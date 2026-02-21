@@ -1,4 +1,4 @@
-# doc_rag (Local Server)
+# Trunk RAG (Local Server)
 
 폐쇄망/로컬 환경에서 사용하는 경량 RAG 서버입니다.
 
