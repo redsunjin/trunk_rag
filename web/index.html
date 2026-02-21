@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>doc_rag local dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="light-theme">
+  <div class="app-container">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h2>Settings</h2>
+        <button id="closeSidebar" class="close-btn">&times;</button>
+      </div>
+      <div class="sidebar-content">
+        <div class="sidebar-section">
+          <h3>LLM Configuration</h3>
+          <div class="input-group">
+            <label for="provider">LLM Provider</label>
+            <select id="provider">
+              <option value="ollama" selected>ollama</option>
+              <option value="openai">openai</option>
+              <option value="lmstudio">lmstudio</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label for="model">LLM Model</label>
+            <input type="text" id="model" value="qwen3:4b">
+          </div>
+          <div class="input-group">
+            <label for="baseUrl">Base URL (optional)</label>
+            <input type="text" id="baseUrl" value="http://localhost:11434">
+          </div>
+          <div class="input-group">
+            <label for="apiKey">API Key (optional)</label>
+            <input type="password" id="apiKey" value="">
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <h3>Health</h3>
+          <div id="statusIndicator" class="status-indicator">
+            <span class="status-dot"></span>
+            <span class="status-text">Checking...</span>
+          </div>
+          <p id="statusMsg" class="status-msg">로컬 서버 상태를 확인 중입니다.</p>
+          <div class="sidebar-actions">
+            <button id="healthBtn" class="secondary-btn">Health Check</button>
+            <button id="reindexBtn" class="primary-btn">Reindex</button>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <h3>RAG Documents</h3>
+          <div class="doc-list" id="docList">
+            <p class="status-msg">문서 목록 로딩 중...</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="main-header">
+        <div class="header-left">
+          <button id="menuToggle" class="menu-toggle">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+          <h1>RAG Chat</h1>
+        </div>
+      </header>
+
+      <section class="chat-layout">
+        <div class="main-chat-container" id="chatContainer">
+          <div class="chat-message bot">
+            안녕하세요. 문서 기반 RAG 어시스턴트입니다. 질문을 입력해 주세요.
+          </div>
+        </div>
+        <div class="main-chat-input">
+          <textarea id="userInput" rows="2" placeholder="질문을 입력하세요..."></textarea>
+          <button id="sendBtn" class="primary-btn">Send</button>
+        </div>
+      </section>
+
+      <section class="doc-viewer-layout">
+        <div class="card">
+          <h3 id="docTitle">Document Viewer</h3>
+          <div class="doc-viewer-body" id="docViewer">
+            <p class="status-msg">왼쪽 문서 목록에서 파일을 선택하면 내용을 볼 수 있습니다.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const sidebar = document.getElementById("sidebar");
+    const sidebarOverlay = document.getElementById("sidebarOverlay");
+    const menuToggle = document.getElementById("menuToggle");
+    const closeSidebar = document.getElementById("closeSidebar");
+
+    const provider = document.getElementById("provider");
+    const model = document.getElementById("model");
+    const baseUrl = document.getElementById("baseUrl");
+    const apiKey = document.getElementById("apiKey");
+    const userInput = document.getElementById("userInput");
+
+    const sendBtn = document.getElementById("sendBtn");
+    const healthBtn = document.getElementById("healthBtn");
+    const reindexBtn = document.getElementById("reindexBtn");
+
+    const chatContainer = document.getElementById("chatContainer");
+    const statusIndicator = document.getElementById("statusIndicator");
+    const statusMsg = document.getElementById("statusMsg");
+    const docList = document.getElementById("docList");
+    const docTitle = document.getElementById("docTitle");
+    const docViewer = document.getElementById("docViewer");
+
+    function escapeHtml(value) {
+      return value
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+
+    function renderMarkdownBasic(markdown) {
+      const lines = markdown.split("\n");
+      const html = [];
+      let inList = false;
+      let inCode = false;
+      for (const line of lines) {
+        if (line.startsWith("```")) {
+          if (!inCode) {
+            html.push("<pre><code>");
+            inCode = true;
+          } else {
+            html.push("</code></pre>");
+            inCode = false;
+          }
+          continue;
+        }
+        if (inCode) {
+          html.push(escapeHtml(line) + "\n");
+          continue;
+        }
+
+        const text = escapeHtml(line);
+        if (text.startsWith("#### ")) {
+          if (inList) { html.push("</ul>"); inList = false; }
+          html.push("<h4>" + text.slice(5) + "</h4>");
+        } else if (text.startsWith("### ")) {
+          if (inList) { html.push("</ul>"); inList = false; }
+          html.push("<h3>" + text.slice(4) + "</h3>");
+        } else if (text.startsWith("## ")) {
+          if (inList) { html.push("</ul>"); inList = false; }
+          html.push("<h2>" + text.slice(3) + "</h2>");
+        } else if (text.startsWith("- ")) {
+          if (!inList) { html.push("<ul>"); inList = true; }
+          html.push("<li>" + text.slice(2) + "</li>");
+        } else if (text.trim() === "") {
+          if (inList) { html.push("</ul>"); inList = false; }
+          html.push("<br>");
+        } else {
+          if (inList) { html.push("</ul>"); inList = false; }
+          html.push("<p>" + text + "</p>");
+        }
+      }
+      if (inList) html.push("</ul>");
+      if (inCode) html.push("</code></pre>");
+      return html.join("");
+    }
+
+    function appendMessage(role, text) {
+      const message = document.createElement("div");
+      message.className = "chat-message " + role;
+      message.textContent = text;
+      chatContainer.appendChild(message);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function setStatus(type, text, detail) {
+      statusIndicator.className = "status-indicator " + type;
+      statusIndicator.querySelector(".status-text").textContent = text;
+      statusMsg.textContent = detail || "";
+    }
+
+    function syncDefaults() {
+      if (provider.value === "ollama") {
+        model.value = "qwen3:4b";
+        baseUrl.value = "http://localhost:11434";
+      } else if (provider.value === "lmstudio") {
+        model.value = "local-model";
+        baseUrl.value = "http://localhost:1234/v1";
+      } else {
+        model.value = "gpt-4o-mini";
+        baseUrl.value = "";
+      }
+    }
+
+    async function loadDocs() {
+      try {
+        const res = await fetch("/rag-docs");
+        const data = await res.json();
+        if (!res.ok) {
+          docList.innerHTML = `<p class="status-msg">${data.detail || "문서 목록 로드 실패"}</p>`;
+          return;
+        }
+        if (!data.docs || data.docs.length === 0) {
+          docList.innerHTML = "<p class='status-msg'>등록된 문서가 없습니다.</p>";
+          return;
+        }
+
+        const items = data.docs.map((doc) => `
+          <button class="doc-item-btn" data-name="${doc.name}">
+            <span class="doc-name">${doc.name}</span>
+            <span class="doc-meta">${Math.round(doc.size / 1024)} KB</span>
+          </button>
+        `).join("");
+        docList.innerHTML = items;
+
+        docList.querySelectorAll(".doc-item-btn").forEach((button) => {
+          button.addEventListener("click", () => openDoc(button.dataset.name));
+        });
+      } catch (error) {
+        docList.innerHTML = `<p class="status-msg">오류: ${error}</p>`;
+      }
+    }
+
+    async function openDoc(name) {
+      docTitle.textContent = "Document Viewer - " + name;
+      docViewer.innerHTML = "<p class='status-msg'>문서 로딩 중...</p>";
+      try {
+        const res = await fetch("/rag-docs/" + encodeURIComponent(name));
+        const data = await res.json();
+        if (!res.ok) {
+          docViewer.innerHTML = `<p class='status-msg'>${data.detail || "문서 조회 실패"}</p>`;
+          return;
+        }
+        docViewer.innerHTML = renderMarkdownBasic(data.content || "");
+      } catch (error) {
+        docViewer.innerHTML = `<p class='status-msg'>오류: ${error}</p>`;
+      }
+    }
+
+    provider.addEventListener("change", syncDefaults);
+
+    async function healthCheck() {
+      try {
+        const res = await fetch("/health");
+        const data = await res.json();
+        if (!res.ok) {
+          setStatus("error", "Error", data.detail || "health check 실패");
+          return;
+        }
+        setStatus("ok", "Online", `vectors=${data.vectors ?? "-"}`);
+      } catch (err) {
+        setStatus("error", "Offline", String(err));
+      }
+    }
+
+    async function sendQuestion() {
+      const question = userInput.value.trim();
+      if (!question) return;
+
+      appendMessage("user", question);
+      appendMessage("bot", "생성 중...");
+      const pending = chatContainer.lastElementChild;
+
+      const payload = {
+        query: question,
+        llm_provider: provider.value,
+        llm_model: model.value || null,
+        llm_api_key: apiKey.value || null,
+        llm_base_url: baseUrl.value || null
+      };
+
+      try {
+        const res = await fetch("/query", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          pending.textContent = data.detail || "요청 실패";
+          return;
+        }
+        pending.textContent = data.answer;
+      } catch (err) {
+        pending.textContent = "오류: " + err;
+      }
+
+      userInput.value = "";
+    }
+
+    async function reindex() {
+      setStatus("warn", "Working", "문서 재인덱싱 중...");
+      try {
+        const res = await fetch("/reindex", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({reset: true})
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setStatus("error", "Error", data.detail || "reindex 실패");
+          return;
+        }
+        setStatus("ok", "Online", `reindex 완료: vectors=${data.vectors}`);
+        appendMessage("bot", `재인덱싱 완료: vectors=${data.vectors}`);
+        await loadDocs();
+      } catch (err) {
+        setStatus("error", "Error", String(err));
+      }
+    }
+
+    sendBtn.addEventListener("click", sendQuestion);
+    userInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendQuestion();
+      }
+    });
+
+    healthBtn.addEventListener("click", healthCheck);
+    reindexBtn.addEventListener("click", reindex);
+
+    menuToggle.addEventListener("click", () => {
+      sidebar.classList.add("active");
+      sidebarOverlay.classList.add("active");
+    });
+    closeSidebar.addEventListener("click", () => {
+      sidebar.classList.remove("active");
+      sidebarOverlay.classList.remove("active");
+    });
+    sidebarOverlay.addEventListener("click", () => {
+      sidebar.classList.remove("active");
+      sidebarOverlay.classList.remove("active");
+    });
+
+    healthCheck();
+    loadDocs();
+  </script>
+</body>
+</html>
