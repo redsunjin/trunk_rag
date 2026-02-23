@@ -2,11 +2,29 @@
 
 폐쇄망/로컬 환경에서 사용하는 경량 RAG 서버입니다.
 
-- 문서: `data/*.md` (고정 5개 파일)
-- 청킹: `##`, `###`, `####` 헤더 기반 + 문자 분할
+- 문서: 전처리 완료된 `data/*.md` 입력
+- 청킹: `##`, `###`, `####` 헤더 기반 + 문자 분할(현재)
 - 벡터스토어: Chroma (로컬 폴더)
 - LLM: `openai` / `ollama` / `lmstudio` 선택
 - 인터페이스: FastAPI + 브라우저(`http://127.0.0.1:8000`)
+
+## Operating Model (현행화)
+
+`trunk_rag`는 "가벼운 RAG 런타임" 역할에 집중합니다.
+
+1. 외부 전처리 단계(별도 프로세스, 클라우드 LLM 포함 가능)
+- 원본 소스를 정제해 RAG 정책에 맞는 Markdown으로 변환
+- 메타데이터(`source`, `country`, `doc_type`)를 채운 산출물 생성
+
+2. `trunk_rag` 단계(현재 + 다음 단계)
+- 현재: 정제된 md를 인덱싱/검색/질의
+- 다음 단계(P1): 데이터 등록 시 검증(사용 가능/불가 판정) 기능 추가
+- 다음 단계(P1): 분야별 컬렉션 + 단순 라우팅 적용
+
+비목표(현재 단계):
+- 원본 수집/크롤링
+- 대규모 자동 재작성 파이프라인
+- 무거운 rerank/multi-vector 파이프라인 기본 탑재
 
 ## Files
 
@@ -16,7 +34,12 @@
 - `web/index.html`: 간단 웹 UI
 - `web/intro.html`: 인트로/상태 확인 페이지
 - `run_doc_rag.bat`: 터미널 명령 없이 서버+브라우저 실행
+- `stop_doc_rag.bat`: 실행 중인 로컬 서버 종료
 - `.env.example`: 환경변수 템플릿
+- `docs/PREPROCESSING_RULES.md`: 전처리 규칙 초안
+- `docs/VECTORSTORE_POLICY.md`: 벡터스토어 운영/용량 정책
+- `docs/COLLECTION_ROUTING_POLICY.md`: 분야별 컬렉션/라우팅 정책
+- `docs/FUTURE_EXTERNAL_CONSTRAINTS.md`: 외부 제한사항 중 추후 적용 항목
 
 ## Quick Start
 
@@ -31,6 +54,11 @@ cd C:\Users\sunji\workspace\doc_rag
 .\run_doc_rag.bat
 ```
 3. 브라우저에서 `http://127.0.0.1:8000/intro`가 열리고, `서비스 시작` 버튼으로 `/app` 진입.
+4. 종료:
+```powershell
+cd C:\Users\sunji\workspace\doc_rag
+.\stop_doc_rag.bat
+```
 
 수동 실행이 필요하면 기존처럼 `app_api.py` 직접 실행도 가능.
 
@@ -52,6 +80,54 @@ curl -X POST http://127.0.0.1:8000/query `
   -d "{\"query\":\"각 국가별 대표적인 과학적 성과\",\"llm_provider\":\"ollama\",\"llm_model\":\"qwen3:4b\",\"llm_base_url\":\"http://localhost:11434\"}"
 ```
 
+### `/query` 에러 응답 규격
+
+- 성공 응답은 기존과 동일:
+```json
+{
+  "answer": "...",
+  "provider": "ollama",
+  "model": "qwen3:4b"
+}
+```
+
+- 실패 응답은 `flat + detail` 호환 포맷:
+```json
+{
+  "code": "LLM_TIMEOUT",
+  "message": "LLM 응답 시간이 제한(15초)을 초과했습니다.",
+  "hint": "모델 상태를 확인하거나 더 짧은 질문으로 다시 시도하세요.",
+  "request_id": "uuid-or-client-id",
+  "detail": "LLM 응답 시간이 제한(15초)을 초과했습니다."
+}
+```
+
+- 실패 코드 매핑:
+  - `INVALID_REQUEST` -> `422`
+  - `VECTORSTORE_EMPTY` -> `400`
+  - `INVALID_PROVIDER` -> `400`
+  - `LLM_CONNECTION_FAILED` -> `502`
+  - `LLM_TIMEOUT` -> `504`
+  - `INTERNAL_ERROR` -> `500`
+
+- `X-Request-ID` 헤더:
+  - `/query`의 성공/실패 응답 모두 포함
+  - 요청에 `X-Request-ID`를 보내면 같은 값 재사용
+  - 없으면 서버가 UUID 생성
+
+## Preprocessing Contract (정책)
+
+현재 정책:
+- `trunk_rag`는 전처리된 md를 입력으로 사용한다.
+- 전처리 가이드/규칙은 `docs/PREPROCESSING_RULES.md`를 기준으로 한다.
+
+다음 단계(P1) 정책:
+- 문서 등록 또는 인덱싱 전 검증을 수행하고 `usable=true/false` 판정을 제공한다.
+- 불가(`usable=false`) 문서는 벡터스토어에 반영하지 않는다.
+
+참고:
+- 본 정책의 상세 운영 기준은 `docs/FUTURE_EXTERNAL_CONSTRAINTS.md`에 정리한다.
+
 ## Environment
 
 `.env.example`를 복사해 `.env` 생성 후 사용.
@@ -59,3 +135,40 @@ curl -X POST http://127.0.0.1:8000/query `
 - OpenAI 사용 시: `OPENAI_API_KEY`
 - Ollama 사용 시: `OLLAMA_BASE_URL`
 - LM Studio 사용 시: `LMSTUDIO_BASE_URL`, `LMSTUDIO_API_KEY`
+
+## Testing
+
+개발용 테스트 의존성 설치:
+
+```powershell
+python -m pip install -r requirements-dev.txt
+python -m playwright install chromium
+```
+
+실행:
+
+```powershell
+pytest -q
+```
+
+개별 실행:
+
+```powershell
+pytest -q tests/test_api_smoke.py
+pytest -q tests/e2e/test_web_flow_playwright.py -m e2e
+```
+
+## Vector Store Notes
+
+데이터가 증가하면 속도/품질 저하 우려가 있습니다.
+
+- 속도 리스크: 벡터 수 증가에 따른 검색 지연 증가
+- 품질 리스크: 유사하지만 덜 관련된 청크가 상위로 노출(노이즈 증가)
+
+정책:
+- 무제한 적재 대신 컬렉션 용량 가이드를 둔다.
+- 컬렉션당 cap: `30,000 ~ 50,000 vectors`
+- cap은 토큰이 아니라 벡터(청크) 수 기준이다.
+- 분야별 컬렉션으로 분할하고 단순 라우팅으로 조회 범위를 제한한다.
+- 상세 수치와 대응 단계는 `docs/VECTORSTORE_POLICY.md`를 따른다.
+- 라우팅 방식 상세는 `docs/COLLECTION_ROUTING_POLICY.md`를 따른다.

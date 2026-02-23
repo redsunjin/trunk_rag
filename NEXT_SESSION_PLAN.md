@@ -1,80 +1,80 @@
-# doc_rag 진행 현황 및 다음 세션 우선순위
+# doc_rag 다음 세션 계획 (현행화)
 
 기준 문서:
 - `SPEC.md`
 - `README.md`
+- `docs/PREPROCESSING_RULES.md`
+- `docs/VECTORSTORE_POLICY.md`
+- `docs/COLLECTION_ROUTING_POLICY.md`
+- `docs/FUTURE_EXTERNAL_CONSTRAINTS.md`
 
 작성 목적:
-- 오늘까지 구현된 항목과 미완료 항목을 구분
-- 다음 세션에서 바로 시작할 수 있도록 우선순위 고정
+- 현재 구현 완료 상태를 반영
+- 합의된 운영모델(외부 전처리 + trunk_rag 검증 게이트)을 기준으로 다음 작업 우선순위를 고정
 
-## 1. 완료된 항목 (Done)
+## 1. 현재 완료 상태 (Done)
 
-### A. 로컬 RAG 백엔드 기본 구조
+### A. 로컬 RAG 런타임
 - `app_api.py` FastAPI 서버 구성
 - `POST /query`, `POST /reindex`, `GET /health` 구현
 - 문서 목록/원문 조회 API 구현:
   - `GET /rag-docs`
   - `GET /rag-docs/{doc_name}`
 
-### B. 문서/청킹/인덱싱 파이프라인
-- `data/*.md` (5개 파일) 기반 로딩
-- `##`, `###`, `####` 기준 헤더 청킹 + 문자 분할
-- `BAAI/bge-m3` 임베딩 + Chroma 저장
-- 인덱스 스크립트(`build_index.py`) 및 CLI 질의(`query_cli.py`) 구성
+### B. 안정성/품질 (P0 완료)
+- `/query` 표준 에러 응답 적용:
+  - `code`, `message`, `hint`, `request_id`, `detail`
+- `/query` 타임아웃 정책(15초, 재시도 없음)
+- `X-Request-ID` 응답 헤더 적용
+- 테스트 구축:
+  - API 스모크: `tests/test_api_smoke.py`
+  - 프론트 E2E: `tests/e2e/test_web_flow_playwright.py`
 
-### C. UI 및 접근 경로
-- 메인 UI: `web/index.html`
-- 인트로 페이지: `web/intro.html`
-- 스타일: `web/styles.css`
-- 라우팅:
-  - `/` -> `/intro` 리다이렉트
-  - `/app` 메인 UI
-- 문서 목록 + MD 뷰어 + 채팅 질의 화면 구성
+### C. 전처리 정책 문서
+- `docs/PREPROCESSING_RULES.md` 초안 작성
 
-### D. 실행 편의
-- `run_doc_rag.bat` 추가
-- 브라우저 수동 URL 입력 없이 `/intro` 진입 가능
+## 2. 운영 방향 확정 (중요)
 
-## 2. 미완료/보완 필요 항목 (Not Done)
-
-### A. 운영 안정성
-- `/query` 실패 케이스별 표준 에러 응답 정교화
-- LLM 타임아웃/재시도 정책 정리
-- 서버 로깅 포맷 및 레벨 정책 정리
-
-### B. 품질/검증
-- API 자동 테스트(health/query/reindex/docs) 최소 세트 구축
-- 프론트엔드 기능 테스트(문서 조회/질의/재인덱싱) 최소 검증 루틴 정리
-
-### C. 전처리 워크플로우 분리
-- 원본 md -> 정제 md 파이프라인 스크립트 별도화
-- 문서 품질 규칙(헤더 구조, 메타데이터 규약) 문서화
-
-### D. 배포/실행 형태
-- 데스크톱 앱 래핑(Electron/Tauri) 여부 결정 전
-- 현재는 로컬 서버 실행형 유지
+1. `trunk_rag`는 "전처리된 md 소비자" 역할에 집중한다.
+2. 원본 소스 정제/재작성은 외부 전처리 프로세스에서 수행한다.
+3. `trunk_rag`는 다음 범위를 관리한다:
+- 전처리 가이드 제공
+- 데이터 등록 시 검증(사용 가능/불가 판정)
+- 통과 문서만 벡터스토어 반영
 
 ## 3. 다음 세션 우선순위
 
-### P0 (즉시)
-1. API/프론트 최소 회귀 테스트 추가
-2. `/query` 에러 처리 표준화
-3. 문서 전처리 규칙 초안 확정
+### P1 (즉시)
+1. 전처리 가이드 제공 산출물 추가
+- 프롬프트 템플릿
+- JSON 메타데이터 예시 포맷
 
-### P1 (다음)
-1. 전처리 스크립트 분리(입력/출력 디렉터리 명확화)
-2. 운영 로그 구조화(요청 ID, provider, model, latency)
-3. README 실행 시나리오를 "인덱싱/서버/질의" 3단계로 재정리
+2. 데이터 등록/인덱싱 전 검증 기능 추가
+- 헤더 구조 검증(`##`, `###`, `####`)
+- 메타 필수항목 검증(`source`, `country`, `doc_type`)
+- RAG 사용 가능/불가(`usable=true/false`) 판정
 
-### P2 (후속)
-1. 데스크톱 앱 전환 PoC
-2. 문서 업로드 관리자 UI 또는 관리 스크립트 설계
+3. 벡터스토어 운영 정책 문서화 및 경고 기준 확정
+- soft cap / hard cap
+- 초과 시 대응 절차(분리, 아카이브, 차단)
+
+4. 분야별 컬렉션 + 단순 라우팅 설계 고정
+- 컬렉션 분할 기준(도메인 단위)
+- 라우팅 우선순위(사용자 선택 -> 키워드 매핑 -> 기본 fallback)
+- 컬렉션당 cap(`30k~50k vectors`, 총량 기준 대략 `30M~50M tokens`) 연계
+
+### P2 (다음)
+1. 토큰 기준 청킹 전환 검증(가벼운 방식 유지 범위 내)
+2. 검증 결과 리포트 출력 개선(JSON + 요약 텍스트)
+3. 다중 컬렉션 조회(최대 2개 병렬) 옵션 검토
+
+### P3 (후속)
+1. 데스크톱 래핑(Electron/Tauri) PoC
+2. 문서 업로드 관리자 워크플로우 설계
 
 ## 4. 다음 세션 시작 체크리스트
 
 1. `run_doc_rag.bat`로 서버/인트로 기동 확인
 2. `/health` 확인 후 `/reindex` 1회 실행
-3. `/rag-docs` 문서 목록/`/rag-docs/{doc_name}` 원문 조회 확인
-4. `/query` 기본 질의 2~3개로 응답 품질 확인
-5. P0 작업부터 착수
+3. `/query` 샘플 질의 2~3개 응답 확인
+4. 전처리 가이드/검증 기능(P1-1, P1-2)부터 착수
