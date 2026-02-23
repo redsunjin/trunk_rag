@@ -189,6 +189,24 @@
       statusMsg.textContent = detail || "";
     }
 
+    function parseApiError(data, fallbackMessage) {
+      if (!data || typeof data !== "object") {
+        return { message: fallbackMessage, hint: "", requestId: "" };
+      }
+      return {
+        message: data.message || data.detail || fallbackMessage,
+        hint: data.hint || "",
+        requestId: data.request_id || ""
+      };
+    }
+
+    function formatApiError(error) {
+      const parts = [error.message];
+      if (error.hint) parts.push(`hint: ${error.hint}`);
+      if (error.requestId) parts.push(`request_id: ${error.requestId}`);
+      return parts.join(" | ");
+    }
+
     function syncDefaults() {
       if (provider.value === "ollama") {
         model.value = "qwen3:4b";
@@ -207,7 +225,8 @@
         const res = await fetch("/rag-docs");
         const data = await res.json();
         if (!res.ok) {
-          docList.innerHTML = `<p class="status-msg">${data.detail || "문서 목록 로드 실패"}</p>`;
+          const error = parseApiError(data, "문서 목록 로드 실패");
+          docList.innerHTML = `<p class="status-msg">${escapeHtml(formatApiError(error))}</p>`;
           return;
         }
         if (!data.docs || data.docs.length === 0) {
@@ -238,7 +257,8 @@
         const res = await fetch("/rag-docs/" + encodeURIComponent(name));
         const data = await res.json();
         if (!res.ok) {
-          docViewer.innerHTML = `<p class='status-msg'>${data.detail || "문서 조회 실패"}</p>`;
+          const error = parseApiError(data, "문서 조회 실패");
+          docViewer.innerHTML = `<p class='status-msg'>${escapeHtml(formatApiError(error))}</p>`;
           return;
         }
         docViewer.innerHTML = renderMarkdownBasic(data.content || "");
@@ -254,7 +274,8 @@
         const res = await fetch("/health");
         const data = await res.json();
         if (!res.ok) {
-          setStatus("error", "Error", data.detail || "health check 실패");
+          const error = parseApiError(data, "health check 실패");
+          setStatus("error", "Error", formatApiError(error));
           return;
         }
         setStatus("ok", "Online", `vectors=${data.vectors ?? "-"}`);
@@ -287,7 +308,8 @@
         });
         const data = await res.json();
         if (!res.ok) {
-          pending.textContent = data.detail || "요청 실패";
+          const error = parseApiError(data, "요청 실패");
+          pending.textContent = formatApiError(error);
           return;
         }
         pending.textContent = data.answer;
@@ -308,7 +330,8 @@
         });
         const data = await res.json();
         if (!res.ok) {
-          setStatus("error", "Error", data.detail || "reindex 실패");
+          const error = parseApiError(data, "reindex 실패");
+          setStatus("error", "Error", formatApiError(error));
           return;
         }
         setStatus("ok", "Online", `reindex 완료: vectors=${data.vectors}`);

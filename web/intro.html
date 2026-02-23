@@ -40,12 +40,31 @@
       statusMsg.textContent = detail || "";
     }
 
+    function parseApiError(data, fallbackMessage) {
+      if (!data || typeof data !== "object") {
+        return { message: fallbackMessage, hint: "", requestId: "" };
+      }
+      return {
+        message: data.message || data.detail || fallbackMessage,
+        hint: data.hint || "",
+        requestId: data.request_id || ""
+      };
+    }
+
+    function formatApiError(error) {
+      const parts = [error.message];
+      if (error.hint) parts.push(`hint: ${error.hint}`);
+      if (error.requestId) parts.push(`request_id: ${error.requestId}`);
+      return parts.join(" | ");
+    }
+
     async function healthCheck() {
       try {
         const res = await fetch("/health");
         const data = await res.json();
         if (!res.ok) {
-          setStatus("error", "Error", data.detail || "health check 실패");
+          const error = parseApiError(data, "health check 실패");
+          setStatus("error", "Error", formatApiError(error));
           return false;
         }
         setStatus("ok", "Online", `vectors=${data.vectors ?? "-"}`);
