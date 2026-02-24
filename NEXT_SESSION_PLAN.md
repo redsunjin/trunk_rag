@@ -100,3 +100,44 @@
 3. `/query` 샘플 질의 2~3개 응답 확인
 4. 인트로 사용자/관리자 분기 및 컬렉션 선택 UI부터 착수
 5. 업로드 요청/승인 흐름(P1-5)까지 MVP 완료
+
+## 5. 세션 업데이트 (2026-02-24)
+
+완료:
+- 전처리 가이드 산출물 추가
+  - `docs/PREPROCESSING_PROMPT_TEMPLATE.md`
+  - `docs/PREPROCESSING_METADATA_SCHEMA.json`
+  - `docs/examples/preprocessed_sample.md`
+  - `docs/examples/preprocessed_sample.metadata.json`
+- 컬렉션 API/라우팅 1차 반영
+  - `GET /collections`
+  - `/query`의 `collection` 파라미터 + 키워드 라우팅 + fallback
+  - `/reindex`의 컬렉션 선택 + hard cap 사전 검증
+- 사용자/관리자 진입 분리 1차 반영
+  - `/intro` 사용자/관리자 분기
+  - `POST /admin/auth` 인증코드 체크
+  - `/admin` 상태 페이지 추가
+- 업로드 요청/승인 워크플로우 1차 반영
+  - `pending/approved/rejected` 상태모델
+  - 사용자 업로드 요청 API/UI
+  - 관리자 승인/반려 API/UI
+  - `DOC_RAG_AUTO_APPROVE` 옵션 반영
+- 등록 전 검증 기능 1차 반영
+  - `scripts/validate_rag_doc.py`
+  - `usable/reasons/warnings` 산출
+  - `/reindex` 응답에 검증 요약 포함
+
+잔여:
+- 관리자 반려 사유/이력 검색 UI 고도화
+- 다중 컬렉션 조회(최대 2개 병렬) 옵션 검토
+
+## 6. Graph/Lang 도입 검토 (2026-02-24)
+
+- 검토 문서: `Graph_Lang도입검토.md` (원문: `통합graph_lang설명.md`)
+- 결론: 본체 직접 통합보다 **사이드카 방식** 권고
+  - 본체(`doc_rag`)는 경량 질의 경로를 유지
+  - Graph/Lang은 고급 오케스트레이션을 별도 프로세스로 분리
+- 이유:
+  - 현 프로젝트 목표(로컬/경량/단순 운영)와 충돌 최소화
+  - 장애 격리 및 롤백/실험 용이성 확보
+  - p95 지연 변동성 관리에 유리

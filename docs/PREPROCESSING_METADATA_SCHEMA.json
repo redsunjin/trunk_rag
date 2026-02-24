@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://doc-rag.local/schemas/preprocessing-metadata.schema.json",
+  "title": "doc_rag preprocessing metadata schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "source",
+    "country",
+    "doc_type"
+  ],
+  "properties": {
+    "source": {
+      "type": "string",
+      "minLength": 1,
+      "description": "원본 파일명 (예: fr.md)"
+    },
+    "country": {
+      "type": "string",
+      "enum": [
+        "all",
+        "france",
+        "germany",
+        "italy",
+        "uk"
+      ]
+    },
+    "doc_type": {
+      "type": "string",
+      "enum": [
+        "summary",
+        "country"
+      ]
+    },
+    "preprocess_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "processed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_license": {
+      "type": "string",
+      "minLength": 1
+    },
+    "language": {
+      "type": "string",
+      "minLength": 2,
+      "default": "ko"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    }
+  }
+}
+

@@ -70,52 +70,55 @@
 
 ## P1 (다음 세션 핵심)
 
+상태:
+- [x] P1 핵심 항목 1~5 1차 구현 완료 (2026-02-24)
+
 ### 1) 전처리 가이드 제공(문서 템플릿 중심)
-- [ ] `docs/PREPROCESSING_PROMPT_TEMPLATE.md` 생성
-- [ ] `docs/PREPROCESSING_METADATA_SCHEMA.json` 생성
-- [ ] 전처리 산출물 예시(`.md` + metadata) 1세트 정리
+- [x] `docs/PREPROCESSING_PROMPT_TEMPLATE.md` 생성
+- [x] `docs/PREPROCESSING_METADATA_SCHEMA.json` 생성
+- [x] 전처리 산출물 예시(`.md` + metadata) 1세트 정리
 
 완료 기준:
 - 외부 전처리 담당자가 동일 형식으로 산출물을 만들 수 있다.
 
 ### 2) 컬렉션 선택/라우팅 기반 사용자 UI
-- [ ] `/intro`에서 사용자/관리자 진입 분기 UI 추가
-- [ ] 기존 채팅 UI에 컬렉션 선택 드롭다운 추가
-- [ ] `/query` 요청 시 선택한 컬렉션 전달
+- [x] `/intro`에서 사용자/관리자 진입 분기 UI 추가
+- [x] 기존 채팅 UI에 컬렉션 선택 드롭다운 추가
+- [x] `/query` 요청 시 선택한 컬렉션 전달
 
 완료 기준:
 - 사용자는 컬렉션 선택 후 기존과 동일한 채팅 흐름으로 질의할 수 있다.
 
 ### 3) 관리자 인증 및 요청 승인 흐름
-- [ ] 관리자 인증코드 기반 진입(초기 MVP) 추가
-- [ ] 업로드 요청 상태 모델 추가(`pending/approved/rejected`)
-- [ ] 일반 사용자 업로드 요청 API/UI 추가
-- [ ] 관리자 승인/반려 API/UI 추가
-- [ ] 개인 운영용 `auto-approve` 옵션 설계 반영
+- [x] 관리자 인증코드 기반 진입(초기 MVP) 추가
+- [x] 업로드 요청 상태 모델 추가(`pending/approved/rejected`)
+- [x] 일반 사용자 업로드 요청 API/UI 추가
+- [x] 관리자 승인/반려 API/UI 추가
+- [x] 개인 운영용 `auto-approve` 옵션 설계 반영
 
 완료 기준:
 - 일반 사용자는 요청만 가능하고, 승인된 문서만 인덱싱된다.
 
 ### 4) 등록 시 검증 기능(usable 판정)
-- [ ] 검증 스크립트/모듈 추가 (`scripts/validate_rag_doc.py` 또는 동등 기능)
-- [ ] 검증 항목:
-  - [ ] 헤더 구조(`##`, `###`, `####`)
-  - [ ] 필수 메타(`source`, `country`, `doc_type`)
-  - [ ] 최소 길이/빈 섹션
-- [ ] 결과 출력:
-  - [ ] `usable=true/false`
-  - [ ] `reasons[]`
+- [x] 검증 스크립트/모듈 추가 (`scripts/validate_rag_doc.py` 또는 동등 기능)
+- [x] 검증 항목:
+  - [x] 헤더 구조(`##`, `###`, `####`)
+  - [x] 필수 메타(`source`, `country`, `doc_type`)
+  - [x] 최소 길이/빈 섹션
+- [x] 결과 출력:
+  - [x] `usable=true/false`
+  - [x] `reasons[]`
 
 완료 기준:
 - 인덱싱 전 문서의 RAG 사용 가능 여부를 자동 판정할 수 있다.
 
 ### 5) 벡터스토어 운영 정책 적용
-- [ ] `docs/VECTORSTORE_POLICY.md` 기준 수치 확정
-- [ ] 컬렉션당 cap `30k~50k vectors` 확정 (총량 기준 대략 `30M~50M tokens`)
-- [ ] soft cap/hard cap 초과 시 운영 절차 문서화
-- [ ] 분야별 컬렉션 분할 정책 반영
-- [ ] 단순 라우팅 정책 반영(`사용자 선택 -> 키워드 매핑 -> fallback`)
-- [ ] README/SPEC에 정책 링크 반영
+- [x] `docs/VECTORSTORE_POLICY.md` 기준 수치 확정
+- [x] 컬렉션당 cap `30k~50k vectors` 확정 (총량 기준 대략 `30M~50M tokens`)
+- [x] soft cap/hard cap 초과 시 운영 절차 문서화
+- [x] 분야별 컬렉션 분할 정책 반영
+- [x] 단순 라우팅 정책 반영(`사용자 선택 -> 키워드 매핑 -> fallback`)
+- [x] README/SPEC에 정책 링크 반영
 
 완료 기준:
 - 데이터 증가 시 성능/품질 저하 대응 기준이 명시되어 있다.

@@ -19,6 +19,10 @@
 - LLM provider 선택: `ollama`, `lmstudio`, `openai`
 - FastAPI 서버 + 브라우저 UI
 - `/query` 표준 에러 응답 + 요청 ID 추적
+- 컬렉션 라우팅(`collection` 선택 + 키워드 fallback)
+- 컬렉션 상태 조회(`/collections`) + cap 사용률
+- 등록 전 문서 검증(`usable/reasons/warnings`) 1차 적용
+- 업로드 요청/승인 워크플로우(`pending/approved/rejected`) 1차 적용
 - API/프론트 최소 회귀 테스트 체계(pytest + Playwright)
 - 전처리 규칙 문서(`docs/PREPROCESSING_RULES.md`)
 
@@ -34,12 +38,16 @@
 ## 완료된 작업
 ### 백엔드
 - `GET /health`, `POST /reindex`, `POST /query` 구현
+- `GET /collections`, `POST /admin/auth` 구현
+- `GET /upload-requests`, `POST /upload-requests` 구현
+- `POST /upload-requests/{id}/approve`, `POST /upload-requests/{id}/reject` 구현
 - `GET /rag-docs`, `GET /rag-docs/{doc_name}` 구현
 - `/query` 표준 실패 응답(`code`, `message`, `hint`, `request_id`, `detail`) 구현
 - `/query` 타임아웃 정책(15초, 재시도 없음) 적용
 - `/query` 성공/실패 응답에 `X-Request-ID` 헤더 제공
 - `/` -> `/intro` 리다이렉트
 - `/intro` 인트로 페이지, `/app` 메인 RAG UI 제공
+- `/admin` 관리자 상태 페이지 제공(MVP)
 - `/styles.css` 경로에서 공통 스타일 제공
 
 ### RAG 파이프라인
@@ -64,8 +72,10 @@
 ## 핵심 파일
 - `app_api.py`: 메인 로컬 서버, API 엔드포인트, UI/스타일 라우팅
 - `common.py`: 문서/청킹/임베딩/LLM 공통 유틸
+- `scripts/validate_rag_doc.py`: 등록 전 문서 검증
 - `build_index.py`: 초기 인덱싱 스크립트
 - `web/index.html`: 브라우저 UI
+- `web/admin.html`: 관리자 상태 UI
 - `styles.css`: 공통 스타일
 
 ## API 계약
@@ -75,9 +85,35 @@
 ```json
 {
   "status": "ok",
+  "collection_key": "all",
   "collection": "w2_007_header_rag",
   "persist_dir": "C:/.../chroma_db",
-  "vectors": 37
+  "vectors": 37,
+  "auto_approve": false,
+  "pending_requests": 2
+}
+```
+
+### GET `/collections`
+- 목적: 컬렉션별 벡터 수/cap 사용률 조회
+- 응답 예:
+```json
+{
+  "default_collection_key": "all",
+  "collections": [
+    {
+      "key": "all",
+      "name": "w2_007_header_rag",
+      "label": "전체 (기본)",
+      "vectors": 37,
+      "soft_cap": 30000,
+      "hard_cap": 50000,
+      "soft_usage_ratio": 0.0012,
+      "hard_usage_ratio": 0.0007,
+      "soft_exceeded": false,
+      "hard_exceeded": false
+    }
+  ]
 }
 ```
 
@@ -86,17 +122,20 @@
 - 요청:
 ```json
 {
-  "reset": true
+  "reset": true,
+  "collection": "all"
 }
 ```
 - 응답 예:
 ```json
 {
   "docs": 5,
+  "docs_total": 5,
   "chunks": 37,
   "vectors": 37,
   "persist_dir": "C:/.../chroma_db",
-  "collection": "w2_007_header_rag"
+  "collection": "w2_007_header_rag",
+  "collection_key": "all"
 }
 ```
 
@@ -106,20 +145,98 @@
 ```json
 {
   "query": "각 국가별 대표적인 과학적 성과를 요약해줘",
+  "collection": "all",
   "llm_provider": "ollama",
   "llm_model": "qwen3:4b",
   "llm_api_key": null,
   "llm_base_url": "http://localhost:11434"
 }
 ```
+
+### POST `/admin/auth`
+- 목적: 관리자 인증코드 확인(초기 MVP)
+- 요청:
+```json
+{
+  "code": "admin1234"
+}
+```
+
+### GET `/upload-requests`
+- 목적: 업로드 요청 목록 조회(상태 필터 가능)
+- 응답 예:
+```json
+{
+  "auto_approve": false,
+  "counts": {
+    "pending": 2,
+    "approved": 1,
+    "rejected": 0
+  },
+  "requests": [
+    {
+      "id": "uuid",
+      "status": "pending",
+      "collection_key": "fr",
+      "source_name": "new_doc.md",
+      "usable": true
+    }
+  ]
+}
+```
+
+### POST `/upload-requests`
+- 목적: 일반 사용자 업로드 요청 생성
+- 요청:
+```json
+{
+  "source_name": "new_doc.md",
+  "collection": "fr",
+  "country": "france",
+  "doc_type": "country",
+  "content": "## 제목\n본문"
+}
+```
+- 응답 예:
+```json
+{
+  "auto_approve": false,
+  "request": {
+    "id": "uuid",
+    "status": "pending",
+    "usable": true
+  }
+}
+```
+
+### POST `/upload-requests/{id}/approve`
+- 목적: 관리자 승인 및 인덱싱 반영
+- 요청:
+```json
+{
+  "code": "admin1234"
+}
+```
+
+### POST `/upload-requests/{id}/reject`
+- 목적: 관리자 반려
+- 요청:
+```json
+{
+  "code": "admin1234",
+  "reason": "검증 기준 미달"
+}
+```
+- 응답:
+```json
+{
+  "ok": true
+}
+```
 - 실패 응답 예:
 ```json
 {
-  "code": "LLM_TIMEOUT",
-  "message": "LLM 응답 시간이 제한(15초)을 초과했습니다.",
-  "hint": "모델 상태를 확인하거나 더 짧은 질문으로 다시 시도하세요.",
-  "request_id": "uuid",
-  "detail": "LLM 응답 시간이 제한(15초)을 초과했습니다."
+  "detail": "관리자 인증코드가 올바르지 않습니다."
 }
 ```
 
@@ -170,6 +287,7 @@ C:\Users\sunji\llm_5th\001_chatbot\.venv\Scripts\python.exe app_api.py
 - UI 접속:
 - 인트로: `http://127.0.0.1:8000/intro`
 - 메인: `http://127.0.0.1:8000/app`
+- 관리자: `http://127.0.0.1:8000/admin`
 
 ## 설계 결정 기록
 - 실습용 가변 파라미터를 줄이고 운영용 기본값을 서버 상수로 고정
@@ -192,11 +310,11 @@ C:\Users\sunji\llm_5th\001_chatbot\.venv\Scripts\python.exe app_api.py
   - RAG 적합 md 산출
 - `trunk_rag` 단계:
   - 산출 md 인덱싱/검색/질의
-  - 등록 전 검증(추가 예정)으로 사용 가능/불가 판정
-  - 분야별 컬렉션 + 단순 라우팅(추가 예정)
+  - 등록 전 검증으로 사용 가능/불가 판정
+  - 분야별 컬렉션 + 단순 라우팅
 
 ## 벡터스토어 정책
-- 현재는 단일 컬렉션이며, 다음 단계에서 분야별 복수 컬렉션으로 확장
+- 기본 컬렉션(`all`) + 분야별 컬렉션(`eu/fr/ge/it/uk`)을 운영
 - 컬렉션당 cap은 `30,000 ~ 50,000 vectors`
 - 벡터 수 증가 시 성능/품질 저하를 방지하기 위해 용량 정책 적용
 - 상세는 `docs/VECTORSTORE_POLICY.md` 참조
