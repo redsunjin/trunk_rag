@@ -20,6 +20,13 @@
         <div class="sidebar-section">
           <h3>LLM Configuration</h3>
           <div class="input-group">
+            <label for="collection">Collection</label>
+            <select id="collection">
+              <option value="all" selected>전체 (기본)</option>
+            </select>
+            <small id="collectionHint" class="helper-text">컬렉션 정보를 로딩 중입니다.</small>
+          </div>
+          <div class="input-group">
             <label for="provider">LLM Provider</label>
             <select id="provider">
               <option value="ollama" selected>ollama</option>
@@ -59,6 +66,43 @@
           <div class="doc-list" id="docList">
             <p class="status-msg">문서 목록 로딩 중...</p>
           </div>
+        </div>
+
+        <div class="sidebar-section">
+          <h3>Upload Request</h3>
+          <div class="input-group">
+            <label for="uploadSource">Source Name</label>
+            <input type="text" id="uploadSource" placeholder="example.md">
+          </div>
+          <div class="input-row">
+            <div class="input-group">
+              <label for="uploadCountry">Country</label>
+              <select id="uploadCountry">
+                <option value="">(collection 기본값)</option>
+                <option value="all">all</option>
+                <option value="france">france</option>
+                <option value="germany">germany</option>
+                <option value="italy">italy</option>
+                <option value="uk">uk</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label for="uploadDocType">Doc Type</label>
+              <select id="uploadDocType">
+                <option value="">(collection 기본값)</option>
+                <option value="summary">summary</option>
+                <option value="country">country</option>
+              </select>
+            </div>
+          </div>
+          <div class="input-group">
+            <label for="uploadContent">Markdown Content</label>
+            <textarea id="uploadContent" rows="6" placeholder="## 제목&#10;본문 내용을 입력하세요."></textarea>
+          </div>
+          <div class="sidebar-actions">
+            <button id="uploadBtn" class="primary-btn">업로드 요청</button>
+          </div>
+          <p id="uploadMsg" class="status-msg" style="margin-top:8px;"></p>
         </div>
       </div>
     </aside>
@@ -108,6 +152,8 @@
     const model = document.getElementById("model");
     const baseUrl = document.getElementById("baseUrl");
     const apiKey = document.getElementById("apiKey");
+    const collection = document.getElementById("collection");
+    const collectionHint = document.getElementById("collectionHint");
     const userInput = document.getElementById("userInput");
 
     const sendBtn = document.getElementById("sendBtn");
@@ -120,6 +166,13 @@
     const docList = document.getElementById("docList");
     const docTitle = document.getElementById("docTitle");
     const docViewer = document.getElementById("docViewer");
+    const uploadSource = document.getElementById("uploadSource");
+    const uploadCountry = document.getElementById("uploadCountry");
+    const uploadDocType = document.getElementById("uploadDocType");
+    const uploadContent = document.getElementById("uploadContent");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const uploadMsg = document.getElementById("uploadMsg");
+    let collectionItems = [];
 
     function escapeHtml(value) {
       return value
@@ -193,9 +246,14 @@
       if (!data || typeof data !== "object") {
         return { message: fallbackMessage, hint: "", requestId: "" };
       }
+      const detailMessage =
+        typeof data.detail === "string"
+          ? data.detail
+          : (data.detail && typeof data.detail === "object" ? (data.detail.message || JSON.stringify(data.detail)) : "");
+      const hint = data.hint || (data.detail && typeof data.detail === "object" ? (data.detail.hint || "") : "");
       return {
-        message: data.message || data.detail || fallbackMessage,
-        hint: data.hint || "",
+        message: data.message || detailMessage || fallbackMessage,
+        hint,
         requestId: data.request_id || ""
       };
     }
@@ -217,6 +275,48 @@
       } else {
         model.value = "gpt-4o-mini";
         baseUrl.value = "";
+      }
+    }
+
+    function collectionDisplayText(item) {
+      const softPct = Math.round((item.soft_usage_ratio || 0) * 100);
+      return `${item.label} (${item.key}) - vectors=${item.vectors}, soft=${softPct}%`;
+    }
+
+    function updateCollectionHint() {
+      const selected = collectionItems.find((item) => item.key === collection.value);
+      if (!selected) return;
+      const hardPct = Math.round((selected.hard_usage_ratio || 0) * 100);
+      collectionHint.textContent = `선택: ${selected.name} | hard-cap 사용률 ${hardPct}%`;
+    }
+
+    async function loadCollections() {
+      try {
+        const res = await fetch("/collections");
+        const data = await res.json();
+        if (!res.ok) {
+          const error = parseApiError(data, "컬렉션 로드 실패");
+          collectionHint.textContent = formatApiError(error);
+          return;
+        }
+
+        collectionItems = data.collections || [];
+        if (!collectionItems.length) {
+          collection.innerHTML = `<option value="all">전체 (기본)</option>`;
+          collectionHint.textContent = "컬렉션 정보가 없습니다.";
+          return;
+        }
+
+        const defaultKey = data.default_collection_key || "all";
+        const currentValue = collection.value;
+        collection.innerHTML = collectionItems
+          .map((item) => `<option value="${item.key}">${collectionDisplayText(item)}</option>`)
+          .join("");
+        const valueExists = collectionItems.some((item) => item.key === currentValue);
+        collection.value = valueExists ? currentValue : defaultKey;
+        updateCollectionHint();
+      } catch (error) {
+        collectionHint.textContent = String(error);
       }
     }
 
@@ -268,6 +368,7 @@
     }
 
     provider.addEventListener("change", syncDefaults);
+    collection.addEventListener("change", updateCollectionHint);
 
     async function healthCheck() {
       try {
@@ -278,7 +379,7 @@
           setStatus("error", "Error", formatApiError(error));
           return;
         }
-        setStatus("ok", "Online", `vectors=${data.vectors ?? "-"}`);
+        setStatus("ok", "Online", `default=${data.collection_key ?? "all"}, vectors=${data.vectors ?? "-"}`);
       } catch (err) {
         setStatus("error", "Offline", String(err));
       }
@@ -297,7 +398,8 @@
         llm_provider: provider.value,
         llm_model: model.value || null,
         llm_api_key: apiKey.value || null,
-        llm_base_url: baseUrl.value || null
+        llm_base_url: baseUrl.value || null,
+        collection: collection.value || null
       };
 
       try {
@@ -326,7 +428,7 @@
         const res = await fetch("/reindex", {
           method: "POST",
           headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({reset: true})
+          body: JSON.stringify({reset: true, collection: collection.value || null})
         });
         const data = await res.json();
         if (!res.ok) {
@@ -334,11 +436,58 @@
           setStatus("error", "Error", formatApiError(error));
           return;
         }
-        setStatus("ok", "Online", `reindex 완료: vectors=${data.vectors}`);
-        appendMessage("bot", `재인덱싱 완료: vectors=${data.vectors}`);
+        const collectionName = data.collection || collection.value || "all";
+        setStatus("ok", "Online", `reindex 완료: collection=${collectionName}, vectors=${data.vectors}`);
+        appendMessage("bot", `재인덱싱 완료: collection=${collectionName}, vectors=${data.vectors}`);
         await loadDocs();
+        await loadCollections();
       } catch (err) {
         setStatus("error", "Error", String(err));
+      }
+    }
+
+    async function submitUploadRequest() {
+      const content = uploadContent.value.trim();
+      if (!content) {
+        uploadMsg.textContent = "업로드할 Markdown 내용을 입력하세요.";
+        return;
+      }
+
+      uploadMsg.textContent = "업로드 요청 생성 중...";
+      const payload = {
+        source_name: uploadSource.value.trim() || null,
+        collection: collection.value || null,
+        country: uploadCountry.value || null,
+        doc_type: uploadDocType.value || null,
+        content
+      };
+
+      try {
+        const res = await fetch("/upload-requests", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          const error = parseApiError(data, "업로드 요청 생성 실패");
+          uploadMsg.textContent = formatApiError(error);
+          return;
+        }
+
+        const request = data.request || {};
+        const requestId = request.id || "-";
+        const status = request.status || "pending";
+        const autoApprove = data.auto_approve ? "on" : "off";
+        uploadMsg.textContent = `요청 생성 완료: id=${requestId}, status=${status}, auto_approve=${autoApprove}`;
+        appendMessage("bot", `업로드 요청 생성: id=${requestId}, status=${status}`);
+
+        if (status === "approved") {
+          await loadCollections();
+          await loadDocs();
+        }
+      } catch (error) {
+        uploadMsg.textContent = String(error);
       }
     }
 
@@ -352,6 +501,7 @@
 
     healthBtn.addEventListener("click", healthCheck);
     reindexBtn.addEventListener("click", reindex);
+    uploadBtn.addEventListener("click", submitUploadRequest);
 
     menuToggle.addEventListener("click", () => {
       sidebar.classList.add("active");
@@ -367,6 +517,7 @@
     });
 
     healthCheck();
+    loadCollections();
     loadDocs();
   </script>
 </body>

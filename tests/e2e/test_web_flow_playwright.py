@@ -70,7 +70,7 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     page.goto(f"{live_server_url}/intro", wait_until="domcontentloaded")
     expect(page.locator("#statusIndicator .status-text")).to_have_text("Online", timeout=15000)
 
-    page.click("#startBtn")
+    page.click("#userStartBtn")
     expect(page).to_have_url(re.compile(r".*/app$"), timeout=10000)
 
     first_doc_button = page.locator(".doc-item-btn").first
@@ -139,5 +139,28 @@ def test_intro_app_flow(page: Page, live_server_url: str):
 
     page.route("**/reindex", reindex_success)
     page.click("#reindexBtn")
-    expect(page.locator("#statusMsg")).to_contain_text("reindex 완료: vectors=99")
+    expect(page.locator("#statusMsg")).to_contain_text("reindex 완료")
+    expect(page.locator("#statusMsg")).to_contain_text("vectors=99")
     page.unroute("**/reindex", reindex_success)
+
+    def upload_request_success(route):
+        route.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps(
+                {
+                    "auto_approve": False,
+                    "request": {
+                        "id": "req-upload-1",
+                        "status": "pending",
+                    },
+                }
+            ),
+        )
+
+    page.route("**/upload-requests", upload_request_success)
+    page.fill("#uploadContent", "## 업로드 테스트\n충분한 본문 길이를 가진 테스트 문장입니다.")
+    page.click("#uploadBtn")
+    expect(page.locator("#uploadMsg")).to_contain_text("req-upload-1")
+    expect(page.locator("#uploadMsg")).to_contain_text("pending")
+    page.unroute("**/upload-requests", upload_request_success)

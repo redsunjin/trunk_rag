@@ -10,19 +10,35 @@
 <body class="light-theme">
   <div class="app-container">
     <main class="main-content" style="display:flex;align-items:center;justify-content:center;">
-      <section class="card" style="max-width:640px;width:100%;">
+      <section class="card" style="max-width:700px;width:100%;">
         <h2 style="margin-bottom:12px;">doc_rag Local Server</h2>
         <p class="status-msg" style="margin-bottom:16px;">
-          문서 기반 RAG 서비스를 시작합니다.
+          사용자/관리자 모드를 선택하세요.
         </p>
+
         <div id="statusIndicator" class="status-indicator" style="margin-bottom:10px;">
           <span class="status-dot"></span>
           <span class="status-text">Checking...</span>
         </div>
         <p id="statusMsg" class="status-msg" style="margin-bottom:18px;">서버 상태 확인 중입니다.</p>
-        <div style="display:flex;gap:10px;">
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
           <button id="refreshBtn" class="secondary-btn">상태 새로고침</button>
-          <button id="startBtn" class="primary-btn">서비스 시작</button>
+          <button id="userStartBtn" class="primary-btn">사용자 모드 시작</button>
+          <button id="adminToggleBtn" class="secondary-btn">관리자 모드 진입</button>
+        </div>
+
+        <div id="adminPanel" class="card hidden" style="padding:16px;background:#f8f9fa;box-shadow:none;border:1px solid #dee2e6;">
+          <h3 style="margin-bottom:10px;">관리자 인증</h3>
+          <div class="input-group" style="margin-bottom:10px;">
+            <label for="adminCode">인증 코드</label>
+            <input id="adminCode" type="password" placeholder="관리자 인증 코드를 입력하세요">
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button id="adminEnterBtn" class="primary-btn">관리자 페이지 이동</button>
+            <button id="adminCloseBtn" class="secondary-btn">닫기</button>
+          </div>
+          <p id="adminMsg" class="status-msg" style="margin-top:10px;"></p>
         </div>
       </section>
     </main>
@@ -31,8 +47,14 @@
   <script>
     const statusIndicator = document.getElementById("statusIndicator");
     const statusMsg = document.getElementById("statusMsg");
-    const startBtn = document.getElementById("startBtn");
     const refreshBtn = document.getElementById("refreshBtn");
+    const userStartBtn = document.getElementById("userStartBtn");
+    const adminToggleBtn = document.getElementById("adminToggleBtn");
+    const adminPanel = document.getElementById("adminPanel");
+    const adminCode = document.getElementById("adminCode");
+    const adminEnterBtn = document.getElementById("adminEnterBtn");
+    const adminCloseBtn = document.getElementById("adminCloseBtn");
+    const adminMsg = document.getElementById("adminMsg");
 
     function setStatus(type, text, detail) {
       statusIndicator.className = "status-indicator " + type;
@@ -44,9 +66,14 @@
       if (!data || typeof data !== "object") {
         return { message: fallbackMessage, hint: "", requestId: "" };
       }
+      const detailMessage =
+        typeof data.detail === "string"
+          ? data.detail
+          : (data.detail && typeof data.detail === "object" ? (data.detail.message || JSON.stringify(data.detail)) : "");
+      const hint = data.hint || (data.detail && typeof data.detail === "object" ? (data.detail.hint || "") : "");
       return {
-        message: data.message || data.detail || fallbackMessage,
-        hint: data.hint || "",
+        message: data.message || detailMessage || fallbackMessage,
+        hint,
         requestId: data.request_id || ""
       };
     }
@@ -67,7 +94,7 @@
           setStatus("error", "Error", formatApiError(error));
           return false;
         }
-        setStatus("ok", "Online", `vectors=${data.vectors ?? "-"}`);
+        setStatus("ok", "Online", `default=${data.collection_key} vectors=${data.vectors ?? "-"}`);
         return true;
       } catch (error) {
         setStatus("error", "Offline", String(error));
@@ -75,15 +102,69 @@
       }
     }
 
+    function showAdminPanel(show) {
+      if (show) {
+        adminPanel.classList.remove("hidden");
+      } else {
+        adminPanel.classList.add("hidden");
+        adminMsg.textContent = "";
+        adminCode.value = "";
+      }
+    }
+
     refreshBtn.addEventListener("click", healthCheck);
 
-    startBtn.addEventListener("click", async () => {
+    userStartBtn.addEventListener("click", async () => {
       const ok = await healthCheck();
       if (!ok) {
         alert("서버가 실행 중이 아닙니다. 런처 스크립트로 서버를 먼저 시작해 주세요.");
         return;
       }
       location.href = "/app";
+    });
+
+    adminToggleBtn.addEventListener("click", () => showAdminPanel(true));
+    adminCloseBtn.addEventListener("click", () => showAdminPanel(false));
+
+    adminEnterBtn.addEventListener("click", async () => {
+      const code = adminCode.value.trim();
+      if (!code) {
+        adminMsg.textContent = "인증 코드를 입력해 주세요.";
+        return;
+      }
+
+      const ok = await healthCheck();
+      if (!ok) {
+        adminMsg.textContent = "서버가 오프라인 상태입니다.";
+        return;
+      }
+
+      adminMsg.textContent = "인증 확인 중...";
+      try {
+        const res = await fetch("/admin/auth", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({code})
+        });
+
+        let data = {};
+        try {
+          data = await res.json();
+        } catch (error) {
+          data = {};
+        }
+
+        if (!res.ok) {
+          const error = parseApiError(data, "관리자 인증 실패");
+          adminMsg.textContent = formatApiError(error);
+          return;
+        }
+
+        adminMsg.textContent = "인증 성공. 관리자 페이지로 이동합니다.";
+        location.href = "/admin";
+      } catch (error) {
+        adminMsg.textContent = String(error);
+      }
     });
 
     healthCheck();
