@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import app_api
 
 
@@ -19,8 +21,18 @@ def test_health_returns_200(client):
     assert response.status_code == 200
     body = response.json()
     assert body["status"] == "ok"
+    assert body["collection_key"] == "all"
     assert "collection" in body
     assert "persist_dir" in body
+
+
+def test_collections_returns_200(client):
+    response = client.get("/collections")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["default_collection_key"] == "all"
+    assert isinstance(body["collections"], list)
+    assert any(item["key"] == "all" for item in body["collections"])
 
 
 def test_rag_docs_returns_200(client):
@@ -51,7 +63,7 @@ def test_reindex_returns_200_with_monkeypatch(client, monkeypatch):
     monkeypatch.setattr(
         app_api,
         "reindex",
-        lambda reset=True: {
+        lambda reset=True, collection_key="all": {
             "docs": 5,
             "chunks": 37,
             "vectors": 37,
@@ -70,7 +82,7 @@ def test_query_success_case(client, monkeypatch):
         def as_retriever(self, **kwargs):
             return object()
 
-    monkeypatch.setattr(app_api, "get_db", lambda: DummyDB())
+    monkeypatch.setattr(app_api, "get_db", lambda *args, **kwargs: DummyDB())
     monkeypatch.setattr(app_api, "get_vector_count", lambda _db: 1)
     monkeypatch.setattr(
         app_api,
@@ -100,7 +112,7 @@ def test_query_success_case(client, monkeypatch):
 
 
 def test_query_vectorstore_empty(client, monkeypatch):
-    monkeypatch.setattr(app_api, "get_db", lambda: object())
+    monkeypatch.setattr(app_api, "get_db", lambda *args, **kwargs: object())
     monkeypatch.setattr(app_api, "get_vector_count", lambda _db: 0)
     response = client.post(
         "/query",
@@ -116,7 +128,7 @@ def test_query_invalid_provider(client, monkeypatch):
         def as_retriever(self, **kwargs):
             return object()
 
-    monkeypatch.setattr(app_api, "get_db", lambda: DummyDB())
+    monkeypatch.setattr(app_api, "get_db", lambda *args, **kwargs: DummyDB())
     monkeypatch.setattr(app_api, "get_vector_count", lambda _db: 1)
     response = client.post("/query", json={"query": "테스트", "llm_provider": "bad-provider"})
     body = _assert_query_error_shape(response, 400, "INVALID_PROVIDER")
@@ -128,7 +140,7 @@ def test_query_llm_connection_failed(client, monkeypatch):
         def as_retriever(self, **kwargs):
             return object()
 
-    monkeypatch.setattr(app_api, "get_db", lambda: DummyDB())
+    monkeypatch.setattr(app_api, "get_db", lambda *args, **kwargs: DummyDB())
     monkeypatch.setattr(app_api, "get_vector_count", lambda _db: 1)
     monkeypatch.setattr(
         app_api,
@@ -149,7 +161,7 @@ def test_query_timeout(client, monkeypatch):
         def as_retriever(self, **kwargs):
             return object()
 
-    monkeypatch.setattr(app_api, "get_db", lambda: DummyDB())
+    monkeypatch.setattr(app_api, "get_db", lambda *args, **kwargs: DummyDB())
     monkeypatch.setattr(app_api, "get_vector_count", lambda _db: 1)
     monkeypatch.setattr(
         app_api,
@@ -171,3 +183,105 @@ def test_query_invalid_request_422(client):
     response = client.post("/query", json={"query": ""})
     body = _assert_query_error_shape(response, 422, "INVALID_REQUEST")
     assert "query" in (body.get("hint") or "")
+
+
+def test_query_invalid_collection(client):
+    response = client.post(
+        "/query",
+        json={"query": "테스트", "llm_provider": "ollama", "collection": "not-supported"},
+    )
+    body = _assert_query_error_shape(response, 400, "INVALID_COLLECTION")
+    assert "지원값" in (body.get("hint") or "")
+
+
+def test_admin_auth_success_and_failure(client, monkeypatch):
+    monkeypatch.setenv("DOC_RAG_ADMIN_CODE", "123456")
+
+    success = client.post("/admin/auth", json={"code": "123456"})
+    assert success.status_code == 200
+    assert success.json() == {"ok": True}
+
+    failure = client.post("/admin/auth", json={"code": "wrong"})
+    assert failure.status_code == 401
+
+
+def _sample_markdown() -> str:
+    return "## 테스트 섹션\n이 문서는 업로드 요청 테스트를 위한 충분한 길이의 본문을 포함합니다."
+
+
+def test_upload_request_create_pending_and_list(client, monkeypatch, tmp_path: Path):
+    monkeypatch.setattr(app_api, "upload_request_store_path", lambda: tmp_path / "upload_requests.json")
+    monkeypatch.setenv("DOC_RAG_AUTO_APPROVE", "0")
+
+    create = client.post(
+        "/upload-requests",
+        json={
+            "source_name": "sample_upload.md",
+            "collection": "fr",
+            "country": "france",
+            "doc_type": "country",
+            "content": _sample_markdown(),
+        },
+    )
+    assert create.status_code == 200
+    body = create.json()
+    assert body["auto_approve"] is False
+    assert body["request"]["status"] == "pending"
+    request_id = body["request"]["id"]
+
+    listing = client.get("/upload-requests", params={"status": "pending"})
+    assert listing.status_code == 200
+    listed = listing.json()
+    assert listed["counts"]["pending"] == 1
+    assert any(item["id"] == request_id for item in listed["requests"])
+
+
+def test_upload_request_approve_and_reject(client, monkeypatch, tmp_path: Path):
+    monkeypatch.setattr(app_api, "upload_request_store_path", lambda: tmp_path / "upload_requests.json")
+    monkeypatch.setenv("DOC_RAG_AUTO_APPROVE", "0")
+    monkeypatch.setenv("DOC_RAG_ADMIN_CODE", "admin999")
+    monkeypatch.setattr(
+        app_api,
+        "index_documents_for_collection",
+        lambda docs, collection_key, reset: {
+            "chunks_added": len(docs),
+            "vectors": 99,
+            "cap": {"soft_cap": 30000, "hard_cap": 50000},
+            "collection": "mock_collection",
+            "collection_key": collection_key,
+        },
+    )
+
+    first = client.post(
+        "/upload-requests",
+        json={
+            "source_name": "approve_target.md",
+            "collection": "all",
+            "content": _sample_markdown(),
+        },
+    )
+    assert first.status_code == 200
+    first_id = first.json()["request"]["id"]
+
+    approved = client.post(f"/upload-requests/{first_id}/approve", json={"code": "admin999"})
+    assert approved.status_code == 200
+    assert approved.json()["request"]["status"] == "approved"
+
+    second = client.post(
+        "/upload-requests",
+        json={
+            "source_name": "reject_target.md",
+            "collection": "all",
+            "content": _sample_markdown(),
+        },
+    )
+    assert second.status_code == 200
+    second_id = second.json()["request"]["id"]
+
+    rejected = client.post(
+        f"/upload-requests/{second_id}/reject",
+        json={"code": "admin999", "reason": "형식 미흡"},
+    )
+    assert rejected.status_code == 200
+    assert rejected.json()["request"]["status"] == "rejected"
+    assert rejected.json()["request"]["rejected_reason"] == "형식 미흡"
