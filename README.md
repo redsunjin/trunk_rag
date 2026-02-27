@@ -1,3 +1,6 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+
 # Trunk RAG (Local Server)
 
 폐쇄망/로컬 환경에서 사용하는 경량 RAG 서버입니다.
