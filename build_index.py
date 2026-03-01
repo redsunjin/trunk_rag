@@ -6,6 +6,8 @@ from pathlib import Path
 from langchain_chroma import Chroma
 
 from common import (
+    CHUNKING_MODE_CHAR,
+    DEFAULT_TOKEN_ENCODING,
     DEFAULT_FILE_NAMES,
     create_embeddings,
     default_data_dir,
@@ -25,6 +27,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--reset", action="store_true")
     parser.add_argument("--chunk-size", type=int, default=800)
     parser.add_argument("--chunk-overlap", type=int, default=120)
+    parser.add_argument("--chunking-mode", type=str, default=CHUNKING_MODE_CHAR)
+    parser.add_argument("--token-encoding", type=str, default=DEFAULT_TOKEN_ENCODING)
     return parser.parse_args()
 
 
@@ -43,8 +47,11 @@ def main() -> None:
         docs,
         chunk_size=args.chunk_size,
         chunk_overlap=args.chunk_overlap,
+        chunking_mode=args.chunking_mode,
+        token_encoding=args.token_encoding,
     )
     print(f"Loaded docs: {len(docs)}")
+    print(f"Chunking mode: {args.chunking_mode} (encoding={args.token_encoding})")
     print(f"Header chunks: {len(chunks)}")
 
     embeddings = create_embeddings(args.embedding_model)
