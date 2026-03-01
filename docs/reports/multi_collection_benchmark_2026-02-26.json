@@ -1,0 +1,78 @@
+{
+  "generated_at": "2026-02-26T07:38:49+00:00",
+  "rounds": 5,
+  "queries": [
+    "프랑스와 독일의 대표적인 과학자 업적을 비교해줘",
+    "프랑스의 과학 혁신 사례를 요약해줘",
+    "독일의 과학 발전 특징을 알려줘",
+    "유럽 과학사에서 프랑스와 독일의 공통점을 정리해줘",
+    "근대 과학 발전에 기여한 인물들을 정리해줘"
+  ],
+  "reindexed": true,
+  "index_stats": {
+    "all": {
+      "collection": "w2_007_header_rag",
+      "vectors": 37,
+      "docs": 5
+    },
+    "fr": {
+      "collection": "rag_science_history_fr",
+      "vectors": 7,
+      "docs": 1
+    },
+    "ge": {
+      "collection": "rag_science_history_ge",
+      "vectors": 7,
+      "docs": 1
+    }
+  },
+  "results": [
+    {
+      "name": "single_all",
+      "collection_keys": [
+        "all"
+      ],
+      "collection_names": [
+        "w2_007_header_rag"
+      ],
+      "measurements": 25,
+      "latency_avg_ms": 460.36,
+      "latency_p50_ms": 448.653,
+      "latency_p95_ms": 597.682,
+      "docs_avg": 3,
+      "source_count_avg": 2.2
+    },
+    {
+      "name": "single_fr",
+      "collection_keys": [
+        "fr"
+      ],
+      "collection_names": [
+        "rag_science_history_fr"
+      ],
+      "measurements": 25,
+      "latency_avg_ms": 492.741,
+      "latency_p50_ms": 466.905,
+      "latency_p95_ms": 633.08,
+      "docs_avg": 3,
+      "source_count_avg": 1
+    },
+    {
+      "name": "dual_fr_ge",
+      "collection_keys": [
+        "fr",
+        "ge"
+      ],
+      "collection_names": [
+        "rag_science_history_fr",
+        "rag_science_history_ge"
+      ],
+      "measurements": 25,
+      "latency_avg_ms": 981.901,
+      "latency_p50_ms": 983.802,
+      "latency_p95_ms": 1156.695,
+      "docs_avg": 6,
+      "source_count_avg": 2
+    }
+  ]
+}

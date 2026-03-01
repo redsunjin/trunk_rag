@@ -1,0 +1,67 @@
+{
+  "generated_at": "2026-02-27T04:22:02+00:00",
+  "data_dir": "C:\\Users\\sunji\\workspace\\doc_rag\\data",
+  "files": [
+    "eu_summry.md",
+    "fr.md",
+    "ge.md",
+    "it.md",
+    "uk.md"
+  ],
+  "results": [
+    {
+      "mode": "char",
+      "chunk_size": 800,
+      "chunk_overlap": 120,
+      "token_encoding": "cl100k_base",
+      "rounds": 5,
+      "chunk_count": 37,
+      "split_time_avg_ms": 10.243,
+      "split_time_p95_ms": 13.828,
+      "char_length": {
+        "avg": 716.081,
+        "p50": 754.0,
+        "p95": 788.4
+      },
+      "token_length": {
+        "avg": 657.081,
+        "p50": 683.0,
+        "p95": 774.2
+      },
+      "chunks_by_source": {
+        "eu_summry.md": 9,
+        "fr.md": 7,
+        "ge.md": 7,
+        "it.md": 7,
+        "uk.md": 7
+      }
+    },
+    {
+      "mode": "token",
+      "chunk_size": 800,
+      "chunk_overlap": 120,
+      "token_encoding": "cl100k_base",
+      "rounds": 5,
+      "chunk_count": 37,
+      "split_time_avg_ms": 66.64,
+      "split_time_p95_ms": 74.629,
+      "char_length": {
+        "avg": 729.703,
+        "p50": 797.0,
+        "p95": 869.6
+      },
+      "token_length": {
+        "avg": 658.27,
+        "p50": 712.0,
+        "p95": 777.2
+      },
+      "chunks_by_source": {
+        "eu_summry.md": 9,
+        "fr.md": 7,
+        "ge.md": 7,
+        "it.md": 7,
+        "uk.md": 7
+      }
+    }
+  ]
+}

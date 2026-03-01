@@ -14,7 +14,7 @@
 ## 현재 범위
 ### 포함
 - 로컬 문서 로딩: `data/*.md` (현재 샘플 5개 파일)
-- 헤더 기반 청킹: `##`, `###`, `####`
+- 헤더 기반 청킹: `##`, `###`, `####` + 모드(`char` 기본, `token` 옵션)
 - 임베딩 + 로컬 벡터스토어: HuggingFace + Chroma
 - LLM provider 선택: `ollama`, `lmstudio`, `openai`
 - FastAPI 서버 + 브라우저 UI
@@ -52,7 +52,7 @@
 
 ### RAG 파이프라인
 - Markdown 문서 로딩
-- 헤더 기준 분할 + 문자 분할
+- 헤더 기준 분할 + 모드별 분할(`char`/`token`)
 - 임베딩 생성(`BAAI/bge-m3`)
 - Chroma 인덱싱/조회
 
@@ -292,7 +292,7 @@ C:\Users\sunji\llm_5th\001_chatbot\.venv\Scripts\python.exe app_api.py
 ## 설계 결정 기록
 - 실습용 가변 파라미터를 줄이고 운영용 기본값을 서버 상수로 고정
 - API 중심 구조 유지(FastAPI)로 UI/앱/확장 연동 재사용성 확보
-- 문서 청킹 정책은 `##`, `###`, `####` 고정
+- 문서 청킹 정책은 `##`, `###`, `####` 고정 + 분할 모드는 `char` 기본 유지
 - LLM provider 다중 지원 유지(로컬 우선 + 외부 API 선택)
 - `trunk_rag`는 전처리된 md 소비자 역할에 집중
 - 전처리는 외부 단계에서 수행하고, `trunk_rag`는 검증 게이트 중심으로 관리

@@ -1,143 +1,126 @@
-# doc_rag 다음 세션 계획 (현행화)
+# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-02-28 기준)
 
 기준 문서:
 - `SPEC.md`
 - `README.md`
+- `TODO.md`
 - `docs/PREPROCESSING_RULES.md`
 - `docs/VECTORSTORE_POLICY.md`
 - `docs/COLLECTION_ROUTING_POLICY.md`
-- `docs/FUTURE_EXTERNAL_CONSTRAINTS.md`
+- `docs/reports/MULTI_COLLECTION_POC_REPORT_2026-02-26.md`
+- `docs/reports/TOKEN_CHUNKING_POC_REPORT_2026-02-27.md`
+- `docs/reports/QUERY_E2E_P95_REPORT_2026-02-27.md`
+- `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md`
+- `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
+- `docs/WIP_SNAPSHOT_2026-02-28.md`
 
 작성 목적:
-- 현재 구현 완료 상태를 반영
-- 합의된 운영모델(외부 전처리 + trunk_rag 검증 게이트)을 기준으로 다음 작업 우선순위를 고정
-- 다음 세션에서 바로 구현 가능한 기능 단위로 작업을 재배열
+- 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
+- 완료/미완료 범위를 재정렬하고, 다음 작업 우선순위를 명확화
 
-## 1. 현재 완료 상태 (Done)
+## 0. 2026-02-28 세션 업데이트 (이번 세션 반영)
 
-### A. 로컬 RAG 런타임
-- `app_api.py` FastAPI 서버 구성
-- `POST /query`, `POST /reindex`, `GET /health` 구현
-- 문서 목록/원문 조회 API 구현:
-  - `GET /rag-docs`
-  - `GET /rag-docs/{doc_name}`
+완료 항목:
+1. P3-Prep 백엔드 분해 완료
+- `app_api.py`를 조립 계층으로 축소
+- 신규 모듈 추가:
+  - `core/settings.py`, `core/errors.py`, `core/http.py`
+  - `services/runtime_service.py`, `services/collection_service.py`, `services/index_service.py`, `services/query_service.py`, `services/upload_service.py`
+  - `api/schemas.py`, `api/routes_query.py`, `api/routes_system.py`, `api/routes_upload.py`, `api/routes_docs_ui.py`
 
-### B. 안정성/품질 (P0 완료)
-- `/query` 표준 에러 응답 적용:
-  - `code`, `message`, `hint`, `request_id`, `detail`
-- `/query` 타임아웃 정책(15초, 재시도 없음)
-- `X-Request-ID` 응답 헤더 적용
-- 테스트 구축:
-  - API 스모크: `tests/test_api_smoke.py`
-  - 프론트 E2E: `tests/e2e/test_web_flow_playwright.py`
+2. P3-Prep 프론트 분해 완료
+- `web/index.html`, `web/admin.html` inline script 제거
+- 신규 모듈 추가:
+  - `web/js/shared.js`
+  - `web/js/app_page.js`
+  - `web/js/admin_page.js`
+- JS 제공 엔드포인트 추가: `GET /js/{file_name}`
 
-### C. 전처리 정책 문서
-- `docs/PREPROCESSING_RULES.md` 초안 작성
+3. 테스트 구조 분해 완료
+- API 테스트를 기능군 단위로 분리:
+  - `tests/api/test_system_api.py`
+  - `tests/api/test_query_api.py`
+  - `tests/api/test_upload_api.py`
+- 회귀 테스트: `.venv\Scripts\python.exe -m pytest -q`
+- 결과: `24 passed`
 
-## 2. 운영 방향 확정 (중요)
+4. 스냅샷 문서 고정
+- `docs/WIP_SNAPSHOT_2026-02-28.md` 추가
 
-1. `trunk_rag`는 "전처리된 md 소비자" 역할에 집중한다.
-2. 원본 소스 정제/재작성은 외부 전처리 프로세스에서 수행한다.
-3. `trunk_rag`는 다음 범위를 관리한다:
-- 전처리 가이드 제공
-- 데이터 등록 시 검증(사용 가능/불가 판정)
-- 통과 문서만 벡터스토어 반영
-4. 사용자/관리자 UX를 분리한다:
-- 사용자: 기존 채팅 UI 유지 + 컬렉션 선택 기능만 추가
-- 관리자: 업로드 요청 검증/승인 + 컬렉션 용량 관리
-5. 업로드 권한 정책:
-- 일반 사용자는 md 업로드 "요청" 가능
-- 관리자는 요청 승인 후 인덱싱 반영
-- 개인 운영(관리자=사용자) 모드에서는 `auto-approve` 옵션 허용
+## 1. 현재 상태 (핵심)
 
-## 3. 다음 세션 우선순위
+정량 스냅샷:
+- `app_api.py`: 160 lines
+- `web/index.html`: 156 lines
+- `web/admin.html`: 70 lines
+- `web/js/app_page.js`: 396 lines
+- `web/js/admin_page.js`: 249 lines
+- 전체 테스트: `24 passed`
 
-### P1 (즉시)
-1. 전처리 가이드 제공 산출물 추가
-- 프롬프트 템플릿
-- JSON 메타데이터 예시 포맷
+판단:
+- P3-Prep 게이트(`app_api.py <= 350`, inline script 외부화, 회귀 통과)는 충족됨.
+- 다음 우선순위는 성능/품질 파라미터 재탐색 + P3 기능 착수로 이동.
 
-2. 컬렉션 라우팅 기반 API 확장
-- `GET /collections` (벡터수/cap 사용률)
-- `/query`에 `collection` 파라미터 추가(기본값 유지)
-- 컬렉션별 cap(`30k~50k`) 사전 검증
+## 2. 현재 남은 작업 범위 (핵심)
 
-3. 사용자/관리자 진입 분리(인트로)
-- `/intro`에서 `사용자`/`관리자` 분기
-- 관리자 진입은 인증코드 기반(초기 MVP)
+즉시 진행 대상 (다음 세션 1순위):
+1. 토큰 모드 파라미터 재탐색(예: chunk_size/overlap 조정)
+2. `/query` 품질/지연 균형 프로파일 재탐색(`DOC_RAG_OLLAMA_NUM_PREDICT`, `DOC_RAG_MAX_CONTEXT_CHARS`)
+3. 벤치 결과(JSON/리포트) 갱신 및 운영 기본값 재확정
 
-4. 데이터 등록/인덱싱 전 검증 기능 추가
-- 헤더 구조 검증(`##`, `###`, `####`)
-- 메타 필수항목 검증(`source`, `country`, `doc_type`)
-- RAG 사용 가능/불가(`usable=true/false`) 판정
-
-5. 업로드 요청-승인 워크플로우 추가
-- 일반 사용자: 업로드 요청 생성(`pending`)
-- 관리자: 승인/반려 처리(`approved/rejected`)
-- 승인 시에만 벡터스토어 반영
-
-6. 벡터스토어 운영 정책 적용
-- soft cap / hard cap
-- 초과 시 대응 절차(분리, 아카이브, 차단)
-- 컬렉션당 cap(`30k~50k vectors`, 총량 기준 대략 `30M~50M tokens`) 연계
-
-### P2 (다음)
-1. 관리자 UI(`/admin`) 고도화
-- 컬렉션별 여유율 시각화
-- 요청 이력/반려 사유 검색
-2. 토큰 기준 청킹 전환 검증(가벼운 방식 유지 범위 내)
-3. 검증 결과 리포트 출력 개선(JSON + 요약 텍스트)
-4. 다중 컬렉션 조회(최대 2개 병렬) 옵션 검토
-
-### P3 (후속)
+후속 대상 (P3):
 1. 데스크톱 래핑(Electron/Tauri) PoC
-2. 문서 업로드 관리자 워크플로우 설계
+2. 문서 업로드/갱신 관리자 워크플로우 설계(운영 절차 중심)
 
-## 4. 다음 세션 시작 체크리스트
+## 3. 다음 세션 우선순위 (실행 순서)
 
-1. `run_doc_rag.bat`로 서버/인트로 기동 확인
-2. `/health` 확인 후 `/reindex` 1회 실행
-3. `/query` 샘플 질의 2~3개 응답 확인
-4. 인트로 사용자/관리자 분기 및 컬렉션 선택 UI부터 착수
-5. 업로드 요청/승인 흐름(P1-5)까지 MVP 완료
+### A. 성능/품질 재탐색
+1. 토큰 청킹 파라미터 실험(`scripts/benchmark_token_chunking.py`)
+2. `/query` E2E 재측정(`scripts/benchmark_query_e2e.py`)
+3. 단일/다중 컬렉션 검색 비용 재확인(`scripts/benchmark_multi_collection.py`)
 
-## 5. 세션 업데이트 (2026-02-24)
+### B. 운영 기본값 확정
+1. `.env.example` 기본값/권장값 갱신
+2. `README.md`, `SPEC.md` 동기화
+3. 리포트 요약(`docs/reports/*`) 갱신
 
-완료:
-- 전처리 가이드 산출물 추가
-  - `docs/PREPROCESSING_PROMPT_TEMPLATE.md`
-  - `docs/PREPROCESSING_METADATA_SCHEMA.json`
-  - `docs/examples/preprocessed_sample.md`
-  - `docs/examples/preprocessed_sample.metadata.json`
-- 컬렉션 API/라우팅 1차 반영
-  - `GET /collections`
-  - `/query`의 `collection` 파라미터 + 키워드 라우팅 + fallback
-  - `/reindex`의 컬렉션 선택 + hard cap 사전 검증
-- 사용자/관리자 진입 분리 1차 반영
-  - `/intro` 사용자/관리자 분기
-  - `POST /admin/auth` 인증코드 체크
-  - `/admin` 상태 페이지 추가
-- 업로드 요청/승인 워크플로우 1차 반영
-  - `pending/approved/rejected` 상태모델
-  - 사용자 업로드 요청 API/UI
-  - 관리자 승인/반려 API/UI
-  - `DOC_RAG_AUTO_APPROVE` 옵션 반영
-- 등록 전 검증 기능 1차 반영
-  - `scripts/validate_rag_doc.py`
-  - `usable/reasons/warnings` 산출
-  - `/reindex` 응답에 검증 요약 포함
+### C. P3 기능 착수
+1. 데스크톱 래핑(Electron/Tauri) PoC
+2. 업로드/갱신 관리자 워크플로우 상세 설계
 
-잔여:
-- 관리자 반려 사유/이력 검색 UI 고도화
-- 다중 컬렉션 조회(최대 2개 병렬) 옵션 검토
+## 4. 세션 시작 체크리스트 (핸드오버용)
 
-## 6. Graph/Lang 도입 검토 (2026-02-24)
+1. `git status --short`로 작업트리 확인
+2. `.venv\Scripts\python.exe -m pytest -q`
+3. `run_doc_rag.bat` 실행 후 `/intro`, `/app`, `/admin` 로딩 확인
+4. `GET /health` 확인(벡터 수/auto_approve/pending/chunking_mode 확인)
+5. `POST /reindex` 1회 실행(응답 내 `validation.summary_text` 확인)
+6. `/query` 샘플 질의(단일 + 다중 컬렉션) 확인
 
-- 검토 문서: `Graph_Lang도입검토.md` (원문: `통합graph_lang설명.md`)
-- 결론: 본체 직접 통합보다 **사이드카 방식** 권고
-  - 본체(`doc_rag`)는 경량 질의 경로를 유지
-  - Graph/Lang은 고급 오케스트레이션을 별도 프로세스로 분리
-- 이유:
-  - 현 프로젝트 목표(로컬/경량/단순 운영)와 충돌 최소화
-  - 장애 격리 및 롤백/실험 용이성 확보
-  - p95 지연 변동성 관리에 유리
+## 5. git worktree + agent 병렬 도입 계획 (권장)
+
+결론:
+- P3-Prep 분해가 완료되어, 다음 단계부터는 P3 기능 트랙 병렬화 가치가 높아짐.
+
+도입 단계:
+1. Stage A (파일럿 2트랙)
+- Track-1(Core): 성능/품질 파라미터 실험 + 리포트
+- Track-2(Product): 데스크톱 PoC + 관리자 워크플로우 설계
+
+2. Stage B (확장 3트랙)
+- Track-1: 데스크톱 래핑 구현
+- Track-2: 업로드/갱신 운영 정책/플로우
+- Track-3: 회귀 QA/문서 동기화
+
+## 6. 리스크 및 확인 포인트
+
+1. 다중 컬렉션은 커버리지 이점이 있으나 p95 지연 상승 리스크 유지
+2. 벤치 환경에 따라 LLM 응답 시간이 크게 변동될 수 있음
+3. 서비스 분해 후 monkeypatch 경로가 바뀌었으므로 신규 테스트 작성 시 모듈 경로 준수 필요
+
+## 7. 다음 커밋 목표 (권장)
+
+1. `refactor(api): split app_api into routers/services/core`
+2. `refactor(web): move inline scripts to web/js modules`
+3. `test(api): split smoke tests by domain`
+4. `docs(plan): sync plan/todo after p3-prep completion`

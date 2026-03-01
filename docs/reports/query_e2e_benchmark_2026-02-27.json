@@ -1,0 +1,88 @@
+{
+  "generated_at": "2026-02-27T14:49:24+00:00",
+  "base_url": "http://127.0.0.1:8000",
+  "rounds": 2,
+  "warmup": 1,
+  "queries": [
+    "프랑스의 대표적인 과학 혁신 사례를 요약해줘",
+    "독일의 과학 발전 특징을 간단히 정리해줘",
+    "프랑스와 독일의 공통 과학적 성과를 비교해줘"
+  ],
+  "llm": {
+    "provider": "ollama",
+    "model": "phi3:mini",
+    "base_url": "http://localhost:11434"
+  },
+  "health": {
+    "status": "ok",
+    "collection_key": "all",
+    "collection": "w2_007_header_rag",
+    "persist_dir": "C:\\Users\\sunji\\workspace\\doc_rag\\chroma_db",
+    "vectors": 37,
+    "auto_approve": 0,
+    "pending_requests": 0,
+    "chunking_mode": "char",
+    "query_timeout_seconds": 90,
+    "max_context_chars": 300
+  },
+  "results": [
+    {
+      "name": "single_all",
+      "collection_keys": [
+        "all"
+      ],
+      "measurements": 6,
+      "success_count": 6,
+      "failure_count": 0,
+      "success_ratio": 1.0,
+      "status_counts": {
+        "200": 6
+      },
+      "latency_all_avg_ms": 21275.364,
+      "latency_all_p95_ms": 39219.862,
+      "latency_success_avg_ms": 21275.364,
+      "latency_success_p50_ms": 20627.589,
+      "latency_success_p95_ms": 39219.862,
+      "errors_sample": []
+    },
+    {
+      "name": "single_fr",
+      "collection_keys": [
+        "fr"
+      ],
+      "measurements": 6,
+      "success_count": 6,
+      "failure_count": 0,
+      "success_ratio": 1.0,
+      "status_counts": {
+        "200": 6
+      },
+      "latency_all_avg_ms": 8994.574,
+      "latency_all_p95_ms": 10123.842,
+      "latency_success_avg_ms": 8994.574,
+      "latency_success_p50_ms": 10013.962,
+      "latency_success_p95_ms": 10123.842,
+      "errors_sample": []
+    },
+    {
+      "name": "dual_fr_ge",
+      "collection_keys": [
+        "fr",
+        "ge"
+      ],
+      "measurements": 6,
+      "success_count": 6,
+      "failure_count": 0,
+      "success_ratio": 1.0,
+      "status_counts": {
+        "200": 6
+      },
+      "latency_all_avg_ms": 10073.855,
+      "latency_all_p95_ms": 11522.943,
+      "latency_success_avg_ms": 10073.855,
+      "latency_success_p50_ms": 10940.252,
+      "latency_success_p95_ms": 11522.943,
+      "errors_sample": []
+    }
+  ]
+}

@@ -3,7 +3,7 @@
 폐쇄망/로컬 환경에서 사용하는 경량 RAG 서버입니다.
 
 - 문서: 전처리 완료된 `data/*.md` 입력
-- 청킹: `##`, `###`, `####` 헤더 기반 + 문자 분할(현재)
+- 청킹: `##`, `###`, `####` 헤더 기반 + 문자 분할(기본), 토큰 분할(옵션)
 - 벡터스토어: Chroma (로컬 폴더)
 - LLM: `openai` / `ollama` / `lmstudio` 선택
 - 인터페이스: FastAPI + 브라우저(`http://127.0.0.1:8000`)
@@ -36,6 +36,8 @@
 - `web/intro.html`: 인트로/상태 확인 페이지
 - `web/admin.html`: 관리자 상태 페이지(MVP)
 - `scripts/validate_rag_doc.py`: 등록 전 문서 검증 스크립트
+- `scripts/benchmark_token_chunking.py`: char/token 청킹 비교 벤치 스크립트
+- `scripts/benchmark_query_e2e.py`: `/query` E2E p95 벤치 스크립트
 - `run_doc_rag.bat`: 터미널 명령 없이 서버+브라우저 실행
 - `stop_doc_rag.bat`: 실행 중인 로컬 서버 종료
 - `.env.example`: 환경변수 템플릿
@@ -73,7 +75,7 @@ cd C:\Users\sunji\workspace\doc_rag
 - `GET /health`: 서버/벡터 상태 확인
 - `GET /collections`: 컬렉션별 벡터 수/cap 사용률 조회
 - `POST /reindex`: 문서 재인덱싱
-- `POST /query`: 질의
+- `POST /query`: 질의(기본 단일 컬렉션, 필요 시 최대 2개 컬렉션 선택)
 - `GET /rag-docs`: RAG 대상 문서 목록
 - `GET /rag-docs/{doc_name}`: 문서 원문(md) 조회
 - `POST /admin/auth`: 관리자 인증 코드 확인
@@ -81,6 +83,13 @@ cd C:\Users\sunji\workspace\doc_rag
 - `POST /upload-requests`: 일반 사용자 업로드 요청 생성
 - `POST /upload-requests/{id}/approve`: 관리자 승인
 - `POST /upload-requests/{id}/reject`: 관리자 반려
+
+`POST /reindex` 응답의 `validation`에는 기계 판독용 필드와 함께
+`summary_text`(예: `total=5, usable=5, rejected=0, warnings=0, usable_ratio=100.00%`)가 포함됩니다.
+
+`GET /health` 응답에는 현재 적용 중인 `chunking_mode`(`char` 또는 `token`)와
+`query_timeout_seconds`, `max_context_chars`가 포함됩니다.
+`POST /reindex` 응답에는 실제 인덱싱에 사용된 `chunking` 설정이 포함됩니다.
 
 예시:
 
@@ -113,6 +122,8 @@ curl -X POST http://127.0.0.1:8000/query `
   "detail": "LLM 응답 시간이 제한(15초)을 초과했습니다."
 }
 ```
+
+- 타임아웃은 기본 `15초`이며 `DOC_RAG_QUERY_TIMEOUT_SECONDS`로 조정할 수 있습니다.
 
 업로드 요청 생성 예시:
 
@@ -159,9 +170,14 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 
 - OpenAI 사용 시: `OPENAI_API_KEY`
 - Ollama 사용 시: `OLLAMA_BASE_URL`
+- Ollama 응답 길이 제한(선택): `DOC_RAG_OLLAMA_NUM_PREDICT` (예: `8`, 미설정 시 모델 기본값)
 - LM Studio 사용 시: `LMSTUDIO_BASE_URL`, `LMSTUDIO_API_KEY`
 - 관리자 모드 인증 코드(선택): `DOC_RAG_ADMIN_CODE` (기본값: `admin1234`)
 - 개인 운영 자동 승인(선택): `DOC_RAG_AUTO_APPROVE` (`1/true/on`이면 요청 생성 즉시 승인/인덱싱)
+- 질의 타임아웃(선택): `DOC_RAG_QUERY_TIMEOUT_SECONDS` (기본 `15`, 단위 초)
+- 컨텍스트 길이 제한(선택): `DOC_RAG_MAX_CONTEXT_CHARS` (미설정 시 제한 없음)
+- 청킹 모드(선택): `DOC_RAG_CHUNKING_MODE` (`char` 기본, `token` 옵션)
+- 토큰 인코딩(선택): `DOC_RAG_CHUNK_TOKEN_ENCODING` (기본 `cl100k_base`)
 
 ## Testing
 
@@ -181,9 +197,46 @@ pytest -q
 개별 실행:
 
 ```powershell
-pytest -q tests/test_api_smoke.py
+pytest -q tests/api
 pytest -q tests/e2e/test_web_flow_playwright.py -m e2e
 ```
+
+다중 컬렉션 PoC 벤치(검색 단계):
+
+```powershell
+.venv\Scripts\python.exe scripts\benchmark_multi_collection.py --reindex --rounds 5 --output docs\reports\multi_collection_benchmark_2026-02-26.json
+```
+
+- 결과 메모: `docs/reports/MULTI_COLLECTION_POC_REPORT_2026-02-26.md`
+
+토큰 청킹 PoC 벤치(분할 단계):
+
+```powershell
+.venv\Scripts\python.exe scripts\benchmark_token_chunking.py --rounds 5 --output docs\reports\token_chunking_benchmark_2026-02-27.json
+```
+
+- 결과 메모: `docs/reports/TOKEN_CHUNKING_POC_REPORT_2026-02-27.md`
+
+`/query` E2E 벤치(LLM 포함, API 기준):
+
+```powershell
+.venv\Scripts\python.exe scripts\benchmark_query_e2e.py `
+  --base-url http://127.0.0.1:8000 `
+  --llm-provider ollama `
+  --llm-model phi3:mini `
+  --llm-base-url http://localhost:11434 `
+  --rounds 2 `
+  --warmup 1 `
+  --query-timeout-seconds 120 `
+  --output docs\reports\query_e2e_benchmark_2026-02-27.json
+```
+
+- 기본 시나리오: `single_all`, `single_fr`, `dual_fr_ge`
+- 출력에는 시나리오별 `latency_success_p95_ms`와 `status_counts`가 포함됩니다.
+- 느린 로컬 CPU 환경에서는 아래 런타임 설정을 권장:
+  - `DOC_RAG_QUERY_TIMEOUT_SECONDS=90`
+  - `DOC_RAG_OLLAMA_NUM_PREDICT=8`
+  - `DOC_RAG_MAX_CONTEXT_CHARS=300`
 
 ## Vector Store Notes
 
