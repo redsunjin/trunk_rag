@@ -20,10 +20,11 @@
 - 원본 소스를 정제해 RAG 정책에 맞는 Markdown으로 변환
 - 메타데이터(`source`, `country`, `doc_type`)를 채운 산출물 생성
 
-2. `trunk_rag` 단계(현재 + 다음 단계)
+2. `trunk_rag` 단계(현재 + 다음 우선순위)
 - 현재: 정제된 md를 인덱싱/검색/질의
-- 다음 단계(P1): 데이터 등록 시 검증(사용 가능/불가 판정) 기능 추가
-- 다음 단계(P1): 분야별 컬렉션 + 단순 라우팅 적용
+- 현재: 데이터 등록 시 검증(사용 가능/불가 판정) 적용
+- 현재: 분야별 컬렉션 + 단순 라우팅 적용
+- 다음 우선순위(P2/P3): 성능/품질 파라미터 재탐색, 데스크톱 래핑 PoC, 관리자 워크플로우 고도화
 
 비목표(현재 단계):
 - 원본 수집/크롤링
@@ -32,13 +33,19 @@
 
 ## Files
 
-- `app_api.py`: 메인 로컬 서버
+- `app_api.py`: FastAPI 앱 엔트리포인트/조립 계층
+- `api/routes_*.py`: API/UI 라우트 모듈
+- `services/*.py`: 질의/인덱싱/업로드 서비스 모듈
+- `core/*.py`: 설정/에러/HTTP 유틸
 - `build_index.py`: 초기 인덱스 생성 스크립트
 - `common.py`: 공통 유틸리티
 - `web/index.html`: 간단 웹 UI
 - `web/intro.html`: 인트로/상태 확인 페이지
 - `web/admin.html`: 관리자 상태 페이지(MVP)
+- `web/js/*.js`: 프론트엔드 로직 모듈
+- `web/styles.css`: 공통 스타일
 - `scripts/validate_rag_doc.py`: 등록 전 문서 검증 스크립트
+- `scripts/benchmark_multi_collection.py`: 단일/다중 컬렉션 검색 비교 벤치
 - `scripts/benchmark_token_chunking.py`: char/token 청킹 비교 벤치 스크립트
 - `scripts/benchmark_query_e2e.py`: `/query` E2E p95 벤치 스크립트
 - `run_doc_rag.bat`: 터미널 명령 없이 서버+브라우저 실행
@@ -55,23 +62,28 @@
 
 1. 최초 1회 인덱싱:
 ```powershell
-cd C:\Users\sunji\workspace\doc_rag
-C:\Users\sunji\llm_5th\001_chatbot\.venv\Scripts\python.exe build_index.py --reset
+cd <repo>
+python build_index.py --reset
 ```
-2. 이후 실행:
+2. Windows 빠른 실행:
 ```powershell
-cd C:\Users\sunji\workspace\doc_rag
+cd <repo>
 .\run_doc_rag.bat
 ```
-3. 브라우저에서 `http://127.0.0.1:8000/intro`가 열리고, `사용자 모드 시작` 버튼으로 `/app` 진입.
-   - 관리자 모드는 인증 코드 입력 후 `/admin` 진입
-4. 종료:
+3. 수동 실행이 필요하면:
 ```powershell
-cd C:\Users\sunji\workspace\doc_rag
+cd <repo>
+python app_api.py
+```
+4. 브라우저에서 `http://127.0.0.1:8000/intro`가 열리고, `사용자 모드 시작` 버튼으로 `/app` 진입.
+   - 관리자 모드는 인증 코드 입력 후 `/admin` 진입
+5. Windows 배치 실행 종료:
+```powershell
+cd <repo>
 .\stop_doc_rag.bat
 ```
 
-수동 실행이 필요하면 기존처럼 `app_api.py` 직접 실행도 가능.
+수동 실행 시에는 실행 중인 터미널에서 `Ctrl+C`로 종료할 수 있습니다.
 
 ## API
 
@@ -160,7 +172,7 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 - 외부 전처리 프롬프트 템플릿은 `docs/PREPROCESSING_PROMPT_TEMPLATE.md`를 사용한다.
 - 메타데이터 형식은 `docs/PREPROCESSING_METADATA_SCHEMA.json`을 따른다.
 
-다음 단계(P1) 정책:
+현재 적용 정책:
 - 문서 등록 또는 인덱싱 전 검증을 수행하고 `usable=true/false` 판정을 제공한다.
 - 불가(`usable=false`) 문서는 벡터스토어에 반영하지 않는다.
 
@@ -194,14 +206,15 @@ python -m playwright install chromium
 실행:
 
 ```powershell
-pytest -q
+python -m pytest -q
 ```
 
 개별 실행:
 
 ```powershell
-pytest -q tests/api
-pytest -q tests/e2e/test_web_flow_playwright.py -m e2e
+python -m pytest -q tests/api
+python -m pytest -q tests/test_chunking_modes.py
+python -m pytest -q tests/e2e/test_web_flow_playwright.py -m e2e
 ```
 
 다중 컬렉션 PoC 벤치(검색 단계):

@@ -57,7 +57,10 @@
 - Chroma 인덱싱/조회
 
 ### 품질/검증
-- API 스모크 테스트: `tests/test_api_smoke.py`
+- API 회귀 테스트: `tests/api/test_system_api.py`
+- API 회귀 테스트: `tests/api/test_query_api.py`
+- API 회귀 테스트: `tests/api/test_upload_api.py`
+- 청킹 모드 테스트: `tests/test_chunking_modes.py`
 - 프론트 E2E 테스트: `tests/e2e/test_web_flow_playwright.py`
 
 ### LLM 연결
@@ -68,15 +71,27 @@
 - 공통 `styles.css` 스타일 패턴을 현재 `web/index.html`에 반영
 - 공통 레이아웃 클래스 적용(`app-container`, `sidebar`, `main-content`, `card`)
 - 화면 구성: 좌측(설정/헬스/문서목록), 우측(채팅/MD 뷰어)
+- 인트로/관리자 페이지 분리(`web/intro.html`, `web/admin.html`)
+- 프론트 로직 모듈 분리(`web/js/shared.js`, `web/js/app_page.js`, `web/js/admin_page.js`)
+
+### 구조 분해(P3-Prep 완료)
+- `app_api.py`는 앱 조립/예외 처리 중심으로 축소
+- 라우트는 `api/routes_*.py`로 분리
+- 서비스 로직은 `services/*.py`로 분리
+- 설정/에러/HTTP 유틸은 `core/*.py`로 분리
 
 ## 핵심 파일
-- `app_api.py`: 메인 로컬 서버, API 엔드포인트, UI/스타일 라우팅
+- `app_api.py`: FastAPI 앱 엔트리포인트와 예외 처리
+- `api/routes_*.py`: API/UI 라우팅
+- `services/*.py`: 인덱싱/질의/업로드 서비스 계층
+- `core/*.py`: 설정/에러/HTTP 공통 계층
 - `common.py`: 문서/청킹/임베딩/LLM 공통 유틸
 - `scripts/validate_rag_doc.py`: 등록 전 문서 검증
 - `build_index.py`: 초기 인덱싱 스크립트
 - `web/index.html`: 브라우저 UI
 - `web/admin.html`: 관리자 상태 UI
-- `styles.css`: 공통 스타일
+- `web/styles.css`: 공통 스타일
+- `web/js/*.js`: 프론트 로직 모듈
 
 ## API 계약
 ### GET `/health`
@@ -272,17 +287,18 @@
 ## 실행 기준
 - 인덱스 생성:
 ```powershell
-cd C:\Users\sunji\workspace\doc_rag
-C:\Users\sunji\llm_5th\001_chatbot\.venv\Scripts\python.exe build_index.py --reset
+cd <repo>
+python build_index.py --reset
 ```
 - 서버 실행(권장):
 ```powershell
-cd C:\Users\sunji\workspace\doc_rag
+cd <repo>
 .\run_doc_rag.bat
 ```
 - 서버 실행(수동):
 ```powershell
-C:\Users\sunji\llm_5th\001_chatbot\.venv\Scripts\python.exe app_api.py
+cd <repo>
+python app_api.py
 ```
 - UI 접속:
 - 인트로: `http://127.0.0.1:8000/intro`
@@ -325,21 +341,21 @@ C:\Users\sunji\llm_5th\001_chatbot\.venv\Scripts\python.exe app_api.py
 
 ## 다음 진행 방향
 ### 1순위
-- 전처리 가이드 제공 체계 고정
-- 등록 전 검증 기능(사용 가능/불가 판정) 추가
+- 토큰 청킹 파라미터 재탐색
+- `/query` 품질/지연 균형 재측정
 
 ### 2순위
-- 벡터스토어 용량 정책 적용
-- 내용: soft/hard cap 기준 및 경고/차단 정책
- - 내용: 분야별 컬렉션 분할 및 단순 라우팅
+- 운영 기본값 재확정
+- 내용: `DOC_RAG_OLLAMA_NUM_PREDICT`, `DOC_RAG_MAX_CONTEXT_CHARS`, `DOC_RAG_QUERY_TIMEOUT_SECONDS`
+- 내용: `README.md`, `SPEC.md`, 벤치 리포트 동기화
 
 ### 3순위
-- 청킹 정책 고도화
-- 내용: 토큰 기준 상한 분할 도입 여부 검증
+- 데스크톱 래핑(Electron/Tauri) PoC
+- 내용: 로컬 서버 패키징 가능성 검토
 
 ### 4순위
-- 배포 형태 결정
-- 내용: 로컬 서버 단독 유지 vs 데스크톱 래핑(Electron/Tauri)
+- 문서 업로드/갱신 관리자 워크플로우 설계
+- 내용: 운영 절차, 승인/반려 후속 처리, 갱신 정책 정의
 
 ## 완료 판정 기준
 - `health/reindex/query` 정상 동작

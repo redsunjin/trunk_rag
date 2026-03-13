@@ -1,4 +1,4 @@
-# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-02-28 기준)
+# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-03-13 기준)
 
 기준 문서:
 - `SPEC.md`
@@ -18,7 +18,66 @@
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
 - 완료/미완료 범위를 재정렬하고, 다음 작업 우선순위를 명확화
 
-## 0. 2026-02-28 세션 업데이트 (이번 세션 반영)
+## 0. 2026-03-13 우선순위 재정렬
+
+결론:
+1. 다음 작업의 첫 게이트는 "쉬운 RAG 운영 경로" 정리다.
+2. 그 다음은 성능/품질 파라미터와 운영 기본값 확정이다.
+3. GraphRAG는 즉시 구현 대상이 아니라, 필요성 입증 후 사이드카 PoC로만 착수한다.
+
+배경:
+- 현재 프로젝트의 운영 모델은 `폐쇄망/로컬/경량 RAG 런타임`이다.
+- 사용자 화면과 실행 경로에는 아직 고급 설정 노출, 개인 경로 fallback, 빈 인덱스/모델 미실행 안내 부족 같은 마찰이 남아 있다.
+- 동시에 `/query` p95는 `single_all` 기준 약 `39.2s`로 추가 구조 도입 전에 운영 기본값 재정리가 필요하다.
+
+## 1. 현재 즉시 우선순위
+
+### A. 쉬운 RAG 운영 게이트
+1. 실행/부트스트랩 단순화
+- `run_doc_rag.bat` 경로 fallback 정리
+- 브라우저 오픈 전 `/health` 준비 대기
+- 실패 시 다음 행동 가이드 출력
+
+2. 기본값 단일화
+- 기본 provider/model/base_url 1세트 확정
+- `.env.example`, UI 기본값, README 실행법 정렬
+
+3. 사용자 화면 단순화
+- 기본 모드에서 고급 LLM 설정 숨김 또는 접기
+- 빈 인덱스/오프라인/모델 미실행 상태 안내 강화
+
+4. 문서 등록 단순화
+- 업로드 필수 입력 최소화
+- 자동 추론 가능한 메타데이터 확대
+
+완료 기준:
+- 새 사용자 기준 "실행 -> 첫 질의 -> 업로드 요청"까지 별도 설명 없이 가능
+
+### B. 성능/품질 게이트
+1. 토큰 청킹 파라미터 재탐색
+2. `/query` E2E 재측정
+3. 단일/다중 컬렉션 기본 경로 재판정
+4. 운영 권장 기본값과 리포트 갱신
+
+완료 기준:
+- 운영 기본값과 p95 기준을 문서로 고정
+
+### C. 제품화 후속
+1. 데스크톱 래핑(Electron/Tauri) PoC
+2. 업로드/갱신 관리자 워크플로우 상세 설계
+
+### D. GraphRAG 결정 게이트
+1. 관계형/다중 홉 질문셋 15~20개 수집
+2. 현행 Vector RAG 실패 사례 문서화
+3. 사이드카 PoC 계약 정의(`/query-advanced` 또는 별도 서비스)
+4. Go/No-Go 판단 후에만 GraphRAG PoC 착수
+
+원칙:
+- 기본 `/query`는 기존 Vector RAG 유지
+- GraphRAG는 본체 직접 통합이 아니라 사이드카 우선
+- AuraDB는 기본안이 아니며, 폐쇄망/로컬 요구가 유지되면 self-managed Neo4j 우선 검토
+
+## 2. 2026-02-28 세션 업데이트 (이전 세션 반영)
 
 완료 항목:
 1. P3-Prep 백엔드 분해 완료
@@ -47,7 +106,7 @@
 4. 스냅샷 문서 고정
 - `docs/WIP_SNAPSHOT_2026-02-28.md` 추가
 
-## 1. 현재 상태 (핵심)
+## 3. 현재 상태 (핵심)
 
 정량 스냅샷:
 - `app_api.py`: 160 lines
@@ -59,36 +118,50 @@
 
 판단:
 - P3-Prep 게이트(`app_api.py <= 350`, inline script 외부화, 회귀 통과)는 충족됨.
-- 다음 우선순위는 성능/품질 파라미터 재탐색 + P3 기능 착수로 이동.
+- 다음 우선순위는 쉬운 RAG 운영 게이트 -> 성능/품질 파라미터 재탐색 -> P3 기능 착수 순이다.
 
-## 2. 현재 남은 작업 범위 (핵심)
+## 4. 현재 남은 작업 범위 (핵심)
 
 즉시 진행 대상 (다음 세션 1순위):
-1. 토큰 모드 파라미터 재탐색(예: chunk_size/overlap 조정)
-2. `/query` 품질/지연 균형 프로파일 재탐색(`DOC_RAG_OLLAMA_NUM_PREDICT`, `DOC_RAG_MAX_CONTEXT_CHARS`)
-3. 벤치 결과(JSON/리포트) 갱신 및 운영 기본값 재확정
+1. 쉬운 RAG 운영 게이트(실행/기본값/UI/업로드 단순화)
+2. 토큰 모드 파라미터 재탐색(예: chunk_size/overlap 조정)
+3. `/query` 품질/지연 균형 프로파일 재탐색(`DOC_RAG_OLLAMA_NUM_PREDICT`, `DOC_RAG_MAX_CONTEXT_CHARS`)
+4. 벤치 결과(JSON/리포트) 갱신 및 운영 기본값 재확정
 
 후속 대상 (P3):
 1. 데스크톱 래핑(Electron/Tauri) PoC
 2. 문서 업로드/갱신 관리자 워크플로우 설계(운영 절차 중심)
+3. GraphRAG 필요성 검증 및 사이드카 PoC 여부 결정
 
-## 3. 다음 세션 우선순위 (실행 순서)
+## 5. 다음 세션 우선순위 (실행 순서)
 
-### A. 성능/품질 재탐색
+### A. 쉬운 RAG 운영 게이트
+1. 런처/종료 스크립트 정리
+2. UI 기본값/설정 노출 정리
+3. 빈 인덱스/오프라인/모델 미실행 안내 강화
+4. 업로드 최소 입력화
+
+### B. 성능/품질 재탐색
 1. 토큰 청킹 파라미터 실험(`scripts/benchmark_token_chunking.py`)
 2. `/query` E2E 재측정(`scripts/benchmark_query_e2e.py`)
 3. 단일/다중 컬렉션 검색 비용 재확인(`scripts/benchmark_multi_collection.py`)
 
-### B. 운영 기본값 확정
+### C. 운영 기본값 확정
 1. `.env.example` 기본값/권장값 갱신
 2. `README.md`, `SPEC.md` 동기화
 3. 리포트 요약(`docs/reports/*`) 갱신
 
-### C. P3 기능 착수
+### D. P3 기능 착수
 1. 데스크톱 래핑(Electron/Tauri) PoC
 2. 업로드/갱신 관리자 워크플로우 상세 설계
 
-## 4. 세션 시작 체크리스트 (핸드오버용)
+### E. GraphRAG 결정 게이트
+1. 관계형 질문셋 작성
+2. 현행 Vector RAG 실패/성공 기준선 작성
+3. Neo4j 사이드카 PoC 계약 정의
+4. AuraDB vs self-managed Neo4j 적용 조건 문서화
+
+## 6. 세션 시작 체크리스트 (핸드오버용)
 
 1. `git status --short`로 작업트리 확인
 2. `.venv\Scripts\python.exe -m pytest -q`
@@ -97,7 +170,11 @@
 5. `POST /reindex` 1회 실행(응답 내 `validation.summary_text` 확인)
 6. `/query` 샘플 질의(단일 + 다중 컬렉션) 확인
 
-## 5. git worktree + agent 병렬 도입 계획 (권장)
+추가 확인:
+7. 기본 모드에서 LLM 세부 설정 없이 질의 가능한지 확인
+8. 빈 인덱스/오류 상태에서 다음 행동 안내가 충분한지 확인
+
+## 7. git worktree + agent 병렬 도입 계획 (권장)
 
 결론:
 - P3-Prep 분해가 완료되어, 다음 단계부터는 P3 기능 트랙 병렬화 가치가 높아짐.
@@ -112,15 +189,16 @@
 - Track-2: 업로드/갱신 운영 정책/플로우
 - Track-3: 회귀 QA/문서 동기화
 
-## 6. 리스크 및 확인 포인트
+## 8. 리스크 및 확인 포인트
 
 1. 다중 컬렉션은 커버리지 이점이 있으나 p95 지연 상승 리스크 유지
 2. 벤치 환경에 따라 LLM 응답 시간이 크게 변동될 수 있음
 3. 서비스 분해 후 monkeypatch 경로가 바뀌었으므로 신규 테스트 작성 시 모듈 경로 준수 필요
+4. 쉬운 RAG 개선 없이 기능만 추가하면 사용자 마찰이 누적될 수 있음
+5. GraphRAG/AuraDB는 운영 모델(폐쇄망/로컬/경량)과 충돌 가능성이 큼
 
-## 7. 다음 커밋 목표 (권장)
+## 9. 다음 커밋 목표 (권장)
 
-1. `refactor(api): split app_api into routers/services/core`
-2. `refactor(web): move inline scripts to web/js modules`
-3. `test(api): split smoke tests by domain`
-4. `docs(plan): sync plan/todo after p3-prep completion`
+1. `feat(ux): simplify easy-rag bootstrap and defaults`
+2. `perf(rag): remeasure query p95 and tune runtime defaults`
+3. `docs(plan): reprioritize roadmap for easy-rag gate and graphrag decision`
