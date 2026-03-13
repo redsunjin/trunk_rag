@@ -116,6 +116,7 @@
   "auto_approve": false,
   "pending_requests": 2,
   "chunking_mode": "char",
+  "embedding_model": "BAAI/bge-m3",
   "query_timeout_seconds": 15,
   "max_context_chars": null,
   "default_llm_provider": "ollama",
@@ -318,6 +319,7 @@ cd <repo>
 copy .env.example .env
 ```
 - `.env.example` 기본값은 로컬 우선(`ollama`, `qwen3:4b`)이다.
+- 임베딩 모델은 `DOC_RAG_EMBEDDING_MODEL`로 override 가능하며, HuggingFace 모델 ID 또는 로컬 경로를 받을 수 있다.
 - 인덱스 생성:
 ```powershell
 cd <repo>
@@ -355,7 +357,7 @@ cd <repo>
 - 현재는 단일 노드 운영 기준
 - UI는 최소 운영 기능 중심(사이드바/차트/슬라이더 미사용)
 - 데이터가 증가할수록 검색 지연과 노이즈 증가 가능
-- 폐쇄망/오프라인 운영 시 임베딩 모델(`BAAI/bge-m3`) 로컬 캐시와 로컬 LLM 런타임 준비가 선행돼야 함
+- 폐쇄망/오프라인 운영 시 `DOC_RAG_EMBEDDING_MODEL`로 지정한 로컬 경로 또는 `BAAI/bge-m3` 로컬 캐시와 로컬 LLM 런타임 준비가 선행돼야 함
 
 ## 운영 경계(현행)
 - 외부 전처리 단계:

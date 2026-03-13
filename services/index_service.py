@@ -19,25 +19,30 @@ from core.settings import (
     DATA_DIR,
     DEFAULT_COLLECTION_KEY,
     DEFAULT_FILE_NAMES,
-    EMBEDDING_MODEL,
     PERSIST_DIR,
 )
 from scripts.validate_rag_doc import validate_loaded_documents
 from services import collection_service, runtime_service
 
 
-@lru_cache(maxsize=1)
-def get_embeddings():
-    return create_embeddings(EMBEDDING_MODEL)
+@lru_cache(maxsize=4)
+def _get_embeddings_cached(model_name: str):
+    return create_embeddings(model_name)
+
+
+def get_embeddings(model_name: str | None = None):
+    resolved_model = (model_name or runtime_service.get_embedding_model()).strip()
+    return _get_embeddings_cached(resolved_model)
 
 
 def get_db(collection_key: str = DEFAULT_COLLECTION_KEY) -> Chroma:
     persist_path = Path(PERSIST_DIR)
     persist_path.mkdir(parents=True, exist_ok=True)
     collection_name = collection_service.get_collection_name(collection_key)
+    embedding_model = runtime_service.get_embedding_model()
     return Chroma(
         collection_name=collection_name,
-        embedding_function=get_embeddings(),
+        embedding_function=get_embeddings(embedding_model),
         persist_directory=str(persist_path),
     )
 
@@ -131,7 +136,7 @@ def index_documents_for_collection(
 
     persist_dir = Path(PERSIST_DIR)
     persist_dir.mkdir(parents=True, exist_ok=True)
-    embeddings = get_embeddings()
+    embeddings = get_embeddings(runtime_service.get_embedding_model())
 
     if reset:
         try:

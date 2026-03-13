@@ -16,6 +16,7 @@ from common import (
     load_project_env,
     split_by_markdown_headers,
 )
+from services import runtime_service
 
 
 def parse_args() -> argparse.Namespace:
@@ -23,7 +24,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--data-dir", type=Path, default=default_data_dir())
     parser.add_argument("--persist-dir", type=Path, default=default_persist_dir())
     parser.add_argument("--collection", type=str, default="w2_007_header_rag")
-    parser.add_argument("--embedding-model", type=str, default="BAAI/bge-m3")
+    parser.add_argument("--embedding-model", type=str)
     parser.add_argument("--reset", action="store_true")
     parser.add_argument("--chunk-size", type=int, default=800)
     parser.add_argument("--chunk-overlap", type=int, default=120)
@@ -38,6 +39,7 @@ def main() -> None:
     env_path = load_project_env()
     if env_path:
         print(f"Loaded env: {env_path}")
+    embedding_model = (args.embedding_model or "").strip() or runtime_service.get_embedding_model()
 
     docs = load_markdown_documents(args.data_dir, DEFAULT_FILE_NAMES)
     if not docs:
@@ -53,8 +55,9 @@ def main() -> None:
     print(f"Loaded docs: {len(docs)}")
     print(f"Chunking mode: {args.chunking_mode} (encoding={args.token_encoding})")
     print(f"Header chunks: {len(chunks)}")
+    print(f"Embedding model: {embedding_model}")
 
-    embeddings = create_embeddings(args.embedding_model)
+    embeddings = create_embeddings(embedding_model)
 
     args.persist_dir.mkdir(parents=True, exist_ok=True)
 

@@ -17,6 +17,7 @@ from common import (
     load_project_env,
     resolve_llm_config,
 )
+from services import runtime_service
 
 
 def format_docs(docs) -> str:
@@ -29,7 +30,7 @@ def format_docs(docs) -> str:
 
 
 def build_retriever():
-    embeddings = create_embeddings("BAAI/bge-m3")
+    embeddings = create_embeddings(runtime_service.get_embedding_model())
     db = Chroma(
         collection_name="w2_007_header_rag",
         embedding_function=embeddings,

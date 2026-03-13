@@ -20,6 +20,8 @@ from core.settings import (
     CHUNK_TOKEN_ENCODING_ENV_KEY,
     CHUNKING_MODE_ENV_KEY,
     DEFAULT_QUERY_TIMEOUT_SECONDS,
+    DEFAULT_EMBEDDING_MODEL,
+    EMBEDDING_MODEL_ENV_KEY,
     MAX_CONTEXT_CHARS_ENV_KEY,
     QUERY_TIMEOUT_SECONDS_ENV_KEY,
 )
@@ -122,6 +124,11 @@ def get_default_llm_config() -> dict[str, str | None]:
         "model": model,
         "base_url": base_url,
     }
+
+
+def get_embedding_model() -> str:
+    value = os.getenv(EMBEDDING_MODEL_ENV_KEY, DEFAULT_EMBEDDING_MODEL).strip()
+    return value or DEFAULT_EMBEDDING_MODEL
 
 
 def verify_admin_code(code: str) -> None:

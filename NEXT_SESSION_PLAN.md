@@ -68,9 +68,10 @@
 진행 메모 (2026-03-13):
 - 토큰 청킹 스윕(`700/80`, `800/120`, `900/120`)은 실행 완료
 - 다음 E2E 후보는 `token_800_120`, 보조 후보는 `token_700_80`
+- `DOC_RAG_EMBEDDING_MODEL` override와 `scripts/runtime_preflight.py`가 추가돼 런타임 준비 상태를 먼저 판별할 수 있다.
 - 현재 환경 blocker:
-  - `BAAI/bge-m3` 로컬 캐시 없음
-  - `ollama` 엔드포인트 미실행
+  - 로컬 embedding model 경로 또는 `BAAI/bge-m3` 캐시 준비 필요
+  - benchmark 대상 API를 포트 충돌 없는 base URL로 실행해야 함
 
 ### C. 제품화 후속
 1. 데스크톱 래핑(Electron/Tauri) PoC
@@ -155,6 +156,11 @@
 1. 토큰 청킹 파라미터 실험(`scripts/benchmark_token_chunking.py`)
 2. `/query` E2E 재측정(`scripts/benchmark_query_e2e.py`)
 3. 단일/다중 컬렉션 검색 비용 재확인(`scripts/benchmark_multi_collection.py`)
+
+다음 실행 순서:
+1. 충돌 없는 포트(예: `8010`)로 `app_api.py` 실행
+2. `scripts/runtime_preflight.py --base-url http://127.0.0.1:8010`
+3. `scripts/benchmark_query_e2e.py --base-url http://127.0.0.1:8010`
 
 ### C. 운영 기본값 확정
 1. `.env.example` 기본값/권장값 갱신

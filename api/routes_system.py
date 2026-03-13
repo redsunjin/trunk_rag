@@ -24,6 +24,7 @@ def health() -> dict[str, int | str | bool | None]:
         "auto_approve": runtime_service.is_auto_approve_enabled(),
         "pending_requests": pending_count,
         "chunking_mode": chunking["mode"],
+        "embedding_model": runtime_service.get_embedding_model(),
         "query_timeout_seconds": runtime_service.get_query_timeout_seconds(),
         "max_context_chars": runtime_service.get_max_context_chars(),
         "default_llm_provider": default_llm["provider"],

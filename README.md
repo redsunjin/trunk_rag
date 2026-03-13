@@ -48,6 +48,7 @@
 - `scripts/benchmark_multi_collection.py`: 단일/다중 컬렉션 검색 비교 벤치
 - `scripts/benchmark_token_chunking.py`: char/token 청킹 비교 벤치 스크립트
 - `scripts/benchmark_query_e2e.py`: `/query` E2E p95 벤치 스크립트
+- `scripts/runtime_preflight.py`: P1 벤치 전 런타임 준비 상태 점검
 - `run_doc_rag.bat`: 터미널 명령 없이 서버+브라우저 실행
 - `stop_doc_rag.bat`: 실행 중인 로컬 서버 종료
 - `AGENTS.md`: 에이전트용 상시 작업 정책
@@ -74,7 +75,7 @@ python -m venv .venv
 cd <repo>
 .venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
-   - 완전 오프라인 환경에서는 임베딩 모델 `BAAI/bge-m3`를 사전에 로컬 캐시에 준비해야 합니다.
+   - 완전 오프라인 환경에서는 임베딩 모델 `BAAI/bge-m3`를 사전에 로컬 캐시에 준비하거나 `DOC_RAG_EMBEDDING_MODEL`로 로컬 경로를 지정해야 합니다.
 3. 환경변수 파일 준비(권장):
 ```powershell
 cd <repo>
@@ -127,7 +128,7 @@ cd <repo>
 `summary_text`(예: `total=5, usable=5, rejected=0, warnings=0, usable_ratio=100.00%`)가 포함됩니다.
 
 `GET /health` 응답에는 현재 적용 중인 `chunking_mode`(`char` 또는 `token`)와
-`query_timeout_seconds`, `max_context_chars`, `default_llm_provider`,
+`embedding_model`, `query_timeout_seconds`, `max_context_chars`, `default_llm_provider`,
 `default_llm_model`, `default_llm_base_url`가 포함됩니다.
 브라우저 기본 모드는 이 값을 받아 권장 LLM 설정을 자동 적용하고,
 `고급 설정 펼치기`를 누른 경우에만 provider/model/base URL/API key를 직접 수정합니다.
@@ -212,7 +213,7 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 
 - 기본 예시는 `LLM_PROVIDER=ollama`, `LLM_MODEL=qwen3:4b`
 - 로컬 기본 경로에서는 `OLLAMA_BASE_URL=http://localhost:11434`
-- 오프라인 운영 시에는 임베딩 모델 `BAAI/bge-m3`의 로컬 캐시 또는 대체 가능한 로컬 모델 경로가 필요
+- 오프라인 운영 시에는 `DOC_RAG_EMBEDDING_MODEL`로 지정한 경로 또는 `BAAI/bge-m3` 로컬 캐시가 필요
 - Ollama 기본 경로를 쓰려면 대상 모델이 로컬에 pull/run 된 상태여야 함
 
 - OpenAI 사용 시: `OPENAI_API_KEY`
@@ -225,6 +226,7 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 - 컨텍스트 길이 제한(선택): `DOC_RAG_MAX_CONTEXT_CHARS` (미설정 시 제한 없음)
 - 청킹 모드(선택): `DOC_RAG_CHUNKING_MODE` (`char` 기본, `token` 옵션)
 - 토큰 인코딩(선택): `DOC_RAG_CHUNK_TOKEN_ENCODING` (기본 `cl100k_base`)
+- 임베딩 모델(선택): `DOC_RAG_EMBEDDING_MODEL` (기본 `BAAI/bge-m3`, 로컬 경로 가능)
 
 ## UI 기본 동작
 
@@ -274,9 +276,18 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 
 `/query` E2E 벤치(LLM 포함, API 기준):
 
+사전 점검:
+
+```powershell
+.venv\Scripts\python.exe scripts\runtime_preflight.py --base-url http://127.0.0.1:8010
+```
+
+- `blocked`가 나오면 `DOC_RAG_EMBEDDING_MODEL`, `OLLAMA_BASE_URL`, `vectors=0`, 포트 충돌을 먼저 정리합니다.
+- 다른 프로젝트가 `8000` 포트를 쓰고 있으면 이 프로젝트 서버를 다른 포트로 띄우고 같은 `--base-url`를 넘깁니다.
+
 ```powershell
 .venv\Scripts\python.exe scripts\benchmark_query_e2e.py `
-  --base-url http://127.0.0.1:8000 `
+  --base-url http://127.0.0.1:8010 `
   --llm-provider ollama `
   --llm-model phi3:mini `
   --llm-base-url http://localhost:11434 `

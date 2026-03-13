@@ -15,6 +15,17 @@ DEFAULT_TIMEOUT_SECONDS = 45
 DEFAULT_QUERY_TIMEOUT_SECONDS = 60
 DEFAULT_ROUNDS = 3
 MAX_ERROR_SAMPLES = 10
+REQUIRED_HEALTH_KEYS = {
+    "status",
+    "collection_key",
+    "collection",
+    "persist_dir",
+    "vectors",
+    "chunking_mode",
+    "embedding_model",
+    "default_llm_provider",
+    "default_llm_model",
+}
 DEFAULT_SCENARIOS: dict[str, list[str]] = {
     "single_all": ["all"],
     "single_fr": ["fr"],
@@ -70,11 +81,26 @@ def build_scenarios(raw_specs: list[str] | None) -> dict[str, list[str]]:
     return scenarios
 
 
+def validate_health_payload(payload: dict[str, object]) -> None:
+    missing = sorted(REQUIRED_HEALTH_KEYS - payload.keys())
+    if missing:
+        missing_text = ", ".join(missing)
+        raise ValueError(
+            "Unexpected /health payload. "
+            f"Missing fields: {missing_text}. "
+            "다른 프로젝트가 같은 포트를 사용 중인지 확인하세요."
+        )
+    if payload.get("status") != "ok":
+        raise ValueError(f"Unexpected /health status: {payload.get('status')}")
+
+
 def health_check(base_url: str, timeout_seconds: int) -> dict[str, object]:
     request = urllib.request.Request(f"{base_url}/health", method="GET")
     with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
         payload = response.read()
-    return json.loads(payload.decode("utf-8"))
+    body = json.loads(payload.decode("utf-8"))
+    validate_health_payload(body)
+    return body
 
 
 def call_query(
