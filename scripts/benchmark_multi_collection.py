@@ -4,7 +4,7 @@ import argparse
 import json
 import sys
 import time
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from statistics import mean
 from typing import Iterable
@@ -206,7 +206,7 @@ def main() -> None:
         )
 
     payload = {
-        "generated_at": datetime.now(UTC).replace(microsecond=0).isoformat(),
+        "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "rounds": args.rounds,
         "queries": queries,
         "reindexed": args.reindex,

@@ -264,6 +264,21 @@ def approximate_token_count(text: str) -> int:
     return max(len(tokens), 1)
 
 
+def count_text_tokens(text: str, encoding_name: str = DEFAULT_TOKEN_ENCODING) -> int:
+    try:
+        import tiktoken
+
+        encoder = tiktoken.get_encoding(encoding_name)
+        return max(len(encoder.encode(text)), 1)
+    except Exception as exc:
+        logger.warning(
+            "token count fallback to approximate counter: encoding=%s error=%s",
+            encoding_name,
+            exc,
+        )
+        return approximate_token_count(text)
+
+
 def split_by_markdown_headers(
     docs: list[Document],
     chunk_size: int = 800,

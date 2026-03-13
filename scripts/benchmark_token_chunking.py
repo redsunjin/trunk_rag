@@ -4,7 +4,7 @@ import argparse
 import json
 import sys
 import time
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from statistics import mean
 
@@ -17,12 +17,11 @@ from common import (  # noqa: E402
     CHUNKING_MODE_TOKEN,
     DEFAULT_FILE_NAMES,
     DEFAULT_TOKEN_ENCODING,
+    count_text_tokens,
     default_data_dir,
     load_markdown_documents,
     split_by_markdown_headers,
 )
-
-import tiktoken  # noqa: E402
 
 
 def percentile(values: list[float], ratio: float) -> float:
@@ -77,9 +76,8 @@ def run_chunking(
         )
         elapsed_ms.append((time.perf_counter() - started) * 1000.0)
 
-    encoder = tiktoken.get_encoding(token_encoding)
     char_lengths = [len(item.page_content) for item in chunks]
-    token_lengths = [len(encoder.encode(item.page_content)) for item in chunks]
+    token_lengths = [count_text_tokens(item.page_content, token_encoding) for item in chunks]
 
     chunks_by_source: dict[str, int] = {}
     for item in chunks:
@@ -116,9 +114,34 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--chunk-overlap", type=int, default=120)
     parser.add_argument("--token-chunk-size", type=int)
     parser.add_argument("--token-chunk-overlap", type=int)
+    parser.add_argument(
+        "--token-profile",
+        action="append",
+        help="Token chunk profile as chunk_size:chunk_overlap. Can be repeated.",
+    )
     parser.add_argument("--token-encoding", type=str, default=DEFAULT_TOKEN_ENCODING)
     parser.add_argument("--output", type=Path)
     return parser.parse_args()
+
+
+def parse_token_profiles(raw_profiles: list[str] | None, fallback_size: int, fallback_overlap: int) -> list[tuple[int, int]]:
+    if not raw_profiles:
+        return [(fallback_size, fallback_overlap)]
+
+    profiles: list[tuple[int, int]] = []
+    for raw in raw_profiles:
+        chunk_size_text, separator, chunk_overlap_text = raw.partition(":")
+        if separator != ":":
+            raise ValueError(f"Invalid --token-profile: {raw}. Use chunk_size:chunk_overlap")
+        try:
+            chunk_size = int(chunk_size_text.strip())
+            chunk_overlap = int(chunk_overlap_text.strip())
+        except ValueError as exc:
+            raise ValueError(f"Invalid --token-profile: {raw}. Use integers like 700:80") from exc
+        if chunk_size < 1 or chunk_overlap < 0:
+            raise ValueError(f"Invalid --token-profile: {raw}. chunk_size>=1 and chunk_overlap>=0")
+        profiles.append((chunk_size, chunk_overlap))
+    return profiles
 
 
 def main() -> None:
@@ -131,9 +154,14 @@ def main() -> None:
     if not docs:
         raise FileNotFoundError(f"No markdown files loaded from: {args.data_dir}")
 
-    token_chunk_size = args.token_chunk_size if args.token_chunk_size is not None else args.chunk_size
-    token_chunk_overlap = (
+    fallback_token_chunk_size = args.token_chunk_size if args.token_chunk_size is not None else args.chunk_size
+    fallback_token_chunk_overlap = (
         args.token_chunk_overlap if args.token_chunk_overlap is not None else args.chunk_overlap
+    )
+    token_profiles = parse_token_profiles(
+        args.token_profile,
+        fallback_token_chunk_size,
+        fallback_token_chunk_overlap,
     )
 
     char_result = run_chunking(
@@ -144,20 +172,24 @@ def main() -> None:
         token_encoding=args.token_encoding,
         rounds=args.rounds,
     )
-    token_result = run_chunking(
-        docs=docs,
-        chunking_mode=CHUNKING_MODE_TOKEN,
-        chunk_size=token_chunk_size,
-        chunk_overlap=token_chunk_overlap,
-        token_encoding=args.token_encoding,
-        rounds=args.rounds,
-    )
+    results = [char_result]
+    for token_chunk_size, token_chunk_overlap in token_profiles:
+        token_result = run_chunking(
+            docs=docs,
+            chunking_mode=CHUNKING_MODE_TOKEN,
+            chunk_size=token_chunk_size,
+            chunk_overlap=token_chunk_overlap,
+            token_encoding=args.token_encoding,
+            rounds=args.rounds,
+        )
+        token_result["profile"] = f"token_{token_chunk_size}_{token_chunk_overlap}"
+        results.append(token_result)
 
     payload = {
-        "generated_at": datetime.now(UTC).replace(microsecond=0).isoformat(),
+        "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "data_dir": str(args.data_dir),
         "files": list(file_names),
-        "results": [char_result, token_result],
+        "results": results,
     }
 
     if args.output:

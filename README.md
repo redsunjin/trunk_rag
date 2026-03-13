@@ -74,6 +74,7 @@ python -m venv .venv
 cd <repo>
 .venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
+   - 완전 오프라인 환경에서는 임베딩 모델 `BAAI/bge-m3`를 사전에 로컬 캐시에 준비해야 합니다.
 3. 환경변수 파일 준비(권장):
 ```powershell
 cd <repo>
@@ -211,6 +212,8 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 
 - 기본 예시는 `LLM_PROVIDER=ollama`, `LLM_MODEL=qwen3:4b`
 - 로컬 기본 경로에서는 `OLLAMA_BASE_URL=http://localhost:11434`
+- 오프라인 운영 시에는 임베딩 모델 `BAAI/bge-m3`의 로컬 캐시 또는 대체 가능한 로컬 모델 경로가 필요
+- Ollama 기본 경로를 쓰려면 대상 모델이 로컬에 pull/run 된 상태여야 함
 
 - OpenAI 사용 시: `OPENAI_API_KEY`
 - Ollama 사용 시: `OLLAMA_BASE_URL`

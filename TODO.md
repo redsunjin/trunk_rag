@@ -58,6 +58,11 @@
 목표:
 - 쉬운 RAG 기본 경로가 느리거나 불안정하지 않도록 운영 기본값을 고정한다.
 
+진행 메모 (2026-03-13):
+- `scripts/benchmark_token_chunking.py`를 Python 3.9/파라미터 스윕 기준으로 보강했다.
+- 토큰 청킹 1차 스윕(`700/80`, `800/120`, `900/120`)은 완료했고 결과는 `docs/reports/TOKEN_CHUNKING_SWEEP_REPORT_2026-03-13.md`에 정리했다.
+- 현재 환경에서는 `BAAI/bge-m3` 로컬 캐시 부재로 retrieval 계측이 막혔고, `ollama` 오프라인으로 `/query` E2E가 막혔다.
+
 - [ ] 토큰 청킹 파라미터 재탐색 (`chunk_size`, `chunk_overlap`)
 - [ ] `/query` 지연/품질 균형 재측정 (`DOC_RAG_OLLAMA_NUM_PREDICT`, `DOC_RAG_MAX_CONTEXT_CHARS`)
 - [ ] 단일/다중 컬렉션 기본 경로 재판정

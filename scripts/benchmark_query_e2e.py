@@ -6,7 +6,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from statistics import mean
 
@@ -274,7 +274,7 @@ def main() -> None:
         results.append(result)
 
     payload = {
-        "generated_at": datetime.now(UTC).replace(microsecond=0).isoformat(),
+        "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "base_url": base_url,
         "rounds": args.rounds,
         "warmup": args.warmup,
