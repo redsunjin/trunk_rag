@@ -14,6 +14,7 @@ def health() -> dict[str, int | str | bool | None]:
     default_collection = collection_service.get_collection_name(DEFAULT_COLLECTION_KEY)
     pending_count = len(upload_service.list_upload_requests(status=REQUEST_STATUS_PENDING))
     chunking = runtime_service.get_chunking_config()
+    default_llm = runtime_service.get_default_llm_config()
     return {
         "status": "ok",
         "collection_key": DEFAULT_COLLECTION_KEY,
@@ -25,6 +26,9 @@ def health() -> dict[str, int | str | bool | None]:
         "chunking_mode": chunking["mode"],
         "query_timeout_seconds": runtime_service.get_query_timeout_seconds(),
         "max_context_chars": runtime_service.get_max_context_chars(),
+        "default_llm_provider": default_llm["provider"],
+        "default_llm_model": default_llm["model"],
+        "default_llm_base_url": default_llm["base_url"],
     }
 
 

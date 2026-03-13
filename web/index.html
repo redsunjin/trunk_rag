@@ -19,6 +19,9 @@
       <div class="sidebar-content">
         <div class="sidebar-section">
           <h3>LLM Configuration</h3>
+          <p id="runtimeSummary" class="status-msg" style="margin-bottom:10px;">
+            기본 질의 설정을 불러오는 중입니다.
+          </p>
           <div class="input-row">
             <div class="input-group">
               <label for="collection">Collection 1</label>
@@ -34,25 +37,31 @@
             </div>
           </div>
           <small id="collectionHint" class="helper-text">컬렉션 정보를 로딩 중입니다.</small>
-          <div class="input-group">
-            <label for="provider">LLM Provider</label>
-            <select id="provider">
-              <option value="ollama" selected>ollama</option>
-              <option value="openai">openai</option>
-              <option value="lmstudio">lmstudio</option>
-            </select>
+          <div style="display:flex;gap:8px;align-items:center;margin:12px 0 8px;">
+            <button id="advancedSettingsToggle" class="secondary-btn" type="button">고급 설정 펼치기</button>
+            <small class="helper-text" style="margin-top:0;">기본 모드에서는 권장 설정을 자동 사용합니다.</small>
           </div>
-          <div class="input-group">
-            <label for="model">LLM Model</label>
-            <input type="text" id="model" value="qwen3:4b">
-          </div>
-          <div class="input-group">
-            <label for="baseUrl">Base URL (optional)</label>
-            <input type="text" id="baseUrl" value="http://localhost:11434">
-          </div>
-          <div class="input-group">
-            <label for="apiKey">API Key (optional)</label>
-            <input type="password" id="apiKey" value="">
+          <div id="advancedSettings" class="hidden">
+            <div class="input-group">
+              <label for="provider">LLM Provider</label>
+              <select id="provider">
+                <option value="ollama" selected>ollama</option>
+                <option value="openai">openai</option>
+                <option value="lmstudio">lmstudio</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label for="model">LLM Model</label>
+              <input type="text" id="model" value="qwen3:4b">
+            </div>
+            <div class="input-group">
+              <label for="baseUrl">Base URL (optional)</label>
+              <input type="text" id="baseUrl" value="http://localhost:11434">
+            </div>
+            <div class="input-group">
+              <label for="apiKey">API Key (optional)</label>
+              <input type="password" id="apiKey" value="">
+            </div>
           </div>
         </div>
 
@@ -79,8 +88,9 @@
         <div class="sidebar-section">
           <h3>Upload Request</h3>
           <div class="input-group">
-            <label for="uploadSource">Source Name</label>
-            <input type="text" id="uploadSource" placeholder="example.md">
+            <label for="uploadSource">Source Name (optional)</label>
+            <input type="text" id="uploadSource" placeholder="비워두면 자동 생성됩니다">
+            <small class="helper-text">컬렉션 기준으로 country/doc_type 기본값을 자동 채웁니다.</small>
           </div>
           <div class="input-row">
             <div class="input-group">
@@ -153,4 +163,3 @@
   <script type="module" src="/js/app_page.js"></script>
 </body>
 </html>
-

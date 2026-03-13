@@ -13,6 +13,8 @@ def test_health_returns_200(client):
     assert "collection" in body
     assert "persist_dir" in body
     assert body["chunking_mode"] in {"char", "token"}
+    assert body["default_llm_provider"] in {"openai", "ollama", "lmstudio"}
+    assert isinstance(body["default_llm_model"], str)
 
 
 def test_collections_returns_200(client):

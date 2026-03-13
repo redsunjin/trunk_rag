@@ -9,6 +9,9 @@ const provider = document.getElementById("provider");
 const model = document.getElementById("model");
 const baseUrl = document.getElementById("baseUrl");
 const apiKey = document.getElementById("apiKey");
+const runtimeSummary = document.getElementById("runtimeSummary");
+const advancedSettings = document.getElementById("advancedSettings");
+const advancedSettingsToggle = document.getElementById("advancedSettingsToggle");
 const collection = document.getElementById("collection");
 const collection2 = document.getElementById("collection2");
 const collectionHint = document.getElementById("collectionHint");
@@ -30,7 +33,11 @@ const uploadDocType = document.getElementById("uploadDocType");
 const uploadContent = document.getElementById("uploadContent");
 const uploadBtn = document.getElementById("uploadBtn");
 const uploadMsg = document.getElementById("uploadMsg");
+
 let collectionItems = [];
+let lastHealth = null;
+let advancedSettingsOpen = false;
+let runtimeDefaultsLoaded = false;
 
 function renderMarkdownBasic(markdown) {
   const lines = markdown.split("\n");
@@ -104,6 +111,57 @@ function syncDefaults() {
     model.value = "gpt-4o-mini";
     baseUrl.value = "";
   }
+}
+
+function setAdvancedSettingsOpen(open) {
+  advancedSettingsOpen = open;
+  advancedSettings.classList.toggle("hidden", !open);
+  advancedSettingsToggle.textContent = open ? "고급 설정 접기" : "고급 설정 펼치기";
+  if (!open && lastHealth) {
+    applyRuntimeDefaults(lastHealth, true);
+  }
+}
+
+function applyRuntimeDefaults(data, force = false) {
+  if (!data) return;
+  const runtimeProvider = data.default_llm_provider || "ollama";
+  const runtimeModel = data.default_llm_model || "";
+  const runtimeBaseUrl = data.default_llm_base_url || "";
+
+  if (!force && runtimeDefaultsLoaded && advancedSettingsOpen) {
+    return;
+  }
+
+  provider.value = runtimeProvider;
+  model.value = runtimeModel;
+  baseUrl.value = runtimeBaseUrl;
+  runtimeDefaultsLoaded = true;
+
+  if (runtimeSummary) {
+    const baseUrlText = runtimeBaseUrl ? ` | ${runtimeBaseUrl}` : "";
+    runtimeSummary.textContent = `기본 질의 설정: ${runtimeProvider} / ${runtimeModel}${baseUrlText}`;
+  }
+}
+
+function buildGuidedErrorMessage(rawError, parsedError) {
+  const code = rawError?.code || "";
+  const base = formatApiError(parsedError);
+  if (code === "VECTORSTORE_EMPTY") {
+    return `${base} | next: 왼쪽 메뉴에서 Reindex를 먼저 실행하세요.`;
+  }
+  if (code === "LLM_CONNECTION_FAILED") {
+    if (provider.value === "ollama") {
+      return `${base} | next: Ollama 서버와 모델 실행 상태를 확인한 뒤 다시 시도하세요.`;
+    }
+    if (provider.value === "lmstudio") {
+      return `${base} | next: LM Studio 서버 주소와 모델 로드 상태를 확인하세요.`;
+    }
+    return `${base} | next: API 키와 base URL 설정을 확인하세요.`;
+  }
+  if (code === "LLM_TIMEOUT") {
+    return `${base} | next: 더 짧은 질문으로 다시 시도하거나 모델 상태를 확인하세요.`;
+  }
+  return base;
 }
 
 function collectionDisplayText(item) {
@@ -191,7 +249,7 @@ async function loadDocs() {
       return;
     }
     if (!data.docs || data.docs.length === 0) {
-      docList.innerHTML = "<p class='status-msg'>등록된 문서가 없습니다.</p>";
+      docList.innerHTML = "<p class='status-msg'>등록된 문서가 없습니다. Reindex 또는 업로드 요청 후 다시 확인하세요.</p>";
       return;
     }
 
@@ -228,31 +286,35 @@ async function openDoc(name) {
   }
 }
 
-provider.addEventListener("change", syncDefaults);
-collection.addEventListener("change", () => {
-  if (collection2.value === collection.value) {
-    collection2.value = "";
-  }
-  updateCollectionHint();
-});
-collection2.addEventListener("change", () => {
-  if (collection2.value === collection.value) {
-    collection2.value = "";
-  }
-  updateCollectionHint();
-});
-
 async function healthCheck() {
   try {
     const res = await fetch("/health");
     const data = await res.json();
+    lastHealth = data;
     if (!res.ok) {
       const error = parseApiError(data, "health check 실패");
       setStatus("error", "Error", formatApiError(error));
       return;
     }
-    setStatus("ok", "Online", `default=${data.collection_key ?? "all"}, vectors=${data.vectors ?? "-"}`);
+
+    applyRuntimeDefaults(data);
+
+    if ((data.vectors ?? 0) <= 0) {
+      setStatus(
+        "warn",
+        "Ready",
+        "인덱스가 비어 있습니다. 왼쪽 메뉴의 Reindex를 먼저 실행한 뒤 질문하세요.",
+      );
+      return;
+    }
+
+    setStatus(
+      "ok",
+      "Online",
+      `default=${data.collection_key ?? "all"}, vectors=${data.vectors ?? "-"}, llm=${data.default_llm_provider ?? "-"}`
+    );
   } catch (err) {
+    lastHealth = null;
     setStatus("error", "Offline", String(err));
   }
 }
@@ -260,6 +322,11 @@ async function healthCheck() {
 async function sendQuestion() {
   const question = userInput.value.trim();
   if (!question) return;
+
+  if (lastHealth && (lastHealth.vectors ?? 0) <= 0) {
+    appendMessage("bot", "인덱스가 아직 비어 있습니다. 왼쪽 메뉴에서 Reindex를 먼저 실행하세요.");
+    return;
+  }
 
   appendMessage("user", question);
   appendMessage("bot", "생성 중...");
@@ -273,19 +340,19 @@ async function sendQuestion() {
     llm_api_key: apiKey.value || null,
     llm_base_url: baseUrl.value || null,
     collection: selectedCollections[0] || null,
-    collections: selectedCollections.length ? selectedCollections : null
+    collections: selectedCollections.length ? selectedCollections : null,
   };
 
   try {
     const res = await fetch("/query", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
     const data = await res.json();
     if (!res.ok) {
       const error = parseApiError(data, "요청 실패");
-      pending.textContent = formatApiError(error);
+      pending.textContent = buildGuidedErrorMessage(data, error);
       return;
     }
     pending.textContent = data.answer;
@@ -302,7 +369,7 @@ async function reindex() {
     const res = await fetch("/reindex", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({reset: true, collection: collection.value || null})
+      body: JSON.stringify({reset: true, collection: collection.value || null}),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -314,6 +381,7 @@ async function reindex() {
     const validationSummary = data.validation?.summary_text ? ` | ${data.validation.summary_text}` : "";
     setStatus("ok", "Online", `reindex 완료: collection=${collectionName}, vectors=${data.vectors}${validationSummary}`);
     appendMessage("bot", `재인덱싱 완료: collection=${collectionName}, vectors=${data.vectors}${validationSummary}`);
+    await healthCheck();
     await loadDocs();
     await loadCollections();
   } catch (err) {
@@ -334,14 +402,14 @@ async function submitUploadRequest() {
     collection: collection.value || null,
     country: uploadCountry.value || null,
     doc_type: uploadDocType.value || null,
-    content
+    content,
   };
 
   try {
     const res = await fetch("/upload-requests", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -352,19 +420,41 @@ async function submitUploadRequest() {
 
     const request = data.request || {};
     const requestId = request.id || "-";
+    const sourceName = request.source_name || uploadSource.value.trim() || "auto-generated";
     const status = request.status || "pending";
     const autoApprove = data.auto_approve ? "on" : "off";
-    uploadMsg.textContent = `요청 생성 완료: id=${requestId}, status=${status}, auto_approve=${autoApprove}`;
-    appendMessage("bot", `업로드 요청 생성: id=${requestId}, status=${status}`);
+    uploadMsg.textContent = `요청 생성 완료: source=${sourceName}, id=${requestId}, status=${status}, auto_approve=${autoApprove}`;
 
     if (status === "approved") {
+      appendMessage("bot", `업로드 문서가 바로 반영되었습니다: ${sourceName}`);
       await loadCollections();
       await loadDocs();
+      await healthCheck();
+      return;
     }
+
+    appendMessage("bot", `업로드 요청이 접수되었습니다: ${sourceName} | 관리자 승인 대기`);
   } catch (error) {
     uploadMsg.textContent = String(error);
   }
 }
+
+provider.addEventListener("change", syncDefaults);
+advancedSettingsToggle.addEventListener("click", () => {
+  setAdvancedSettingsOpen(!advancedSettingsOpen);
+});
+collection.addEventListener("change", () => {
+  if (collection2.value === collection.value) {
+    collection2.value = "";
+  }
+  updateCollectionHint();
+});
+collection2.addEventListener("change", () => {
+  if (collection2.value === collection.value) {
+    collection2.value = "";
+  }
+  updateCollectionHint();
+});
 
 sendBtn.addEventListener("click", sendQuestion);
 userInput.addEventListener("keydown", (event) => {
@@ -391,6 +481,7 @@ sidebarOverlay.addEventListener("click", () => {
   sidebarOverlay.classList.remove("active");
 });
 
+setAdvancedSettingsOpen(false);
 healthCheck();
 loadCollections();
 loadDocs();

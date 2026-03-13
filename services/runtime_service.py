@@ -6,7 +6,14 @@ from datetime import UTC, datetime
 
 from fastapi import HTTPException
 
-from common import CHUNKING_MODE_CHAR, DEFAULT_TOKEN_ENCODING, normalize_chunking_mode
+from common import (
+    CHUNKING_MODE_CHAR,
+    DEFAULT_TOKEN_ENCODING,
+    default_llm_model,
+    normalize_chunking_mode,
+    normalize_provider,
+    resolve_llm_config,
+)
 from core.settings import (
     ADMIN_CODE_ENV_KEY,
     AUTO_APPROVE_ENV_KEY,
@@ -94,6 +101,27 @@ def get_chunking_config() -> dict[str, str]:
     if not token_encoding:
         token_encoding = DEFAULT_TOKEN_ENCODING
     return {"mode": mode, "token_encoding": token_encoding}
+
+
+def get_default_llm_config() -> dict[str, str | None]:
+    raw_provider = os.getenv("LLM_PROVIDER", "ollama")
+    try:
+        provider = normalize_provider(raw_provider)
+    except ValueError:
+        logger.warning("invalid default llm provider: %s (fallback=ollama)", raw_provider)
+        provider = "ollama"
+
+    raw_model = os.getenv("LLM_MODEL")
+    model = (raw_model or "").strip() or default_llm_model(provider)
+    provider, model, _api_key, base_url = resolve_llm_config(
+        provider=provider,
+        model=model,
+    )
+    return {
+        "provider": provider,
+        "model": model,
+        "base_url": base_url,
+    }
 
 
 def verify_admin_code(code: str) -> None:

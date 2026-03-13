@@ -73,6 +73,12 @@ def test_intro_app_flow(page: Page, live_server_url: str):
 
     page.click("#userStartBtn")
     expect(page).to_have_url(re.compile(r".*/app$"), timeout=10000)
+    expect(page.locator("#runtimeSummary")).to_contain_text("기본 질의 설정", timeout=10000)
+    expect(page.locator("#advancedSettings")).to_be_hidden()
+    page.click("#advancedSettingsToggle")
+    expect(page.locator("#advancedSettings")).to_be_visible()
+    page.click("#advancedSettingsToggle")
+    expect(page.locator("#advancedSettings")).to_be_hidden()
 
     first_doc_button = page.locator(".doc-item-btn").first
     expect(first_doc_button).to_be_visible(timeout=10000)
