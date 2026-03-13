@@ -23,6 +23,9 @@
 - 컬렉션 상태 조회(`/collections`) + cap 사용률
 - 등록 전 문서 검증(`usable/reasons/warnings`) 1차 적용
 - 업로드 요청/승인 워크플로우(`pending/approved/rejected`) 1차 적용
+- `/health` 기반 런타임 기본 LLM 설정 노출
+- 기본 모드 UI에서 고급 LLM 설정 기본 숨김
+- 빈 인덱스/LLM 연결 오류에 대한 가이드 메시지
 - API/프론트 최소 회귀 테스트 체계(pytest + Playwright)
 - 전처리 규칙 문서(`docs/PREPROCESSING_RULES.md`)
 
@@ -73,6 +76,10 @@
 - 화면 구성: 좌측(설정/헬스/문서목록), 우측(채팅/MD 뷰어)
 - 인트로/관리자 페이지 분리(`web/intro.html`, `web/admin.html`)
 - 프론트 로직 모듈 분리(`web/js/shared.js`, `web/js/app_page.js`, `web/js/admin_page.js`)
+- 메인 UI 기본 모드에서 런타임 기본 LLM 설정 자동 적용
+- `고급 설정 펼치기`로 provider/model/base URL/API key 수동 수정
+- `vectors=0` 상태에서 `Reindex` 선행 안내
+- 업로드 요청에서 `Source Name` optional + 컬렉션 기준 기본값 사용
 
 ### 구조 분해(P3-Prep 완료)
 - `app_api.py`는 앱 조립/예외 처리 중심으로 축소
@@ -105,9 +112,17 @@
   "persist_dir": "C:/.../chroma_db",
   "vectors": 37,
   "auto_approve": false,
-  "pending_requests": 2
+  "pending_requests": 2,
+  "chunking_mode": "char",
+  "query_timeout_seconds": 15,
+  "max_context_chars": null,
+  "default_llm_provider": "ollama",
+  "default_llm_model": "qwen3:4b",
+  "default_llm_base_url": "http://localhost:11434"
 }
 ```
+- 메인 UI 기본 모드는 `default_llm_*` 값을 자동 사용한다.
+- `vectors=0`이면 사용자가 질의하기 전에 `Reindex`를 먼저 실행하도록 안내한다.
 
 ### GET `/collections`
 - 목적: 컬렉션별 벡터 수/cap 사용률 조회
@@ -285,6 +300,12 @@
 ```
 
 ## 실행 기준
+- 환경 파일 준비(권장):
+```powershell
+cd <repo>
+copy .env.example .env
+```
+- `.env.example` 기본값은 로컬 우선(`ollama`, `qwen3:4b`)이다.
 - 인덱스 생성:
 ```powershell
 cd <repo>
@@ -295,23 +316,27 @@ python build_index.py --reset
 cd <repo>
 .\run_doc_rag.bat
 ```
+- 런처는 `.venv\Scripts\python.exe` 우선, 없으면 시스템 `python`을 사용한다.
+- 런처는 `/health`가 200 응답이 될 때까지 최대 45초 대기한 뒤 `/intro`를 연다.
 - 서버 실행(수동):
 ```powershell
 cd <repo>
 python app_api.py
 ```
+- 첫 실행 또는 `vectors=0` 상태면 `/app` 왼쪽 메뉴의 `Reindex`를 먼저 실행한다.
 - UI 접속:
 - 인트로: `http://127.0.0.1:8000/intro`
 - 메인: `http://127.0.0.1:8000/app`
 - 관리자: `http://127.0.0.1:8000/admin`
 
 ## 설계 결정 기록
-- 실습용 가변 파라미터를 줄이고 운영용 기본값을 서버 상수로 고정
+- 실습용 가변 파라미터를 줄이고 운영용 기본값은 `/health`를 통해 UI에 주입
 - API 중심 구조 유지(FastAPI)로 UI/앱/확장 연동 재사용성 확보
 - 문서 청킹 정책은 `##`, `###`, `####` 고정 + 분할 모드는 `char` 기본 유지
-- LLM provider 다중 지원 유지(로컬 우선 + 외부 API 선택)
+- LLM provider 다중 지원 유지(로컬 우선 + 외부 API 선택), 다만 기본 UX는 로컬 기본값 중심
 - `trunk_rag`는 전처리된 md 소비자 역할에 집중
 - 전처리는 외부 단계에서 수행하고, `trunk_rag`는 검증 게이트 중심으로 관리
+- 쉬운 RAG 기본 경로를 위해 런처 readiness 대기와 고급 설정 기본 숨김 유지
 
 ## 제약 사항
 - 추론 속도/품질은 로컬 하드웨어 성능에 크게 의존

@@ -8,7 +8,7 @@
 - 문서: 전처리 완료된 `data/*.md` 입력
 - 청킹: `##`, `###`, `####` 헤더 기반 + 문자 분할(기본), 토큰 분할(옵션)
 - 벡터스토어: Chroma (로컬 폴더)
-- LLM: `openai` / `ollama` / `lmstudio` 선택
+- LLM: `openai` / `ollama` / `lmstudio` 선택(기본 예시: `ollama` + `qwen3:4b`)
 - 인터페이스: FastAPI + 브라우저(`http://127.0.0.1:8000`)
 - 업로드 워크플로우: 사용자 요청(`pending`) -> 관리자 승인/반려
 
@@ -60,24 +60,33 @@
 
 ## Quick Start
 
-1. 최초 1회 인덱싱:
+1. 환경변수 파일 준비(권장):
 ```powershell
 cd <repo>
-python build_index.py --reset
+copy .env.example .env
 ```
-2. Windows 빠른 실행:
+   - `.env.example` 기본값은 로컬 우선 설정(`ollama`, `qwen3:4b`)입니다.
+2. Windows 빠른 실행(권장):
 ```powershell
 cd <repo>
 .\run_doc_rag.bat
 ```
-3. 수동 실행이 필요하면:
+   - `.venv\Scripts\python.exe`가 있으면 우선 사용하고, 없으면 시스템 `python`을 찾습니다.
+   - `/health`가 준비될 때까지 최대 45초 대기한 뒤 `http://127.0.0.1:8000/intro`를 엽니다.
+3. 첫 실행이거나 상태 메시지에 `vectors=0`이 보이면 먼저 인덱싱:
+   - 브라우저 왼쪽 메뉴에서 `Reindex`를 실행하거나
+```powershell
+cd <repo>
+python build_index.py --reset
+```
+4. 수동 실행이 필요하면:
 ```powershell
 cd <repo>
 python app_api.py
 ```
-4. 브라우저에서 `http://127.0.0.1:8000/intro`가 열리고, `사용자 모드 시작` 버튼으로 `/app` 진입.
+5. 브라우저에서 `http://127.0.0.1:8000/intro`가 열리고, `사용자 모드 시작` 버튼으로 `/app` 진입.
    - 관리자 모드는 인증 코드 입력 후 `/admin` 진입
-5. Windows 배치 실행 종료:
+6. Windows 배치 실행 종료:
 ```powershell
 cd <repo>
 .\stop_doc_rag.bat
@@ -103,7 +112,10 @@ cd <repo>
 `summary_text`(예: `total=5, usable=5, rejected=0, warnings=0, usable_ratio=100.00%`)가 포함됩니다.
 
 `GET /health` 응답에는 현재 적용 중인 `chunking_mode`(`char` 또는 `token`)와
-`query_timeout_seconds`, `max_context_chars`가 포함됩니다.
+`query_timeout_seconds`, `max_context_chars`, `default_llm_provider`,
+`default_llm_model`, `default_llm_base_url`가 포함됩니다.
+브라우저 기본 모드는 이 값을 받아 권장 LLM 설정을 자동 적용하고,
+`고급 설정 펼치기`를 누른 경우에만 provider/model/base URL/API key를 직접 수정합니다.
 `POST /reindex` 응답에는 실제 인덱싱에 사용된 `chunking` 설정이 포함됩니다.
 
 예시:
@@ -183,6 +195,9 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 
 `.env.example`를 복사해 `.env` 생성 후 사용.
 
+- 기본 예시는 `LLM_PROVIDER=ollama`, `LLM_MODEL=qwen3:4b`
+- 로컬 기본 경로에서는 `OLLAMA_BASE_URL=http://localhost:11434`
+
 - OpenAI 사용 시: `OPENAI_API_KEY`
 - Ollama 사용 시: `OLLAMA_BASE_URL`
 - Ollama 응답 길이 제한(선택): `DOC_RAG_OLLAMA_NUM_PREDICT` (예: `8`, 미설정 시 모델 기본값)
@@ -193,6 +208,13 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 - 컨텍스트 길이 제한(선택): `DOC_RAG_MAX_CONTEXT_CHARS` (미설정 시 제한 없음)
 - 청킹 모드(선택): `DOC_RAG_CHUNKING_MODE` (`char` 기본, `token` 옵션)
 - 토큰 인코딩(선택): `DOC_RAG_CHUNK_TOKEN_ENCODING` (기본 `cl100k_base`)
+
+## UI 기본 동작
+
+- 기본 질의 모드에서는 `/health`의 런타임 기본 LLM 설정을 자동 사용합니다.
+- `고급 설정 펼치기`를 눌러야 provider/model/base URL/API key를 직접 수정할 수 있습니다.
+- `vectors=0`이면 질문 전 `Reindex`를 먼저 실행하라는 안내가 표시됩니다.
+- 업로드 요청에서 `Source Name`은 비워둘 수 있고, `country`/`doc_type`은 컬렉션 기준 기본값을 따를 수 있습니다.
 
 ## Testing
 
