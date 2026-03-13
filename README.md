@@ -50,6 +50,8 @@
 - `scripts/benchmark_query_e2e.py`: `/query` E2E p95 벤치 스크립트
 - `run_doc_rag.bat`: 터미널 명령 없이 서버+브라우저 실행
 - `stop_doc_rag.bat`: 실행 중인 로컬 서버 종료
+- `AGENTS.md`: 에이전트용 상시 작업 정책
+- `WORKFLOW.md`: 사람/에이전트 공통 작업 순서
 - `requirements.txt`: 런타임 의존성
 - `requirements-dev.txt`: 테스트/브라우저 의존성
 - `.env.example`: 환경변수 템플릿
