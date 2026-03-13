@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import logging
 import os
+import re
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -44,6 +46,9 @@ CHUNKING_MODE_TOKEN = "token"
 SUPPORTED_CHUNKING_MODES = {CHUNKING_MODE_CHAR, CHUNKING_MODE_TOKEN}
 DEFAULT_TOKEN_ENCODING = "cl100k_base"
 OLLAMA_NUM_PREDICT_ENV_KEY = "DOC_RAG_OLLAMA_NUM_PREDICT"
+TOKEN_FALLBACK_PATTERN = re.compile(r"[가-힣]|[A-Za-z0-9_]+|[^\s]")
+
+logger = logging.getLogger("doc_rag.common")
 
 
 def project_root() -> Path:
@@ -235,11 +240,28 @@ def build_text_splitter(
         )
 
     encoding = token_encoding.strip() or DEFAULT_TOKEN_ENCODING
-    return RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-        encoding_name=encoding,
-        chunk_size=chunk_size,
-        chunk_overlap=chunk_overlap,
-    )
+    try:
+        return RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+            encoding_name=encoding,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+        )
+    except Exception as exc:
+        logger.warning(
+            "token splitter fallback to approximate token counter: encoding=%s error=%s",
+            encoding,
+            exc,
+        )
+        return RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+            length_function=approximate_token_count,
+        )
+
+
+def approximate_token_count(text: str) -> int:
+    tokens = TOKEN_FALLBACK_PATTERN.findall(text)
+    return max(len(tokens), 1)
 
 
 def split_by_markdown_headers(

@@ -85,19 +85,26 @@
       return parts.join(" | ");
     }
 
-    async function healthCheck() {
-      try {
-        const res = await fetch("/health");
-        const data = await res.json();
-        if (!res.ok) {
+	    async function healthCheck() {
+	      try {
+	        const res = await fetch("/health");
+	        const data = await res.json();
+	        if (!res.ok) {
           const error = parseApiError(data, "health check 실패");
           setStatus("error", "Error", formatApiError(error));
           return false;
         }
-        setStatus("ok", "Online", `default=${data.collection_key} vectors=${data.vectors ?? "-"}`);
-        return true;
-      } catch (error) {
-        setStatus("error", "Offline", String(error));
+	        const llmSummary = data.default_llm_provider && data.default_llm_model
+	          ? `${data.default_llm_provider} / ${data.default_llm_model}`
+	          : "-";
+	        if ((data.vectors ?? 0) <= 0) {
+	          setStatus("warn", "Ready", `인덱스가 비어 있습니다. 앱으로 이동한 뒤 Reindex를 먼저 실행하세요. | llm=${llmSummary}`);
+	          return true;
+	        }
+	        setStatus("ok", "Online", `default=${data.collection_key} vectors=${data.vectors ?? "-"} llm=${llmSummary}`);
+	        return true;
+	      } catch (error) {
+	        setStatus("error", "Offline", String(error));
         return false;
       }
     }

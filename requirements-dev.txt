@@ -1,3 +1,4 @@
+-r requirements.txt
 pytest>=8.2,<9
 playwright>=1.49,<2
 pytest-playwright>=0.5,<1

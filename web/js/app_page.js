@@ -30,6 +30,9 @@ const docViewer = document.getElementById("docViewer");
 const uploadSource = document.getElementById("uploadSource");
 const uploadCountry = document.getElementById("uploadCountry");
 const uploadDocType = document.getElementById("uploadDocType");
+const uploadDefaultsSummary = document.getElementById("uploadDefaultsSummary");
+const uploadMetadataFields = document.getElementById("uploadMetadataFields");
+const uploadMetadataToggle = document.getElementById("uploadMetadataToggle");
 const uploadContent = document.getElementById("uploadContent");
 const uploadBtn = document.getElementById("uploadBtn");
 const uploadMsg = document.getElementById("uploadMsg");
@@ -38,6 +41,7 @@ let collectionItems = [];
 let lastHealth = null;
 let advancedSettingsOpen = false;
 let runtimeDefaultsLoaded = false;
+let uploadMetadataOpen = false;
 
 function renderMarkdownBasic(markdown) {
   const lines = markdown.split("\n");
@@ -111,6 +115,39 @@ function syncDefaults() {
     model.value = "gpt-4o-mini";
     baseUrl.value = "";
   }
+}
+
+function defaultUploadCountry(collectionKey) {
+  const mapping = {
+    all: "all",
+    eu: "all",
+    fr: "france",
+    ge: "germany",
+    it: "italy",
+    uk: "uk",
+  };
+  return mapping[collectionKey] || "all";
+}
+
+function defaultUploadDocType(collectionKey) {
+  return collectionKey === "all" || collectionKey === "eu" ? "summary" : "country";
+}
+
+function updateUploadDefaultsSummary() {
+  if (!uploadDefaultsSummary) return;
+  const collectionKey = collection.value || "all";
+  const sourceText = uploadSource.value.trim() || "auto";
+  const countryText = uploadCountry.value || defaultUploadCountry(collectionKey);
+  const docTypeText = uploadDocType.value || defaultUploadDocType(collectionKey);
+  uploadDefaultsSummary.textContent =
+    `업로드 기본값: source=${sourceText}, country=${countryText}, doc_type=${docTypeText}`;
+}
+
+function setUploadMetadataOpen(open) {
+  uploadMetadataOpen = open;
+  uploadMetadataFields.classList.toggle("hidden", !open);
+  uploadMetadataToggle.textContent = open ? "메타데이터 접기" : "메타데이터 수정";
+  updateUploadDefaultsSummary();
 }
 
 function setAdvancedSettingsOpen(open) {
@@ -196,6 +233,7 @@ function updateCollectionHint() {
   const labels = selectedInfos.map((item) => `${item.label}(${item.key})`).join(", ");
   const maxHardPct = Math.max(...selectedInfos.map((item) => Math.round((item.hard_usage_ratio || 0) * 100)));
   collectionHint.textContent = `선택: ${labels} | 최대 hard-cap 사용률 ${maxHardPct}%`;
+  updateUploadDefaultsSummary();
 }
 
 async function loadCollections() {
@@ -234,6 +272,7 @@ async function loadCollections() {
       collection2.value = "";
     }
     updateCollectionHint();
+    updateUploadDefaultsSummary();
   } catch (error) {
     collectionHint.textContent = String(error);
   }
@@ -424,12 +463,25 @@ async function submitUploadRequest() {
     const status = request.status || "pending";
     const autoApprove = data.auto_approve ? "on" : "off";
     uploadMsg.textContent = `요청 생성 완료: source=${sourceName}, id=${requestId}, status=${status}, auto_approve=${autoApprove}`;
+    uploadSource.value = "";
+    uploadCountry.value = "";
+    uploadDocType.value = "";
+    uploadContent.value = "";
+    setUploadMetadataOpen(false);
 
     if (status === "approved") {
       appendMessage("bot", `업로드 문서가 바로 반영되었습니다: ${sourceName}`);
       await loadCollections();
       await loadDocs();
       await healthCheck();
+      return;
+    }
+
+    if (status === "rejected") {
+      const rejectedReason = request.rejected_reason
+        || request.validation?.reasons?.[0]
+        || "검증 실패";
+      appendMessage("bot", `업로드 요청이 반려되었습니다: ${sourceName} | 사유=${rejectedReason}`);
       return;
     }
 
@@ -443,11 +495,15 @@ provider.addEventListener("change", syncDefaults);
 advancedSettingsToggle.addEventListener("click", () => {
   setAdvancedSettingsOpen(!advancedSettingsOpen);
 });
+uploadMetadataToggle.addEventListener("click", () => {
+  setUploadMetadataOpen(!uploadMetadataOpen);
+});
 collection.addEventListener("change", () => {
   if (collection2.value === collection.value) {
     collection2.value = "";
   }
   updateCollectionHint();
+  updateUploadDefaultsSummary();
 });
 collection2.addEventListener("change", () => {
   if (collection2.value === collection.value) {
@@ -455,6 +511,9 @@ collection2.addEventListener("change", () => {
   }
   updateCollectionHint();
 });
+uploadSource.addEventListener("input", updateUploadDefaultsSummary);
+uploadCountry.addEventListener("change", updateUploadDefaultsSummary);
+uploadDocType.addEventListener("change", updateUploadDefaultsSummary);
 
 sendBtn.addEventListener("click", sendQuestion);
 userInput.addEventListener("keydown", (event) => {
@@ -485,3 +544,4 @@ setAdvancedSettingsOpen(false);
 healthCheck();
 loadCollections();
 loadDocs();
+setUploadMetadataOpen(false);

@@ -50,6 +50,8 @@
 - `scripts/benchmark_query_e2e.py`: `/query` E2E p95 벤치 스크립트
 - `run_doc_rag.bat`: 터미널 명령 없이 서버+브라우저 실행
 - `stop_doc_rag.bat`: 실행 중인 로컬 서버 종료
+- `requirements.txt`: 런타임 의존성
+- `requirements-dev.txt`: 테스트/브라우저 의존성
 - `.env.example`: 환경변수 템플릿
 - `docs/PREPROCESSING_RULES.md`: 전처리 규칙 초안
 - `docs/PREPROCESSING_PROMPT_TEMPLATE.md`: 전처리 프롬프트 템플릿
@@ -60,33 +62,43 @@
 
 ## Quick Start
 
-1. 환경변수 파일 준비(권장):
+1. Python 가상환경 생성(권장):
+```powershell
+cd <repo>
+python -m venv .venv
+```
+2. 런타임 패키지 설치:
+```powershell
+cd <repo>
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+3. 환경변수 파일 준비(권장):
 ```powershell
 cd <repo>
 copy .env.example .env
 ```
    - `.env.example` 기본값은 로컬 우선 설정(`ollama`, `qwen3:4b`)입니다.
-2. Windows 빠른 실행(권장):
+4. Windows 빠른 실행(권장):
 ```powershell
 cd <repo>
 .\run_doc_rag.bat
 ```
    - `.venv\Scripts\python.exe`가 있으면 우선 사용하고, 없으면 시스템 `python`을 찾습니다.
    - `/health`가 준비될 때까지 최대 45초 대기한 뒤 `http://127.0.0.1:8000/intro`를 엽니다.
-3. 첫 실행이거나 상태 메시지에 `vectors=0`이 보이면 먼저 인덱싱:
+5. 첫 실행이거나 상태 메시지에 `vectors=0`이 보이면 먼저 인덱싱:
    - 브라우저 왼쪽 메뉴에서 `Reindex`를 실행하거나
 ```powershell
 cd <repo>
-python build_index.py --reset
+.venv\Scripts\python.exe build_index.py --reset
 ```
-4. 수동 실행이 필요하면:
+6. 수동 실행이 필요하면:
 ```powershell
 cd <repo>
-python app_api.py
+.venv\Scripts\python.exe app_api.py
 ```
-5. 브라우저에서 `http://127.0.0.1:8000/intro`가 열리고, `사용자 모드 시작` 버튼으로 `/app` 진입.
+7. 브라우저에서 `http://127.0.0.1:8000/intro`가 열리고, `사용자 모드 시작` 버튼으로 `/app` 진입.
    - 관리자 모드는 인증 코드 입력 후 `/admin` 진입
-6. Windows 배치 실행 종료:
+8. Windows 배치 실행 종료:
 ```powershell
 cd <repo>
 .\stop_doc_rag.bat
@@ -221,22 +233,22 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 개발용 테스트 의존성 설치:
 
 ```powershell
-python -m pip install -r requirements-dev.txt
-python -m playwright install chromium
+.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.venv\Scripts\python.exe -m playwright install chromium
 ```
 
 실행:
 
 ```powershell
-python -m pytest -q
+.venv\Scripts\python.exe -m pytest -q
 ```
 
 개별 실행:
 
 ```powershell
-python -m pytest -q tests/api
-python -m pytest -q tests/test_chunking_modes.py
-python -m pytest -q tests/e2e/test_web_flow_playwright.py -m e2e
+.venv\Scripts\python.exe -m pytest -q tests/api
+.venv\Scripts\python.exe -m pytest -q tests/test_chunking_modes.py
+.venv\Scripts\python.exe -m pytest -q tests/e2e/test_web_flow_playwright.py -m e2e
 ```
 
 다중 컬렉션 PoC 벤치(검색 단계):

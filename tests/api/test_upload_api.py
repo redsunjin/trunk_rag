@@ -51,6 +51,31 @@ def test_upload_request_create_pending_and_list(client, monkeypatch, tmp_path: P
     assert any(item["id"] == request_id for item in listed["requests"])
 
 
+def test_upload_request_uses_collection_defaults_when_optional_fields_are_omitted(client, monkeypatch, tmp_path: Path):
+    monkeypatch.setattr(
+        routes_upload.upload_service,
+        "upload_request_store_path",
+        lambda: tmp_path / "upload_requests.json",
+    )
+    monkeypatch.setenv("DOC_RAG_AUTO_APPROVE", "0")
+
+    create = client.post(
+        "/upload-requests",
+        json={
+            "collection": "ge",
+            "content": _sample_markdown(),
+        },
+    )
+    assert create.status_code == 200
+    body = create.json()
+    request = body["request"]
+    assert request["status"] == "pending"
+    assert request["source_name"].startswith("upload_")
+    assert request["source_name"].endswith(".md")
+    assert request["metadata"]["country"] == "germany"
+    assert request["metadata"]["doc_type"] == "country"
+
+
 def test_upload_request_approve_and_reject(client, monkeypatch, tmp_path: Path):
     monkeypatch.setattr(
         routes_upload.upload_service,

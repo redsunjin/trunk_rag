@@ -69,16 +69,23 @@ def live_server_url():
 @pytest.mark.e2e
 def test_intro_app_flow(page: Page, live_server_url: str):
     page.goto(f"{live_server_url}/intro", wait_until="domcontentloaded")
-    expect(page.locator("#statusIndicator .status-text")).to_have_text("Online", timeout=15000)
+    expect(page.locator("#statusIndicator .status-text")).to_have_text(re.compile(r"Online|Ready"), timeout=15000)
+    expect(page.locator("#statusMsg")).to_contain_text("llm=", timeout=15000)
 
     page.click("#userStartBtn")
     expect(page).to_have_url(re.compile(r".*/app$"), timeout=10000)
     expect(page.locator("#runtimeSummary")).to_contain_text("기본 질의 설정", timeout=10000)
     expect(page.locator("#advancedSettings")).to_be_hidden()
+    expect(page.locator("#uploadMetadataFields")).to_be_hidden()
+    expect(page.locator("#uploadDefaultsSummary")).to_contain_text("source=auto")
     page.click("#advancedSettingsToggle")
     expect(page.locator("#advancedSettings")).to_be_visible()
     page.click("#advancedSettingsToggle")
     expect(page.locator("#advancedSettings")).to_be_hidden()
+    page.click("#uploadMetadataToggle")
+    expect(page.locator("#uploadMetadataFields")).to_be_visible()
+    page.click("#uploadMetadataToggle")
+    expect(page.locator("#uploadMetadataFields")).to_be_hidden()
 
     first_doc_button = page.locator(".doc-item-btn").first
     expect(first_doc_button).to_be_visible(timeout=10000)
@@ -90,6 +97,35 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     expect(page.locator("#collection2 option[value='ge']")).to_have_count(1, timeout=10000)
     page.select_option("#collection", "fr")
     page.select_option("#collection2", "ge")
+    expect(page.locator("#uploadDefaultsSummary")).to_contain_text("country=france")
+    expect(page.locator("#uploadDefaultsSummary")).to_contain_text("doc_type=country")
+
+    def health_success(route):
+        route.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps(
+                {
+                    "status": "ok",
+                    "collection_key": "all",
+                    "collection": "w2_007_header_rag",
+                    "persist_dir": "mock",
+                    "vectors": 37,
+                    "auto_approve": False,
+                    "pending_requests": 0,
+                    "chunking_mode": "char",
+                    "query_timeout_seconds": 15,
+                    "max_context_chars": None,
+                    "default_llm_provider": "ollama",
+                    "default_llm_model": "qwen3:4b",
+                    "default_llm_base_url": "http://localhost:11434",
+                }
+            ),
+        )
+
+    page.route("**/health", health_success)
+    page.click("#healthBtn")
+    expect(page.locator("#statusMsg")).to_contain_text("vectors=37")
 
     query_payload: dict[str, object] = {}
 
@@ -159,12 +195,15 @@ def test_intro_app_flow(page: Page, live_server_url: str):
 
     page.route("**/reindex", reindex_success)
     page.click("#reindexBtn")
-    expect(page.locator("#statusMsg")).to_contain_text("reindex 완료")
-    expect(page.locator("#statusMsg")).to_contain_text("vectors=99")
-    expect(page.locator("#statusMsg")).to_contain_text("usable_ratio=100.00%")
+    expect(page.locator(".chat-message.bot").last).to_contain_text("재인덱싱 완료")
+    expect(page.locator(".chat-message.bot").last).to_contain_text("vectors=99")
+    expect(page.locator(".chat-message.bot").last).to_contain_text("usable_ratio=100.00%")
     page.unroute("**/reindex", reindex_success)
 
+    upload_payload: dict[str, object] = {}
+
     def upload_request_success(route):
+        upload_payload["body"] = route.request.post_data_json
         route.fulfill(
             status=200,
             content_type="application/json",
@@ -184,7 +223,39 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     page.click("#uploadBtn")
     expect(page.locator("#uploadMsg")).to_contain_text("req-upload-1")
     expect(page.locator("#uploadMsg")).to_contain_text("pending")
+    assert upload_payload["body"]["source_name"] is None
+    assert upload_payload["body"]["country"] is None
+    assert upload_payload["body"]["doc_type"] is None
     page.unroute("**/upload-requests", upload_request_success)
+
+    def upload_request_rejected(route):
+        route.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps(
+                {
+                    "auto_approve": True,
+                    "request": {
+                        "id": "req-upload-2",
+                        "status": "rejected",
+                        "source_name": "bad_upload.md",
+                        "rejected_reason": "auto-approve enabled but validation failed",
+                        "validation": {
+                            "reasons": ["헤더 누락"],
+                        },
+                    },
+                }
+            ),
+        )
+
+    page.route("**/upload-requests", upload_request_rejected)
+    page.fill("#uploadContent", "본문만 있고 헤더가 없는 문장")
+    page.click("#uploadBtn")
+    expect(page.locator("#uploadMsg")).to_contain_text("req-upload-2")
+    expect(page.locator(".chat-message.bot").last).to_contain_text("반려되었습니다")
+    expect(page.locator(".chat-message.bot").last).to_contain_text("validation failed")
+    page.unroute("**/upload-requests", upload_request_rejected)
+    page.unroute("**/health", health_success)
 
 
 @pytest.mark.e2e

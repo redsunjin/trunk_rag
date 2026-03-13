@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from fastapi import HTTPException
 
@@ -33,7 +33,7 @@ def get_admin_code() -> str:
 
 
 def utc_now_iso() -> str:
-    return datetime.now(UTC).replace(microsecond=0).isoformat()
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
 def parse_bool_env(name: str, default: bool = False) -> bool:

@@ -95,6 +95,8 @@
 - `common.py`: 문서/청킹/임베딩/LLM 공통 유틸
 - `scripts/validate_rag_doc.py`: 등록 전 문서 검증
 - `build_index.py`: 초기 인덱싱 스크립트
+- `requirements.txt`: 런타임 의존성
+- `requirements-dev.txt`: 테스트/브라우저 의존성
 - `web/index.html`: 브라우저 UI
 - `web/admin.html`: 관리자 상태 UI
 - `web/styles.css`: 공통 스타일
@@ -300,6 +302,16 @@
 ```
 
 ## 실행 기준
+- 가상환경 생성(권장):
+```powershell
+cd <repo>
+python -m venv .venv
+```
+- 런타임 패키지 설치:
+```powershell
+cd <repo>
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
 - 환경 파일 준비(권장):
 ```powershell
 cd <repo>
@@ -309,7 +321,7 @@ copy .env.example .env
 - 인덱스 생성:
 ```powershell
 cd <repo>
-python build_index.py --reset
+.venv\Scripts\python.exe build_index.py --reset
 ```
 - 서버 실행(권장):
 ```powershell
@@ -321,7 +333,7 @@ cd <repo>
 - 서버 실행(수동):
 ```powershell
 cd <repo>
-python app_api.py
+.venv\Scripts\python.exe app_api.py
 ```
 - 첫 실행 또는 `vectors=0` 상태면 `/app` 왼쪽 메뉴의 `Reindex`를 먼저 실행한다.
 - UI 접속:

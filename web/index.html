@@ -87,30 +87,39 @@
 
         <div class="sidebar-section">
           <h3>Upload Request</h3>
-          <div class="input-group">
-            <label for="uploadSource">Source Name (optional)</label>
-            <input type="text" id="uploadSource" placeholder="비워두면 자동 생성됩니다">
-            <small class="helper-text">컬렉션 기준으로 country/doc_type 기본값을 자동 채웁니다.</small>
+          <p id="uploadDefaultsSummary" class="status-msg" style="margin-bottom:10px;">
+            기본 업로드 메타데이터를 계산 중입니다.
+          </p>
+          <div style="display:flex;gap:8px;align-items:center;margin:0 0 12px;">
+            <button id="uploadMetadataToggle" class="secondary-btn" type="button">메타데이터 수정</button>
+            <small class="helper-text" style="margin-top:0;">기본 경로에서는 자동 파일명과 컬렉션 기본값을 사용합니다.</small>
           </div>
-          <div class="input-row">
+          <div id="uploadMetadataFields" class="hidden">
             <div class="input-group">
-              <label for="uploadCountry">Country</label>
-              <select id="uploadCountry">
-                <option value="">(collection 기본값)</option>
-                <option value="all">all</option>
-                <option value="france">france</option>
-                <option value="germany">germany</option>
-                <option value="italy">italy</option>
-                <option value="uk">uk</option>
-              </select>
+              <label for="uploadSource">Source Name (optional)</label>
+              <input type="text" id="uploadSource" placeholder="비워두면 자동 생성됩니다">
+              <small class="helper-text">비워두면 `upload_타임스탬프.md` 형식으로 자동 생성됩니다.</small>
             </div>
-            <div class="input-group">
-              <label for="uploadDocType">Doc Type</label>
-              <select id="uploadDocType">
-                <option value="">(collection 기본값)</option>
-                <option value="summary">summary</option>
-                <option value="country">country</option>
-              </select>
+            <div class="input-row">
+              <div class="input-group">
+                <label for="uploadCountry">Country</label>
+                <select id="uploadCountry">
+                  <option value="">(collection 기본값)</option>
+                  <option value="all">all</option>
+                  <option value="france">france</option>
+                  <option value="germany">germany</option>
+                  <option value="italy">italy</option>
+                  <option value="uk">uk</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="uploadDocType">Doc Type</label>
+                <select id="uploadDocType">
+                  <option value="">(collection 기본값)</option>
+                  <option value="summary">summary</option>
+                  <option value="country">country</option>
+                </select>
+              </div>
             </div>
           </div>
           <div class="input-group">

@@ -13,7 +13,7 @@ if %ERRORLEVEL%==0 (
 )
 
 echo [doc_rag] Python runtime not found.
-echo [doc_rag] Create .venv or install Python 3, then retry.
+echo [doc_rag] Create .venv, install requirements.txt, or install Python 3, then retry.
 exit /b 1
 
 :python_ready
@@ -42,4 +42,5 @@ if %ERRORLEVEL%==0 (
 
 echo [doc_rag] Server launch requested, but /health was not ready within 45 seconds.
 echo [doc_rag] Check the 'doc_rag_server' window for missing dependencies, port conflicts, or runtime errors.
+echo [doc_rag] If packages are missing, run: .venv\Scripts\python.exe -m pip install -r requirements.txt
 exit /b 1
