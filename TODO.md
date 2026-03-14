@@ -62,12 +62,14 @@
 - `scripts/benchmark_token_chunking.py`를 Python 3.9/파라미터 스윕 기준으로 보강했다.
 - 토큰 청킹 1차 스윕(`700/80`, `800/120`, `900/120`)은 완료했고 결과는 `docs/reports/TOKEN_CHUNKING_SWEEP_REPORT_2026-03-13.md`에 정리했다.
 - `DOC_RAG_EMBEDDING_MODEL` override와 `scripts/runtime_preflight.py`를 추가해 런타임 준비 상태를 사전 점검할 수 있게 했다.
-- 현재 남은 blocker는 로컬 embedding model 준비와 benchmark 대상 API base URL 확보다.
+- 초기 blocker였던 로컬 embedding model/base URL 문제는 local benchmark profile로 우회해 재측정을 진행했다.
+- `2026-03-14` 재측정으로 local benchmark profile(`llama3.1:8b`, `max_context=300`, `num_predict=32`) 기준 `/query` E2E는 다시 통과했다.
+- 같은 profile에서 `token_800_120`은 `char` 대비 p95가 `1.9% ~ 3.1%` 더 빨랐지만, 공식 기본 스택이 아니라서 운영 기본값은 아직 `char` 유지로 본다.
 
-- [ ] 토큰 청킹 파라미터 재탐색 (`chunk_size`, `chunk_overlap`)
+- [x] 토큰 청킹 파라미터 재탐색 (`chunk_size`, `chunk_overlap`)
 - [ ] `/query` 지연/품질 균형 재측정 (`DOC_RAG_OLLAMA_NUM_PREDICT`, `DOC_RAG_MAX_CONTEXT_CHARS`)
 - [ ] 단일/다중 컬렉션 기본 경로 재판정
-- [ ] 벤치 JSON/리포트 갱신
+- [x] 벤치 JSON/리포트 갱신
 - [ ] 운영 권장 기본값 확정 및 문서 반영
 
 완료 기준:

@@ -1,0 +1,92 @@
+{
+  "generated_at": "2026-03-14T09:06:05+00:00",
+  "base_url": "http://127.0.0.1:8010",
+  "rounds": 2,
+  "warmup": 1,
+  "queries": [
+    "프랑스의 대표적인 과학 혁신 사례를 요약해줘",
+    "독일의 과학 발전 특징을 간단히 정리해줘",
+    "프랑스와 독일의 공통 과학적 성과를 비교해줘"
+  ],
+  "llm": {
+    "provider": "ollama",
+    "model": "llama3.1:8b",
+    "base_url": "http://127.0.0.1:11434"
+  },
+  "health": {
+    "status": "ok",
+    "collection_key": "all",
+    "collection": "w2_007_header_rag",
+    "persist_dir": "/Users/Agent/ps-workspace/trunk_rag/chroma_db",
+    "vectors": 37,
+    "auto_approve": false,
+    "pending_requests": 0,
+    "chunking_mode": "char",
+    "embedding_model": "/Users/Agent/Documents/huggingface/models/minishlab/potion-base-4M",
+    "query_timeout_seconds": 90,
+    "max_context_chars": 300,
+    "default_llm_provider": "ollama",
+    "default_llm_model": "llama3.1:8b",
+    "default_llm_base_url": "http://127.0.0.1:11434"
+  },
+  "results": [
+    {
+      "name": "single_all",
+      "collection_keys": [
+        "all"
+      ],
+      "measurements": 6,
+      "success_count": 6,
+      "failure_count": 0,
+      "success_ratio": 1.0,
+      "status_counts": {
+        "200": 6
+      },
+      "latency_all_avg_ms": 676.188,
+      "latency_all_p95_ms": 796.635,
+      "latency_success_avg_ms": 676.188,
+      "latency_success_p50_ms": 718.776,
+      "latency_success_p95_ms": 796.635,
+      "errors_sample": []
+    },
+    {
+      "name": "single_fr",
+      "collection_keys": [
+        "fr"
+      ],
+      "measurements": 6,
+      "success_count": 6,
+      "failure_count": 0,
+      "success_ratio": 1.0,
+      "status_counts": {
+        "200": 6
+      },
+      "latency_all_avg_ms": 945.181,
+      "latency_all_p95_ms": 1264.958,
+      "latency_success_avg_ms": 945.181,
+      "latency_success_p50_ms": 840.464,
+      "latency_success_p95_ms": 1264.958,
+      "errors_sample": []
+    },
+    {
+      "name": "dual_fr_ge",
+      "collection_keys": [
+        "fr",
+        "ge"
+      ],
+      "measurements": 6,
+      "success_count": 6,
+      "failure_count": 0,
+      "success_ratio": 1.0,
+      "status_counts": {
+        "200": 6
+      },
+      "latency_all_avg_ms": 930.951,
+      "latency_all_p95_ms": 1249.782,
+      "latency_success_avg_ms": 930.951,
+      "latency_success_p50_ms": 824.386,
+      "latency_success_p95_ms": 1249.782,
+      "errors_sample": []
+    }
+  ]
+}

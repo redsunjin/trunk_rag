@@ -69,9 +69,10 @@
 - 토큰 청킹 스윕(`700/80`, `800/120`, `900/120`)은 실행 완료
 - 다음 E2E 후보는 `token_800_120`, 보조 후보는 `token_700_80`
 - `DOC_RAG_EMBEDDING_MODEL` override와 `scripts/runtime_preflight.py`가 추가돼 런타임 준비 상태를 먼저 판별할 수 있다.
-- 현재 환경 blocker:
-  - 로컬 embedding model 경로 또는 `BAAI/bge-m3` 캐시 준비 필요
-  - benchmark 대상 API를 포트 충돌 없는 base URL로 실행해야 함
+- 초기 blocker였던 로컬 embedding model/base URL 문제는 local benchmark profile로 우회했다.
+- `2026-03-14` local benchmark profile(`llama3.1:8b`, local embedding path, `DOC_RAG_EMBEDDING_DEVICE=cpu`)에서는 `/query` E2E 100% 성공으로 재개됐다.
+- 같은 profile에서 `token_800_120` p95는 `char` 대비 `single_all -2.0%`, `single_fr -3.1%`, `dual_fr_ge -1.9%`였다.
+- 다만 개선폭이 작고 공식 기본 스택이 아니므로 기본 청킹 모드는 당분간 `char` 유지로 둔다.
 
 ### C. 제품화 후속
 1. 데스크톱 래핑(Electron/Tauri) PoC
@@ -166,6 +167,10 @@
 1. `.env.example` 기본값/권장값 갱신
 2. `README.md`, `SPEC.md` 동기화
 3. 리포트 요약(`docs/reports/*`) 갱신
+
+바로 다음 확인:
+1. 샘플 질의 2~3개 품질 수동 확인
+2. 가능하면 공식 기본 스택 또는 그에 가까운 로컬 스택으로 재측정
 
 ### D. P3 기능 착수
 1. 데스크톱 래핑(Electron/Tauri) PoC

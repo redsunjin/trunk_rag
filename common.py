@@ -3,13 +3,18 @@
 from __future__ import annotations
 
 import logging
+import json
 import os
 import re
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Any, Iterable
 
 from dotenv import load_dotenv
 from langchain_core.documents import Document
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
+from langchain_core.runnables import RunnableLambda
 from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
 
 try:
@@ -46,6 +51,8 @@ CHUNKING_MODE_TOKEN = "token"
 SUPPORTED_CHUNKING_MODES = {CHUNKING_MODE_CHAR, CHUNKING_MODE_TOKEN}
 DEFAULT_TOKEN_ENCODING = "cl100k_base"
 OLLAMA_NUM_PREDICT_ENV_KEY = "DOC_RAG_OLLAMA_NUM_PREDICT"
+EMBEDDING_DEVICE_ENV_KEY = "DOC_RAG_EMBEDDING_DEVICE"
+DEFAULT_OLLAMA_HTTP_TIMEOUT_SECONDS = 120
 TOKEN_FALLBACK_PATTERN = re.compile(r"[가-힣]|[A-Za-z0-9_]+|[^\s]")
 
 logger = logging.getLogger("doc_rag.common")
@@ -85,7 +92,11 @@ def resolve_hf_embeddings_class():
 
 def create_embeddings(model_name: str) -> Any:
     embeddings_cls = resolve_hf_embeddings_class()
-    return embeddings_cls(model_name=model_name)
+    kwargs: dict[str, Any] = {"model_name": model_name}
+    device = os.getenv(EMBEDDING_DEVICE_ENV_KEY, "").strip()
+    if device:
+        kwargs["model_kwargs"] = {"device": device}
+    return embeddings_cls(**kwargs)
 
 
 def parse_optional_positive_int_env(name: str) -> int | None:
@@ -177,17 +188,118 @@ def create_chat_llm(
             openai_api_base=base_url or "http://localhost:1234/v1",
         )
 
-    if ChatOllama is None:
-        raise ImportError("`ChatOllama` backend is not available. Install `langchain-ollama`.")
-    kwargs: dict[str, Any] = {
-        "model": model,
-        "temperature": temperature,
-        "base_url": base_url or "http://localhost:11434",
+    return build_ollama_chat_runnable(
+        model=model,
+        temperature=temperature,
+        base_url=base_url or "http://localhost:11434",
+    )
+
+
+def _message_role(message: BaseMessage) -> str:
+    if message.type == "system":
+        return "system"
+    if message.type == "ai":
+        return "assistant"
+    return "user"
+
+
+def _message_content(message: BaseMessage) -> str:
+    content = message.content
+    if isinstance(content, str):
+        return content
+    return str(content)
+
+
+def build_ollama_messages(prompt: Any) -> list[dict[str, str]]:
+    if hasattr(prompt, "to_messages"):
+        messages = prompt.to_messages()
+    elif isinstance(prompt, list) and all(isinstance(item, BaseMessage) for item in prompt):
+        messages = prompt
+    else:
+        messages = [HumanMessage(content=str(prompt))]
+
+    payload: list[dict[str, str]] = []
+    for message in messages:
+        payload.append(
+            {
+                "role": _message_role(message),
+                "content": _message_content(message),
+            }
+        )
+    return payload
+
+
+def build_ollama_response_message(payload: dict[str, Any]) -> AIMessage:
+    message = payload.get("message", {})
+    if not isinstance(message, dict):
+        return AIMessage(content=str(message))
+
+    content = str(message.get("content") or "").strip()
+    if not content:
+        content = str(message.get("thinking") or "").strip()
+
+    extra = {
+        key: value
+        for key, value in message.items()
+        if key not in {"content"}
     }
+    return AIMessage(content=content, additional_kwargs=extra)
+
+
+def invoke_ollama_chat(
+    prompt: Any,
+    *,
+    model: str,
+    temperature: float,
+    base_url: str,
+) -> AIMessage:
     num_predict = parse_optional_positive_int_env(OLLAMA_NUM_PREDICT_ENV_KEY)
+    options: dict[str, Any] = {"temperature": temperature}
     if num_predict is not None:
-        kwargs["num_predict"] = num_predict
-    return ChatOllama(**kwargs)
+        options["num_predict"] = num_predict
+
+    body = {
+        "model": model,
+        "messages": build_ollama_messages(prompt),
+        "stream": False,
+        "options": options,
+    }
+    request = urllib.request.Request(
+        f"{base_url.rstrip('/')}/api/chat",
+        data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
+        method="POST",
+        headers={"Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=DEFAULT_OLLAMA_HTTP_TIMEOUT_SECONDS) as response:
+            raw = response.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"Ollama HTTP error: {exc.code} {detail}") from exc
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"Ollama connection failed: {exc}") from exc
+
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError("Ollama returned invalid JSON.") from exc
+    return build_ollama_response_message(payload)
+
+
+def build_ollama_chat_runnable(
+    *,
+    model: str,
+    temperature: float,
+    base_url: str,
+):
+    return RunnableLambda(
+        lambda prompt: invoke_ollama_chat(
+            prompt,
+            model=model,
+            temperature=temperature,
+            base_url=base_url,
+        )
+    )
 
 
 def load_markdown_documents(data_dir: Path, file_names: Iterable[str]) -> list[Document]:

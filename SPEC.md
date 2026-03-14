@@ -320,6 +320,7 @@ copy .env.example .env
 ```
 - `.env.example` 기본값은 로컬 우선(`ollama`, `qwen3:4b`)이다.
 - 임베딩 모델은 `DOC_RAG_EMBEDDING_MODEL`로 override 가능하며, HuggingFace 모델 ID 또는 로컬 경로를 받을 수 있다.
+- 로컬 embedding 모델이 `MPS`에서 불안정하면 `DOC_RAG_EMBEDDING_DEVICE=cpu`로 강제할 수 있다.
 - 인덱스 생성:
 ```powershell
 cd <repo>
