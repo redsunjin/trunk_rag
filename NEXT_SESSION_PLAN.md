@@ -43,6 +43,7 @@
 7. 업로드/갱신 구현 1차가 반영돼 승인된 요청은 `chroma_db/managed_docs/` 기준으로 재구성된다.
 8. `POST /upload-requests`는 `request_type/doc_key/change_summary`를 받고, `GET /rag-docs`와 `POST /reindex`는 seed + managed active 문서를 같은 기준으로 본다.
 9. `DOC_RAG_AUTO_APPROVE`는 `create` 요청에만 적용되고 `update`는 항상 관리자 승인 경로를 탄다.
+10. 데스크톱 패키징/배포 하드닝 재검토 결과, embedded Python/별도 설치 전략이 정해지기 전까지는 보류 유지로 판단했다.
 
 ## 0.2 2026-03-17 GraphRAG 게이트 업데이트
 
@@ -109,8 +110,7 @@
 - `.venv/bin/python -m pytest -q` -> `32 passed in 5.29s`
 
 ### C. 제품화 후속
-1. 데스크톱 패키징/배포 하드닝 여부 재검토
-2. 업로드/갱신 관리자 워크플로우 구현 2차
+1. 업로드/갱신 관리자 워크플로우 구현 2차
 
 ### D. GraphRAG 결정 게이트
 1. 실제 accuracy/latency 실측
@@ -167,20 +167,18 @@
 ## 4. 현재 남은 작업 범위 (핵심)
 
 즉시 진행 대상 (다음 세션 1순위):
-1. 데스크톱 패키징/배포 하드닝 여부 재검토
-2. 업로드/갱신 관리자 워크플로우 구현 2차
-3. GraphRAG actual PoC/실측
+1. 업로드/갱신 관리자 워크플로우 구현 2차
+2. GraphRAG actual PoC/실측
 
 후속 대상 (P3):
 1. GraphRAG 필요성 검증 및 사이드카 PoC 여부 결정
-2. 데스크톱 패키징/배포 하드닝 여부 재검토
-3. 업로드/갱신 관리자 워크플로우 구현 2차
+2. 업로드/갱신 관리자 워크플로우 구현 2차
+3. 데스크톱 패키징은 embedded Python/설치 전략 결정 전까지 보류 유지
 
 ## 5. 다음 세션 우선순위 (실행 순서)
 
 ### A. 제품화 후속
-1. 데스크톱 패키징/배포 하드닝 여부 재검토
-2. 업로드/갱신 관리자 워크플로우 구현 2차
+1. 업로드/갱신 관리자 워크플로우 구현 2차
 
 ### B. GraphRAG 결정 게이트
 1. Neo4j sidecar actual PoC/실측
@@ -221,7 +219,7 @@
 3. 서비스 분해 후 monkeypatch 경로가 바뀌었으므로 신규 테스트 작성 시 모듈 경로 준수 필요
 4. 쉬운 RAG 개선 없이 기능만 추가하면 사용자 마찰이 누적될 수 있음
 5. GraphRAG/AuraDB는 운영 모델(폐쇄망/로컬/경량)과 충돌 가능성이 큼
-6. Electron PoC는 가능성을 확인했지만 설치형 제품으로 가려면 Python/모델 번들링 전략이 별도로 필요함
+6. Electron PoC는 가능성을 확인했지만 설치형 제품으로 가려면 Python/모델 번들링 전략이 별도로 필요하며, 현재는 보류 상태다.
 7. 업로드 관리자 워크플로우는 active 버전/manifest까지는 구현됐지만, diff 뷰/이력 조회/rollback UI는 아직 없다.
 
 ## 9. 다음 커밋 목표 (권장)
@@ -230,3 +228,4 @@
 2. `perf(rag): remeasure query p95 and tune runtime defaults`
 3. `docs(plan): reprioritize roadmap for easy-rag gate and graphrag decision`
 4. `feat(upload): persist managed markdown and active-doc workflow`
+5. `docs(desktop): record packaging hardening hold decision`

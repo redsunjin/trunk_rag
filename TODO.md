@@ -84,6 +84,7 @@
 ## 현재 우선순위 P2 (제품화 후속)
 
 - [x] 데스크톱 래핑(Electron/Tauri) PoC
+- [x] 데스크톱 패키징/배포 하드닝 여부 재검토
 - [x] 문서 업로드/갱신 관리자 워크플로우 설계
 - [x] 문서 업로드/갱신 관리자 워크플로우 구현 1차
 
@@ -94,6 +95,8 @@
 - `npm run smoke`로 서버 부트스트랩과 `/health` readiness를 검증했다.
 - 결론은 "기술적으로 가능하지만 MVP 기본 범위에는 아직 넣지 않고 보류"다.
 - 근거 문서는 `docs/reports/DESKTOP_WRAPPER_POC_REPORT_2026-03-17.md`를 기준으로 본다.
+- 패키징/배포 하드닝 재검토 결과도 `docs/reports/DESKTOP_PACKAGING_HARDENING_REVIEW_2026-03-17.md`에 고정했다.
+- 결론은 "embedded Python/별도 설치 전략이 먼저 결정되기 전까지는 패키징 투자를 보류"다.
 - 업로드/갱신 관리자 워크플로우 설계는 `docs/UPLOAD_ADMIN_WORKFLOW.md`에 고정했다.
 - 핵심 결정은 "승인 결과를 벡터스토어 직접 추가로 끝내지 말고 managed markdown 원본 + active 버전으로 운영한다"는 점이다.
 - 구현 1차에서는 `request_type/doc_key/change_summary`를 업로드 요청에 추가했다.
@@ -246,7 +249,7 @@ Go / No-Go 기준:
 - [ ] 전체 회귀 테스트 통과
 
 ### Stage B (확장, P3 3트랙)
-- [ ] Track-1: 데스크톱 패키징/배포 하드닝
+- [x] Track-1: 데스크톱 패키징/배포 하드닝 여부 재검토
 - [x] Track-2: 업로드/갱신 관리자 워크플로우 구현 1차
 - [ ] Track-3: QA/문서 업데이트 전담
 

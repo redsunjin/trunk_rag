@@ -69,6 +69,7 @@
 - `docs/COLLECTION_ROUTING_POLICY.md`: 분야별 컬렉션/라우팅 정책
 - `docs/FUTURE_EXTERNAL_CONSTRAINTS.md`: 외부 제한사항 중 추후 적용 항목
 - `docs/reports/DESKTOP_WRAPPER_POC_REPORT_2026-03-17.md`: 데스크톱 래핑 PoC 결과 및 MVP 반영 판단
+- `docs/reports/DESKTOP_PACKAGING_HARDENING_REVIEW_2026-03-17.md`: 데스크톱 패키징/배포 하드닝 재검토 결과
 
 ## Quick Start
 
@@ -136,6 +137,7 @@ npm start
 - Electron 앱 시작 시에도 같은 preflight를 먼저 실행하고, blocking 실패가 있으면 창에서 바로 이유를 보여 줍니다.
 - 현재 PoC는 설치형 제품이 아니라 "기존 웹 UI를 데스크톱 셸로 감쌀 수 있는지"를 검증하는 수준입니다.
 - 결론과 리스크는 `docs/reports/DESKTOP_WRAPPER_POC_REPORT_2026-03-17.md`를 기준으로 봅니다.
+- 패키징/배포 하드닝 재검토 결과는 `docs/reports/DESKTOP_PACKAGING_HARDENING_REVIEW_2026-03-17.md`를 기준으로 보며, 현재 판단은 "보류 유지"입니다.
 
 ## API
 

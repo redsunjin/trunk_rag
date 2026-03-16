@@ -26,6 +26,7 @@
 - 승인된 업로드를 `chroma_db/managed_docs/`에 저장하고 active 버전 기준으로 재구성
 - 업로드 요청의 `request_type/doc_key/change_summary` 필드 지원
 - `/rag-docs`와 `reindex`가 seed + managed active 문서를 같은 기준으로 사용
+- Electron 패키징/배포 하드닝 재검토 완료(현재 판단: 보류 유지)
 - `/health` 기반 런타임 기본 LLM 설정 노출
 - 기본 모드 UI에서 고급 LLM 설정 기본 숨김
 - 빈 인덱스/LLM 연결 오류에 대한 가이드 메시지
@@ -469,16 +470,16 @@ npm start
 
 ## 다음 진행 방향
 ### 1순위
-- 데스크톱 패키징/배포 하드닝 여부 재검토
-- 내용: embedded Python/설치 전략, preflight UI, 패키징 비용 판단
-
-### 2순위
 - 업로드/갱신 관리자 워크플로우 구현 2차
 - 내용: 관리자 상세 보기, diff/이력 UX, reject reason code 정리
 
-### 3순위
+### 2순위
 - GraphRAG actual PoC/실측
 - 내용: self-managed Neo4j sidecar 구현, accuracy/latency 측정, Go/No-Go 판단
+
+### 3순위
+- 데스크톱 패키징 실제 착수 재검토
+- 내용: embedded Python/설치 전략이 먼저 고정된 경우에만 패키징 재개
 
 ## 완료 판정 기준
 - `health/reindex/query` 정상 동작
