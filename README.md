@@ -24,7 +24,7 @@
 - 현재: 정제된 md를 인덱싱/검색/질의
 - 현재: 데이터 등록 시 검증(사용 가능/불가 판정) 적용
 - 현재: 분야별 컬렉션 + 단순 라우팅 적용
-- 다음 우선순위(P2/P3): 성능/품질 파라미터 재탐색, 데스크톱 래핑 PoC, 관리자 워크플로우 고도화
+- 다음 우선순위(P2/P3): 관리자 워크플로우 상세 설계, 데스크톱 패키징/배포 하드닝 재검토
 
 비목표(현재 단계):
 - 원본 수집/크롤링
@@ -51,6 +51,7 @@
 - `scripts/runtime_preflight.py`: P1 벤치 전 런타임 준비 상태 점검
 - `run_doc_rag.bat`: 터미널 명령 없이 서버+브라우저 실행
 - `stop_doc_rag.bat`: 실행 중인 로컬 서버 종료
+- `desktop/electron/*`: 기존 웹 UI를 감싸는 실험용 Electron 데스크톱 래퍼 PoC
 - `AGENTS.md`: 에이전트용 상시 작업 정책
 - `WORKFLOW.md`: 사람/에이전트 공통 작업 순서
 - `requirements.txt`: 런타임 의존성
@@ -62,6 +63,7 @@
 - `docs/VECTORSTORE_POLICY.md`: 벡터스토어 운영/용량 정책
 - `docs/COLLECTION_ROUTING_POLICY.md`: 분야별 컬렉션/라우팅 정책
 - `docs/FUTURE_EXTERNAL_CONSTRAINTS.md`: 외부 제한사항 중 추후 적용 항목
+- `docs/reports/DESKTOP_WRAPPER_POC_REPORT_2026-03-17.md`: 데스크톱 래핑 PoC 결과 및 MVP 반영 판단
 
 ## Quick Start
 
@@ -109,6 +111,23 @@ cd <repo>
 ```
 
 수동 실행 시에는 실행 중인 터미널에서 `Ctrl+C`로 종료할 수 있습니다.
+
+## Experimental Desktop PoC
+
+기본 운영 경로는 계속 브라우저 UI이지만, `desktop/electron`에 최소 실행 가능한 Electron PoC를 추가했습니다.
+
+```powershell
+cd <repo>\desktop\electron
+npm install
+npm run check
+npm run smoke
+npm start
+```
+
+- `npm run smoke`는 `.venv`의 Python 또는 시스템 Python으로 `app_api.py`를 띄운 뒤 `/health` readiness를 확인합니다.
+- `npm start`는 같은 런타임을 Electron 창에 연결해 `/intro`를 엽니다.
+- 현재 PoC는 설치형 제품이 아니라 "기존 웹 UI를 데스크톱 셸로 감쌀 수 있는지"를 검증하는 수준입니다.
+- 결론과 리스크는 `docs/reports/DESKTOP_WRAPPER_POC_REPORT_2026-03-17.md`를 기준으로 봅니다.
 
 ## API
 
@@ -256,6 +275,14 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 ```powershell
 .venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 .venv\Scripts\python.exe -m playwright install chromium
+```
+
+Electron PoC 검증:
+
+```powershell
+cd <repo>\desktop\electron
+npm run check
+npm run smoke
 ```
 
 실행:

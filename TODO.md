@@ -83,8 +83,15 @@
 
 ## 현재 우선순위 P2 (제품화 후속)
 
-- [ ] 데스크톱 래핑(Electron/Tauri) PoC
+- [x] 데스크톱 래핑(Electron/Tauri) PoC
 - [ ] 문서 업로드/갱신 관리자 워크플로우 설계
+
+진행 메모 (2026-03-17):
+- `desktop/electron`에 Electron PoC를 추가했다.
+- PoC는 기존 FastAPI 서버를 직접 띄우거나 기존 서버에 attach한 뒤 `/intro`를 데스크톱 창으로 연다.
+- `npm run smoke`로 서버 부트스트랩과 `/health` readiness를 검증했다.
+- 결론은 "기술적으로 가능하지만 MVP 기본 범위에는 아직 넣지 않고 보류"다.
+- 근거 문서는 `docs/reports/DESKTOP_WRAPPER_POC_REPORT_2026-03-17.md`를 기준으로 본다.
 
 ## GraphRAG 도입 결정 게이트
 
@@ -152,7 +159,7 @@ Go / No-Go 기준:
 
 ## P2 (후속)
 
-- [ ] 데스크톱 래핑(Electron/Tauri) PoC
+- [x] 데스크톱 래핑(Electron/Tauri) PoC
 - [ ] 문서 업로드/갱신 관리자 워크플로우 설계
 
 ## P3-Prep (코드베이스 효율화 게이트)
@@ -215,7 +222,7 @@ Go / No-Go 기준:
 - [ ] 전체 회귀 테스트 통과
 
 ### Stage B (확장, P3 3트랙)
-- [ ] Track-1: 데스크톱 래핑 PoC
+- [ ] Track-1: 데스크톱 패키징/배포 하드닝
 - [ ] Track-2: 업로드/갱신 관리자 워크플로우 설계
 - [ ] Track-3: QA/문서 업데이트 전담
 

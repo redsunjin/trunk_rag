@@ -28,12 +28,14 @@
 - 빈 인덱스/LLM 연결 오류에 대한 가이드 메시지
 - API/프론트 최소 회귀 테스트 체계(pytest + Playwright)
 - 전처리 규칙 문서(`docs/PREPROCESSING_RULES.md`)
+- 실험용 Electron 데스크톱 래퍼 PoC(`desktop/electron`)
 
 ### 제외(현재 단계)
 - 사용자 인증/권한
 - 멀티 유저 세션 분리
 - 분산/HA 배포
 - 문서 업로드 관리자 UI
+- 데스크톱 정식 제품화/설치 프로그램
 - 원본 소스 자동 수집/크롤링
 - 대규모 자동 전처리(재작성/요약) 파이프라인 내장
 - cross-encoder rerank/multi-vector 기본 탑재
@@ -81,6 +83,12 @@
 - `vectors=0` 상태에서 `Reindex` 선행 안내
 - 업로드 요청에서 `Source Name` optional + 컬렉션 기준 기본값 사용
 
+### 데스크톱 PoC
+- Electron 기반 최소 래퍼 추가(`desktop/electron`)
+- 기존 `/intro`, `/app`, `/admin` 웹 UI를 재사용
+- 로컬 서버 미실행 시 `.venv` 또는 시스템 Python으로 `app_api.py`를 부트스트랩
+- 종료 시 Electron이 직접 띄운 Python 프로세스 정리
+
 ### 구조 분해(P3-Prep 완료)
 - `app_api.py`는 앱 조립/예외 처리 중심으로 축소
 - 라우트는 `api/routes_*.py`로 분리
@@ -97,6 +105,7 @@
 - `build_index.py`: 초기 인덱싱 스크립트
 - `requirements.txt`: 런타임 의존성
 - `requirements-dev.txt`: 테스트/브라우저 의존성
+- `desktop/electron/*`: Electron PoC 런타임/검증 스크립트
 - `web/index.html`: 브라우저 UI
 - `web/admin.html`: 관리자 상태 UI
 - `web/styles.css`: 공통 스타일
@@ -342,6 +351,14 @@ cd <repo>
 cd <repo>
 .venv\Scripts\python.exe app_api.py
 ```
+- 실험용 Electron PoC:
+```powershell
+cd <repo>\desktop\electron
+npm install
+npm run check
+npm run smoke
+npm start
+```
 - 첫 실행 또는 `vectors=0` 상태면 `/app` 왼쪽 메뉴의 `Reindex`를 먼저 실행한다.
 - UI 접속:
 - 인트로: `http://127.0.0.1:8000/intro`
@@ -357,6 +374,7 @@ cd <repo>
 - 전처리는 외부 단계에서 수행하고, `trunk_rag`는 검증 게이트 중심으로 관리
 - 쉬운 RAG 기본 경로를 위해 런처 readiness 대기와 고급 설정 기본 숨김 유지
 - 교차 국가 비교 질의는 `all` 고정보다 키워드 기반 자동 다중 라우팅(최대 2개)을 기본 경로로 둔다
+- 데스크톱은 웹 UI 재작성 대신 기존 FastAPI + 웹 자산을 감싸는 래퍼로만 PoC하고, MVP 본체에는 아직 포함하지 않는다
 
 ## 제약 사항
 - 추론 속도/품질은 로컬 하드웨어 성능에 크게 의존
@@ -387,16 +405,16 @@ cd <repo>
 
 ## 다음 진행 방향
 ### 1순위
-- 데스크톱 래핑(Electron/Tauri) PoC
-- 내용: 로컬 서버 패키징 가능성 검토
-
-### 2순위
 - 문서 업로드/갱신 관리자 워크플로우 설계
 - 내용: 운영 절차, 승인/반려 후속 처리, 갱신 정책 정의
 
-### 3순위
+### 2순위
 - GraphRAG 도입 필요성 검증
 - 내용: 관계형 질문셋 분리, 실패 사례 축적, 사이드카 PoC Go/No-Go 판단
+
+### 3순위
+- 데스크톱 패키징/배포 하드닝 여부 재검토
+- 내용: embedded Python/설치 전략, preflight UI, 패키징 비용 판단
 
 ## 완료 판정 기준
 - `health/reindex/query` 정상 동작

@@ -1,0 +1,15 @@
+{
+  "name": "doc-rag-electron-poc",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Electron wrapper PoC for trunk_rag",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "check": "node --check main.js && node --check server_runtime.js && node --check scripts/smoke_runtime.js",
+    "smoke": "node scripts/smoke_runtime.js"
+  },
+  "devDependencies": {
+    "electron": "^41.0.2"
+  }
+}
