@@ -114,9 +114,14 @@
 - 결론은 "Vector RAG 기본 경로 유지 + graph-candidate 질문군만 sidecar 후보"다.
 
 PoC 범위:
-- [ ] `md -> entity/relation 추출 -> graph 적재` 최소 파이프라인 정의
-- [ ] `query router -> graph/vector hybrid retrieval -> fallback` 계약 정의
-- [ ] 정확도/지연/운영 복잡도 비교표 작성
+- [x] `md -> entity/relation 추출 -> graph 적재` 최소 파이프라인 정의
+- [x] `query router -> graph/vector hybrid retrieval -> fallback` 계약 정의
+- [x] 정확도/지연/운영 복잡도 비교표 작성
+
+진행 메모 (2026-03-17):
+- `docs/GRAPH_RAG_SIDECAR_CONTRACT.md`에 최소 적재 파이프라인, `POST /query-advanced` 계약, fallback 규칙을 고정했다.
+- GraphRAG 준비 문서 기준으로는 "질문셋 -> 실패 사례 -> sidecar 계약"까지 완료됐다.
+- 남은 항목은 실제 accuracy/latency 실측과 Go/No-Go 판단이다.
 
 Go / No-Go 기준:
 - [ ] 정확도 개선이 실제로 확인된다.

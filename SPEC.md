@@ -32,6 +32,7 @@
 - 업로드/갱신 관리자 워크플로우 설계 문서(`docs/UPLOAD_ADMIN_WORKFLOW.md`)
 - GraphRAG 판단용 질문셋 문서(`docs/GRAPH_RAG_QUESTION_SET.md`)
 - Vector RAG 실패 사례 문서(`docs/reports/GRAPH_RAG_VECTOR_GAP_REPORT_2026-03-17.md`)
+- GraphRAG sidecar 계약 문서(`docs/GRAPH_RAG_SIDECAR_CONTRACT.md`)
 
 ### 제외(현재 단계)
 - 사용자 인증/권한
@@ -116,6 +117,7 @@
 - `docs/UPLOAD_ADMIN_WORKFLOW.md`: 업로드/갱신 관리자 운영 설계
 - `docs/GRAPH_RAG_QUESTION_SET.md`: GraphRAG 판단용 질문셋
 - `docs/reports/GRAPH_RAG_VECTOR_GAP_REPORT_2026-03-17.md`: Vector RAG 실패 사례와 Graph 후보 범위
+- `docs/GRAPH_RAG_SIDECAR_CONTRACT.md`: GraphRAG sidecar 계약
 
 ## API 계약
 ### GET `/health`
@@ -412,16 +414,16 @@ npm start
 
 ## 다음 진행 방향
 ### 1순위
-- GraphRAG 도입 필요성 검증
-- 내용: 사이드카 PoC 계약 정의, Go/No-Go 판단
-
-### 2순위
 - 데스크톱 패키징/배포 하드닝 여부 재검토
 - 내용: embedded Python/설치 전략, preflight UI, 패키징 비용 판단
 
-### 3순위
+### 2순위
 - 업로드/갱신 관리자 워크플로우 구현 1차
 - 내용: managed markdown 저장소, update 구분, `/rag-docs`/reindex 일관화
+
+### 3순위
+- GraphRAG actual PoC/실측
+- 내용: self-managed Neo4j sidecar 구현, accuracy/latency 측정, Go/No-Go 판단
 
 ## 완료 판정 기준
 - `health/reindex/query` 정상 동작
