@@ -24,7 +24,7 @@
 - 현재: 정제된 md를 인덱싱/검색/질의
 - 현재: 데이터 등록 시 검증(사용 가능/불가 판정) 적용
 - 현재: 분야별 컬렉션 + 단순 라우팅 적용
-- 다음 우선순위(P2/P3): 관리자 워크플로우 상세 설계, 데스크톱 패키징/배포 하드닝 재검토
+- 다음 우선순위(P2/P3): GraphRAG 판단용 질문셋 수집, 데스크톱 패키징/배포 하드닝 재검토, 관리자 워크플로우 구현 1차
 
 비목표(현재 단계):
 - 원본 수집/크롤링
@@ -60,6 +60,7 @@
 - `docs/PREPROCESSING_RULES.md`: 전처리 규칙 초안
 - `docs/PREPROCESSING_PROMPT_TEMPLATE.md`: 전처리 프롬프트 템플릿
 - `docs/PREPROCESSING_METADATA_SCHEMA.json`: 전처리 메타데이터 스키마
+- `docs/UPLOAD_ADMIN_WORKFLOW.md`: 업로드/갱신 관리자 워크플로우 설계 기준
 - `docs/VECTORSTORE_POLICY.md`: 벡터스토어 운영/용량 정책
 - `docs/COLLECTION_ROUTING_POLICY.md`: 분야별 컬렉션/라우팅 정책
 - `docs/FUTURE_EXTERNAL_CONSTRAINTS.md`: 외부 제한사항 중 추후 적용 항목
@@ -142,6 +143,7 @@ npm start
 - `POST /upload-requests`: 일반 사용자 업로드 요청 생성
 - `POST /upload-requests/{id}/approve`: 관리자 승인
 - `POST /upload-requests/{id}/reject`: 관리자 반려
+- 운영 기준은 `docs/UPLOAD_ADMIN_WORKFLOW.md`를 따른다.
 
 `POST /reindex` 응답의 `validation`에는 기계 판독용 필드와 함께
 `summary_text`(예: `total=5, usable=5, rejected=0, warnings=0, usable_ratio=100.00%`)가 포함됩니다.

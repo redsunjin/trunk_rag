@@ -29,6 +29,7 @@
 - API/프론트 최소 회귀 테스트 체계(pytest + Playwright)
 - 전처리 규칙 문서(`docs/PREPROCESSING_RULES.md`)
 - 실험용 Electron 데스크톱 래퍼 PoC(`desktop/electron`)
+- 업로드/갱신 관리자 워크플로우 설계 문서(`docs/UPLOAD_ADMIN_WORKFLOW.md`)
 
 ### 제외(현재 단계)
 - 사용자 인증/권한
@@ -110,6 +111,7 @@
 - `web/admin.html`: 관리자 상태 UI
 - `web/styles.css`: 공통 스타일
 - `web/js/*.js`: 프론트 로직 모듈
+- `docs/UPLOAD_ADMIN_WORKFLOW.md`: 업로드/갱신 관리자 운영 설계
 
 ## API 계약
 ### GET `/health`
@@ -375,6 +377,7 @@ npm start
 - 쉬운 RAG 기본 경로를 위해 런처 readiness 대기와 고급 설정 기본 숨김 유지
 - 교차 국가 비교 질의는 `all` 고정보다 키워드 기반 자동 다중 라우팅(최대 2개)을 기본 경로로 둔다
 - 데스크톱은 웹 UI 재작성 대신 기존 FastAPI + 웹 자산을 감싸는 래퍼로만 PoC하고, MVP 본체에는 아직 포함하지 않는다
+- 업로드/갱신 운영 기준은 벡터스토어 직접 수정이 아니라 managed markdown 원본 + active 버전 기준으로 가져간다
 
 ## 제약 사항
 - 추론 속도/품질은 로컬 하드웨어 성능에 크게 의존
@@ -405,16 +408,16 @@ npm start
 
 ## 다음 진행 방향
 ### 1순위
-- 문서 업로드/갱신 관리자 워크플로우 설계
-- 내용: 운영 절차, 승인/반려 후속 처리, 갱신 정책 정의
-
-### 2순위
 - GraphRAG 도입 필요성 검증
 - 내용: 관계형 질문셋 분리, 실패 사례 축적, 사이드카 PoC Go/No-Go 판단
 
-### 3순위
+### 2순위
 - 데스크톱 패키징/배포 하드닝 여부 재검토
 - 내용: embedded Python/설치 전략, preflight UI, 패키징 비용 판단
+
+### 3순위
+- 업로드/갱신 관리자 워크플로우 구현 1차
+- 내용: managed markdown 저장소, update 구분, `/rag-docs`/reindex 일관화
 
 ## 완료 판정 기준
 - `health/reindex/query` 정상 동작
