@@ -98,14 +98,18 @@
 ## GraphRAG 도입 결정 게이트
 
 원칙:
-- [ ] 기본 `/query`는 기존 Vector RAG를 유지한다.
-- [ ] GraphRAG는 본체 직접 통합이 아니라 사이드카 PoC를 기본안으로 본다.
-- [ ] AuraDB는 기본안이 아니다. 폐쇄망/로컬 요구가 유지되면 self-managed Neo4j를 우선 검토한다.
+- [x] 기본 `/query`는 기존 Vector RAG를 유지한다.
+- [x] GraphRAG는 본체 직접 통합이 아니라 사이드카 PoC를 기본안으로 본다.
+- [x] AuraDB는 기본안이 아니다. 폐쇄망/로컬 요구가 유지되면 self-managed Neo4j를 우선 검토한다.
 
 착수 전 조건:
-- [ ] 관계형/다중 홉 질문셋 15~20개 수집
+- [x] 관계형/다중 홉 질문셋 15~20개 수집
 - [ ] 현재 Vector RAG 실패 사례와 개선 필요성 문서화
-- [ ] GraphRAG가 필요한 질문 유형을 운영 질문과 분리
+- [x] GraphRAG가 필요한 질문 유형을 운영 질문과 분리
+
+진행 메모 (2026-03-17):
+- `docs/GRAPH_RAG_QUESTION_SET.md`에 18개 질문을 `ops-baseline` / `graph-candidate`로 분리해 고정했다.
+- 이 문서부터는 "운영 질문은 기존 `/query` 품질 기준", "관계 연결 질문만 GraphRAG 후보"라는 경계를 사용한다.
 
 PoC 범위:
 - [ ] `md -> entity/relation 추출 -> graph 적재` 최소 파이프라인 정의

@@ -4,6 +4,7 @@
 - `SPEC.md`
 - `README.md`
 - `TODO.md`
+- `docs/GRAPH_RAG_QUESTION_SET.md`
 - `docs/UPLOAD_ADMIN_WORKFLOW.md`
 - `docs/PREPROCESSING_RULES.md`
 - `docs/VECTORSTORE_POLICY.md`
@@ -36,6 +37,13 @@
 3. 업로드/갱신 관리자 워크플로우 설계도 완료됐고, 기준 문서는 `docs/UPLOAD_ADMIN_WORKFLOW.md`로 고정했다.
 4. 관리자 워크플로우의 핵심 결정은 managed markdown 원본 + active 버전 기준으로 운영한다는 점이다.
 5. 다만 데스크톱 PoC는 여전히 Python 런타임, 의존성 설치, LLM 준비 상태에 기대므로 MVP 기본 경로로 넣지 않는다.
+
+## 0.2 2026-03-17 GraphRAG 게이트 업데이트
+
+결론:
+1. `docs/GRAPH_RAG_QUESTION_SET.md`에 관계형/다중 홉 질문 18개를 고정했다.
+2. 질문은 `ops-baseline`과 `graph-candidate`로 분리했다.
+3. 다음 GraphRAG 게이트 1순위는 "현행 Vector RAG 실패 사례와 개선 필요성 문서화"다.
 
 배경:
 - 현재 프로젝트의 운영 모델은 `폐쇄망/로컬/경량 RAG 런타임`이다.
@@ -97,10 +105,9 @@
 2. 업로드/갱신 관리자 워크플로우 구현 1차
 
 ### D. GraphRAG 결정 게이트
-1. 관계형/다중 홉 질문셋 15~20개 수집
-2. 현행 Vector RAG 실패 사례 문서화
-3. 사이드카 PoC 계약 정의(`/query-advanced` 또는 별도 서비스)
-4. Go/No-Go 판단 후에만 GraphRAG PoC 착수
+1. 현행 Vector RAG 실패 사례 문서화
+2. 사이드카 PoC 계약 정의(`/query-advanced` 또는 별도 서비스)
+3. Go/No-Go 판단 후에만 GraphRAG PoC 착수
 
 원칙:
 - 기본 `/query`는 기존 Vector RAG 유지
@@ -153,7 +160,7 @@
 ## 4. 현재 남은 작업 범위 (핵심)
 
 즉시 진행 대상 (다음 세션 1순위):
-1. GraphRAG 판단용 관계형 질문셋 수집
+1. 현행 Vector RAG 실패 사례 문서화
 2. 데스크톱 패키징/배포 하드닝 여부 재검토
 3. 업로드/갱신 관리자 워크플로우 구현 1차
 
@@ -169,10 +176,9 @@
 2. 업로드/갱신 관리자 워크플로우 구현 1차
 
 ### B. GraphRAG 결정 게이트
-1. 관계형 질문셋 작성
-2. 현행 Vector RAG 실패/성공 기준선 작성
-3. Neo4j 사이드카 PoC 계약 정의
-4. AuraDB vs self-managed Neo4j 적용 조건 문서화
+1. 현행 Vector RAG 실패/성공 기준선 작성
+2. Neo4j 사이드카 PoC 계약 정의
+3. AuraDB vs self-managed Neo4j 적용 조건 문서화
 
 ## 6. 세션 시작 체크리스트 (핸드오버용)
 
