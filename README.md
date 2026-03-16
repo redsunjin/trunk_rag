@@ -24,7 +24,7 @@
 - 현재: 정제된 md를 인덱싱/검색/질의
 - 현재: 데이터 등록 시 검증(사용 가능/불가 판정) 적용
 - 현재: 분야별 컬렉션 + 단순 라우팅 적용
-- 다음 우선순위(P2/P3): Vector RAG 실패 사례 문서화, 데스크톱 패키징/배포 하드닝 재검토, 관리자 워크플로우 구현 1차
+- 다음 우선순위(P2/P3): GraphRAG sidecar 계약 정의, 데스크톱 패키징/배포 하드닝 재검토, 관리자 워크플로우 구현 1차
 
 비목표(현재 단계):
 - 원본 수집/크롤링
@@ -62,6 +62,7 @@
 - `docs/PREPROCESSING_METADATA_SCHEMA.json`: 전처리 메타데이터 스키마
 - `docs/UPLOAD_ADMIN_WORKFLOW.md`: 업로드/갱신 관리자 워크플로우 설계 기준
 - `docs/GRAPH_RAG_QUESTION_SET.md`: GraphRAG 판단용 관계형 질문셋
+- `docs/reports/GRAPH_RAG_VECTOR_GAP_REPORT_2026-03-17.md`: 현재 Vector RAG 실패 사례와 Graph 후보 범위
 - `docs/VECTORSTORE_POLICY.md`: 벡터스토어 운영/용량 정책
 - `docs/COLLECTION_ROUTING_POLICY.md`: 분야별 컬렉션/라우팅 정책
 - `docs/FUTURE_EXTERNAL_CONSTRAINTS.md`: 외부 제한사항 중 추후 적용 항목

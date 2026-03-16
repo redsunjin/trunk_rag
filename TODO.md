@@ -104,12 +104,14 @@
 
 착수 전 조건:
 - [x] 관계형/다중 홉 질문셋 15~20개 수집
-- [ ] 현재 Vector RAG 실패 사례와 개선 필요성 문서화
+- [x] 현재 Vector RAG 실패 사례와 개선 필요성 문서화
 - [x] GraphRAG가 필요한 질문 유형을 운영 질문과 분리
 
 진행 메모 (2026-03-17):
 - `docs/GRAPH_RAG_QUESTION_SET.md`에 18개 질문을 `ops-baseline` / `graph-candidate`로 분리해 고정했다.
 - 이 문서부터는 "운영 질문은 기존 `/query` 품질 기준", "관계 연결 질문만 GraphRAG 후보"라는 경계를 사용한다.
+- `docs/reports/GRAPH_RAG_VECTOR_GAP_REPORT_2026-03-17.md`에 실제 관측된 실패와 구조적 한계를 분리해 정리했다.
+- 결론은 "Vector RAG 기본 경로 유지 + graph-candidate 질문군만 sidecar 후보"다.
 
 PoC 범위:
 - [ ] `md -> entity/relation 추출 -> graph 적재` 최소 파이프라인 정의

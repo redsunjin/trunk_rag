@@ -31,6 +31,7 @@
 - 실험용 Electron 데스크톱 래퍼 PoC(`desktop/electron`)
 - 업로드/갱신 관리자 워크플로우 설계 문서(`docs/UPLOAD_ADMIN_WORKFLOW.md`)
 - GraphRAG 판단용 질문셋 문서(`docs/GRAPH_RAG_QUESTION_SET.md`)
+- Vector RAG 실패 사례 문서(`docs/reports/GRAPH_RAG_VECTOR_GAP_REPORT_2026-03-17.md`)
 
 ### 제외(현재 단계)
 - 사용자 인증/권한
@@ -114,6 +115,7 @@
 - `web/js/*.js`: 프론트 로직 모듈
 - `docs/UPLOAD_ADMIN_WORKFLOW.md`: 업로드/갱신 관리자 운영 설계
 - `docs/GRAPH_RAG_QUESTION_SET.md`: GraphRAG 판단용 질문셋
+- `docs/reports/GRAPH_RAG_VECTOR_GAP_REPORT_2026-03-17.md`: Vector RAG 실패 사례와 Graph 후보 범위
 
 ## API 계약
 ### GET `/health`
@@ -411,7 +413,7 @@ npm start
 ## 다음 진행 방향
 ### 1순위
 - GraphRAG 도입 필요성 검증
-- 내용: Vector RAG 실패 사례 축적, 사이드카 PoC Go/No-Go 판단
+- 내용: 사이드카 PoC 계약 정의, Go/No-Go 판단
 
 ### 2순위
 - 데스크톱 패키징/배포 하드닝 여부 재검토

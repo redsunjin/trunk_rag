@@ -6,6 +6,7 @@
 - `TODO.md`
 - `docs/GRAPH_RAG_QUESTION_SET.md`
 - `docs/UPLOAD_ADMIN_WORKFLOW.md`
+- `docs/reports/GRAPH_RAG_VECTOR_GAP_REPORT_2026-03-17.md`
 - `docs/PREPROCESSING_RULES.md`
 - `docs/VECTORSTORE_POLICY.md`
 - `docs/COLLECTION_ROUTING_POLICY.md`
@@ -43,7 +44,8 @@
 결론:
 1. `docs/GRAPH_RAG_QUESTION_SET.md`에 관계형/다중 홉 질문 18개를 고정했다.
 2. 질문은 `ops-baseline`과 `graph-candidate`로 분리했다.
-3. 다음 GraphRAG 게이트 1순위는 "현행 Vector RAG 실패 사례와 개선 필요성 문서화"다.
+3. `docs/reports/GRAPH_RAG_VECTOR_GAP_REPORT_2026-03-17.md`에 현재 Vector RAG 실패 사례와 구조적 한계를 정리했다.
+4. 다음 GraphRAG 게이트 1순위는 "사이드카 PoC 계약 정의"다.
 
 배경:
 - 현재 프로젝트의 운영 모델은 `폐쇄망/로컬/경량 RAG 런타임`이다.
@@ -105,9 +107,8 @@
 2. 업로드/갱신 관리자 워크플로우 구현 1차
 
 ### D. GraphRAG 결정 게이트
-1. 현행 Vector RAG 실패 사례 문서화
-2. 사이드카 PoC 계약 정의(`/query-advanced` 또는 별도 서비스)
-3. Go/No-Go 판단 후에만 GraphRAG PoC 착수
+1. 사이드카 PoC 계약 정의(`/query-advanced` 또는 별도 서비스)
+2. Go/No-Go 판단 후에만 GraphRAG PoC 착수
 
 원칙:
 - 기본 `/query`는 기존 Vector RAG 유지
@@ -160,7 +161,7 @@
 ## 4. 현재 남은 작업 범위 (핵심)
 
 즉시 진행 대상 (다음 세션 1순위):
-1. 현행 Vector RAG 실패 사례 문서화
+1. GraphRAG sidecar PoC 계약 정의
 2. 데스크톱 패키징/배포 하드닝 여부 재검토
 3. 업로드/갱신 관리자 워크플로우 구현 1차
 
@@ -176,9 +177,8 @@
 2. 업로드/갱신 관리자 워크플로우 구현 1차
 
 ### B. GraphRAG 결정 게이트
-1. 현행 Vector RAG 실패/성공 기준선 작성
-2. Neo4j 사이드카 PoC 계약 정의
-3. AuraDB vs self-managed Neo4j 적용 조건 문서화
+1. Neo4j 사이드카 PoC 계약 정의
+2. AuraDB vs self-managed Neo4j 적용 조건 문서화
 
 ## 6. 세션 시작 체크리스트 (핸드오버용)
 
