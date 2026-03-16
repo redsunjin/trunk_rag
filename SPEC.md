@@ -89,6 +89,7 @@
 
 ### 데스크톱 PoC
 - Electron 기반 최소 래퍼 추가(`desktop/electron`)
+- 시작 전 preflight 추가(repo 경로, Python, backend import, 기본 LLM 런타임 점검)
 - 기존 `/intro`, `/app`, `/admin` 웹 UI를 재사용
 - 로컬 서버 미실행 시 `.venv` 또는 시스템 Python으로 `app_api.py`를 부트스트랩
 - 종료 시 Electron이 직접 띄운 Python 프로세스 정리
@@ -364,6 +365,7 @@ cd <repo>
 cd <repo>\desktop\electron
 npm install
 npm run check
+npm run preflight
 npm run smoke
 npm start
 ```

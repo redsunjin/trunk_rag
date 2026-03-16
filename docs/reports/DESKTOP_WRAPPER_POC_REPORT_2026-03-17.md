@@ -13,11 +13,14 @@
 - PoC 경로: `desktop/electron`
 - 추가 파일:
   - `desktop/electron/main.js`
+  - `desktop/electron/preflight.js`
   - `desktop/electron/server_runtime.js`
+  - `desktop/electron/scripts/preflight_runtime.js`
   - `desktop/electron/scripts/smoke_runtime.js`
   - `desktop/electron/package.json`
 - 동작:
   - 기존 서버가 이미 떠 있으면 그대로 attach
+  - 시작 전 preflight로 repo 경로, Python, backend import, 기본 LLM 런타임 상태를 먼저 점검
   - 서버가 없으면 `.venv/bin/python` 또는 시스템 `python3/python`으로 `app_api.py` 실행
   - `/health` 응답이 준비되면 Electron 창에서 `/intro` 로드
   - 앱 종료 시 Electron이 직접 띄운 Python 프로세스는 같이 정리
@@ -30,6 +33,12 @@
 ## 검증
 - 정적 검증:
   - `cd desktop/electron && npm run check`
+- preflight 검증:
+  - `cd desktop/electron && npm run preflight`
+  - 결과:
+    - repo 경로/Python/backend import = `ok`
+    - 기존 `/health` 미기동 = `warn`
+    - 로컬 Ollama reachable, 기본 모델 `qwen3:4b` 미설치 = `warn`
 - 런타임 검증:
   - `cd desktop/electron && npm run smoke`
   - 결과: `ready mode=spawned url=http://127.0.0.1:8000/intro vectors=37 chunking=char`
@@ -54,6 +63,9 @@
 3. Electron 번들 크기와 플랫폼별 패키징/서명/업데이트 전략은 아직 검증하지 않았다.
 4. 포트 충돌, 모델 미실행, 오프라인 임베딩 경로 누락 같은 운영 실패는 여전히 런타임 준비도에 좌우된다.
 5. 관리 워크플로우와 운영 가이드가 정리되기 전 데스크톱 배포를 먼저 강화하면 제품 표면만 넓어질 수 있다.
+
+완화 메모:
+- 이번 hardening으로 최소한 시작 단계에서 "왜 안 뜨는지"를 창과 CLI에서 먼저 드러낼 수 있게 됐다.
 
 ## MVP 반영 판단
 - 결론: MVP 본체에는 넣지 않고 보류한다.

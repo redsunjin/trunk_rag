@@ -89,6 +89,7 @@
 진행 메모 (2026-03-17):
 - `desktop/electron`에 Electron PoC를 추가했다.
 - PoC는 기존 FastAPI 서버를 직접 띄우거나 기존 서버에 attach한 뒤 `/intro`를 데스크톱 창으로 연다.
+- `npm run preflight`와 앱 시작 전 preflight를 추가해 repo/Python/backend import/기본 LLM 런타임을 먼저 점검하도록 했다.
 - `npm run smoke`로 서버 부트스트랩과 `/health` readiness를 검증했다.
 - 결론은 "기술적으로 가능하지만 MVP 기본 범위에는 아직 넣지 않고 보류"다.
 - 근거 문서는 `docs/reports/DESKTOP_WRAPPER_POC_REPORT_2026-03-17.md`를 기준으로 본다.

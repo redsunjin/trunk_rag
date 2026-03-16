@@ -1,5 +1,6 @@
 const { app, BrowserWindow, Menu, shell } = require("electron");
 
+const { formatPreflightReport, inspectDesktopEnvironment } = require("./preflight");
 const { startManagedServer } = require("./server_runtime");
 
 let mainWindow = null;
@@ -82,6 +83,13 @@ function installApplicationMenu() {
     {
       label: "App",
       submenu: [
+        {
+          label: "Run Preflight",
+          click: () => showPreflightReport(),
+        },
+        {
+          type: "separator",
+        },
         {
           label: "Intro",
           click: () => loadRoute("/intro"),
@@ -166,13 +174,41 @@ async function loadRoute(route) {
   await mainWindow.loadURL(targetUrl);
 }
 
+async function showPreflightReport() {
+  if (!mainWindow) {
+    return;
+  }
+
+  const report = await inspectDesktopEnvironment();
+  const title = report.ok ? "doc_rag desktop preflight" : "doc_rag desktop preflight issues";
+  const body = report.ok
+    ? "현재 런타임 준비 상태입니다."
+    : "배포 전 필수 런타임 항목을 먼저 해결하세요.";
+  await mainWindow.loadURL(buildStatusPage(title, body, formatPreflightReport(report)));
+}
+
 async function bootstrap() {
   installApplicationMenu();
   mainWindow = createMainWindow();
+  const preflightReport = await inspectDesktopEnvironment();
+  const preflightDetail = formatPreflightReport(preflightReport);
+
+  if (!preflightReport.ok) {
+    await mainWindow.loadURL(
+      buildStatusPage(
+        "doc_rag desktop preflight failed",
+        "Python 런타임, backend import, repo 경로를 먼저 해결하세요.",
+        preflightDetail,
+      ),
+    );
+    return;
+  }
+
   await mainWindow.loadURL(
     buildStatusPage(
       "doc_rag desktop PoC",
-      "FastAPI 런타임을 확인하고 로컬 UI를 연결하는 중입니다.",
+      "로컬 preflight를 통과했습니다. FastAPI 런타임을 연결하는 중입니다.",
+      preflightDetail,
     ),
   );
 
@@ -185,7 +221,7 @@ async function bootstrap() {
       buildStatusPage(
         "doc_rag desktop PoC start failed",
         "Python 런타임, requirements 설치, 포트 충돌 여부를 확인하세요.",
-        detail,
+        `${preflightDetail}\n\n${detail}`,
       ),
     );
   }

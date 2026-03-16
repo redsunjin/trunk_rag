@@ -6,7 +6,8 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "check": "node --check main.js && node --check server_runtime.js && node --check scripts/smoke_runtime.js",
+    "check": "node --check main.js && node --check preflight.js && node --check server_runtime.js && node --check scripts/preflight_runtime.js && node --check scripts/smoke_runtime.js",
+    "preflight": "node scripts/preflight_runtime.js",
     "smoke": "node scripts/smoke_runtime.js"
   },
   "devDependencies": {

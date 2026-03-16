@@ -38,7 +38,8 @@
 2. `cargo` 부재와 현재 구조를 고려하면 이번 PoC 기준 구현 경로는 Tauri보다 Electron이 현실적이었다.
 3. 업로드/갱신 관리자 워크플로우 설계도 완료됐고, 기준 문서는 `docs/UPLOAD_ADMIN_WORKFLOW.md`로 고정했다.
 4. 관리자 워크플로우의 핵심 결정은 managed markdown 원본 + active 버전 기준으로 운영한다는 점이다.
-5. 다만 데스크톱 PoC는 여전히 Python 런타임, 의존성 설치, LLM 준비 상태에 기대므로 MVP 기본 경로로 넣지 않는다.
+5. Electron은 이제 시작 전 preflight로 repo/Python/backend import/기본 LLM 런타임을 먼저 점검한다.
+6. 다만 데스크톱 PoC는 여전히 Python 런타임, 의존성 설치, LLM 준비 상태에 기대므로 MVP 기본 경로로 넣지 않는다.
 
 ## 0.2 2026-03-17 GraphRAG 게이트 업데이트
 

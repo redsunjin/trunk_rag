@@ -124,12 +124,15 @@ cd <repo>
 cd <repo>\desktop\electron
 npm install
 npm run check
+npm run preflight
 npm run smoke
 npm start
 ```
 
+- `npm run preflight`는 repo 경로, Python 런타임, `app_api` import, 기존 `/health`, 기본 LLM 런타임 도달 여부를 먼저 점검합니다.
 - `npm run smoke`는 `.venv`의 Python 또는 시스템 Python으로 `app_api.py`를 띄운 뒤 `/health` readiness를 확인합니다.
 - `npm start`는 같은 런타임을 Electron 창에 연결해 `/intro`를 엽니다.
+- Electron 앱 시작 시에도 같은 preflight를 먼저 실행하고, blocking 실패가 있으면 창에서 바로 이유를 보여 줍니다.
 - 현재 PoC는 설치형 제품이 아니라 "기존 웹 UI를 데스크톱 셸로 감쌀 수 있는지"를 검증하는 수준입니다.
 - 결론과 리스크는 `docs/reports/DESKTOP_WRAPPER_POC_REPORT_2026-03-17.md`를 기준으로 봅니다.
 
@@ -287,6 +290,7 @@ Electron PoC 검증:
 ```powershell
 cd <repo>\desktop\electron
 npm run check
+npm run preflight
 npm run smoke
 ```
 
