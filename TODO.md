@@ -85,6 +85,7 @@
 
 - [x] 데스크톱 래핑(Electron/Tauri) PoC
 - [x] 문서 업로드/갱신 관리자 워크플로우 설계
+- [x] 문서 업로드/갱신 관리자 워크플로우 구현 1차
 
 진행 메모 (2026-03-17):
 - `desktop/electron`에 Electron PoC를 추가했다.
@@ -95,6 +96,15 @@
 - 근거 문서는 `docs/reports/DESKTOP_WRAPPER_POC_REPORT_2026-03-17.md`를 기준으로 본다.
 - 업로드/갱신 관리자 워크플로우 설계는 `docs/UPLOAD_ADMIN_WORKFLOW.md`에 고정했다.
 - 핵심 결정은 "승인 결과를 벡터스토어 직접 추가로 끝내지 말고 managed markdown 원본 + active 버전으로 운영한다"는 점이다.
+- 구현 1차에서는 `request_type/doc_key/change_summary`를 업로드 요청에 추가했다.
+- 승인된 요청은 `chroma_db/managed_docs/` 아래 버전 파일로 저장되고, active 버전 기준으로 재구성된다.
+- `GET /rag-docs`와 `POST /reindex`는 이제 seed 문서 + managed active 문서를 같은 기준으로 본다.
+- `DOC_RAG_AUTO_APPROVE`는 `create` 요청에만 적용되고 `update`에는 적용되지 않는다.
+
+검증:
+- [x] `env PYTHONPYCACHEPREFIX=/tmp/trunk_rag_pycache ./.venv/bin/python -m compileall api services core tests`
+- [x] `./.venv/bin/python -m pytest -q tests/api/test_upload_api.py tests/api/test_system_api.py` -> `13 passed in 0.14s` (2026-03-17)
+- [x] `./.venv/bin/python -m pytest -q` -> `34 passed in 4.81s` (2026-03-17)
 
 ## GraphRAG 도입 결정 게이트
 
@@ -237,7 +247,7 @@ Go / No-Go 기준:
 
 ### Stage B (확장, P3 3트랙)
 - [ ] Track-1: 데스크톱 패키징/배포 하드닝
-- [ ] Track-2: 업로드/갱신 관리자 워크플로우 구현 1차
+- [x] Track-2: 업로드/갱신 관리자 워크플로우 구현 1차
 - [ ] Track-3: QA/문서 업데이트 전담
 
 완료 기준:

@@ -28,8 +28,11 @@ const docList = document.getElementById("docList");
 const docTitle = document.getElementById("docTitle");
 const docViewer = document.getElementById("docViewer");
 const uploadSource = document.getElementById("uploadSource");
+const uploadDocKey = document.getElementById("uploadDocKey");
+const uploadRequestType = document.getElementById("uploadRequestType");
 const uploadCountry = document.getElementById("uploadCountry");
 const uploadDocType = document.getElementById("uploadDocType");
+const uploadChangeSummary = document.getElementById("uploadChangeSummary");
 const uploadDefaultsSummary = document.getElementById("uploadDefaultsSummary");
 const uploadMetadataFields = document.getElementById("uploadMetadataFields");
 const uploadMetadataToggle = document.getElementById("uploadMetadataToggle");
@@ -137,10 +140,12 @@ function updateUploadDefaultsSummary() {
   if (!uploadDefaultsSummary) return;
   const collectionKey = collection.value || "all";
   const sourceText = uploadSource.value.trim() || "auto";
+  const docKeyText = uploadDocKey.value.trim() || "auto";
+  const requestTypeText = uploadRequestType.value || "auto";
   const countryText = uploadCountry.value || defaultUploadCountry(collectionKey);
   const docTypeText = uploadDocType.value || defaultUploadDocType(collectionKey);
   uploadDefaultsSummary.textContent =
-    `업로드 기본값: source=${sourceText}, country=${countryText}, doc_type=${docTypeText}`;
+    `업로드 기본값: source=${sourceText}, doc_key=${docKeyText}, request_type=${requestTypeText}, country=${countryText}, doc_type=${docTypeText}`;
 }
 
 function setUploadMetadataOpen(open) {
@@ -295,7 +300,7 @@ async function loadDocs() {
     const items = data.docs.map((doc) => `
       <button class="doc-item-btn" data-name="${doc.name}">
         <span class="doc-name">${doc.name}</span>
-        <span class="doc-meta">${Math.round(doc.size / 1024)} KB</span>
+        <span class="doc-meta">${doc.origin || "seed"} | ${doc.doc_key || "-"} | ${Math.round(doc.size / 1024)} KB</span>
       </button>
     `).join("");
     docList.innerHTML = items;
@@ -438,9 +443,12 @@ async function submitUploadRequest() {
   uploadMsg.textContent = "업로드 요청 생성 중...";
   const payload = {
     source_name: uploadSource.value.trim() || null,
+    doc_key: uploadDocKey.value.trim() || null,
+    request_type: uploadRequestType.value || null,
     collection: collection.value || null,
     country: uploadCountry.value || null,
     doc_type: uploadDocType.value || null,
+    change_summary: uploadChangeSummary.value.trim() || null,
     content,
   };
 
@@ -460,17 +468,22 @@ async function submitUploadRequest() {
     const request = data.request || {};
     const requestId = request.id || "-";
     const sourceName = request.source_name || uploadSource.value.trim() || "auto-generated";
+    const requestType = request.request_type || "auto";
+    const docKey = request.doc_key || uploadDocKey.value.trim() || "auto";
     const status = request.status || "pending";
     const autoApprove = data.auto_approve ? "on" : "off";
-    uploadMsg.textContent = `요청 생성 완료: source=${sourceName}, id=${requestId}, status=${status}, auto_approve=${autoApprove}`;
+    uploadMsg.textContent = `요청 생성 완료: source=${sourceName}, doc_key=${docKey}, type=${requestType}, id=${requestId}, status=${status}, auto_approve=${autoApprove}`;
     uploadSource.value = "";
+    uploadDocKey.value = "";
+    uploadRequestType.value = "";
     uploadCountry.value = "";
     uploadDocType.value = "";
+    uploadChangeSummary.value = "";
     uploadContent.value = "";
     setUploadMetadataOpen(false);
 
     if (status === "approved") {
-      appendMessage("bot", `업로드 문서가 바로 반영되었습니다: ${sourceName}`);
+      appendMessage("bot", `업로드 문서가 바로 반영되었습니다: ${sourceName} | doc_key=${docKey}`);
       await loadCollections();
       await loadDocs();
       await healthCheck();
@@ -481,11 +494,11 @@ async function submitUploadRequest() {
       const rejectedReason = request.rejected_reason
         || request.validation?.reasons?.[0]
         || "검증 실패";
-      appendMessage("bot", `업로드 요청이 반려되었습니다: ${sourceName} | 사유=${rejectedReason}`);
+      appendMessage("bot", `업로드 요청이 반려되었습니다: ${sourceName} | doc_key=${docKey} | 사유=${rejectedReason}`);
       return;
     }
 
-    appendMessage("bot", `업로드 요청이 접수되었습니다: ${sourceName} | 관리자 승인 대기`);
+    appendMessage("bot", `업로드 요청이 접수되었습니다: ${sourceName} | doc_key=${docKey} | type=${requestType} | 관리자 승인 대기`);
   } catch (error) {
     uploadMsg.textContent = String(error);
   }
@@ -512,6 +525,8 @@ collection2.addEventListener("change", () => {
   updateCollectionHint();
 });
 uploadSource.addEventListener("input", updateUploadDefaultsSummary);
+uploadDocKey.addEventListener("input", updateUploadDefaultsSummary);
+uploadRequestType.addEventListener("change", updateUploadDefaultsSummary);
 uploadCountry.addEventListener("change", updateUploadDefaultsSummary);
 uploadDocType.addEventListener("change", updateUploadDefaultsSummary);
 

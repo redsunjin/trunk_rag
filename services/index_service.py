@@ -8,8 +8,8 @@ from langchain_chroma import Chroma
 from langchain_core.documents import Document
 
 from common import (
+    COUNTRY_BY_STEM,
     create_embeddings,
-    load_markdown_documents,
     split_by_markdown_headers,
 )
 from core.settings import (
@@ -18,11 +18,10 @@ from core.settings import (
     COLLECTION_HARD_CAP,
     DATA_DIR,
     DEFAULT_COLLECTION_KEY,
-    DEFAULT_FILE_NAMES,
     PERSIST_DIR,
 )
 from scripts.validate_rag_doc import validate_loaded_documents
-from services import collection_service, runtime_service
+from services import collection_service, runtime_service, upload_service
 
 
 @lru_cache(maxsize=4)
@@ -103,6 +102,120 @@ def build_validation_summary(
     }
 
 
+def _collection_key_for_seed_file(file_name: str) -> str:
+    for key in collection_service.list_collection_keys():
+        if key == DEFAULT_COLLECTION_KEY:
+            continue
+        config = collection_service.get_collection_config(key)
+        if file_name in set(config.get("file_names", [])):
+            return key
+    return DEFAULT_COLLECTION_KEY
+
+
+def _load_seed_source_records(collection_key: str) -> list[dict[str, object]]:
+    config = collection_service.get_collection_config(collection_key)
+    file_names = list(config.get("file_names", []))
+    data_dir = Path(DATA_DIR)
+    records: list[dict[str, object]] = []
+
+    for name in file_names:
+        path = data_dir / str(name)
+        if not path.exists():
+            continue
+
+        stem = path.stem
+        stat = path.stat()
+        records.append(
+            {
+                "name": path.name,
+                "path": path,
+                "origin": "seed",
+                "doc_key": stem.lower(),
+                "collection_key": _collection_key_for_seed_file(path.name),
+                "size": stat.st_size,
+                "updated_at": int(stat.st_mtime),
+                "metadata": {
+                    "source": path.name,
+                    "topic": "europe_science_history",
+                    "country": COUNTRY_BY_STEM.get(stem, "unknown"),
+                    "doc_type": "summary" if stem == "eu_summry" else "country",
+                    "doc_key": stem.lower(),
+                    "origin": "seed",
+                },
+            }
+        )
+
+    return records
+
+
+def _load_managed_source_records(collection_key: str) -> list[dict[str, object]]:
+    if collection_key == DEFAULT_COLLECTION_KEY:
+        items = upload_service.list_active_managed_docs(None)
+    else:
+        items = upload_service.list_active_managed_docs(collection_key)
+
+    records: list[dict[str, object]] = []
+    for item in items:
+        path = Path(str(item.get("file_path", "")))
+        if not path.exists():
+            continue
+
+        metadata = item.get("metadata", {})
+        if not isinstance(metadata, dict):
+            metadata = {}
+
+        stat = path.stat()
+        records.append(
+            {
+                "name": str(item.get("source_name", path.name)),
+                "path": path,
+                "origin": "managed",
+                "doc_key": str(item.get("doc_key", "")).lower(),
+                "collection_key": str(item.get("collection_key", "")),
+                "size": stat.st_size,
+                "updated_at": int(stat.st_mtime),
+                "metadata": {
+                    **metadata,
+                    "source": str(item.get("source_name", path.name)),
+                    "doc_key": str(item.get("doc_key", "")).lower(),
+                    "origin": "managed",
+                    "collection_key": str(item.get("collection_key", "")),
+                    "request_type": str(item.get("request_type", "")),
+                    "change_summary": str(item.get("change_summary", "")),
+                },
+            }
+        )
+
+    return records
+
+
+def build_collection_source_records(collection_key: str = DEFAULT_COLLECTION_KEY) -> list[dict[str, object]]:
+    merged: dict[str, dict[str, object]] = {}
+    for record in _load_seed_source_records(collection_key):
+        merged[str(record["doc_key"])] = record
+    for record in _load_managed_source_records(collection_key):
+        merged[str(record["doc_key"])] = record
+    return sorted(
+        merged.values(),
+        key=lambda item: (str(item.get("collection_key", "")), str(item.get("doc_key", ""))),
+    )
+
+
+def build_collection_documents(collection_key: str = DEFAULT_COLLECTION_KEY) -> list[Document]:
+    docs: list[Document] = []
+    for record in build_collection_source_records(collection_key):
+        path = record["path"]
+        if not isinstance(path, Path):
+            continue
+        docs.append(
+            Document(
+                page_content=path.read_text(encoding="utf-8"),
+                metadata=dict(record.get("metadata", {})),
+            )
+        )
+    return docs
+
+
 def index_documents_for_collection(
     docs: list[Document],
     *,
@@ -179,10 +292,9 @@ def index_documents_for_collection(
 
 def reindex(reset: bool = True, collection_key: str = DEFAULT_COLLECTION_KEY) -> dict[str, object]:
     config = collection_service.get_collection_config(collection_key)
-    file_names = list(config["file_names"])
     collection_name = str(config["name"])
 
-    docs = load_markdown_documents(Path(DATA_DIR), file_names)
+    docs = build_collection_documents(collection_key)
     if not docs:
         raise HTTPException(status_code=400, detail=f"No markdown files found in {DATA_DIR}")
 
@@ -222,27 +334,26 @@ def reindex(reset: bool = True, collection_key: str = DEFAULT_COLLECTION_KEY) ->
 
 
 def list_target_docs() -> list[dict[str, int | str]]:
-    data_dir = Path(DATA_DIR)
     docs: list[dict[str, int | str]] = []
-    for name in DEFAULT_FILE_NAMES:
-        path = data_dir / name
-        if not path.exists():
-            continue
-        stat = path.stat()
+    for record in build_collection_source_records(DEFAULT_COLLECTION_KEY):
         docs.append(
             {
-                "name": path.name,
-                "size": stat.st_size,
-                "updated_at": int(stat.st_mtime),
+                "name": str(record.get("name", "")),
+                "size": int(record.get("size", 0)),
+                "updated_at": int(record.get("updated_at", 0)),
+                "origin": str(record.get("origin", "seed")),
+                "doc_key": str(record.get("doc_key", "")),
+                "collection_key": str(record.get("collection_key", DEFAULT_COLLECTION_KEY)),
             }
         )
     return docs
 
 
 def resolve_doc_path(doc_name: str) -> Path:
-    if doc_name not in set(DEFAULT_FILE_NAMES):
-        raise HTTPException(status_code=404, detail=f"Document not found: {doc_name}")
-    path = Path(DATA_DIR) / doc_name
-    if not path.exists():
-        raise HTTPException(status_code=404, detail=f"Document not found: {doc_name}")
-    return path
+    for record in build_collection_source_records(DEFAULT_COLLECTION_KEY):
+        if str(record.get("name", "")) != doc_name:
+            continue
+        path = record.get("path")
+        if isinstance(path, Path) and path.exists():
+            return path
+    raise HTTPException(status_code=404, detail=f"Document not found: {doc_name}")

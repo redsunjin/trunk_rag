@@ -78,15 +78,21 @@ function renderRequestTable(items, counts) {
     const validation = item.validation || {};
     const reasons = Array.isArray(validation.reasons) ? validation.reasons.join(" | ") : "-";
     const rejectedReason = item.rejected_reason || "-";
+    const managedDoc = item.managed_doc || {};
+    const managedVersion = managedDoc.version_id ? managedDoc.version_id.slice(0, 8) : "-";
     return `
       <tr>
         <td>${escapeHtml(item.id)}</td>
         <td>${escapeHtml(item.source_name || "-")}</td>
+        <td>${escapeHtml(item.doc_key || "-")}</td>
+        <td>${escapeHtml(item.request_type || "-")}</td>
         <td>${escapeHtml(item.collection_key || "-")}</td>
         <td>${escapeHtml(item.status)}</td>
         <td>${usable}</td>
+        <td>${escapeHtml(item.change_summary || "-")}</td>
         <td>${escapeHtml(item.created_at || "-")}</td>
         <td>${escapeHtml(item.updated_at || "-")}</td>
+        <td>${escapeHtml(managedVersion)}</td>
         <td>${escapeHtml(rejectedReason)}</td>
         <td>${escapeHtml(reasons)}</td>
         <td style="display:flex;gap:6px;">${requestActionButtons(item)}</td>
@@ -105,11 +111,15 @@ function renderRequestTable(items, counts) {
         <tr>
           <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">id</th>
           <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">source</th>
+          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">doc_key</th>
+          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">type</th>
           <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">collection</th>
           <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">status</th>
           <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">usable</th>
+          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">change_summary</th>
           <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">created_at</th>
           <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">updated_at</th>
+          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">managed_version</th>
           <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">rejected_reason</th>
           <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">validation_reasons</th>
           <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">actions</th>

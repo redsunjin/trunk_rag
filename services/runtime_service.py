@@ -144,3 +144,16 @@ def sanitize_source_name(source_name: str) -> str:
     if not safe.lower().endswith(".md"):
         safe = f"{safe}.md"
     return safe
+
+
+def sanitize_doc_key(doc_key: str) -> str:
+    value = doc_key.strip().lower()
+    if value.endswith(".md"):
+        value = value[:-3]
+    if not value:
+        raise ValueError("doc_key is empty")
+    safe = "".join(char if (char.isalnum() or char in {"_", "-"}) else "_" for char in value)
+    safe = safe.strip("_")
+    if not safe:
+        raise ValueError("doc_key is empty")
+    return safe

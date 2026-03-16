@@ -23,7 +23,7 @@ def docs() -> dict[str, list[dict[str, int | str]]]:
 def read_doc(doc_name: str) -> dict[str, str]:
     path = index_service.resolve_doc_path(doc_name)
     return {
-        "name": path.name,
+        "name": doc_name,
         "content": path.read_text(encoding="utf-8"),
     }
 

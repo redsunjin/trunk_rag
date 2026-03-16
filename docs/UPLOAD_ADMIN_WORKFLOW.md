@@ -7,16 +7,16 @@
 ## 현재 구현 상태
 - 일반 사용자는 `POST /upload-requests`로 요청을 만들 수 있다.
 - 관리자는 `/admin`에서 `pending/approved/rejected` 목록을 보고 승인/반려할 수 있다.
-- 승인 시 현재는 요청 내용을 바로 벡터스토어에 추가한다.
-- 반려 시 현재는 `rejected_reason`만 저장한다.
+- 요청 생성 시 `request_type`, `doc_key`, `change_summary`를 함께 저장할 수 있다.
+- 승인 시 요청 본문을 `chroma_db/managed_docs/`에 버전 파일로 저장하고 active 버전을 전환한다.
+- `GET /rag-docs`와 `POST /reindex`는 seed 문서 + managed active 문서를 같은 기준으로 본다.
+- `DOC_RAG_AUTO_APPROVE`는 `create` 요청에만 적용되고 `update`는 항상 관리자 승인 경로를 거친다.
 
 ## 현재 구현의 핵심 갭
-1. 승인된 업로드가 파일 기반 원본으로 보존되지 않는다.
-2. 전체 `reindex`를 다시 돌리면 승인 업로드가 재구성되지 않는다.
-3. `GET /rag-docs`는 기본 `data/*.md`만 보여 주므로 승인 업로드와 운영 문서가 분리돼 있다.
-4. 요청이 "신규 문서"인지 "기존 문서 갱신"인지 구분되지 않는다.
-5. 업데이트 전후 비교, 버전 이력, 롤백 기준이 없다.
-6. `auto-approve`가 update까지 열리면 운영자가 모르는 사이 기존 문서를 덮어쓸 위험이 있다.
+1. 업데이트 전후 비교 UI와 diff 요약이 없다.
+2. 버전 이력 조회/rollback 보조 UX가 없다.
+3. 반려 사유가 자유 텍스트 중심이라 reason code 체계가 없다.
+4. 관리자 상세 화면에서 기존 active 문서 미리보기와 신규 제안 문서 미리보기가 분리돼 있지 않다.
 
 ## 설계 원칙
 1. 벡터스토어가 아니라 승인된 Markdown 원본이 운영 기준 데이터다.
@@ -112,10 +112,10 @@
   - `POST /upload-requests/{id}/approve`
   - `POST /upload-requests/{id}/reject`
 - 확장:
-  - 요청 생성 시 `request_type`, `doc_key`, `change_summary`
-  - 승인 응답에 `active_doc`, `superseded_doc`, `reindex_scope`
-  - 반려 응답에 `reason_code`, `decision_note`
-  - 문서 목록 응답에 `origin=seed|managed`, `doc_key`, `active_version`
+  - 요청 생성 시 `request_type`, `doc_key`, `change_summary` 반영 완료
+  - 승인 응답에 `managed_doc`, `ingest.mode=reindex`, `ingest.collections` 반영 완료
+  - 문서 목록 응답에 `origin=seed|managed`, `doc_key`, `collection_key` 반영 완료
+  - 반려 응답에 `reason_code`, `decision_note`는 아직 미구현
 
 ### 관리자 UI
 - 기본 필터는 `pending`
@@ -126,7 +126,7 @@
   - validation usable/reasons/warnings
   - change summary
   - 기존 active 문서 존재 여부
-- 1차 UI는 표 + detail pane 기준으로 유지한다.
+- 1차 UI는 표 기반으로 `request_type/doc_key/change_summary/managed version`까지 노출한다.
 - diff 뷰는 전체 텍스트 라인 diff 대신 "기존 문서 미리보기 / 제안 문서 미리보기" 2열 비교부터 시작한다.
 
 ## 자동 승인 정책
@@ -138,14 +138,14 @@
 ## 구현 우선순위
 
 ### Slice 1
-- managed 문서 runtime 저장소 추가
-- `doc_key` / `request_type` / `change_summary` 필드 추가
-- `GET /rag-docs`가 seed + managed active 문서를 함께 반환
-- 승인된 신규/갱신 요청이 full reindex 후에도 유지되게 만들기
+- [x] managed 문서 runtime 저장소 추가
+- [x] `doc_key` / `request_type` / `change_summary` 필드 추가
+- [x] `GET /rag-docs`가 seed + managed active 문서를 함께 반환
+- [x] 승인된 신규/갱신 요청이 full reindex 후에도 유지되게 만들기
 
 ### Slice 2
 - 관리자 상세 보기 강화
-- pending 기본 필터, update 강조, change summary 노출
+- pending 기본 필터, update 강조, change summary 노출 보강
 - reject reason code 정리
 
 ### Slice 3

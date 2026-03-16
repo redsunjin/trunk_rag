@@ -31,6 +31,9 @@ class AdminAuthRequest(BaseModel):
 class UploadRequestCreateRequest(BaseModel):
     content: str = Field(..., min_length=1)
     source_name: str | None = None
+    request_type: str | None = None
+    doc_key: str | None = None
+    change_summary: str | None = None
     collection: str | None = None
     country: str | None = None
     doc_type: str | None = None

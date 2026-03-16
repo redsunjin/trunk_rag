@@ -24,7 +24,8 @@
 - 현재: 정제된 md를 인덱싱/검색/질의
 - 현재: 데이터 등록 시 검증(사용 가능/불가 판정) 적용
 - 현재: 분야별 컬렉션 + 단순 라우팅 적용
-- 다음 우선순위(P2/P3): 데스크톱 패키징/배포 하드닝 재검토, 관리자 워크플로우 구현 1차, GraphRAG actual PoC/실측
+- 현재: 승인된 업로드는 `chroma_db/managed_docs/`의 active markdown 원본 기준으로 유지
+- 다음 우선순위(P2/P3): 데스크톱 패키징/배포 하드닝 재검토, 관리자 워크플로우 구현 2차, GraphRAG actual PoC/실측
 
 비목표(현재 단계):
 - 원본 수집/크롤링
@@ -150,6 +151,9 @@ npm start
 - `POST /upload-requests/{id}/approve`: 관리자 승인
 - `POST /upload-requests/{id}/reject`: 관리자 반려
 - 운영 기준은 `docs/UPLOAD_ADMIN_WORKFLOW.md`를 따른다.
+- `GET /rag-docs`는 repo의 seed 문서와 승인된 managed active 문서를 함께 반환한다.
+- `POST /upload-requests`는 선택적으로 `request_type`, `doc_key`, `change_summary`를 받을 수 있다.
+- `DOC_RAG_AUTO_APPROVE`는 `create` 요청에만 적용되고 `update` 요청은 항상 관리자 승인 경로를 사용한다.
 
 `POST /reindex` 응답의 `validation`에는 기계 판독용 필드와 함께
 `summary_text`(예: `total=5, usable=5, rejected=0, warnings=0, usable_ratio=100.00%`)가 포함됩니다.
@@ -202,7 +206,7 @@ curl -X POST http://127.0.0.1:8000/query `
 ```powershell
 curl -X POST http://127.0.0.1:8000/upload-requests `
   -H "Content-Type: application/json" `
-  -d "{\"source_name\":\"new_doc.md\",\"collection\":\"fr\",\"country\":\"france\",\"doc_type\":\"country\",\"content\":\"## 제목\\n본문\"}"
+  -d "{\"source_name\":\"new_doc.md\",\"collection\":\"fr\",\"request_type\":\"create\",\"doc_key\":\"new_doc\",\"change_summary\":\"초안 등록\",\"country\":\"france\",\"doc_type\":\"country\",\"content\":\"## 제목\\n본문\"}"
 ```
 
 - 실패 코드 매핑:

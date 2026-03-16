@@ -1,4 +1,4 @@
-# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-03-15 기준)
+# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-03-17 기준)
 
 기준 문서:
 - `SPEC.md`
@@ -40,6 +40,9 @@
 4. 관리자 워크플로우의 핵심 결정은 managed markdown 원본 + active 버전 기준으로 운영한다는 점이다.
 5. Electron은 이제 시작 전 preflight로 repo/Python/backend import/기본 LLM 런타임을 먼저 점검한다.
 6. 다만 데스크톱 PoC는 여전히 Python 런타임, 의존성 설치, LLM 준비 상태에 기대므로 MVP 기본 경로로 넣지 않는다.
+7. 업로드/갱신 구현 1차가 반영돼 승인된 요청은 `chroma_db/managed_docs/` 기준으로 재구성된다.
+8. `POST /upload-requests`는 `request_type/doc_key/change_summary`를 받고, `GET /rag-docs`와 `POST /reindex`는 seed + managed active 문서를 같은 기준으로 본다.
+9. `DOC_RAG_AUTO_APPROVE`는 `create` 요청에만 적용되고 `update`는 항상 관리자 승인 경로를 탄다.
 
 ## 0.2 2026-03-17 GraphRAG 게이트 업데이트
 
@@ -107,7 +110,7 @@
 
 ### C. 제품화 후속
 1. 데스크톱 패키징/배포 하드닝 여부 재검토
-2. 업로드/갱신 관리자 워크플로우 구현 1차
+2. 업로드/갱신 관리자 워크플로우 구현 2차
 
 ### D. GraphRAG 결정 게이트
 1. 실제 accuracy/latency 실측
@@ -151,11 +154,11 @@
 
 정량 스냅샷:
 - `app_api.py`: 160 lines
-- `web/index.html`: 156 lines
+- `web/index.html`: 193 lines
 - `web/admin.html`: 70 lines
-- `web/js/app_page.js`: 396 lines
-- `web/js/admin_page.js`: 249 lines
-- 전체 테스트: `32 passed`
+- `web/js/app_page.js`: 562 lines
+- `web/js/admin_page.js`: 259 lines
+- 전체 테스트: `34 passed`
 
 판단:
 - P3-Prep 게이트(`app_api.py <= 350`, inline script 외부화, 회귀 통과)는 충족됨.
@@ -165,19 +168,19 @@
 
 즉시 진행 대상 (다음 세션 1순위):
 1. 데스크톱 패키징/배포 하드닝 여부 재검토
-2. 업로드/갱신 관리자 워크플로우 구현 1차
+2. 업로드/갱신 관리자 워크플로우 구현 2차
 3. GraphRAG actual PoC/실측
 
 후속 대상 (P3):
 1. GraphRAG 필요성 검증 및 사이드카 PoC 여부 결정
 2. 데스크톱 패키징/배포 하드닝 여부 재검토
-3. 업로드/갱신 관리자 워크플로우 구현 1차
+3. 업로드/갱신 관리자 워크플로우 구현 2차
 
 ## 5. 다음 세션 우선순위 (실행 순서)
 
 ### A. 제품화 후속
 1. 데스크톱 패키징/배포 하드닝 여부 재검토
-2. 업로드/갱신 관리자 워크플로우 구현 1차
+2. 업로드/갱신 관리자 워크플로우 구현 2차
 
 ### B. GraphRAG 결정 게이트
 1. Neo4j sidecar actual PoC/실측
@@ -219,9 +222,11 @@
 4. 쉬운 RAG 개선 없이 기능만 추가하면 사용자 마찰이 누적될 수 있음
 5. GraphRAG/AuraDB는 운영 모델(폐쇄망/로컬/경량)과 충돌 가능성이 큼
 6. Electron PoC는 가능성을 확인했지만 설치형 제품으로 가려면 Python/모델 번들링 전략이 별도로 필요함
+7. 업로드 관리자 워크플로우는 active 버전/manifest까지는 구현됐지만, diff 뷰/이력 조회/rollback UI는 아직 없다.
 
 ## 9. 다음 커밋 목표 (권장)
 
 1. `feat(ux): simplify easy-rag bootstrap and defaults`
 2. `perf(rag): remeasure query p95 and tune runtime defaults`
 3. `docs(plan): reprioritize roadmap for easy-rag gate and graphrag decision`
+4. `feat(upload): persist managed markdown and active-doc workflow`

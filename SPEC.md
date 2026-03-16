@@ -23,6 +23,9 @@
 - 컬렉션 상태 조회(`/collections`) + cap 사용률
 - 등록 전 문서 검증(`usable/reasons/warnings`) 1차 적용
 - 업로드 요청/승인 워크플로우(`pending/approved/rejected`) 1차 적용
+- 승인된 업로드를 `chroma_db/managed_docs/`에 저장하고 active 버전 기준으로 재구성
+- 업로드 요청의 `request_type/doc_key/change_summary` 필드 지원
+- `/rag-docs`와 `reindex`가 seed + managed active 문서를 같은 기준으로 사용
 - `/health` 기반 런타임 기본 LLM 설정 노출
 - 기본 모드 UI에서 고급 LLM 설정 기본 숨김
 - 빈 인덱스/LLM 연결 오류에 대한 가이드 메시지
@@ -38,7 +41,7 @@
 - 사용자 인증/권한
 - 멀티 유저 세션 분리
 - 분산/HA 배포
-- 문서 업로드 관리자 UI
+- 관리자 diff/이력 상세 UI
 - 데스크톱 정식 제품화/설치 프로그램
 - 원본 소스 자동 수집/크롤링
 - 대규모 자동 전처리(재작성/요약) 파이프라인 내장
@@ -51,6 +54,7 @@
 - `GET /upload-requests`, `POST /upload-requests` 구현
 - `POST /upload-requests/{id}/approve`, `POST /upload-requests/{id}/reject` 구현
 - `GET /rag-docs`, `GET /rag-docs/{doc_name}` 구현
+- 승인된 요청의 managed markdown runtime 저장소/manifest 구현
 - `/query` 표준 실패 응답(`code`, `message`, `hint`, `request_id`, `detail`) 구현
 - `/query` 타임아웃 정책(15초, 재시도 없음) 적용
 - `/query` 성공/실패 응답에 `X-Request-ID` 헤더 제공
@@ -86,6 +90,8 @@
 - `고급 설정 펼치기`로 provider/model/base URL/API key 수동 수정
 - `vectors=0` 상태에서 `Reindex` 선행 안내
 - 업로드 요청에서 `Source Name` optional + 컬렉션 기준 기본값 사용
+- 업로드 요청에서 `Doc Key`, `Request Type`, `Change Summary` optional 입력 지원
+- 관리자 화면에서 `doc_key`, `request_type`, `change_summary`, managed version 노출
 
 ### 데스크톱 PoC
 - Electron 기반 최소 래퍼 추가(`desktop/electron`)
@@ -169,7 +175,7 @@
 ```
 
 ### POST `/reindex`
-- 목적: `data/*.md` 기준 벡터 재생성
+- 목적: seed 문서 + managed active 문서 기준 벡터 재생성
 - 요청:
 ```json
 {
@@ -234,6 +240,9 @@
       "status": "pending",
       "collection_key": "fr",
       "source_name": "new_doc.md",
+      "doc_key": "new_doc",
+      "request_type": "create",
+      "change_summary": "초안 등록",
       "usable": true
     }
   ]
@@ -247,6 +256,9 @@
 {
   "source_name": "new_doc.md",
   "collection": "fr",
+  "request_type": "create",
+  "doc_key": "new_doc",
+  "change_summary": "초안 등록",
   "country": "france",
   "doc_type": "country",
   "content": "## 제목\n본문"
@@ -259,10 +271,16 @@
   "request": {
     "id": "uuid",
     "status": "pending",
+    "request_type": "create",
+    "doc_key": "new_doc",
     "usable": true
   }
 }
 ```
+- `request_type`를 명시하지 않으면 현재 active 문서 존재 여부로 `create/update`를 자동 판단한다.
+- `request_type=create`인데 같은 `doc_key`가 이미 있으면 `422`를 반환한다.
+- `request_type=update`인데 대상 `doc_key`가 없으면 `422`를 반환한다.
+- `DOC_RAG_AUTO_APPROVE`는 `create` 요청에만 적용된다.
 
 ### POST `/upload-requests/{id}/approve`
 - 목적: 관리자 승인 및 인덱싱 반영
@@ -270,6 +288,22 @@
 ```json
 {
   "code": "admin1234"
+}
+```
+- 응답 예:
+```json
+{
+  "request": {
+    "id": "uuid",
+    "status": "approved",
+    "managed_doc": {
+      "active": true,
+      "doc_key": "new_doc"
+    },
+    "ingest": {
+      "mode": "reindex"
+    }
+  }
 }
 ```
 
@@ -285,7 +319,11 @@
 - 응답:
 ```json
 {
-  "ok": true
+  "request": {
+    "id": "uuid",
+    "status": "rejected",
+    "rejected_reason": "검증 기준 미달"
+  }
 }
 ```
 - 실패 응답 예:
@@ -301,7 +339,22 @@
 ```json
 {
   "docs": [
-    {"name": "eu_summry.md", "size": 12829, "updated_at": 1766078655}
+    {
+      "name": "eu_summry.md",
+      "size": 12829,
+      "updated_at": 1766078655,
+      "origin": "seed",
+      "doc_key": "eu_summry",
+      "collection_key": "eu"
+    },
+    {
+      "name": "new_doc.md",
+      "size": 512,
+      "updated_at": 1766079999,
+      "origin": "managed",
+      "doc_key": "new_doc",
+      "collection_key": "fr"
+    }
   ]
 }
 ```
@@ -420,8 +473,8 @@ npm start
 - 내용: embedded Python/설치 전략, preflight UI, 패키징 비용 판단
 
 ### 2순위
-- 업로드/갱신 관리자 워크플로우 구현 1차
-- 내용: managed markdown 저장소, update 구분, `/rag-docs`/reindex 일관화
+- 업로드/갱신 관리자 워크플로우 구현 2차
+- 내용: 관리자 상세 보기, diff/이력 UX, reject reason code 정리
 
 ### 3순위
 - GraphRAG actual PoC/실측

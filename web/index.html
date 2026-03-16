@@ -102,6 +102,21 @@
             </div>
             <div class="input-row">
               <div class="input-group">
+                <label for="uploadDocKey">Doc Key (optional)</label>
+                <input type="text" id="uploadDocKey" placeholder="비워두면 source_name 기준으로 계산됩니다">
+                <small class="helper-text">기존 문서 갱신 시 같은 `doc_key`를 사용합니다.</small>
+              </div>
+              <div class="input-group">
+                <label for="uploadRequestType">Request Type (optional)</label>
+                <select id="uploadRequestType">
+                  <option value="">(자동 판단)</option>
+                  <option value="create">create</option>
+                  <option value="update">update</option>
+                </select>
+              </div>
+            </div>
+            <div class="input-row">
+              <div class="input-group">
                 <label for="uploadCountry">Country</label>
                 <select id="uploadCountry">
                   <option value="">(collection 기본값)</option>
@@ -120,6 +135,10 @@
                   <option value="country">country</option>
                 </select>
               </div>
+            </div>
+            <div class="input-group">
+              <label for="uploadChangeSummary">Change Summary (optional)</label>
+              <input type="text" id="uploadChangeSummary" placeholder="예: 2026 개정 내용 반영">
             </div>
           </div>
           <div class="input-group">
