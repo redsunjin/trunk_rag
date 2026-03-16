@@ -53,7 +53,7 @@
 검증:
 - [x] `.venv/bin/python -m pytest -q` -> `25 passed in 7.26s` (2026-03-13)
 
-## 현재 우선순위 P1 (성능/품질 게이트)
+## 현재 우선순위 P1 (성능/품질 게이트, 완료 2026-03-15)
 
 목표:
 - 쉬운 RAG 기본 경로가 느리거나 불안정하지 않도록 운영 기본값을 고정한다.
@@ -65,16 +65,21 @@
 - 초기 blocker였던 로컬 embedding model/base URL 문제는 local benchmark profile로 우회해 재측정을 진행했다.
 - `2026-03-14` 재측정으로 local benchmark profile(`llama3.1:8b`, `max_context=300`, `num_predict=32`) 기준 `/query` E2E는 다시 통과했다.
 - 같은 profile에서 `token_800_120`은 `char` 대비 p95가 `1.9% ~ 3.1%` 더 빨랐지만, 공식 기본 스택이 아니라서 운영 기본값은 아직 `char` 유지로 본다.
+- `2026-03-15` 샘플 질의 품질 비교에서도 `char`와 `token_800_120` 차이는 확인되지 않았다.
+- 같은 비교에서 자동 다중 라우팅(`fr,ge`)은 교차 국가 비교 질의 품질을 개선했고, `collection=all` 고정은 같은 질문에서 충분한 답을 주지 못했다.
 
 - [x] 토큰 청킹 파라미터 재탐색 (`chunk_size`, `chunk_overlap`)
-- [ ] `/query` 지연/품질 균형 재측정 (`DOC_RAG_OLLAMA_NUM_PREDICT`, `DOC_RAG_MAX_CONTEXT_CHARS`)
-- [ ] 단일/다중 컬렉션 기본 경로 재판정
+- [x] `/query` 지연/품질 균형 재측정 (`DOC_RAG_OLLAMA_NUM_PREDICT`, `DOC_RAG_MAX_CONTEXT_CHARS`)
+- [x] 단일/다중 컬렉션 기본 경로 재판정
 - [x] 벤치 JSON/리포트 갱신
-- [ ] 운영 권장 기본값 확정 및 문서 반영
+- [x] 운영 권장 기본값 확정 및 문서 반영
 
 완료 기준:
-- [ ] 기본 질의 경로 p95와 품질 기준이 문서로 고정된다.
-- [ ] 기본 모드의 설정값이 임시값이 아니라 운영 권장값으로 정리된다.
+- [x] 기본 질의 경로 p95와 품질 기준이 문서로 고정된다.
+- [x] 기본 모드의 설정값이 임시값이 아니라 운영 권장값으로 정리된다.
+
+검증:
+- [x] `.venv/bin/python -m pytest -q` -> `32 passed in 5.29s` (2026-03-15)
 
 ## 현재 우선순위 P2 (제품화 후속)
 

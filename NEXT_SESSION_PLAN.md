@@ -1,4 +1,4 @@
-# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-03-13 기준)
+# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-03-15 기준)
 
 기준 문서:
 - `SPEC.md`
@@ -22,7 +22,7 @@
 
 결론:
 1. "쉬운 RAG 운영 경로" 정리는 2026-03-13에 완료됐다.
-2. 다음 작업의 첫 게이트는 성능/품질 파라미터와 운영 기본값 확정이다.
+2. 성능/품질 게이트는 2026-03-15에 완료됐고, 운영 기본값은 `char` + 자동 다중 라우팅 기준으로 고정됐다.
 3. GraphRAG는 즉시 구현 대상이 아니라, 필요성 입증 후 사이드카 PoC로만 착수한다.
 
 배경:
@@ -56,7 +56,7 @@
 검증:
 - `.venv/bin/python -m pytest -q` -> `25 passed in 7.26s`
 
-### B. 성능/품질 게이트
+### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
 2. `/query` E2E 재측정
 3. 단일/다중 컬렉션 기본 경로 재판정
@@ -73,6 +73,12 @@
 - `2026-03-14` local benchmark profile(`llama3.1:8b`, local embedding path, `DOC_RAG_EMBEDDING_DEVICE=cpu`)에서는 `/query` E2E 100% 성공으로 재개됐다.
 - 같은 profile에서 `token_800_120` p95는 `char` 대비 `single_all -2.0%`, `single_fr -3.1%`, `dual_fr_ge -1.9%`였다.
 - 다만 개선폭이 작고 공식 기본 스택이 아니므로 기본 청킹 모드는 당분간 `char` 유지로 둔다.
+- `2026-03-15` 샘플 질의 품질 비교에서도 `char`와 `token_800_120` 차이는 확인되지 않았다.
+- 자동 라우팅은 다중 국가 키워드 감지 시 최대 2개 컬렉션(`fr,ge` 등)을 함께 조회하도록 확정했다.
+- `collection=all`은 fallback/명시 옵션으로 유지하고, 교차 국가 비교 질의의 기본 경로로는 두지 않는다.
+
+검증:
+- `.venv/bin/python -m pytest -q` -> `32 passed in 5.29s`
 
 ### C. 제품화 후속
 1. 데스크톱 래핑(Electron/Tauri) PoC
@@ -126,19 +132,18 @@
 - `web/admin.html`: 70 lines
 - `web/js/app_page.js`: 396 lines
 - `web/js/admin_page.js`: 249 lines
-- 전체 테스트: `24 passed`
+- 전체 테스트: `32 passed`
 
 판단:
 - P3-Prep 게이트(`app_api.py <= 350`, inline script 외부화, 회귀 통과)는 충족됨.
-- 다음 우선순위는 쉬운 RAG 운영 게이트 -> 성능/품질 파라미터 재탐색 -> P3 기능 착수 순이다.
+- 쉬운 RAG 운영 게이트와 성능/품질 게이트는 완료됐고, 다음 우선순위는 제품화 후속 -> GraphRAG 결정 게이트 순이다.
 
 ## 4. 현재 남은 작업 범위 (핵심)
 
 즉시 진행 대상 (다음 세션 1순위):
-1. 쉬운 RAG 운영 게이트(실행/기본값/UI/업로드 단순화)
-2. 토큰 모드 파라미터 재탐색(예: chunk_size/overlap 조정)
-3. `/query` 품질/지연 균형 프로파일 재탐색(`DOC_RAG_OLLAMA_NUM_PREDICT`, `DOC_RAG_MAX_CONTEXT_CHARS`)
-4. 벤치 결과(JSON/리포트) 갱신 및 운영 기본값 재확정
+1. 데스크톱 래핑(Electron/Tauri) PoC
+2. 문서 업로드/갱신 관리자 워크플로우 설계
+3. GraphRAG 판단용 관계형 질문셋 수집
 
 후속 대상 (P3):
 1. 데스크톱 래핑(Electron/Tauri) PoC
@@ -147,36 +152,11 @@
 
 ## 5. 다음 세션 우선순위 (실행 순서)
 
-### A. 쉬운 RAG 운영 게이트
-1. 런처/종료 스크립트 정리
-2. UI 기본값/설정 노출 정리
-3. 빈 인덱스/오프라인/모델 미실행 안내 강화
-4. 업로드 최소 입력화
-
-### B. 성능/품질 재탐색
-1. 토큰 청킹 파라미터 실험(`scripts/benchmark_token_chunking.py`)
-2. `/query` E2E 재측정(`scripts/benchmark_query_e2e.py`)
-3. 단일/다중 컬렉션 검색 비용 재확인(`scripts/benchmark_multi_collection.py`)
-
-다음 실행 순서:
-1. 충돌 없는 포트(예: `8010`)로 `app_api.py` 실행
-2. `scripts/runtime_preflight.py --base-url http://127.0.0.1:8010`
-3. `scripts/benchmark_query_e2e.py --base-url http://127.0.0.1:8010`
-
-### C. 운영 기본값 확정
-1. `.env.example` 기본값/권장값 갱신
-2. `README.md`, `SPEC.md` 동기화
-3. 리포트 요약(`docs/reports/*`) 갱신
-
-바로 다음 확인:
-1. 샘플 질의 2~3개 품질 수동 확인
-2. 가능하면 공식 기본 스택 또는 그에 가까운 로컬 스택으로 재측정
-
-### D. P3 기능 착수
+### A. 제품화 후속
 1. 데스크톱 래핑(Electron/Tauri) PoC
 2. 업로드/갱신 관리자 워크플로우 상세 설계
 
-### E. GraphRAG 결정 게이트
+### B. GraphRAG 결정 게이트
 1. 관계형 질문셋 작성
 2. 현행 Vector RAG 실패/성공 기준선 작성
 3. Neo4j 사이드카 PoC 계약 정의
@@ -189,7 +169,7 @@
 3. `run_doc_rag.bat` 실행 후 `/intro`, `/app`, `/admin` 로딩 확인
 4. `GET /health` 확인(벡터 수/auto_approve/pending/chunking_mode 확인)
 5. `POST /reindex` 1회 실행(응답 내 `validation.summary_text` 확인)
-6. `/query` 샘플 질의(단일 + 다중 컬렉션) 확인
+6. `/query` 샘플 질의(단일 + 다중 컬렉션 자동 라우팅) 확인
 
 추가 확인:
 7. 기본 모드에서 LLM 세부 설정 없이 질의 가능한지 확인

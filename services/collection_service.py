@@ -58,6 +58,19 @@ def guess_collection_key_from_query(query: str) -> str:
     return DEFAULT_COLLECTION_KEY
 
 
+def guess_collection_keys_from_query(query: str) -> list[str]:
+    normalized = query.strip().lower()
+    matched: list[str] = []
+    for key, config in COLLECTION_CONFIGS.items():
+        if key == DEFAULT_COLLECTION_KEY:
+            continue
+        for keyword in config.get("keywords", ()):
+            if str(keyword).lower() in normalized:
+                matched.append(key)
+                break
+    return dedupe_collection_keys(matched)
+
+
 def resolve_collection_for_query(query: str, requested_collection: str | None) -> tuple[str, str]:
     explicit_key = resolve_collection_key(requested_collection)
     if explicit_key:
@@ -101,9 +114,18 @@ def resolve_collection_keys_for_query(
         route_reason = "explicit_multi" if len(keys) > 1 else "explicit"
         return keys, route_reason, False
 
-    key, route_reason = resolve_collection_for_query(query, requested_collection)
-    allow_default_fallback = route_reason == "keyword" and requested_collection is None
-    return [key], route_reason, allow_default_fallback
+    explicit_key = resolve_collection_key(requested_collection)
+    if explicit_key:
+        return [explicit_key], "explicit", False
+
+    matched_keys = guess_collection_keys_from_query(query)
+    if not matched_keys:
+        return [DEFAULT_COLLECTION_KEY], "default", False
+    if len(matched_keys) == 1:
+        return matched_keys, "keyword", True
+    if len(matched_keys) <= MAX_QUERY_COLLECTIONS:
+        return matched_keys, "keyword_multi", True
+    return [DEFAULT_COLLECTION_KEY], "keyword_overflow", False
 
 
 def list_collection_keys() -> list[str]:

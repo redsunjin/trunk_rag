@@ -133,6 +133,8 @@ cd <repo>
 브라우저 기본 모드는 이 값을 받아 권장 LLM 설정을 자동 적용하고,
 `고급 설정 펼치기`를 누른 경우에만 provider/model/base URL/API key를 직접 수정합니다.
 `POST /reindex` 응답에는 실제 인덱싱에 사용된 `chunking` 설정이 포함됩니다.
+`POST /query`에서 `collection`/`collections`를 명시하지 않으면 키워드 기반 자동 라우팅이 동작하고,
+복수 국가 키워드가 동시에 감지되면 최대 2개 컬렉션까지 함께 조회합니다.
 
 예시:
 
@@ -192,6 +194,10 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 - `X-RAG-Collection` 헤더:
   - 실제 질의에 사용된 컬렉션 이름을 반환
 
+- `X-RAG-Collections` 헤더:
+  - 실제 질의에 사용된 전체 컬렉션 목록을 반환
+  - 자동 다중 라우팅이면 최대 2개 컬렉션이 쉼표로 연결된다
+
 ## Preprocessing Contract (정책)
 
 현재 정책:
@@ -228,6 +234,13 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 - 토큰 인코딩(선택): `DOC_RAG_CHUNK_TOKEN_ENCODING` (기본 `cl100k_base`)
 - 임베딩 모델(선택): `DOC_RAG_EMBEDDING_MODEL` (기본 `BAAI/bge-m3`, 로컬 경로 가능)
 - 임베딩 디바이스(선택): `DOC_RAG_EMBEDDING_DEVICE` (예: Apple Silicon 로컬 모델은 `cpu` 권장)
+
+운영 기본값 결정 메모(2026-03-15):
+- 기본 청킹 모드는 계속 `char`를 사용합니다.
+- `token_800_120`은 로컬 벤치에서 소폭 더 빨랐지만, 샘플 질의 품질 차이가 없어 기본값을 바꾸지 않았습니다.
+- 교차 국가 비교 질의는 `all` 고정보다 자동 다중 라우팅(최대 2개 컬렉션)을 기본 경로로 둡니다.
+- 관련 근거는 `docs/reports/QUERY_E2E_CHAR_VS_TOKEN_REPORT_2026-03-14.md`,
+  `docs/reports/QUERY_QUALITY_ROUTE_REPORT_2026-03-15.md`에 정리했습니다.
 
 ## UI 기본 동작
 
@@ -300,9 +313,13 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 
 - 기본 시나리오: `single_all`, `single_fr`, `dual_fr_ge`
 - 출력에는 시나리오별 `latency_success_p95_ms`와 `status_counts`가 포함됩니다.
+- `char` vs `token_800_120` 재측정 결과는 `docs/reports/QUERY_E2E_CHAR_VS_TOKEN_REPORT_2026-03-14.md`
+  에 정리돼 있습니다.
+- 샘플 질의 품질과 자동 다중 라우팅 결과는 `docs/reports/QUERY_QUALITY_ROUTE_REPORT_2026-03-15.md`
+  에 정리돼 있습니다.
 - 느린 로컬 CPU 환경에서는 아래 런타임 설정을 권장:
   - `DOC_RAG_QUERY_TIMEOUT_SECONDS=90`
-  - `DOC_RAG_OLLAMA_NUM_PREDICT=8`
+  - `DOC_RAG_OLLAMA_NUM_PREDICT=32`
   - `DOC_RAG_MAX_CONTEXT_CHARS=300`
 
 ## Vector Store Notes

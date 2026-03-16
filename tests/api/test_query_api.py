@@ -184,3 +184,45 @@ def test_query_with_two_collections(client, monkeypatch):
         ]
     )
     assert response.json()["answer"] == "다중 컬렉션 응답"
+
+
+def test_query_auto_routes_multi_country_keywords(client, monkeypatch):
+    class DummyDB:
+        def __init__(self, key: str):
+            self.key = key
+
+        def as_retriever(self, **kwargs):
+            return object()
+
+    monkeypatch.setattr(routes_query.index_service, "get_db", lambda key="all": DummyDB(key))
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count", lambda _db: 1)
+    monkeypatch.setattr(
+        routes_query,
+        "resolve_llm_config",
+        lambda **kwargs: ("ollama", "qwen3:4b", None, "http://localhost:11434"),
+    )
+    monkeypatch.setattr(routes_query, "create_chat_llm", lambda **kwargs: object())
+    monkeypatch.setattr(routes_query.query_service, "build_query_chain", lambda retriever, llm: object())
+    monkeypatch.setattr(
+        routes_query.query_service,
+        "invoke_query_chain",
+        lambda chain, question, timeout_seconds=15: "자동 다중 라우팅 응답",
+    )
+
+    response = client.post(
+        "/query",
+        json={
+            "query": "프랑스와 독일의 공통 과학적 성과를 비교해줘",
+            "llm_provider": "ollama",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers.get("X-RAG-Collection") == routes_query.collection_service.get_collection_name("fr")
+    assert response.headers.get("X-RAG-Collections") == ",".join(
+        [
+            routes_query.collection_service.get_collection_name("fr"),
+            routes_query.collection_service.get_collection_name("ge"),
+        ]
+    )
+    assert response.json()["answer"] == "자동 다중 라우팅 응답"
