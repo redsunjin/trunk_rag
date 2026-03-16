@@ -25,7 +25,7 @@
 - 현재: 데이터 등록 시 검증(사용 가능/불가 판정) 적용
 - 현재: 분야별 컬렉션 + 단순 라우팅 적용
 - 현재: 승인된 업로드는 `chroma_db/managed_docs/`의 active markdown 원본 기준으로 유지
-- 다음 우선순위(P2/P3): 데스크톱 패키징/배포 하드닝 재검토, 관리자 워크플로우 구현 2차, GraphRAG actual PoC/실측
+- 다음 우선순위(P2/P3): 관리자 워크플로우 구현 2차, GraphRAG answer-level/vector baseline 비교 실측
 
 비목표(현재 단계):
 - 원본 수집/크롤링
@@ -49,6 +49,7 @@
 - `scripts/benchmark_multi_collection.py`: 단일/다중 컬렉션 검색 비교 벤치
 - `scripts/benchmark_token_chunking.py`: char/token 청킹 비교 벤치 스크립트
 - `scripts/benchmark_query_e2e.py`: `/query` E2E p95 벤치 스크립트
+- `scripts/benchmark_graphrag_sidecar.py`: GraphRAG sidecar retrieval PoC/실측 스크립트
 - `scripts/runtime_preflight.py`: P1 벤치 전 런타임 준비 상태 점검
 - `run_doc_rag.bat`: 터미널 명령 없이 서버+브라우저 실행
 - `stop_doc_rag.bat`: 실행 중인 로컬 서버 종료
@@ -64,6 +65,7 @@
 - `docs/UPLOAD_ADMIN_WORKFLOW.md`: 업로드/갱신 관리자 워크플로우 설계 기준
 - `docs/GRAPH_RAG_QUESTION_SET.md`: GraphRAG 판단용 관계형 질문셋
 - `docs/GRAPH_RAG_SIDECAR_CONTRACT.md`: GraphRAG sidecar 계약과 최소 적재 파이프라인
+- `docs/reports/GRAPH_RAG_ACTUAL_POC_REPORT_2026-03-17.md`: GraphRAG retrieval PoC 1차 실측 결과
 - `docs/reports/GRAPH_RAG_VECTOR_GAP_REPORT_2026-03-17.md`: 현재 Vector RAG 실패 사례와 Graph 후보 범위
 - `docs/VECTORSTORE_POLICY.md`: 벡터스토어 운영/용량 정책
 - `docs/COLLECTION_ROUTING_POLICY.md`: 분야별 컬렉션/라우팅 정책
@@ -156,6 +158,7 @@ npm start
 - `GET /rag-docs`는 repo의 seed 문서와 승인된 managed active 문서를 함께 반환한다.
 - `POST /upload-requests`는 선택적으로 `request_type`, `doc_key`, `change_summary`를 받을 수 있다.
 - `DOC_RAG_AUTO_APPROVE`는 `create` 요청에만 적용되고 `update` 요청은 항상 관리자 승인 경로를 사용한다.
+- GraphRAG는 아직 기본 경로가 아니며, 현재는 graph snapshot 기반 retrieval PoC와 1차 측정까지만 반영된 상태다.
 
 `POST /reindex` 응답의 `validation`에는 기계 판독용 필드와 함께
 `summary_text`(예: `total=5, usable=5, rejected=0, warnings=0, usable_ratio=100.00%`)가 포함됩니다.

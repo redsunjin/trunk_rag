@@ -135,7 +135,11 @@ PoC 범위:
 진행 메모 (2026-03-17):
 - `docs/GRAPH_RAG_SIDECAR_CONTRACT.md`에 최소 적재 파이프라인, `POST /query-advanced` 계약, fallback 규칙을 고정했다.
 - GraphRAG 준비 문서 기준으로는 "질문셋 -> 실패 사례 -> sidecar 계약"까지 완료됐다.
-- 남은 항목은 실제 accuracy/latency 실측과 Go/No-Go 판단이다.
+- `services/graphrag_poc_service.py`와 `scripts/benchmark_graphrag_sidecar.py`로 graph snapshot 기반 retrieval PoC를 추가했다.
+- `docs/reports/graphrag_snapshot_2026-03-17/`에 `entities.jsonl`, `relations.jsonl`, `ingest_stats.json`를 생성했다.
+- `docs/reports/GRAPH_RAG_ACTUAL_POC_REPORT_2026-03-17.md` 기준 6개 graph-candidate 질문 1차 실측 결과는 `avg_latency_ms=0.068`, `avg_expected_entity_hit_ratio=0.9444`였다.
+- 다만 이 수치는 answer 정확도가 아니라 retrieval recall 성격 지표이고, 2-hop 확장이 일부 질문에서 넓게 퍼져 precision 판단은 아직 부족하다.
+- 남은 항목은 vector baseline 대비 answer-level accuracy/latency 실측과 Go/No-Go 판단이다.
 
 Go / No-Go 기준:
 - [ ] 정확도 개선이 실제로 확인된다.
@@ -251,7 +255,7 @@ Go / No-Go 기준:
 ### Stage B (확장, P3 3트랙)
 - [x] Track-1: 데스크톱 패키징/배포 하드닝 여부 재검토
 - [x] Track-2: 업로드/갱신 관리자 워크플로우 구현 1차
-- [ ] Track-3: QA/문서 업데이트 전담
+- [x] Track-3: QA/문서 업데이트 전담
 
 완료 기준:
 - [ ] 각 트랙 산출물이 충돌 없이 병합

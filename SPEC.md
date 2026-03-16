@@ -37,6 +37,7 @@
 - GraphRAG 판단용 질문셋 문서(`docs/GRAPH_RAG_QUESTION_SET.md`)
 - Vector RAG 실패 사례 문서(`docs/reports/GRAPH_RAG_VECTOR_GAP_REPORT_2026-03-17.md`)
 - GraphRAG sidecar 계약 문서(`docs/GRAPH_RAG_SIDECAR_CONTRACT.md`)
+- GraphRAG retrieval PoC/실측 스크립트(`scripts/benchmark_graphrag_sidecar.py`)
 
 ### 제외(현재 단계)
 - 사용자 인증/권한
@@ -69,6 +70,7 @@
 - 헤더 기준 분할 + 모드별 분할(`char`/`token`)
 - 임베딩 생성(`BAAI/bge-m3`)
 - Chroma 인덱싱/조회
+- graph snapshot 기반 entity/relation 추출 PoC
 
 ### 품질/검증
 - API 회귀 테스트: `tests/api/test_system_api.py`
@@ -118,6 +120,7 @@
 - `requirements.txt`: 런타임 의존성
 - `requirements-dev.txt`: 테스트/브라우저 의존성
 - `desktop/electron/*`: Electron PoC 런타임/검증 스크립트
+- `services/graphrag_poc_service.py`: GraphRAG snapshot/benchmark 보조 서비스
 - `web/index.html`: 브라우저 UI
 - `web/admin.html`: 관리자 상태 UI
 - `web/styles.css`: 공통 스타일
@@ -126,6 +129,7 @@
 - `docs/GRAPH_RAG_QUESTION_SET.md`: GraphRAG 판단용 질문셋
 - `docs/reports/GRAPH_RAG_VECTOR_GAP_REPORT_2026-03-17.md`: Vector RAG 실패 사례와 Graph 후보 범위
 - `docs/GRAPH_RAG_SIDECAR_CONTRACT.md`: GraphRAG sidecar 계약
+- `docs/reports/GRAPH_RAG_ACTUAL_POC_REPORT_2026-03-17.md`: GraphRAG retrieval PoC 1차 실측
 
 ## API 계약
 ### GET `/health`
@@ -474,8 +478,8 @@ npm start
 - 내용: 관리자 상세 보기, diff/이력 UX, reject reason code 정리
 
 ### 2순위
-- GraphRAG actual PoC/실측
-- 내용: self-managed Neo4j sidecar 구현, accuracy/latency 측정, Go/No-Go 판단
+- GraphRAG answer-level/vector baseline 비교 실측
+- 내용: retrieval PoC 위에 answer-level accuracy/latency 비교와 Go/No-Go 판단 추가
 
 ### 3순위
 - 데스크톱 패키징 실제 착수 재검토

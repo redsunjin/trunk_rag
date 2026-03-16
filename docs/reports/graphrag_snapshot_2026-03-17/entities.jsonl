@@ -1,0 +1,20 @@
+{"id": "bologna_university", "label": "Bologna University", "sources": ["it.md"], "collections": ["it"]}
+{"id": "ecole_polytechnique", "label": "Ecole Polytechnique", "sources": ["eu_summry.md", "fr.md"], "collections": ["eu", "fr"]}
+{"id": "enlightenment", "label": "Enlightenment", "sources": ["ge.md", "uk.md"], "collections": ["ge", "uk"]}
+{"id": "french_revolution", "label": "French Revolution", "sources": ["eu_summry.md", "fr.md"], "collections": ["eu", "fr"]}
+{"id": "galileo", "label": "Galileo", "sources": ["eu_summry.md"], "collections": ["eu"]}
+{"id": "german_physical_society", "label": "German Physical Society", "sources": ["ge.md"], "collections": ["ge"]}
+{"id": "gottingen", "label": "Gottingen", "sources": ["ge.md"], "collections": ["ge"]}
+{"id": "great_fire_london", "label": "Great Fire of London", "sources": ["eu_summry.md", "uk.md"], "collections": ["eu", "uk"]}
+{"id": "helmholtz", "label": "Helmholtz", "sources": ["eu_summry.md", "ge.md"], "collections": ["eu", "ge"]}
+{"id": "humboldt_university", "label": "Humboldt University", "sources": ["ge.md"], "collections": ["ge"]}
+{"id": "leibniz", "label": "Leibniz", "sources": ["eu_summry.md", "ge.md"], "collections": ["eu", "ge"]}
+{"id": "magnus_lab", "label": "Magnus Laboratory", "sources": ["ge.md"], "collections": ["ge"]}
+{"id": "max_planck_institute", "label": "Max Planck Institute", "sources": ["ge.md"], "collections": ["ge"]}
+{"id": "medici", "label": "Medici", "sources": ["eu_summry.md", "fr.md", "it.md"], "collections": ["eu", "fr", "it"]}
+{"id": "napoleonic_wars", "label": "Napoleonic Wars", "sources": ["ge.md", "it.md"], "collections": ["ge", "it"]}
+{"id": "newton", "label": "Newton", "sources": ["eu_summry.md", "ge.md", "uk.md"], "collections": ["eu", "ge", "uk"]}
+{"id": "padua_university", "label": "Padua University", "sources": ["it.md"], "collections": ["it"]}
+{"id": "royal_society", "label": "Royal Society", "sources": ["eu_summry.md", "uk.md"], "collections": ["eu", "uk"]}
+{"id": "siemens", "label": "Siemens", "sources": ["eu_summry.md", "ge.md"], "collections": ["eu", "ge"]}
+{"id": "voltaire", "label": "Voltaire", "sources": ["eu_summry.md", "ge.md", "uk.md"], "collections": ["eu", "ge", "uk"]}

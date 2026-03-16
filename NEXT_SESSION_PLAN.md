@@ -52,7 +52,9 @@
 2. 질문은 `ops-baseline`과 `graph-candidate`로 분리했다.
 3. `docs/reports/GRAPH_RAG_VECTOR_GAP_REPORT_2026-03-17.md`에 현재 Vector RAG 실패 사례와 구조적 한계를 정리했다.
 4. `docs/GRAPH_RAG_SIDECAR_CONTRACT.md`에 최소 적재 파이프라인과 sidecar 계약을 정의했다.
-5. GraphRAG 문서 준비 단계에서 남은 것은 실제 accuracy/latency 실측과 Go/No-Go 판단이다.
+5. `services/graphrag_poc_service.py`와 `scripts/benchmark_graphrag_sidecar.py`로 graph snapshot 기반 retrieval PoC를 추가했다.
+6. `docs/reports/GRAPH_RAG_ACTUAL_POC_REPORT_2026-03-17.md` 기준 6개 graph-candidate 질문의 1차 실측 결과는 `avg_latency_ms=0.068`, `avg_expected_entity_hit_ratio=0.9444`였다.
+7. 다만 현재 수치는 retrieval recall 지표라서 vector baseline 대비 answer-level accuracy 개선 여부는 아직 미확정이다.
 
 배경:
 - 현재 프로젝트의 운영 모델은 `폐쇄망/로컬/경량 RAG 런타임`이다.
@@ -113,7 +115,7 @@
 1. 업로드/갱신 관리자 워크플로우 구현 2차
 
 ### D. GraphRAG 결정 게이트
-1. 실제 accuracy/latency 실측
+1. vector baseline 대비 answer-level accuracy/latency 실측
 2. Go/No-Go 판단 후에만 GraphRAG PoC 착수
 
 원칙:
@@ -168,10 +170,10 @@
 
 즉시 진행 대상 (다음 세션 1순위):
 1. 업로드/갱신 관리자 워크플로우 구현 2차
-2. GraphRAG actual PoC/실측
+2. GraphRAG answer-level/vector baseline 비교 실측
 
 후속 대상 (P3):
-1. GraphRAG 필요성 검증 및 사이드카 PoC 여부 결정
+1. GraphRAG answer-level 비교와 Go/No-Go 판단
 2. 업로드/갱신 관리자 워크플로우 구현 2차
 3. 데스크톱 패키징은 embedded Python/설치 전략 결정 전까지 보류 유지
 
@@ -181,7 +183,7 @@
 1. 업로드/갱신 관리자 워크플로우 구현 2차
 
 ### B. GraphRAG 결정 게이트
-1. Neo4j sidecar actual PoC/실측
+1. Neo4j runtime 연결 또는 동등 sidecar 실행 경로 정리
 2. AuraDB vs self-managed Neo4j 적용 조건 문서화
 
 ## 6. 세션 시작 체크리스트 (핸드오버용)
@@ -221,6 +223,7 @@
 5. GraphRAG/AuraDB는 운영 모델(폐쇄망/로컬/경량)과 충돌 가능성이 큼
 6. Electron PoC는 가능성을 확인했지만 설치형 제품으로 가려면 Python/모델 번들링 전략이 별도로 필요하며, 현재는 보류 상태다.
 7. 업로드 관리자 워크플로우는 active 버전/manifest까지는 구현됐지만, diff 뷰/이력 조회/rollback UI는 아직 없다.
+8. GraphRAG retrieval PoC는 생성됐지만, answer-level precision과 vector baseline 대비 우위는 아직 증명되지 않았다.
 
 ## 9. 다음 커밋 목표 (권장)
 
@@ -229,3 +232,4 @@
 3. `docs(plan): reprioritize roadmap for easy-rag gate and graphrag decision`
 4. `feat(upload): persist managed markdown and active-doc workflow`
 5. `docs(desktop): record packaging hardening hold decision`
+6. `feat(graphrag): add sidecar retrieval poc benchmark`

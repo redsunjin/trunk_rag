@@ -1,0 +1,314 @@
+{
+  "generated_at": "2026-03-16T23:43:35+00:00",
+  "snapshot": {
+    "stats": {
+      "collection_key": "all",
+      "source_docs": 5,
+      "section_hits": 21,
+      "nodes": 20,
+      "edges": 48
+    },
+    "export_paths": {
+      "entities": "docs/reports/graphrag_snapshot_2026-03-17/entities.jsonl",
+      "relations": "docs/reports/graphrag_snapshot_2026-03-17/relations.jsonl",
+      "stats": "docs/reports/graphrag_snapshot_2026-03-17/ingest_stats.json"
+    }
+  },
+  "benchmark": {
+    "results": [
+      {
+        "id": "GQ-09",
+        "question": "뉴턴의 국장, 볼테르의 충격, 프랑스/독일 계몽주의 확산이 어떤 연쇄로 이어졌는지 설명해줘.",
+        "query_entities": [
+          "enlightenment",
+          "newton",
+          "voltaire"
+        ],
+        "matched_entities": [
+          "bologna_university",
+          "ecole_polytechnique",
+          "enlightenment",
+          "french_revolution",
+          "galileo",
+          "german_physical_society",
+          "great_fire_london",
+          "helmholtz",
+          "humboldt_university",
+          "leibniz",
+          "magnus_lab",
+          "medici",
+          "napoleonic_wars",
+          "newton",
+          "padua_university",
+          "royal_society",
+          "siemens",
+          "voltaire"
+        ],
+        "relation_count": 12,
+        "relations": [
+          "Newton <-> Voltaire | weight=3 | eu_summry.md: 2. 영국(United Kingdom): 혁명의 심장부와 소수의 헌신",
+          "Leibniz <-> Newton | weight=3 | eu_summry.md: 3. 조피 도로테아: 프리드리히 대왕의 어머니로서, 군인왕 아버지의 폭압 속에서도 아들에게 음악과 과학의 교양을 심어주어 '학문하는 군주'의 토대를 만들었습니다.",
+          "Enlightenment <-> Newton | weight=2 | ge.md: 2. 계몽주의 시대: 라이프니츠와 지적 네트워크의 정치학 (17세기 ~ 18세기)",
+          "Enlightenment <-> Voltaire | weight=2 | ge.md: 2. 계몽주의 시대: 라이프니츠와 지적 네트워크의 정치학 (17세기 ~ 18세기)",
+          "Helmholtz <-> Newton | weight=2 | eu_summry.md: 3. 조피 도로테아: 프리드리히 대왕의 어머니로서, 군인왕 아버지의 폭압 속에서도 아들에게 음악과 과학의 교양을 심어주어 '학문하는 군주'의 토대를 만들었습니다.",
+          "Newton <-> Royal Society | weight=2 | eu_summry.md: 2. 영국(United Kingdom): 혁명의 심장부와 소수의 헌신",
+          "Galileo <-> Medici | weight=2 | eu_summry.md: 5. 이탈리아(Italy): 유럽 과학 유산의 기술적 모태",
+          "Helmholtz <-> Siemens | weight=2 | eu_summry.md: 3. 조피 도로테아: 프리드리히 대왕의 어머니로서, 군인왕 아버지의 폭압 속에서도 아들에게 음악과 과학의 교양을 심어주어 '학문하는 군주'의 토대를 만들었습니다.",
+          "Great Fire of London <-> Royal Society | weight=2 | eu_summry.md: 2. 영국(United Kingdom): 혁명의 심장부와 소수의 헌신",
+          "Magnus Laboratory <-> Siemens | weight=2 | ge.md: 3. 근대 과학의 체계화: 훔볼트 모델과 엘리트 교육의 제도화 (19세기 초반)",
+          "Ecole Polytechnique <-> French Revolution | weight=2 | eu_summry.md: 4. 프랑스(France): 절대 권력과 이성적 혁명",
+          "Enlightenment <-> Leibniz | weight=1 | ge.md: 2. 계몽주의 시대: 라이프니츠와 지적 네트워크의 정치학 (17세기 ~ 18세기)"
+        ],
+        "latency_ms": 0.08,
+        "expected_entities": [
+          "newton",
+          "voltaire",
+          "enlightenment",
+          "leibniz"
+        ],
+        "expected_entity_hits": 4,
+        "expected_entity_hit_ratio": 1.0
+      },
+      {
+        "id": "GQ-10",
+        "question": "뉴턴과 라이프니츠의 미적분 논쟁이 양국 과학 자존심 경쟁으로 어떻게 번졌는지 설명해줘.",
+        "query_entities": [
+          "leibniz",
+          "newton"
+        ],
+        "matched_entities": [
+          "bologna_university",
+          "ecole_polytechnique",
+          "enlightenment",
+          "french_revolution",
+          "galileo",
+          "german_physical_society",
+          "great_fire_london",
+          "helmholtz",
+          "humboldt_university",
+          "leibniz",
+          "magnus_lab",
+          "medici",
+          "napoleonic_wars",
+          "newton",
+          "padua_university",
+          "royal_society",
+          "siemens",
+          "voltaire"
+        ],
+        "relation_count": 12,
+        "relations": [
+          "Leibniz <-> Newton | weight=3 | eu_summry.md: 3. 조피 도로테아: 프리드리히 대왕의 어머니로서, 군인왕 아버지의 폭압 속에서도 아들에게 음악과 과학의 교양을 심어주어 '학문하는 군주'의 토대를 만들었습니다.",
+          "Newton <-> Voltaire | weight=3 | eu_summry.md: 2. 영국(United Kingdom): 혁명의 심장부와 소수의 헌신",
+          "Enlightenment <-> Newton | weight=2 | ge.md: 2. 계몽주의 시대: 라이프니츠와 지적 네트워크의 정치학 (17세기 ~ 18세기)",
+          "Helmholtz <-> Newton | weight=2 | eu_summry.md: 3. 조피 도로테아: 프리드리히 대왕의 어머니로서, 군인왕 아버지의 폭압 속에서도 아들에게 음악과 과학의 교양을 심어주어 '학문하는 군주'의 토대를 만들었습니다.",
+          "Newton <-> Royal Society | weight=2 | eu_summry.md: 2. 영국(United Kingdom): 혁명의 심장부와 소수의 헌신",
+          "Enlightenment <-> Voltaire | weight=2 | ge.md: 2. 계몽주의 시대: 라이프니츠와 지적 네트워크의 정치학 (17세기 ~ 18세기)",
+          "Galileo <-> Medici | weight=2 | eu_summry.md: 5. 이탈리아(Italy): 유럽 과학 유산의 기술적 모태",
+          "Helmholtz <-> Siemens | weight=2 | eu_summry.md: 3. 조피 도로테아: 프리드리히 대왕의 어머니로서, 군인왕 아버지의 폭압 속에서도 아들에게 음악과 과학의 교양을 심어주어 '학문하는 군주'의 토대를 만들었습니다.",
+          "Great Fire of London <-> Royal Society | weight=2 | eu_summry.md: 2. 영국(United Kingdom): 혁명의 심장부와 소수의 헌신",
+          "Magnus Laboratory <-> Siemens | weight=2 | ge.md: 3. 근대 과학의 체계화: 훔볼트 모델과 엘리트 교육의 제도화 (19세기 초반)",
+          "Ecole Polytechnique <-> French Revolution | weight=2 | eu_summry.md: 4. 프랑스(France): 절대 권력과 이성적 혁명",
+          "Ecole Polytechnique <-> Leibniz | weight=1 | eu_summry.md: 6. 결론 및 종합 분석: 산업 유산이 미래에 던지는 메시지"
+        ],
+        "latency_ms": 0.074,
+        "expected_entities": [
+          "newton",
+          "leibniz",
+          "voltaire"
+        ],
+        "expected_entity_hits": 3,
+        "expected_entity_hit_ratio": 1.0
+      },
+      {
+        "id": "GQ-12",
+        "question": "마그누스 실험실에서 시작된 네트워크가 헬름홀츠, 지멘스, 독일 물리학회, 산업화로 어떻게 이어졌는지 설명해줘.",
+        "query_entities": [
+          "german_physical_society",
+          "helmholtz",
+          "magnus_lab",
+          "siemens"
+        ],
+        "matched_entities": [
+          "ecole_polytechnique",
+          "enlightenment",
+          "galileo",
+          "german_physical_society",
+          "great_fire_london",
+          "helmholtz",
+          "humboldt_university",
+          "leibniz",
+          "magnus_lab",
+          "medici",
+          "napoleonic_wars",
+          "newton",
+          "padua_university",
+          "royal_society",
+          "siemens",
+          "voltaire"
+        ],
+        "relation_count": 12,
+        "relations": [
+          "Leibniz <-> Newton | weight=3 | eu_summry.md: 3. 조피 도로테아: 프리드리히 대왕의 어머니로서, 군인왕 아버지의 폭압 속에서도 아들에게 음악과 과학의 교양을 심어주어 '학문하는 군주'의 토대를 만들었습니다.",
+          "Newton <-> Voltaire | weight=3 | eu_summry.md: 2. 영국(United Kingdom): 혁명의 심장부와 소수의 헌신",
+          "Helmholtz <-> Newton | weight=2 | eu_summry.md: 3. 조피 도로테아: 프리드리히 대왕의 어머니로서, 군인왕 아버지의 폭압 속에서도 아들에게 음악과 과학의 교양을 심어주어 '학문하는 군주'의 토대를 만들었습니다.",
+          "Helmholtz <-> Siemens | weight=2 | eu_summry.md: 3. 조피 도로테아: 프리드리히 대왕의 어머니로서, 군인왕 아버지의 폭압 속에서도 아들에게 음악과 과학의 교양을 심어주어 '학문하는 군주'의 토대를 만들었습니다.",
+          "Magnus Laboratory <-> Siemens | weight=2 | ge.md: 3. 근대 과학의 체계화: 훔볼트 모델과 엘리트 교육의 제도화 (19세기 초반)",
+          "Great Fire of London <-> Royal Society | weight=2 | eu_summry.md: 2. 영국(United Kingdom): 혁명의 심장부와 소수의 헌신",
+          "Newton <-> Royal Society | weight=2 | eu_summry.md: 2. 영국(United Kingdom): 혁명의 심장부와 소수의 헌신",
+          "Enlightenment <-> Newton | weight=2 | ge.md: 2. 계몽주의 시대: 라이프니츠와 지적 네트워크의 정치학 (17세기 ~ 18세기)",
+          "German Physical Society <-> Helmholtz | weight=1 | ge.md: 3. 근대 과학의 체계화: 훔볼트 모델과 엘리트 교육의 제도화 (19세기 초반)",
+          "Helmholtz <-> Humboldt University | weight=1 | ge.md: 3. 근대 과학의 체계화: 훔볼트 모델과 엘리트 교육의 제도화 (19세기 초반)",
+          "Helmholtz <-> Leibniz | weight=1 | eu_summry.md: 3. 조피 도로테아: 프리드리히 대왕의 어머니로서, 군인왕 아버지의 폭압 속에서도 아들에게 음악과 과학의 교양을 심어주어 '학문하는 군주'의 토대를 만들었습니다.",
+          "Helmholtz <-> Magnus Laboratory | weight=1 | ge.md: 3. 근대 과학의 체계화: 훔볼트 모델과 엘리트 교육의 제도화 (19세기 초반)"
+        ],
+        "latency_ms": 0.069,
+        "expected_entities": [
+          "magnus_lab",
+          "helmholtz",
+          "siemens",
+          "german_physical_society"
+        ],
+        "expected_entity_hits": 4,
+        "expected_entity_hit_ratio": 1.0
+      },
+      {
+        "id": "GQ-14",
+        "question": "프랑스 혁명, 나폴레옹 전쟁 이후 독일 재건, 런던 대화재가 각국 과학 제도 설계에 어떤 영향을 줬는지 연결해줘.",
+        "query_entities": [
+          "french_revolution",
+          "great_fire_london",
+          "napoleonic_wars"
+        ],
+        "matched_entities": [
+          "bologna_university",
+          "ecole_polytechnique",
+          "enlightenment",
+          "french_revolution",
+          "galileo",
+          "german_physical_society",
+          "great_fire_london",
+          "helmholtz",
+          "humboldt_university",
+          "leibniz",
+          "magnus_lab",
+          "medici",
+          "napoleonic_wars",
+          "newton",
+          "padua_university",
+          "royal_society",
+          "siemens",
+          "voltaire"
+        ],
+        "relation_count": 12,
+        "relations": [
+          "Newton <-> Voltaire | weight=3 | eu_summry.md: 2. 영국(United Kingdom): 혁명의 심장부와 소수의 헌신",
+          "Leibniz <-> Newton | weight=3 | eu_summry.md: 3. 조피 도로테아: 프리드리히 대왕의 어머니로서, 군인왕 아버지의 폭압 속에서도 아들에게 음악과 과학의 교양을 심어주어 '학문하는 군주'의 토대를 만들었습니다.",
+          "Ecole Polytechnique <-> French Revolution | weight=2 | eu_summry.md: 4. 프랑스(France): 절대 권력과 이성적 혁명",
+          "Great Fire of London <-> Royal Society | weight=2 | eu_summry.md: 2. 영국(United Kingdom): 혁명의 심장부와 소수의 헌신",
+          "Enlightenment <-> Voltaire | weight=2 | ge.md: 2. 계몽주의 시대: 라이프니츠와 지적 네트워크의 정치학 (17세기 ~ 18세기)",
+          "Helmholtz <-> Newton | weight=2 | eu_summry.md: 3. 조피 도로테아: 프리드리히 대왕의 어머니로서, 군인왕 아버지의 폭압 속에서도 아들에게 음악과 과학의 교양을 심어주어 '학문하는 군주'의 토대를 만들었습니다.",
+          "Helmholtz <-> Siemens | weight=2 | eu_summry.md: 3. 조피 도로테아: 프리드리히 대왕의 어머니로서, 군인왕 아버지의 폭압 속에서도 아들에게 음악과 과학의 교양을 심어주어 '학문하는 군주'의 토대를 만들었습니다.",
+          "Newton <-> Royal Society | weight=2 | eu_summry.md: 2. 영국(United Kingdom): 혁명의 심장부와 소수의 헌신",
+          "Magnus Laboratory <-> Siemens | weight=2 | ge.md: 3. 근대 과학의 체계화: 훔볼트 모델과 엘리트 교육의 제도화 (19세기 초반)",
+          "Enlightenment <-> Newton | weight=2 | ge.md: 2. 계몽주의 시대: 라이프니츠와 지적 네트워크의 정치학 (17세기 ~ 18세기)",
+          "Great Fire of London <-> Newton | weight=1 | eu_summry.md: 2. 영국(United Kingdom): 혁명의 심장부와 소수의 헌신",
+          "Great Fire of London <-> Voltaire | weight=1 | eu_summry.md: 2. 영국(United Kingdom): 혁명의 심장부와 소수의 헌신"
+        ],
+        "latency_ms": 0.075,
+        "expected_entities": [
+          "french_revolution",
+          "napoleonic_wars",
+          "great_fire_london",
+          "humboldt_university"
+        ],
+        "expected_entity_hits": 4,
+        "expected_entity_hit_ratio": 1.0
+      },
+      {
+        "id": "GQ-15",
+        "question": "에콜 폴리테크니크, 훔볼트 대학, 왕립학회, 파도바 대학을 한 관계망으로 놓고 각자의 역할을 설명해줘.",
+        "query_entities": [
+          "ecole_polytechnique",
+          "humboldt_university",
+          "padua_university",
+          "royal_society"
+        ],
+        "matched_entities": [
+          "bologna_university",
+          "ecole_polytechnique",
+          "enlightenment",
+          "french_revolution",
+          "galileo",
+          "german_physical_society",
+          "great_fire_london",
+          "helmholtz",
+          "humboldt_university",
+          "leibniz",
+          "magnus_lab",
+          "medici",
+          "napoleonic_wars",
+          "newton",
+          "padua_university",
+          "royal_society",
+          "siemens",
+          "voltaire"
+        ],
+        "relation_count": 12,
+        "relations": [
+          "Newton <-> Voltaire | weight=3 | eu_summry.md: 2. 영국(United Kingdom): 혁명의 심장부와 소수의 헌신",
+          "Leibniz <-> Newton | weight=3 | eu_summry.md: 3. 조피 도로테아: 프리드리히 대왕의 어머니로서, 군인왕 아버지의 폭압 속에서도 아들에게 음악과 과학의 교양을 심어주어 '학문하는 군주'의 토대를 만들었습니다.",
+          "Great Fire of London <-> Royal Society | weight=2 | eu_summry.md: 2. 영국(United Kingdom): 혁명의 심장부와 소수의 헌신",
+          "Newton <-> Royal Society | weight=2 | eu_summry.md: 2. 영국(United Kingdom): 혁명의 심장부와 소수의 헌신",
+          "Ecole Polytechnique <-> French Revolution | weight=2 | eu_summry.md: 4. 프랑스(France): 절대 권력과 이성적 혁명",
+          "Enlightenment <-> Voltaire | weight=2 | ge.md: 2. 계몽주의 시대: 라이프니츠와 지적 네트워크의 정치학 (17세기 ~ 18세기)",
+          "Galileo <-> Medici | weight=2 | eu_summry.md: 5. 이탈리아(Italy): 유럽 과학 유산의 기술적 모태",
+          "Helmholtz <-> Newton | weight=2 | eu_summry.md: 3. 조피 도로테아: 프리드리히 대왕의 어머니로서, 군인왕 아버지의 폭압 속에서도 아들에게 음악과 과학의 교양을 심어주어 '학문하는 군주'의 토대를 만들었습니다.",
+          "Helmholtz <-> Siemens | weight=2 | eu_summry.md: 3. 조피 도로테아: 프리드리히 대왕의 어머니로서, 군인왕 아버지의 폭압 속에서도 아들에게 음악과 과학의 교양을 심어주어 '학문하는 군주'의 토대를 만들었습니다.",
+          "Magnus Laboratory <-> Siemens | weight=2 | ge.md: 3. 근대 과학의 체계화: 훔볼트 모델과 엘리트 교육의 제도화 (19세기 초반)",
+          "Enlightenment <-> Newton | weight=2 | ge.md: 2. 계몽주의 시대: 라이프니츠와 지적 네트워크의 정치학 (17세기 ~ 18세기)",
+          "German Physical Society <-> Humboldt University | weight=1 | ge.md: 3. 근대 과학의 체계화: 훔볼트 모델과 엘리트 교육의 제도화 (19세기 초반)"
+        ],
+        "latency_ms": 0.085,
+        "expected_entities": [
+          "ecole_polytechnique",
+          "humboldt_university",
+          "royal_society",
+          "padua_university"
+        ],
+        "expected_entity_hits": 4,
+        "expected_entity_hit_ratio": 1.0
+      },
+      {
+        "id": "GQ-16",
+        "question": "괴팅겐의 과학 자산이 전쟁 중 보호되고 전후 인재 이동과 막스 플랑크 연구소 재건으로 이어진 흐름을 설명해줘.",
+        "query_entities": [
+          "gottingen",
+          "max_planck_institute"
+        ],
+        "matched_entities": [
+          "gottingen",
+          "max_planck_institute"
+        ],
+        "relation_count": 1,
+        "relations": [
+          "Gottingen <-> Max Planck Institute | weight=1 | ge.md: 5. 지성의 정점과 위기: 괴팅겐의 황금기와 전후 재건 (20세기)"
+        ],
+        "latency_ms": 0.024,
+        "expected_entities": [
+          "gottingen",
+          "max_planck_institute",
+          "helmholtz"
+        ],
+        "expected_entity_hits": 2,
+        "expected_entity_hit_ratio": 0.6667
+      }
+    ],
+    "summary": {
+      "questions": 6,
+      "avg_latency_ms": 0.068,
+      "avg_expected_entity_hit_ratio": 0.9444,
+      "max_hops": 2
+    }
+  }
+}
