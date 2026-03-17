@@ -25,7 +25,8 @@
 - 현재: 데이터 등록 시 검증(사용 가능/불가 판정) 적용
 - 현재: 분야별 컬렉션 + 단순 라우팅 적용
 - 현재: 승인된 업로드는 `chroma_db/managed_docs/`의 active markdown 원본 기준으로 유지
-- 다음 우선순위(P2/P3): 관리자 워크플로우 구현 2차, GraphRAG answer-level/vector baseline 비교 실측
+- 현재: answer-level eval fixture + `/query` 품질 평가 하네스 추가
+- 다음 우선순위(P2/P3): GraphRAG/vector baseline answer-level 실측, 관리자 워크플로우 구현 2차
 
 비목표(현재 단계):
 - 원본 수집/크롤링
@@ -50,6 +51,7 @@
 - `scripts/benchmark_token_chunking.py`: char/token 청킹 비교 벤치 스크립트
 - `scripts/benchmark_query_e2e.py`: `/query` E2E p95 벤치 스크립트
 - `scripts/benchmark_graphrag_sidecar.py`: GraphRAG sidecar retrieval PoC/실측 스크립트
+- `scripts/eval_query_quality.py`: answer-level `/query` 품질 평가 스크립트
 - `scripts/runtime_preflight.py`: P1 벤치 전 런타임 준비 상태 점검
 - `run_doc_rag.bat`: 터미널 명령 없이 서버+브라우저 실행
 - `stop_doc_rag.bat`: 실행 중인 로컬 서버 종료
@@ -64,6 +66,7 @@
 - `docs/PREPROCESSING_METADATA_SCHEMA.json`: 전처리 메타데이터 스키마
 - `docs/UPLOAD_ADMIN_WORKFLOW.md`: 업로드/갱신 관리자 워크플로우 설계 기준
 - `docs/GRAPH_RAG_QUESTION_SET.md`: GraphRAG 판단용 관계형 질문셋
+- `evals/answer_level_eval_fixtures.jsonl`: answer-level 평가 fixture
 - `docs/GRAPH_RAG_SIDECAR_CONTRACT.md`: GraphRAG sidecar 계약과 최소 적재 파이프라인
 - `docs/reports/GRAPH_RAG_ACTUAL_POC_REPORT_2026-03-17.md`: GraphRAG retrieval PoC 1차 실측 결과
 - `docs/reports/GRAPH_RAG_VECTOR_GAP_REPORT_2026-03-17.md`: 현재 Vector RAG 실패 사례와 Graph 후보 범위
@@ -140,6 +143,26 @@ npm start
 - 현재 PoC는 설치형 제품이 아니라 "기존 웹 UI를 데스크톱 셸로 감쌀 수 있는지"를 검증하는 수준입니다.
 - 결론과 리스크는 `docs/reports/DESKTOP_WRAPPER_POC_REPORT_2026-03-17.md`를 기준으로 봅니다.
 - 패키징/배포 하드닝 재검토 결과는 `docs/reports/DESKTOP_PACKAGING_HARDENING_REVIEW_2026-03-17.md`를 기준으로 보며, 현재 판단은 "보류 유지"입니다.
+
+## Quality Evaluation
+
+등록된 문서 기준으로 `/query` 응답의 완성도를 보려면 answer-level 평가 하네스를 사용합니다.
+
+```powershell
+.venv\Scripts\python.exe scripts\eval_query_quality.py `
+  --base-url http://127.0.0.1:8000 `
+  --llm-provider ollama `
+  --llm-model qwen3:4b `
+  --llm-base-url http://localhost:11434 `
+  --output-json docs\reports\query_answer_eval_2026-03-17.json `
+  --output-report docs\reports\QUERY_ANSWER_EVAL_REPORT_2026-03-17.md
+```
+
+- 기본 fixture는 `evals/answer_level_eval_fixtures.jsonl`을 사용합니다.
+- 현재 fixture는 `ops-baseline`과 `graph-candidate`의 대표 질문 일부를 포함합니다.
+- 평가 항목은 `must_include`, `must_include_any`, `must_not_include`, 최소 답변 길이, 실제 route header를 기반으로 점수화됩니다.
+- 현재 `/query`는 최대 2개 컬렉션까지만 직접 선택 가능하므로, 3개 이상 컬렉션이 필요한 graph 질문은 vector baseline 평가 시 `collection=all`로 fallback 합니다.
+- 이 스크립트는 GraphRAG 자체를 평가하는 것이 아니라, 현재 Vector RAG 기본 경로의 answer-level 기준선을 만드는 용도입니다.
 
 ## API
 

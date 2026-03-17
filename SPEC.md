@@ -38,6 +38,7 @@
 - Vector RAG 실패 사례 문서(`docs/reports/GRAPH_RAG_VECTOR_GAP_REPORT_2026-03-17.md`)
 - GraphRAG sidecar 계약 문서(`docs/GRAPH_RAG_SIDECAR_CONTRACT.md`)
 - GraphRAG retrieval PoC/실측 스크립트(`scripts/benchmark_graphrag_sidecar.py`)
+- answer-level 평가 fixture + `/query` 품질 평가 스크립트(`evals/answer_level_eval_fixtures.jsonl`, `scripts/eval_query_quality.py`)
 
 ### 제외(현재 단계)
 - 사용자 인증/권한
@@ -78,6 +79,8 @@
 - API 회귀 테스트: `tests/api/test_upload_api.py`
 - 청킹 모드 테스트: `tests/test_chunking_modes.py`
 - 프론트 E2E 테스트: `tests/e2e/test_web_flow_playwright.py`
+- answer-level fixture 검증: `tests/test_answer_level_eval_fixtures.py`
+- answer-level eval 스크립트 테스트: `tests/test_eval_query_quality.py`
 
 ### LLM 연결
 - provider 분기 로직 통합
@@ -121,6 +124,8 @@
 - `requirements-dev.txt`: 테스트/브라우저 의존성
 - `desktop/electron/*`: Electron PoC 런타임/검증 스크립트
 - `services/graphrag_poc_service.py`: GraphRAG snapshot/benchmark 보조 서비스
+- `scripts/eval_query_quality.py`: answer-level `/query` 품질 평가 하네스
+- `evals/answer_level_eval_fixtures.jsonl`: answer-level 자동 채점 fixture
 - `web/index.html`: 브라우저 UI
 - `web/admin.html`: 관리자 상태 UI
 - `web/styles.css`: 공통 스타일
@@ -479,7 +484,7 @@ npm start
 
 ### 2순위
 - GraphRAG answer-level/vector baseline 비교 실측
-- 내용: retrieval PoC 위에 answer-level accuracy/latency 비교와 Go/No-Go 판단 추가
+- 내용: `scripts/eval_query_quality.py` 기준선으로 Vector RAG를 실측하고, 이후 GraphRAG sidecar와 answer-level accuracy/latency를 비교해 Go/No-Go 판단 추가
 
 ### 3순위
 - 데스크톱 패키징 실제 착수 재검토

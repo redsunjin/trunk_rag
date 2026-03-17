@@ -54,7 +54,8 @@
 4. `docs/GRAPH_RAG_SIDECAR_CONTRACT.md`에 최소 적재 파이프라인과 sidecar 계약을 정의했다.
 5. `services/graphrag_poc_service.py`와 `scripts/benchmark_graphrag_sidecar.py`로 graph snapshot 기반 retrieval PoC를 추가했다.
 6. `docs/reports/GRAPH_RAG_ACTUAL_POC_REPORT_2026-03-17.md` 기준 6개 graph-candidate 질문의 1차 실측 결과는 `avg_latency_ms=0.068`, `avg_expected_entity_hit_ratio=0.9444`였다.
-7. 다만 현재 수치는 retrieval recall 지표라서 vector baseline 대비 answer-level accuracy 개선 여부는 아직 미확정이다.
+7. `evals/answer_level_eval_fixtures.jsonl`와 `scripts/eval_query_quality.py`로 answer-level 자동 채점 하네스를 추가했다.
+8. 다만 현재 수치는 retrieval recall 지표라서 vector baseline 대비 answer-level accuracy 개선 여부는 아직 미확정이고, 새 하네스로 실제 실측을 해야 한다.
 
 배경:
 - 현재 프로젝트의 운영 모델은 `폐쇄망/로컬/경량 RAG 런타임`이다.
@@ -111,12 +112,13 @@
 검증:
 - `.venv/bin/python -m pytest -q` -> `32 passed in 5.29s`
 
-### C. 제품화 후속
-1. 업로드/갱신 관리자 워크플로우 구현 2차
+### C. GraphRAG 결정 게이트
+1. `scripts/eval_query_quality.py`로 vector baseline answer-level accuracy/latency 실측
+2. 같은 질문셋 기준으로 GraphRAG sidecar 비교 실측
+3. Go/No-Go 판단
 
-### D. GraphRAG 결정 게이트
-1. vector baseline 대비 answer-level accuracy/latency 실측
-2. Go/No-Go 판단 후에만 GraphRAG PoC 착수
+### D. 제품화 후속
+1. 업로드/갱신 관리자 워크플로우 구현 2차
 
 원칙:
 - 기본 `/query`는 기존 Vector RAG 유지
@@ -164,13 +166,14 @@
 
 판단:
 - P3-Prep 게이트(`app_api.py <= 350`, inline script 외부화, 회귀 통과)는 충족됨.
-- 쉬운 RAG 운영 게이트와 성능/품질 게이트는 완료됐고, 다음 우선순위는 제품화 후속 -> GraphRAG 결정 게이트 순이다.
+- 쉬운 RAG 운영 게이트와 성능/품질 게이트는 완료됐고, answer-level eval harness까지 준비됐다.
+- 다음 우선순위는 GraphRAG 결정 게이트 실측 -> 제품화 후속 순이다.
 
 ## 4. 현재 남은 작업 범위 (핵심)
 
 즉시 진행 대상 (다음 세션 1순위):
-1. 업로드/갱신 관리자 워크플로우 구현 2차
-2. GraphRAG answer-level/vector baseline 비교 실측
+1. GraphRAG answer-level/vector baseline 비교 실측
+2. 업로드/갱신 관리자 워크플로우 구현 2차
 
 후속 대상 (P3):
 1. GraphRAG answer-level 비교와 Go/No-Go 판단
@@ -179,12 +182,13 @@
 
 ## 5. 다음 세션 우선순위 (실행 순서)
 
-### A. 제품화 후속
-1. 업로드/갱신 관리자 워크플로우 구현 2차
+### A. GraphRAG 결정 게이트
+1. `scripts/eval_query_quality.py`로 Vector RAG 기준선 실측 리포트 작성
+2. 같은 fixture로 GraphRAG sidecar answer-level 비교 경로 정리
+3. Go/No-Go 판단 문서화
 
-### B. GraphRAG 결정 게이트
-1. Neo4j runtime 연결 또는 동등 sidecar 실행 경로 정리
-2. AuraDB vs self-managed Neo4j 적용 조건 문서화
+### B. 제품화 후속
+1. 업로드/갱신 관리자 워크플로우 구현 2차
 
 ## 6. 세션 시작 체크리스트 (핸드오버용)
 
@@ -194,10 +198,11 @@
 4. `GET /health` 확인(벡터 수/auto_approve/pending/chunking_mode 확인)
 5. `POST /reindex` 1회 실행(응답 내 `validation.summary_text` 확인)
 6. `/query` 샘플 질의(단일 + 다중 컬렉션 자동 라우팅) 확인
+7. `scripts/eval_query_quality.py` 1회 실행(ops-baseline 우선)
 
 추가 확인:
-7. 기본 모드에서 LLM 세부 설정 없이 질의 가능한지 확인
-8. 빈 인덱스/오류 상태에서 다음 행동 안내가 충분한지 확인
+8. 기본 모드에서 LLM 세부 설정 없이 질의 가능한지 확인
+9. 빈 인덱스/오류 상태에서 다음 행동 안내가 충분한지 확인
 
 ## 7. git worktree + agent 병렬 도입 계획 (권장)
 
@@ -224,6 +229,7 @@
 6. Electron PoC는 가능성을 확인했지만 설치형 제품으로 가려면 Python/모델 번들링 전략이 별도로 필요하며, 현재는 보류 상태다.
 7. 업로드 관리자 워크플로우는 active 버전/manifest까지는 구현됐지만, diff 뷰/이력 조회/rollback UI는 아직 없다.
 8. GraphRAG retrieval PoC는 생성됐지만, answer-level precision과 vector baseline 대비 우위는 아직 증명되지 않았다.
+9. 현재 answer-level eval fixture는 대표 질문 6개만 포함하므로, 실제 운영 전에는 coverage 확대가 필요하다.
 
 ## 9. 다음 커밋 목표 (권장)
 
@@ -233,3 +239,4 @@
 4. `feat(upload): persist managed markdown and active-doc workflow`
 5. `docs(desktop): record packaging hardening hold decision`
 6. `feat(graphrag): add sidecar retrieval poc benchmark`
+7. `feat(eval): add answer-level query quality harness`

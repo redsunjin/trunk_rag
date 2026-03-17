@@ -139,12 +139,15 @@ PoC 범위:
 - `docs/reports/graphrag_snapshot_2026-03-17/`에 `entities.jsonl`, `relations.jsonl`, `ingest_stats.json`를 생성했다.
 - `docs/reports/GRAPH_RAG_ACTUAL_POC_REPORT_2026-03-17.md` 기준 6개 graph-candidate 질문 1차 실측 결과는 `avg_latency_ms=0.068`, `avg_expected_entity_hit_ratio=0.9444`였다.
 - 다만 이 수치는 answer 정확도가 아니라 retrieval recall 성격 지표이고, 2-hop 확장이 일부 질문에서 넓게 퍼져 precision 판단은 아직 부족하다.
+- `evals/answer_level_eval_fixtures.jsonl`와 `scripts/eval_query_quality.py`를 추가해 answer-level 자동 채점 하네스를 만들었다.
+- 현재 하네스는 대표 질문 6개를 `must_include/must_include_any/must_not_include/route header/min_answer_chars` 기준으로 채점한다.
 - 남은 항목은 vector baseline 대비 answer-level accuracy/latency 실측과 Go/No-Go 판단이다.
 
 Go / No-Go 기준:
 - [ ] 정확도 개선이 실제로 확인된다.
 - [ ] 사이드카 장애 시 기본 질의 경로가 유지된다.
 - [ ] 운영 복잡도 증가가 프로젝트 목표(로컬/경량)를 깨지 않는다.
+- [x] answer-level eval harness가 준비됐다.
 
 ## P0 (즉시 착수)
 
