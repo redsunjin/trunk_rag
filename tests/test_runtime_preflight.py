@@ -17,7 +17,9 @@ def test_find_local_embedding_model_accepts_direct_path(tmp_path: Path):
 def test_find_local_embedding_model_uses_hf_cache_layout(tmp_path: Path):
     hub_dir = tmp_path / "hub"
     model_dir = hub_dir / "models--BAAI--bge-m3"
-    model_dir.mkdir(parents=True)
+    snapshot_dir = model_dir / "snapshots" / "local"
+    snapshot_dir.mkdir(parents=True)
+    (snapshot_dir / "model.safetensors").write_text("ok", encoding="utf-8")
 
     resolved = runtime_preflight.find_local_embedding_model("BAAI/bge-m3", roots=[hub_dir])
 
@@ -31,9 +33,24 @@ def test_validate_health_payload_detects_missing_fields():
     assert "Missing fields" in errors[0]
 
 
-def test_check_embedding_model_reports_missing_cache():
-    result = runtime_preflight.check_embedding_model("BAAI/bge-m3")
+def test_check_embedding_model_reports_missing_cache(tmp_path: Path):
+    result = runtime_preflight.check_embedding_model("BAAI/bge-m3", roots=[tmp_path / "hub"])
 
     assert result["name"] == "embedding_model"
     assert result["ready"] is False
     assert "DOC_RAG_EMBEDDING_MODEL" in result["message"]
+
+
+def test_find_local_embedding_model_rejects_incomplete_hf_cache(tmp_path: Path):
+    hub_dir = tmp_path / "hub"
+    model_dir = hub_dir / "models--BAAI--bge-m3"
+    snapshot_dir = model_dir / "snapshots" / "local"
+    snapshot_dir.mkdir(parents=True)
+    (snapshot_dir / "config.json").write_text("{}", encoding="utf-8")
+    blobs_dir = model_dir / "blobs"
+    blobs_dir.mkdir(parents=True)
+    (blobs_dir / "partial.incomplete").write_text("partial", encoding="utf-8")
+
+    resolved = runtime_preflight.find_local_embedding_model("BAAI/bge-m3", roots=[hub_dir])
+
+    assert resolved is None

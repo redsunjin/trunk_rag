@@ -55,7 +55,8 @@
 5. `services/graphrag_poc_service.py`와 `scripts/benchmark_graphrag_sidecar.py`로 graph snapshot 기반 retrieval PoC를 추가했다.
 6. `docs/reports/GRAPH_RAG_ACTUAL_POC_REPORT_2026-03-17.md` 기준 6개 graph-candidate 질문의 1차 실측 결과는 `avg_latency_ms=0.068`, `avg_expected_entity_hit_ratio=0.9444`였다.
 7. `evals/answer_level_eval_fixtures.jsonl`와 `scripts/eval_query_quality.py`로 answer-level 자동 채점 하네스를 추가했다.
-8. 다만 현재 수치는 retrieval recall 지표라서 vector baseline 대비 answer-level accuracy 개선 여부는 아직 미확정이고, 새 하네스로 실제 실측을 해야 한다.
+8. `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md` 기준 Vector RAG 1차 baseline 실측은 `pass_rate=0.3333`, `avg_weighted_score=0.593`, `p95_latency_ms=14277.843`이었다.
+9. 같은 실측에서 `GQ-03`은 `VECTORSTORE_EMPTY`, `GQ-05`는 `LLM_TIMEOUT`으로 실패했고, GraphRAG sidecar와의 answer-level 비교는 아직 남아 있다.
 
 배경:
 - 현재 프로젝트의 운영 모델은 `폐쇄망/로컬/경량 RAG 런타임`이다.
@@ -113,8 +114,8 @@
 - `.venv/bin/python -m pytest -q` -> `32 passed in 5.29s`
 
 ### C. GraphRAG 결정 게이트
-1. `scripts/eval_query_quality.py`로 vector baseline answer-level accuracy/latency 실측
-2. 같은 질문셋 기준으로 GraphRAG sidecar 비교 실측
+1. `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md`를 기준선으로 GraphRAG sidecar answer-level 비교 실측
+2. `GQ-03`의 `VECTORSTORE_EMPTY`, `GQ-05`의 `LLM_TIMEOUT` 원인 정리 후 baseline 재측정 여부 판단
 3. Go/No-Go 판단
 
 ### D. 제품화 후속
@@ -183,8 +184,8 @@
 ## 5. 다음 세션 우선순위 (실행 순서)
 
 ### A. GraphRAG 결정 게이트
-1. `scripts/eval_query_quality.py`로 Vector RAG 기준선 실측 리포트 작성
-2. 같은 fixture로 GraphRAG sidecar answer-level 비교 경로 정리
+1. `QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md` 기준 실패 케이스(`GQ-03`, `GQ-05`) 원인 정리
+2. 같은 fixture로 GraphRAG sidecar answer-level 비교 경로 정리 및 실측
 3. Go/No-Go 판단 문서화
 
 ### B. 제품화 후속
@@ -228,8 +229,8 @@
 5. GraphRAG/AuraDB는 운영 모델(폐쇄망/로컬/경량)과 충돌 가능성이 큼
 6. Electron PoC는 가능성을 확인했지만 설치형 제품으로 가려면 Python/모델 번들링 전략이 별도로 필요하며, 현재는 보류 상태다.
 7. 업로드 관리자 워크플로우는 active 버전/manifest까지는 구현됐지만, diff 뷰/이력 조회/rollback UI는 아직 없다.
-8. GraphRAG retrieval PoC는 생성됐지만, answer-level precision과 vector baseline 대비 우위는 아직 증명되지 않았다.
-9. 현재 answer-level eval fixture는 대표 질문 6개만 포함하므로, 실제 운영 전에는 coverage 확대가 필요하다.
+8. Vector RAG baseline 1차 실측은 완료됐지만(`pass_rate=0.3333`, `p95_latency_ms=14277.843`), GraphRAG retrieval PoC의 answer-level 우위는 아직 증명되지 않았다.
+9. 현재 answer-level eval fixture는 대표 질문 6개만 포함하고, `uk` 컬렉션 비어 있음/다중 컬렉션 timeout 같은 운영 이슈가 그대로 드러난다.
 
 ## 9. 다음 커밋 목표 (권장)
 

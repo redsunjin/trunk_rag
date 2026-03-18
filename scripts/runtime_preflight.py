@@ -63,6 +63,28 @@ def candidate_hf_cache_roots(home: Path | None = None) -> list[Path]:
     return deduped
 
 
+def is_hf_cache_model_ready(cache_dir: Path) -> bool:
+    snapshots_dir = cache_dir / "snapshots"
+    if not snapshots_dir.exists():
+        return False
+
+    # Partial HuggingFace downloads leave `.incomplete` blobs behind. Treat them
+    # as not ready so runtime preflight does not pass on broken local caches.
+    incomplete_files = list((cache_dir / "blobs").glob("*.incomplete"))
+    if incomplete_files:
+        return False
+
+    for snapshot in snapshots_dir.iterdir():
+        if not snapshot.is_dir():
+            continue
+        if any(
+            (snapshot / file_name).exists()
+            for file_name in ("model.safetensors", "pytorch_model.bin", "model.safetensors.index.json")
+        ):
+            return True
+    return False
+
+
 def find_local_embedding_model(model_name: str, roots: list[Path] | None = None) -> Path | None:
     direct_path = Path(model_name).expanduser()
     if direct_path.exists():
@@ -71,7 +93,7 @@ def find_local_embedding_model(model_name: str, roots: list[Path] | None = None)
     cache_dir_name = normalize_hf_cache_dir(model_name)
     for root in roots or candidate_hf_cache_roots():
         candidate = root / cache_dir_name
-        if candidate.exists():
+        if candidate.exists() and is_hf_cache_model_ready(candidate):
             return candidate.resolve()
     return None
 
@@ -97,8 +119,8 @@ def validate_health_payload(payload: dict[str, object]) -> list[str]:
     return errors
 
 
-def check_embedding_model(model_name: str) -> dict[str, object]:
-    local_path = find_local_embedding_model(model_name)
+def check_embedding_model(model_name: str, roots: list[Path] | None = None) -> dict[str, object]:
+    local_path = find_local_embedding_model(model_name, roots=roots)
     ready = local_path is not None
     if ready:
         message = f"local model cache/path detected: {local_path}"

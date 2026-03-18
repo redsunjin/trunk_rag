@@ -141,7 +141,9 @@ PoC 범위:
 - 다만 이 수치는 answer 정확도가 아니라 retrieval recall 성격 지표이고, 2-hop 확장이 일부 질문에서 넓게 퍼져 precision 판단은 아직 부족하다.
 - `evals/answer_level_eval_fixtures.jsonl`와 `scripts/eval_query_quality.py`를 추가해 answer-level 자동 채점 하네스를 만들었다.
 - 현재 하네스는 대표 질문 6개를 `must_include/must_include_any/must_not_include/route header/min_answer_chars` 기준으로 채점한다.
-- 남은 항목은 vector baseline 대비 answer-level accuracy/latency 실측과 Go/No-Go 판단이다.
+- `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md` 기준 Vector RAG 1차 baseline 실측은 완료됐다.
+- 같은 실측에서 `pass_rate=0.3333`, `avg_weighted_score=0.593`, `p95_latency_ms=14277.843`이었고, `GQ-03`은 `VECTORSTORE_EMPTY`, `GQ-05`는 `LLM_TIMEOUT`으로 실패했다.
+- 다음 남은 항목은 같은 fixture 기준 GraphRAG sidecar answer-level 비교와 Go/No-Go 판단이다.
 
 Go / No-Go 기준:
 - [ ] 정확도 개선이 실제로 확인된다.

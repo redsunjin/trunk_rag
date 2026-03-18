@@ -39,6 +39,7 @@
 - GraphRAG sidecar 계약 문서(`docs/GRAPH_RAG_SIDECAR_CONTRACT.md`)
 - GraphRAG retrieval PoC/실측 스크립트(`scripts/benchmark_graphrag_sidecar.py`)
 - answer-level 평가 fixture + `/query` 품질 평가 스크립트(`evals/answer_level_eval_fixtures.jsonl`, `scripts/eval_query_quality.py`)
+- Vector RAG answer-level baseline 리포트(`docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md`)
 
 ### 제외(현재 단계)
 - 사용자 인증/권한
@@ -126,6 +127,7 @@
 - `services/graphrag_poc_service.py`: GraphRAG snapshot/benchmark 보조 서비스
 - `scripts/eval_query_quality.py`: answer-level `/query` 품질 평가 하네스
 - `evals/answer_level_eval_fixtures.jsonl`: answer-level 자동 채점 fixture
+- `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md`: Vector RAG 1차 answer-level baseline 실측
 - `web/index.html`: 브라우저 UI
 - `web/admin.html`: 관리자 상태 UI
 - `web/styles.css`: 공통 스타일
@@ -479,12 +481,12 @@ npm start
 
 ## 다음 진행 방향
 ### 1순위
-- 업로드/갱신 관리자 워크플로우 구현 2차
-- 내용: 관리자 상세 보기, diff/이력 UX, reject reason code 정리
+- GraphRAG answer-level/vector baseline 비교 실측
+- 내용: `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md` 기준선으로 GraphRAG sidecar와 answer-level accuracy/latency를 비교하고 Go/No-Go 판단 추가
 
 ### 2순위
-- GraphRAG answer-level/vector baseline 비교 실측
-- 내용: `scripts/eval_query_quality.py` 기준선으로 Vector RAG를 실측하고, 이후 GraphRAG sidecar와 answer-level accuracy/latency를 비교해 Go/No-Go 판단 추가
+- 업로드/갱신 관리자 워크플로우 구현 2차
+- 내용: 관리자 상세 보기, diff/이력 UX, reject reason code 정리
 
 ### 3순위
 - 데스크톱 패키징 실제 착수 재검토
