@@ -59,6 +59,8 @@ def test_upload_request_create_pending_and_list(client, monkeypatch, tmp_path: P
     assert body["request"]["status"] == "pending"
     assert body["request"]["request_type"] == "create"
     assert body["request"]["doc_key"] == "sample_upload"
+    assert body["request"]["active_doc_exists"] is False
+    assert "테스트 섹션" in body["request"]["content_preview"]
     request_id = body["request"]["id"]
 
     listing = client.get("/upload-requests", params={"status": "pending"})
@@ -66,6 +68,38 @@ def test_upload_request_create_pending_and_list(client, monkeypatch, tmp_path: P
     listed = listing.json()
     assert listed["counts"]["pending"] == 1
     assert any(item["id"] == request_id for item in listed["requests"])
+
+
+def test_upload_request_update_includes_active_doc_summary(client, monkeypatch, tmp_path: Path):
+    _patch_upload_storage(monkeypatch, tmp_path)
+    monkeypatch.setenv("DOC_RAG_AUTO_APPROVE", "0")
+
+    create = client.post(
+        "/upload-requests",
+        json={
+            "source_name": "fr_refresh.md",
+            "collection": "fr",
+            "request_type": "update",
+            "doc_key": "fr",
+            "change_summary": "핵심 문단 보강",
+            "content": _sample_markdown(),
+        },
+    )
+    assert create.status_code == 200
+    body = create.json()["request"]
+    assert body["status"] == "pending"
+    assert body["request_type"] == "update"
+    assert body["active_doc_exists"] is True
+    assert body["active_doc"]["origin"] == "seed"
+    assert body["active_doc"]["source_name"].endswith(".md")
+    assert body["active_doc"]["preview"]
+
+    detail = client.get(f"/upload-requests/{body['id']}")
+    assert detail.status_code == 200
+    detail_body = detail.json()["request"]
+    assert detail_body["active_doc_exists"] is True
+    assert detail_body["active_doc"]["origin"] == "seed"
+    assert detail_body["content_preview"]
 
 
 def test_upload_request_uses_collection_defaults_when_optional_fields_are_omitted(client, monkeypatch, tmp_path: Path):
@@ -199,11 +233,14 @@ def test_upload_request_approve_persists_managed_doc_and_reject(client, monkeypa
 
     rejected = client.post(
         f"/upload-requests/{second_id}/reject",
-        json={"code": "admin999", "reason": "형식 미흡"},
+        json={"code": "admin999", "reason_code": "FORMAT", "reason": "형식 미흡"},
     )
     assert rejected.status_code == 200
     assert rejected.json()["request"]["status"] == "rejected"
     assert rejected.json()["request"]["rejected_reason"] == "형식 미흡"
+    assert rejected.json()["request"]["rejected_reason_code"] == "FORMAT"
+    assert rejected.json()["request"]["decision_note"] == "형식 미흡"
+    assert rejected.json()["request"]["rejected_reason_note"] == "형식 미흡"
 
     with UPLOAD_REQUEST_LOCK:
         managed_items = routes_upload.upload_service._load_managed_docs_unlocked()
@@ -239,19 +276,20 @@ def test_upload_request_filter_by_rejected_reason(client, monkeypatch, tmp_path:
 
     rejected_first = client.post(
         f"/upload-requests/{first_id}/reject",
-        json={"code": "admin999", "reason": "형식 미흡"},
+        json={"code": "admin999", "reason_code": "FORMAT", "reason": "형식 미흡"},
     )
     assert rejected_first.status_code == 200
     rejected_second = client.post(
         f"/upload-requests/{second_id}/reject",
-        json={"code": "admin999", "reason": "중복 문서"},
+        json={"code": "admin999", "reason_code": "DUPLICATE", "reason": "중복 문서"},
     )
     assert rejected_second.status_code == 200
 
-    listing = client.get("/upload-requests", params={"status": "rejected", "reason": "형식"})
+    listing = client.get("/upload-requests", params={"status": "rejected", "reason": "FORMAT"})
     assert listing.status_code == 200
     body = listing.json()
     assert body["counts"]["rejected"] == 2
     assert len(body["requests"]) == 1
     assert body["requests"][0]["id"] == first_id
     assert body["requests"][0]["rejected_reason"] == "형식 미흡"
+    assert body["requests"][0]["rejected_reason_code"] == "FORMAT"

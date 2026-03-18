@@ -18,6 +18,24 @@ def test_prepare_query_request_uses_default_all_for_more_than_two_collections():
     assert request_mode == "fallback_all_for_eval"
 
 
+def test_prepare_query_request_allows_three_collections_for_graph_snapshot_backend():
+    case = {
+        "id": "GQ-09",
+        "query": "sample",
+        "collection_keys": ["uk", "ge", "fr"],
+    }
+
+    payload, expected_route_keys, request_mode = eval_query_quality.prepare_query_request_for_backend(
+        case,
+        max_collection_keys=3,
+    )
+
+    assert payload["collection"] == "uk"
+    assert payload["collections"] == ["uk", "ge", "fr"]
+    assert expected_route_keys == ["uk", "ge", "fr"]
+    assert request_mode == "explicit_multi"
+
+
 def test_evaluate_case_result_marks_pass_when_required_terms_and_route_match():
     case = {
         "id": "GQ-01",
@@ -92,3 +110,26 @@ def test_evaluate_case_result_marks_fail_on_forbidden_hit_and_route_mismatch():
     assert result["pass"] is False
     assert result["route_pass"] is False
     assert result["forbidden_hits"] == ["환각"]
+
+
+def test_validate_fixture_collections_available_raises_for_empty_explicit_collection():
+    fixtures = [
+        {
+            "id": "GQ-03",
+            "query": "sample",
+            "collection_keys": ["uk"],
+        }
+    ]
+    payload = {
+        "collections": [
+            {"key": "all", "vectors": 37},
+            {"key": "uk", "vectors": 0},
+        ]
+    }
+
+    try:
+        eval_query_quality.validate_fixture_collections_available(fixtures, payload)
+    except ValueError as exc:
+        assert "GQ-03: uk" in str(exc)
+    else:
+        raise AssertionError("expected ValueError for empty explicit collection")

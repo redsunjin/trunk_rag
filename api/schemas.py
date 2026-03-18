@@ -46,4 +46,6 @@ class UploadRequestApproveAction(BaseModel):
 
 class UploadRequestRejectAction(BaseModel):
     code: str = Field(..., min_length=1)
+    reason_code: str | None = None
     reason: str = Field(..., min_length=1)
+    decision_note: str | None = None

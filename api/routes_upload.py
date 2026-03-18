@@ -41,7 +41,10 @@ def _approve_request_item_unlocked(
     request_item["approved_at"] = now
     request_item["updated_at"] = now
     request_item["rejected_at"] = None
+    request_item["rejected_reason_code"] = None
     request_item["rejected_reason"] = None
+    request_item["decision_note"] = None
+    request_item["rejected_reason_note"] = None
     request_item["managed_doc"] = managed_doc
     request_item["ingest"] = {
         "mode": "reindex",
@@ -50,11 +53,15 @@ def _approve_request_item_unlocked(
     return request_item
 
 
+def _view_request_item(request_item: dict[str, object]) -> dict[str, object]:
+    return upload_service.build_upload_request_view_unlocked(request_item)
+
+
 @router.get("/upload-requests/{request_id}")
 def upload_request_detail(request_id: str) -> dict[str, object]:
     with UPLOAD_REQUEST_LOCK:
         _items, item, _index = upload_service.find_upload_request(request_id)
-    return {"request": item}
+    return {"request": _view_request_item(item)}
 
 
 @router.post("/upload-requests")
@@ -103,7 +110,10 @@ def create_upload_request(req: UploadRequestCreateRequest) -> dict[str, object]:
         "updated_at": now,
         "approved_at": None,
         "rejected_at": None,
+        "rejected_reason_code": None,
         "rejected_reason": None,
+        "decision_note": None,
+        "rejected_reason_note": None,
         "managed_doc": None,
         "ingest": None,
     }
@@ -122,7 +132,10 @@ def create_upload_request(req: UploadRequestCreateRequest) -> dict[str, object]:
             if not request_item["usable"]:
                 request_item["status"] = REQUEST_STATUS_REJECTED
                 request_item["rejected_at"] = auto_now
+                request_item["rejected_reason_code"] = "VALIDATION"
                 request_item["rejected_reason"] = "auto-approve enabled but validation failed"
+                request_item["decision_note"] = "auto-approve enabled but validation failed"
+                request_item["rejected_reason_note"] = "auto-approve enabled but validation failed"
                 request_item["updated_at"] = auto_now
             else:
                 _approve_request_item_unlocked(
@@ -134,7 +147,7 @@ def create_upload_request(req: UploadRequestCreateRequest) -> dict[str, object]:
         items.append(request_item)
         upload_service._save_upload_requests_unlocked(items)
 
-    return {"auto_approve": auto_approve, "request": request_item}
+    return {"auto_approve": auto_approve, "request": _view_request_item(request_item)}
 
 
 @router.post("/upload-requests/{request_id}/approve")
@@ -169,7 +182,7 @@ def approve_upload_request(request_id: str, action: UploadRequestApproveAction) 
         items[index] = item
         upload_service._save_upload_requests_unlocked(items)
 
-    return {"request": item}
+    return {"request": _view_request_item(item)}
 
 
 @router.post("/upload-requests/{request_id}/reject")
@@ -181,8 +194,13 @@ def reject_upload_request(request_id: str, action: UploadRequestRejectAction) ->
         upload_service.ensure_pending_status(item)
 
         now = runtime_service.utc_now_iso()
+        reason_code = upload_service.normalize_reject_reason_code(action.reason_code)
+        reason_note = (action.decision_note or action.reason).strip()
         item["status"] = REQUEST_STATUS_REJECTED
+        item["rejected_reason_code"] = reason_code
         item["rejected_reason"] = action.reason.strip()
+        item["decision_note"] = reason_note
+        item["rejected_reason_note"] = reason_note
         item["rejected_at"] = now
         item["updated_at"] = now
         item["approved_at"] = None
@@ -190,4 +208,4 @@ def reject_upload_request(request_id: str, action: UploadRequestRejectAction) ->
         items[index] = item
         upload_service._save_upload_requests_unlocked(items)
 
-    return {"request": item}
+    return {"request": _view_request_item(item)}

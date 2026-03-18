@@ -1,18 +1,13 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from uuid import uuid4
 
 from fastapi import HTTPException
 
-from core.settings import (
-    DEFAULT_COLLECTION_KEY,
-    PERSIST_DIR,
-    REQUEST_STATUS_PENDING,
-    UPLOAD_REQUEST_LOCK,
-    UPLOAD_REQUEST_STORE_FILE,
-)
+from core.settings import DATA_DIR, DEFAULT_COLLECTION_KEY, PERSIST_DIR, REQUEST_STATUS_PENDING, UPLOAD_REQUEST_LOCK, UPLOAD_REQUEST_STORE_FILE
 from services import runtime_service
 from services import collection_service
 
@@ -21,6 +16,9 @@ REQUEST_TYPE_UPDATE = "update"
 REQUEST_TYPES = {REQUEST_TYPE_CREATE, REQUEST_TYPE_UPDATE}
 MANAGED_DOCS_DIR = "managed_docs"
 MANAGED_DOCS_MANIFEST_FILE = "manifest.json"
+REJECT_REASON_CODES = {"FORMAT", "DUPLICATE", "CONTENT", "SCOPE", "VALIDATION", "OTHER"}
+DEFAULT_REJECT_REASON_CODE = "OTHER"
+REQUEST_PREVIEW_LIMIT = 240
 
 
 def upload_request_store_path() -> Path:
@@ -85,6 +83,97 @@ def _save_managed_docs_unlocked(items: list[dict[str, object]]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def _preview_text(value: object, limit: int = REQUEST_PREVIEW_LIMIT) -> str:
+    text = re.sub(r"\s+", " ", str(value or "").strip())
+    if len(text) <= limit:
+        return text
+    return f"{text[:limit].rstrip()}..."
+
+
+def normalize_reject_reason_code(reason_code: str | None) -> str:
+    value = str(reason_code or "").strip().upper()
+    if not value:
+        return DEFAULT_REJECT_REASON_CODE
+    normalized = re.sub(r"[^A-Z0-9]+", "_", value).strip("_")
+    if not normalized or normalized not in REJECT_REASON_CODES:
+        return DEFAULT_REJECT_REASON_CODE
+    return normalized
+
+
+def _read_doc_preview(path: Path, limit: int = REQUEST_PREVIEW_LIMIT) -> str:
+    try:
+        return _preview_text(path.read_text(encoding="utf-8"), limit=limit)
+    except Exception:
+        return ""
+
+
+def _find_seed_doc_record_unlocked(collection_key: str, doc_key: str) -> dict[str, object] | None:
+    normalized_doc_key = doc_key.strip().lower()
+    config = collection_service.get_collection_config(collection_key)
+    data_dir = Path(DATA_DIR)
+    for file_name in config.get("file_names", []):
+        path = data_dir / str(file_name)
+        if not path.exists():
+            continue
+        if path.stem.lower() != normalized_doc_key:
+            continue
+        return {
+            "exists": True,
+            "origin": "seed",
+            "collection_key": collection_key,
+            "doc_key": normalized_doc_key,
+            "source_name": path.name,
+            "version_id": None,
+            "change_summary": "",
+            "updated_at": None,
+            "preview": _read_doc_preview(path),
+        }
+    return None
+
+
+def _find_active_managed_doc_record_unlocked(collection_key: str, doc_key: str) -> dict[str, object] | None:
+    normalized_doc_key = doc_key.strip().lower()
+    for item in _load_managed_docs_unlocked():
+        if not bool(item.get("active", False)):
+            continue
+        if str(item.get("collection_key", "")) != collection_key:
+            continue
+        if str(item.get("doc_key", "")).lower() != normalized_doc_key:
+            continue
+
+        path = Path(str(item.get("file_path", "")))
+        return {
+            "exists": True,
+            "origin": "managed",
+            "collection_key": collection_key,
+            "doc_key": normalized_doc_key,
+            "source_name": str(item.get("source_name", path.name if path.name else "")),
+            "version_id": item.get("version_id"),
+            "change_summary": str(item.get("change_summary", "")),
+            "updated_at": item.get("updated_at"),
+            "preview": _read_doc_preview(path) if path.exists() else "",
+        }
+    return None
+
+
+def get_active_doc_summary_unlocked(collection_key: str, doc_key: str) -> dict[str, object] | None:
+    managed_doc = _find_active_managed_doc_record_unlocked(collection_key, doc_key)
+    if managed_doc:
+        return managed_doc
+    return _find_seed_doc_record_unlocked(collection_key, doc_key)
+
+
+def build_upload_request_view_unlocked(item: dict[str, object]) -> dict[str, object]:
+    view = dict(item)
+    collection_key = str(view.get("collection_key", DEFAULT_COLLECTION_KEY))
+    doc_key = str(view.get("doc_key", "")).strip().lower()
+    active_doc = get_active_doc_summary_unlocked(collection_key, doc_key) if doc_key else None
+    view["content_preview"] = _preview_text(view.get("content", ""))
+    view["active_doc_exists"] = bool(active_doc)
+    view["active_doc"] = active_doc
+    return view
+
+
 def list_upload_requests(
     status: str | None = None,
     reason: str | None = None,
@@ -104,6 +193,8 @@ def list_upload_requests(
                 item
                 for item in items
                 if reason_query in str(item.get("rejected_reason", "")).strip().lower()
+                or reason_query in str(item.get("rejected_reason_code", "")).strip().lower()
+                or reason_query in str(item.get("decision_note", "")).strip().lower()
             ]
 
     if search:
@@ -120,9 +211,12 @@ def list_upload_requests(
                 or query in str(item.get("status", "")).lower()
                 or query in str(item.get("change_summary", "")).lower()
                 or query in str(item.get("rejected_reason", "")).lower()
+                or query in str(item.get("rejected_reason_code", "")).lower()
+                or query in str(item.get("decision_note", "")).lower()
             ]
 
-    return sorted(items, key=lambda item: str(item.get("created_at", "")), reverse=True)
+    ordered = sorted(items, key=lambda item: str(item.get("created_at", "")), reverse=True)
+    return [build_upload_request_view_unlocked(item) for item in ordered]
 
 
 def find_upload_request(request_id: str) -> tuple[list[dict[str, object]], dict[str, object], int]:

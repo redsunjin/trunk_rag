@@ -6,9 +6,11 @@ import time
 from itertools import combinations
 from pathlib import Path
 
+from core.settings import DEFAULT_COLLECTION_KEY
 from services import index_service
 
 SECTION_HEADING_PATTERN = re.compile(r"^(?:##+|\d+\.)\s+")
+KOREAN_TEXT_PATTERN = re.compile(r"[가-힣]")
 
 ENTITY_SPECS: list[dict[str, object]] = [
     {"id": "newton", "label": "Newton", "aliases": ["뉴턴", "newton"]},
@@ -124,6 +126,17 @@ GRAPH_CANDIDATE_SPECS: list[dict[str, object]] = [
 
 def _normalize_text(value: str) -> str:
     return value.lower()
+
+
+def _entity_display_name(entity_id: str) -> str:
+    spec = ENTITY_BY_ID.get(entity_id, {})
+    aliases = spec.get("aliases", [])
+    if isinstance(aliases, list):
+        for alias in aliases:
+            alias_text = str(alias).strip()
+            if alias_text and KOREAN_TEXT_PATTERN.search(alias_text):
+                return alias_text
+    return str(spec.get("label", entity_id))
 
 
 def split_markdown_sections(text: str, *, source_name: str) -> list[dict[str, str]]:
@@ -280,6 +293,50 @@ def export_snapshot_jsonl(snapshot: dict[str, object], output_dir: Path) -> dict
     }
 
 
+def filter_graph_snapshot(snapshot: dict[str, object], collection_keys: list[str]) -> dict[str, object]:
+    normalized_keys = [str(item).strip() for item in collection_keys if str(item).strip()]
+    if not normalized_keys or DEFAULT_COLLECTION_KEY in normalized_keys:
+        return snapshot
+
+    allowed = set(normalized_keys)
+    filtered_edges: list[dict[str, object]] = []
+    matched_node_ids: set[str] = set()
+
+    for edge in snapshot.get("edges", []):
+        if not isinstance(edge, dict):
+            continue
+        edge_collections = {str(item) for item in edge.get("collections", [])}
+        if edge_collections.isdisjoint(allowed):
+            continue
+        filtered_edges.append(edge)
+        matched_node_ids.add(str(edge.get("source", "")))
+        matched_node_ids.add(str(edge.get("target", "")))
+
+    filtered_nodes: list[dict[str, object]] = []
+    for node in snapshot.get("nodes", []):
+        if not isinstance(node, dict):
+            continue
+        node_id = str(node.get("id", ""))
+        node_collections = {str(item) for item in node.get("collections", [])}
+        if node_id in matched_node_ids or not node_collections.isdisjoint(allowed):
+            filtered_nodes.append(node)
+
+    stats = dict(snapshot.get("stats", {}))
+    stats.update(
+        {
+            "filtered": True,
+            "collection_key": ",".join(normalized_keys),
+            "nodes": len(filtered_nodes),
+            "edges": len(filtered_edges),
+        }
+    )
+    return {
+        "nodes": filtered_nodes,
+        "edges": filtered_edges,
+        "stats": stats,
+    }
+
+
 def query_graph_snapshot(snapshot: dict[str, object], question: str, *, max_hops: int = 3) -> dict[str, object]:
     started = time.perf_counter()
     query_entities = detect_entity_ids(question)
@@ -339,6 +396,32 @@ def query_graph_snapshot(snapshot: dict[str, object], question: str, *, max_hops
         "matched_entities": sorted(matched_entities),
         "relations": relation_lines[:12],
         "latency_ms": round(elapsed_ms, 3),
+    }
+
+
+def answer_graph_snapshot(snapshot: dict[str, object], question: str, *, max_hops: int = 3) -> dict[str, object]:
+    result = query_graph_snapshot(snapshot, question, max_hops=max_hops)
+    query_entities = [_entity_display_name(entity_id) for entity_id in result["query_entities"]]
+    matched_entities = [_entity_display_name(entity_id) for entity_id in result["matched_entities"]]
+    relation_lines = [str(line) for line in result["relations"][:6]]
+
+    lines = [
+        f"질문 재진술: {question}",
+        "그래프 스냅샷 기준 관계망 요약입니다.",
+        f"핵심 엔티티: {', '.join(query_entities) if query_entities else '질문에서 직접 감지된 엔티티 없음'}",
+        f"확장 엔티티: {', '.join(matched_entities[:8]) if matched_entities else '-'}",
+        "관계 근거:",
+    ]
+    if relation_lines:
+        lines.extend(f"- {line}" for line in relation_lines)
+    else:
+        lines.append("- 직접 연결된 relation evidence를 찾지 못했습니다.")
+
+    return {
+        **result,
+        "answer": "\n".join(lines),
+        "query_entity_labels": query_entities,
+        "matched_entity_labels": matched_entities,
     }
 
 

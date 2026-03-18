@@ -15,12 +15,15 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from core.settings import COLLECTION_CONFIGS, DEFAULT_COLLECTION_KEY, MAX_QUERY_COLLECTIONS
+from services import graphrag_poc_service
 
 DEFAULT_BASE_URL = "http://127.0.0.1:8000"
 DEFAULT_TIMEOUT_SECONDS = 45
 DEFAULT_EVAL_FILE = Path("evals/answer_level_eval_fixtures.jsonl")
 DEFAULT_OUTPUT_JSON = Path("docs/reports/query_answer_eval_latest.json")
 DEFAULT_OUTPUT_REPORT = Path("docs/reports/QUERY_ANSWER_EVAL_LATEST.md")
+DEFAULT_BACKEND = "vector_query"
+GRAPH_SNAPSHOT_MAX_COLLECTIONS = 3
 REQUIRED_HEALTH_KEYS = {
     "status",
     "collection_key",
@@ -35,6 +38,7 @@ REQUIRED_HEALTH_KEYS = {
 COLLECTION_NAME_TO_KEY = {
     str(config["name"]).strip().lower(): key for key, config in COLLECTION_CONFIGS.items()
 }
+COLLECTION_KEY_TO_NAME = {key: str(config["name"]).strip() for key, config in COLLECTION_CONFIGS.items()}
 
 
 def percentile(values: list[float], ratio: float) -> float:
@@ -78,6 +82,16 @@ def health_check(base_url: str, timeout_seconds: int) -> dict[str, object]:
     return body
 
 
+def collections_check(base_url: str, timeout_seconds: int) -> dict[str, object]:
+    request = urllib.request.Request(f"{base_url}/collections", method="GET")
+    with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+        payload = response.read()
+    body = json.loads(payload.decode("utf-8"))
+    if not isinstance(body, dict) or not isinstance(body.get("collections"), list):
+        raise ValueError("Unexpected /collections payload. 다른 프로젝트가 같은 포트를 사용 중인지 확인하세요.")
+    return body
+
+
 def load_eval_fixtures(
     path: Path,
     *,
@@ -110,12 +124,20 @@ def load_eval_fixtures(
 
 
 def prepare_query_request(case: dict[str, object]) -> tuple[dict[str, object], list[str], str]:
+    return prepare_query_request_for_backend(case, max_collection_keys=MAX_QUERY_COLLECTIONS)
+
+
+def prepare_query_request_for_backend(
+    case: dict[str, object],
+    *,
+    max_collection_keys: int,
+) -> tuple[dict[str, object], list[str], str]:
     payload = {"query": case["query"]}
     collection_keys = [str(item).strip() for item in case.get("collection_keys", []) if str(item).strip()]
     if len(collection_keys) == 1:
         payload["collection"] = collection_keys[0]
         return payload, collection_keys, "explicit_single"
-    if 1 < len(collection_keys) <= MAX_QUERY_COLLECTIONS:
+    if 1 < len(collection_keys) <= max_collection_keys:
         payload["collection"] = collection_keys[0]
         payload["collections"] = collection_keys
         return payload, collection_keys, "explicit_multi"
@@ -137,6 +159,32 @@ def build_query_payload(
     payload["llm_base_url"] = llm_base_url
     payload["llm_api_key"] = llm_api_key
     return payload, expected_route_keys, request_mode
+
+
+def validate_fixture_collections_available(
+    fixtures: list[dict[str, object]],
+    collections_payload: dict[str, object],
+) -> None:
+    vector_counts = {
+        str(item.get("key", "")).strip(): int(item.get("vectors", 0) or 0)
+        for item in collections_payload.get("collections", [])
+        if isinstance(item, dict)
+    }
+    missing_cases: list[str] = []
+    for case in fixtures:
+        payload, expected_route_keys, request_mode = prepare_query_request(case)
+        if request_mode == "fallback_all_for_eval":
+            continue
+        if all(vector_counts.get(key, 0) > 0 for key in expected_route_keys):
+            continue
+        missing = [key for key in expected_route_keys if vector_counts.get(key, 0) <= 0]
+        missing_cases.append(f"{case.get('id')}: {','.join(missing)}")
+
+    if missing_cases:
+        raise ValueError(
+            "Selected eval fixtures require empty collections. "
+            f"먼저 /reindex 또는 대상 컬렉션 준비가 필요합니다: {'; '.join(missing_cases)}"
+        )
 
 
 def call_query(
@@ -175,6 +223,48 @@ def call_query(
     if not isinstance(response_body, dict):
         response_body = {"detail": response_body}
     return status, response_body, elapsed_ms, headers
+
+
+def build_graph_snapshot_health(snapshot: dict[str, object], *, collection_key: str, max_hops: int) -> dict[str, object]:
+    stats = dict(snapshot.get("stats", {}))
+    return {
+        "status": "ok",
+        "collection_key": collection_key,
+        "collection": f"graph_snapshot:{collection_key}",
+        "persist_dir": "-",
+        "vectors": stats.get("edges", 0),
+        "chunking_mode": "graph_snapshot",
+        "embedding_model": "graph_snapshot",
+        "default_llm_provider": "graph_snapshot",
+        "default_llm_model": "-",
+        "graph_nodes": stats.get("nodes", 0),
+        "graph_edges": stats.get("edges", 0),
+        "graph_source_docs": stats.get("source_docs", 0),
+        "graph_section_hits": stats.get("section_hits", 0),
+        "graph_max_hops": max_hops,
+    }
+
+
+def call_graph_snapshot(
+    *,
+    snapshot: dict[str, object],
+    question: str,
+    route_keys: list[str],
+    max_hops: int,
+) -> tuple[int, dict[str, object], float, dict[str, str]]:
+    result = graphrag_poc_service.answer_graph_snapshot(snapshot, question, max_hops=max_hops)
+    collection_names = [COLLECTION_KEY_TO_NAME[key] for key in route_keys if key in COLLECTION_KEY_TO_NAME]
+    headers: dict[str, str] = {}
+    if collection_names:
+        headers["X-RAG-Collections"] = ",".join(collection_names)
+        headers["X-RAG-Collection"] = collection_names[0]
+    body = {
+        "answer": result["answer"],
+        "mode": "graph_snapshot",
+        "entities": result["matched_entities"],
+        "relations": result["relations"],
+    }
+    return 200, body, float(result["latency_ms"]), headers
 
 
 def extract_route_keys(headers: dict[str, str]) -> list[str]:
@@ -326,6 +416,7 @@ def build_markdown_report(payload: dict[str, object]) -> str:
         "",
         "## Scope",
         f"- generated_at: `{payload['generated_at']}`",
+        f"- backend: `{payload.get('backend', DEFAULT_BACKEND)}`",
         f"- eval_file: `{payload['eval_file']}`",
         f"- base_url: `{payload['base_url']}`",
         f"- llm_provider: `{payload['llm_provider']}`",
@@ -338,6 +429,23 @@ def build_markdown_report(payload: dict[str, object]) -> str:
         f"- default_llm_provider: `{health.get('default_llm_provider', '-')}`",
         f"- default_llm_model: `{health.get('default_llm_model', '-')}`",
         "",
+    ]
+
+    if payload.get("backend") == "graph_snapshot":
+        lines.extend(
+            [
+                "## Graph Snapshot",
+                f"- graph_nodes: `{health.get('graph_nodes', 0)}`",
+                f"- graph_edges: `{health.get('graph_edges', 0)}`",
+                f"- graph_source_docs: `{health.get('graph_source_docs', 0)}`",
+                f"- graph_section_hits: `{health.get('graph_section_hits', 0)}`",
+                f"- graph_max_hops: `{health.get('graph_max_hops', 0)}`",
+                "",
+            ]
+        )
+
+    lines.extend(
+        [
         "## Summary",
         f"- cases: `{summary['cases']}`",
         f"- passed: `{summary['passed']}`",
@@ -347,7 +455,8 @@ def build_markdown_report(payload: dict[str, object]) -> str:
         f"- p95_latency_ms: `{summary['p95_latency_ms']}`",
         "",
         "## Buckets",
-    ]
+        ]
+    )
 
     for bucket, bucket_summary in summary["bucket_summaries"].items():
         lines.extend(
@@ -390,6 +499,7 @@ def build_markdown_report(payload: dict[str, object]) -> str:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Evaluate /query answer quality against answer-level fixtures.")
+    parser.add_argument("--backend", choices=["vector_query", "graph_snapshot"], default=DEFAULT_BACKEND)
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
     parser.add_argument("--timeout-seconds", type=int, default=DEFAULT_TIMEOUT_SECONDS)
     parser.add_argument("--eval-file", type=Path, default=DEFAULT_EVAL_FILE)
@@ -400,6 +510,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--llm-model", default=None)
     parser.add_argument("--llm-base-url", default=None)
     parser.add_argument("--llm-api-key", default=None)
+    parser.add_argument("--graph-collection", default=DEFAULT_COLLECTION_KEY)
+    parser.add_argument("--graph-max-hops", type=int, default=2)
     parser.add_argument("--output-json", type=Path, default=DEFAULT_OUTPUT_JSON)
     parser.add_argument("--output-report", type=Path, default=DEFAULT_OUTPUT_REPORT)
     return parser.parse_args()
@@ -414,24 +526,48 @@ def main() -> None:
         case_ids={item.strip() for item in args.case_id if item.strip()} or None,
         max_cases=args.max_cases,
     )
-    health = health_check(args.base_url, args.timeout_seconds)
+    snapshot = None
+    if args.backend == "vector_query":
+        health = health_check(args.base_url, args.timeout_seconds)
+        collections_payload = collections_check(args.base_url, args.timeout_seconds)
+        validate_fixture_collections_available(fixtures, collections_payload)
+    else:
+        snapshot = graphrag_poc_service.build_graph_snapshot(collection_key=args.graph_collection)
+        health = build_graph_snapshot_health(
+            snapshot,
+            collection_key=args.graph_collection,
+            max_hops=args.graph_max_hops,
+        )
 
     results: list[dict[str, object]] = []
     for index, case in enumerate(fixtures, start=1):
-        payload, expected_route_keys, request_mode = build_query_payload(
-            case,
-            llm_provider=args.llm_provider,
-            llm_model=args.llm_model,
-            llm_base_url=args.llm_base_url,
-            llm_api_key=args.llm_api_key,
-        )
-        request_id = f"answer-eval-{index:03d}-{case['id']}"
-        status, body, latency_ms, headers = call_query(
-            base_url=args.base_url,
-            timeout_seconds=args.timeout_seconds,
-            request_id=request_id,
-            payload=payload,
-        )
+        if args.backend == "vector_query":
+            payload, expected_route_keys, request_mode = build_query_payload(
+                case,
+                llm_provider=args.llm_provider,
+                llm_model=args.llm_model,
+                llm_base_url=args.llm_base_url,
+                llm_api_key=args.llm_api_key,
+            )
+            request_id = f"answer-eval-{index:03d}-{case['id']}"
+            status, body, latency_ms, headers = call_query(
+                base_url=args.base_url,
+                timeout_seconds=args.timeout_seconds,
+                request_id=request_id,
+                payload=payload,
+            )
+        else:
+            payload, expected_route_keys, request_mode = prepare_query_request_for_backend(
+                case,
+                max_collection_keys=GRAPH_SNAPSHOT_MAX_COLLECTIONS,
+            )
+            filtered_snapshot = graphrag_poc_service.filter_graph_snapshot(snapshot or {}, expected_route_keys)
+            status, body, latency_ms, headers = call_graph_snapshot(
+                snapshot=filtered_snapshot,
+                question=str(payload["query"]),
+                route_keys=expected_route_keys,
+                max_hops=args.graph_max_hops,
+            )
         results.append(
             evaluate_case_result(
                 case,
@@ -446,6 +582,7 @@ def main() -> None:
 
     payload = {
         "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+        "backend": args.backend,
         "eval_file": str(args.eval_file),
         "base_url": args.base_url,
         "llm_provider": args.llm_provider,

@@ -31,7 +31,7 @@
             <label for="statusFilter">요청 상태 필터</label>
             <select id="statusFilter">
               <option value="">전체</option>
-              <option value="pending">pending</option>
+              <option value="pending" selected>pending</option>
               <option value="approved">approved</option>
               <option value="rejected">rejected</option>
             </select>
@@ -60,6 +60,11 @@
         <h3>업로드 요청 승인 워크플로우</h3>
         <p id="requestMsg" class="status-msg" style="margin-top:8px;">요청 목록 로딩 중...</p>
         <div id="requestTableWrap" style="margin-top:12px;overflow:auto;"></div>
+        <section class="card" style="margin-top:16px;background:rgba(255,255,255,0.6);">
+          <h4 style="margin-bottom:8px;">요청 상세</h4>
+          <p id="requestDetailMsg" class="status-msg">요청을 선택하면 상세가 표시됩니다.</p>
+          <div id="requestDetailWrap" style="margin-top:10px;"></div>
+        </section>
       </section>
     </main>
   </div>
@@ -67,4 +72,3 @@
   <script type="module" src="/js/admin_page.js"></script>
 </body>
 </html>
-

@@ -23,6 +23,7 @@
 - 컬렉션 상태 조회(`/collections`) + cap 사용률
 - 등록 전 문서 검증(`usable/reasons/warnings`) 1차 적용
 - 업로드 요청/승인 워크플로우(`pending/approved/rejected`) 1차 적용
+- 업로드 관리자 Slice 2(`pending` 기본 필터, update 강조, active 문서 미리보기, reject reason code/decision_note) 적용
 - 승인된 업로드를 `chroma_db/managed_docs/`에 저장하고 active 버전 기준으로 재구성
 - 업로드 요청의 `request_type/doc_key/change_summary` 필드 지원
 - `/rag-docs`와 `reindex`가 seed + managed active 문서를 같은 기준으로 사용
@@ -40,6 +41,8 @@
 - GraphRAG retrieval PoC/실측 스크립트(`scripts/benchmark_graphrag_sidecar.py`)
 - answer-level 평가 fixture + `/query` 품질 평가 스크립트(`evals/answer_level_eval_fixtures.jsonl`, `scripts/eval_query_quality.py`)
 - Vector RAG answer-level baseline 리포트(`docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md`)
+- Graph snapshot answer-level 비교 리포트(`docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_GRAPH_SNAPSHOT.md`)
+- GraphRAG Go/No-Go 판단 리포트(`docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md`)
 
 ### 제외(현재 단계)
 - 사용자 인증/권한
@@ -99,6 +102,8 @@
 - 업로드 요청에서 `Source Name` optional + 컬렉션 기준 기본값 사용
 - 업로드 요청에서 `Doc Key`, `Request Type`, `Change Summary` optional 입력 지원
 - 관리자 화면에서 `doc_key`, `request_type`, `change_summary`, managed version 노출
+- 관리자 화면에서 `pending` 기본 필터, `update` 강조, active 문서 미리보기, 요청 상세 패널 제공
+- 반려 시 `reason_code` + `decision_note` 저장 지원
 
 ### 데스크톱 PoC
 - Electron 기반 최소 래퍼 추가(`desktop/electron`)
@@ -481,12 +486,12 @@ npm start
 
 ## 다음 진행 방향
 ### 1순위
-- GraphRAG answer-level/vector baseline 비교 실측
-- 내용: `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md` 기준선으로 GraphRAG sidecar와 answer-level accuracy/latency를 비교하고 Go/No-Go 판단 추가
+- MVP 기본 경로 신뢰성 복구
+- 내용: `uk` 컬렉션 인덱스 부재와 `fr,ge` 다중 컬렉션 timeout을 먼저 정리하고 ops-baseline을 재측정한다.
 
 ### 2순위
-- 업로드/갱신 관리자 워크플로우 구현 2차
-- 내용: 관리자 상세 보기, diff/이력 UX, reject reason code 정리
+- GraphRAG는 연구용 sidecar 트랙 유지
+- 내용: `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md` 기준으로 MVP 통합은 보류하고, 필요 시에만 fallback 포함 실제 sidecar 경로를 다시 검토한다.
 
 ### 3순위
 - 데스크톱 패키징 실제 착수 재검토

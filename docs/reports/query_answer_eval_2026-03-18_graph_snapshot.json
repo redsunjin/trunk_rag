@@ -1,0 +1,191 @@
+{
+  "generated_at": "2026-03-18T12:52:44+00:00",
+  "backend": "graph_snapshot",
+  "eval_file": "evals/answer_level_eval_fixtures.jsonl",
+  "base_url": "http://127.0.0.1:8000",
+  "llm_provider": "ollama",
+  "llm_model": null,
+  "health": {
+    "status": "ok",
+    "collection_key": "all",
+    "collection": "graph_snapshot:all",
+    "persist_dir": "-",
+    "vectors": 48,
+    "chunking_mode": "graph_snapshot",
+    "embedding_model": "graph_snapshot",
+    "default_llm_provider": "graph_snapshot",
+    "default_llm_model": "-",
+    "graph_nodes": 20,
+    "graph_edges": 48,
+    "graph_source_docs": 5,
+    "graph_section_hits": 21,
+    "graph_max_hops": 2
+  },
+  "summary": {
+    "cases": 3,
+    "passed": 2,
+    "pass_rate": 0.6667,
+    "avg_latency_ms": 0.051,
+    "p95_latency_ms": 0.074,
+    "avg_weighted_score": 0.8444,
+    "bucket_summaries": {
+      "graph-candidate": {
+        "cases": 3,
+        "passed": 2,
+        "pass_rate": 0.6667,
+        "avg_latency_ms": 0.051,
+        "p95_latency_ms": 0.074,
+        "avg_weighted_score": 0.8444
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "GQ-09",
+      "bucket": "graph-candidate",
+      "query": "뉴턴의 국장, 볼테르의 충격, 프랑스/독일 계몽주의 확산이 어떤 연쇄로 이어졌는지 설명해줘.",
+      "request_mode": "explicit_multi",
+      "collection_keys": [
+        "uk",
+        "ge",
+        "fr"
+      ],
+      "expected_route_keys": [
+        "uk",
+        "ge",
+        "fr"
+      ],
+      "actual_route_keys": [
+        "uk",
+        "ge",
+        "fr"
+      ],
+      "route_pass": true,
+      "status": 200,
+      "latency_ms": 0.033,
+      "answer_length": 874,
+      "answer_preview": "질문 재진술: 뉴턴의 국장, 볼테르의 충격, 프랑스/독일 계몽주의 확산이 어떤 연쇄로 이어졌는지 설명해줘.\n그래프 스냅샷 기준 관계망 요약입니다.\n핵심 엔티티: 계몽주의, 뉴턴, 볼테르\n확장 엔티티: 계몽주의, 독일 물리학회, 헬름홀츠, 훔볼트 대학, 라이프니츠, 마그누스 실험실, 나폴레옹 전쟁, 뉴턴\n관계 근거:\n- Leibniz <-> Newton | weight=3 | eu_summry.md: 3. 조피 도로테아: 프리드",
+      "answer": "질문 재진술: 뉴턴의 국장, 볼테르의 충격, 프랑스/독일 계몽주의 확산이 어떤 연쇄로 이어졌는지 설명해줘.\n그래프 스냅샷 기준 관계망 요약입니다.\n핵심 엔티티: 계몽주의, 뉴턴, 볼테르\n확장 엔티티: 계몽주의, 독일 물리학회, 헬름홀츠, 훔볼트 대학, 라이프니츠, 마그누스 실험실, 나폴레옹 전쟁, 뉴턴\n관계 근거:\n- Leibniz <-> Newton | weight=3 | eu_summry.md: 3. 조피 도로테아: 프리드리히 대왕의 어머니로서, 군인왕 아버지의 폭압 속에서도 아들에게 음악과 과학의 교양을 심어주어 '학문하는 군주'의 토대를 만들었습니다.\n- Newton <-> Voltaire | weight=3 | eu_summry.md: 2. 영국(United Kingdom): 혁명의 심장부와 소수의 헌신\n- Enlightenment <-> Newton | weight=2 | ge.md: 2. 계몽주의 시대: 라이프니츠와 지적 네트워크의 정치학 (17세기 ~ 18세기)\n- Helmholtz <-> Newton | weight=2 | eu_summry.md: 3. 조피 도로테아: 프리드리히 대왕의 어머니로서, 군인왕 아버지의 폭압 속에서도 아들에게 음악과 과학의 교양을 심어주어 '학문하는 군주'의 토대를 만들었습니다.\n- Enlightenment <-> Voltaire | weight=2 | ge.md: 2. 계몽주의 시대: 라이프니츠와 지적 네트워크의 정치학 (17세기 ~ 18세기)\n- Helmholtz <-> Siemens | weight=2 | eu_summry.md: 3. 조피 도로테아: 프리드리히 대왕의 어머니로서, 군인왕 아버지의 폭압 속에서도 아들에게 음악과 과학의 교양을 심어주어 '학문하는 군주'의 토대를 만들었습니다.",
+      "required_hits": [
+        "계몽주의",
+        "연쇄",
+        "뉴턴",
+        "볼테르",
+        "확산"
+      ],
+      "required_total": 6,
+      "required_ratio": 0.8333,
+      "must_include_any_hits": [],
+      "must_include_any_total": 4,
+      "must_include_any_ratio": 0.0,
+      "forbidden_hits": [],
+      "min_answer_chars": 180,
+      "min_chars_ratio": 1.0,
+      "precision_score": 0.8333,
+      "completeness_score": 0.5,
+      "hallucination_score": 1.0,
+      "weighted_score": 0.7333,
+      "pass": false,
+      "error_code": null,
+      "error_message": null
+    },
+    {
+      "id": "GQ-12",
+      "bucket": "graph-candidate",
+      "query": "마그누스 실험실에서 시작된 네트워크가 헬름홀츠, 지멘스, 독일 물리학회, 산업화로 어떻게 이어졌는지 설명해줘.",
+      "request_mode": "explicit_single",
+      "collection_keys": [
+        "ge"
+      ],
+      "expected_route_keys": [
+        "ge"
+      ],
+      "actual_route_keys": [
+        "ge"
+      ],
+      "route_pass": true,
+      "status": 200,
+      "latency_ms": 0.042,
+      "answer_length": 901,
+      "answer_preview": "질문 재진술: 마그누스 실험실에서 시작된 네트워크가 헬름홀츠, 지멘스, 독일 물리학회, 산업화로 어떻게 이어졌는지 설명해줘.\n그래프 스냅샷 기준 관계망 요약입니다.\n핵심 엔티티: 독일 물리학회, 헬름홀츠, 마그누스 실험실, 지멘스\n확장 엔티티: 계몽주의, 독일 물리학회, 헬름홀츠, 훔볼트 대학, 라이프니츠, 마그누스 실험실, 나폴레옹 전쟁, 뉴턴\n관계 근거:\n- Leibniz <-> Newton | weight=3 | eu_s",
+      "answer": "질문 재진술: 마그누스 실험실에서 시작된 네트워크가 헬름홀츠, 지멘스, 독일 물리학회, 산업화로 어떻게 이어졌는지 설명해줘.\n그래프 스냅샷 기준 관계망 요약입니다.\n핵심 엔티티: 독일 물리학회, 헬름홀츠, 마그누스 실험실, 지멘스\n확장 엔티티: 계몽주의, 독일 물리학회, 헬름홀츠, 훔볼트 대학, 라이프니츠, 마그누스 실험실, 나폴레옹 전쟁, 뉴턴\n관계 근거:\n- Leibniz <-> Newton | weight=3 | eu_summry.md: 3. 조피 도로테아: 프리드리히 대왕의 어머니로서, 군인왕 아버지의 폭압 속에서도 아들에게 음악과 과학의 교양을 심어주어 '학문하는 군주'의 토대를 만들었습니다.\n- Newton <-> Voltaire | weight=3 | eu_summry.md: 2. 영국(United Kingdom): 혁명의 심장부와 소수의 헌신\n- Helmholtz <-> Newton | weight=2 | eu_summry.md: 3. 조피 도로테아: 프리드리히 대왕의 어머니로서, 군인왕 아버지의 폭압 속에서도 아들에게 음악과 과학의 교양을 심어주어 '학문하는 군주'의 토대를 만들었습니다.\n- Helmholtz <-> Siemens | weight=2 | eu_summry.md: 3. 조피 도로테아: 프리드리히 대왕의 어머니로서, 군인왕 아버지의 폭압 속에서도 아들에게 음악과 과학의 교양을 심어주어 '학문하는 군주'의 토대를 만들었습니다.\n- Magnus Laboratory <-> Siemens | weight=2 | ge.md: 3. 근대 과학의 체계화: 훔볼트 모델과 엘리트 교육의 제도화 (19세기 초반)\n- Enlightenment <-> Newton | weight=2 | ge.md: 2. 계몽주의 시대: 라이프니츠와 지적 네트워크의 정치학 (17세기 ~ 18세기)",
+      "required_hits": [
+        "마그누스",
+        "헬름홀츠",
+        "지멘스",
+        "독일 물리학회",
+        "산업"
+      ],
+      "required_total": 5,
+      "required_ratio": 1.0,
+      "must_include_any_hits": [
+        "실험실",
+        "산업",
+        "산업화",
+        "네트워크"
+      ],
+      "must_include_any_total": 6,
+      "must_include_any_ratio": 0.6667,
+      "forbidden_hits": [],
+      "min_answer_chars": 180,
+      "min_chars_ratio": 1.0,
+      "precision_score": 1.0,
+      "completeness_score": 0.8334,
+      "hallucination_score": 1.0,
+      "weighted_score": 0.9334,
+      "pass": true,
+      "error_code": null,
+      "error_message": null
+    },
+    {
+      "id": "GQ-15",
+      "bucket": "graph-candidate",
+      "query": "에콜 폴리테크니크, 훔볼트 대학, 왕립학회, 파도바 대학을 한 관계망으로 놓고 각자의 역할을 설명해줘.",
+      "request_mode": "fallback_all_for_eval",
+      "collection_keys": [
+        "fr",
+        "ge",
+        "uk",
+        "it"
+      ],
+      "expected_route_keys": [
+        "all"
+      ],
+      "actual_route_keys": [
+        "all"
+      ],
+      "route_pass": true,
+      "status": 200,
+      "latency_ms": 0.078,
+      "answer_length": 821,
+      "answer_preview": "질문 재진술: 에콜 폴리테크니크, 훔볼트 대학, 왕립학회, 파도바 대학을 한 관계망으로 놓고 각자의 역할을 설명해줘.\n그래프 스냅샷 기준 관계망 요약입니다.\n핵심 엔티티: 에콜 폴리테크니크, 훔볼트 대학, 파도바 대학, 왕립학회\n확장 엔티티: 볼로냐, 에콜 폴리테크니크, 계몽주의, 프랑스 혁명, 갈릴레오, 독일 물리학회, 런던 대화재, 헬름홀츠\n관계 근거:\n- Leibniz <-> Newton | weight=3 | eu_su",
+      "answer": "질문 재진술: 에콜 폴리테크니크, 훔볼트 대학, 왕립학회, 파도바 대학을 한 관계망으로 놓고 각자의 역할을 설명해줘.\n그래프 스냅샷 기준 관계망 요약입니다.\n핵심 엔티티: 에콜 폴리테크니크, 훔볼트 대학, 파도바 대학, 왕립학회\n확장 엔티티: 볼로냐, 에콜 폴리테크니크, 계몽주의, 프랑스 혁명, 갈릴레오, 독일 물리학회, 런던 대화재, 헬름홀츠\n관계 근거:\n- Leibniz <-> Newton | weight=3 | eu_summry.md: 3. 조피 도로테아: 프리드리히 대왕의 어머니로서, 군인왕 아버지의 폭압 속에서도 아들에게 음악과 과학의 교양을 심어주어 '학문하는 군주'의 토대를 만들었습니다.\n- Newton <-> Voltaire | weight=3 | eu_summry.md: 2. 영국(United Kingdom): 혁명의 심장부와 소수의 헌신\n- Ecole Polytechnique <-> French Revolution | weight=2 | eu_summry.md: 4. 프랑스(France): 절대 권력과 이성적 혁명\n- Great Fire of London <-> Royal Society | weight=2 | eu_summry.md: 2. 영국(United Kingdom): 혁명의 심장부와 소수의 헌신\n- Newton <-> Royal Society | weight=2 | eu_summry.md: 2. 영국(United Kingdom): 혁명의 심장부와 소수의 헌신\n- Enlightenment <-> Newton | weight=2 | ge.md: 2. 계몽주의 시대: 라이프니츠와 지적 네트워크의 정치학 (17세기 ~ 18세기)",
+      "required_hits": [
+        "에콜 폴리테크니크",
+        "훔볼트 대학",
+        "왕립학회",
+        "파도바 대학",
+        "관계망",
+        "역할"
+      ],
+      "required_total": 6,
+      "required_ratio": 1.0,
+      "must_include_any_hits": [
+        "네트워크",
+        "대학"
+      ],
+      "must_include_any_total": 6,
+      "must_include_any_ratio": 0.3333,
+      "forbidden_hits": [],
+      "min_answer_chars": 190,
+      "min_chars_ratio": 1.0,
+      "precision_score": 1.0,
+      "completeness_score": 0.6666,
+      "hallucination_score": 1.0,
+      "weighted_score": 0.8666,
+      "pass": true,
+      "error_code": null,
+      "error_message": null
+    }
+  ]
+}

@@ -11,10 +11,106 @@ const collectionMsg = document.getElementById("collectionMsg");
 const requestMsg = document.getElementById("requestMsg");
 const collectionTableWrap = document.getElementById("collectionTableWrap");
 const requestTableWrap = document.getElementById("requestTableWrap");
+const requestDetailMsg = document.getElementById("requestDetailMsg");
+const requestDetailWrap = document.getElementById("requestDetailWrap");
+
+let selectedRequestId = "";
 
 function parseApiErrorMessage(data, fallbackMessage) {
   const error = parseApiError(data, fallbackMessage);
   return formatApiError(error);
+}
+
+function renderTextBlock(value) {
+  const text = String(value || "").trim();
+  if (!text) {
+    return "<p class='status-msg'>-</p>";
+  }
+  return `<pre style="white-space:pre-wrap;word-break:break-word;margin:0;">${escapeHtml(text)}</pre>`;
+}
+
+function renderRequestType(item) {
+  if (item.request_type === "update") {
+    return "<strong style='color:#9a6700;'>update</strong>";
+  }
+  if (item.request_type === "create") {
+    return "create";
+  }
+  return escapeHtml(item.request_type || "-");
+}
+
+function renderRequestDetail(item) {
+  if (!item) {
+    requestDetailMsg.textContent = "요청을 선택하면 상세가 표시됩니다.";
+    requestDetailWrap.innerHTML = "";
+    return;
+  }
+
+  const validation = item.validation || {};
+  const reasons = Array.isArray(validation.reasons) && validation.reasons.length
+    ? validation.reasons.map((reason) => `<li>${escapeHtml(reason)}</li>`).join("")
+    : "<li>-</li>";
+  const warnings = Array.isArray(validation.warnings) && validation.warnings.length
+    ? validation.warnings.map((warning) => `<li>${escapeHtml(warning)}</li>`).join("")
+    : "<li>-</li>";
+  const activeDoc = item.active_doc || {};
+  const activeState = item.active_doc_exists ? "있음" : "없음";
+  const activeOrigin = activeDoc.origin || "-";
+  const activeSummary = activeDoc.change_summary || "-";
+  const activePreview = activeDoc.preview || "-";
+  const rejectCode = item.rejected_reason_code || "-";
+  const rejectNote = item.decision_note || item.rejected_reason_note || item.rejected_reason || "-";
+
+  requestDetailMsg.textContent = `선택된 요청: ${item.id}`;
+  requestDetailWrap.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;">
+      <div>
+        <strong>기본 정보</strong>
+        <div style="margin-top:6px;line-height:1.5;">
+          <div>상태: ${escapeHtml(item.status || "-")}</div>
+          <div>유형: ${renderRequestType(item)}</div>
+          <div>컬렉션: ${escapeHtml(item.collection_key || "-")}</div>
+          <div>doc_key: ${escapeHtml(item.doc_key || "-")}</div>
+          <div>source_name: ${escapeHtml(item.source_name || "-")}</div>
+          <div>change_summary: ${escapeHtml(item.change_summary || "-")}</div>
+          <div>active_doc_exists: ${activeState}</div>
+          <div>active_doc_origin: ${escapeHtml(activeOrigin)}</div>
+        </div>
+      </div>
+      <div>
+        <strong>검증</strong>
+        <div style="margin-top:6px;">
+          <div>usable: ${item.usable ? "true" : "false"}</div>
+          <div style="margin-top:6px;">reasons:</div>
+          <ul style="margin:6px 0 0 18px;">${reasons}</ul>
+          <div style="margin-top:6px;">warnings:</div>
+          <ul style="margin:6px 0 0 18px;">${warnings}</ul>
+        </div>
+      </div>
+      <div>
+        <strong>반려 메모</strong>
+        <div style="margin-top:6px;line-height:1.5;">
+          <div>reason_code: ${escapeHtml(rejectCode)}</div>
+          <div>decision_note: ${escapeHtml(rejectNote)}</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;">
+      <div>
+        <strong>요청 미리보기</strong>
+        <div style="margin-top:6px;padding:10px;border:1px solid #dee2e6;border-radius:8px;background:#fff;">
+          ${renderTextBlock(item.content_preview || item.content || "-")}
+        </div>
+      </div>
+      <div>
+        <strong>현재 active 문서 미리보기</strong>
+        <div style="margin-top:6px;padding:10px;border:1px solid #dee2e6;border-radius:8px;background:#fff;">
+          <div style="margin-bottom:8px;">active_summary: ${escapeHtml(activeSummary)}</div>
+          ${renderTextBlock(activePreview)}
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 function renderCollectionTable(items, defaultKey) {
@@ -70,6 +166,7 @@ function requestActionButtons(item) {
 function renderRequestTable(items, counts) {
   if (!Array.isArray(items) || items.length === 0) {
     requestTableWrap.innerHTML = "<p class='status-msg'>요청 데이터가 없습니다.</p>";
+    renderRequestDetail(null);
     return;
   }
 
@@ -77,19 +174,28 @@ function renderRequestTable(items, counts) {
     const usable = item.usable ? "true" : "false";
     const validation = item.validation || {};
     const reasons = Array.isArray(validation.reasons) ? validation.reasons.join(" | ") : "-";
+    const reasonCode = item.rejected_reason_code || "-";
     const rejectedReason = item.rejected_reason || "-";
     const managedDoc = item.managed_doc || {};
     const managedVersion = managedDoc.version_id ? managedDoc.version_id.slice(0, 8) : "-";
+    const rowStyle = item.request_type === "update" ? "background:rgba(255,193,7,0.08);" : "";
+    const selectedStyle = item.id === selectedRequestId ? "box-shadow:inset 0 0 0 2px #2f6fed;" : "";
+    const activeDoc = item.active_doc || {};
+    const activeDocText = item.active_doc_exists && activeDoc.exists
+      ? `${activeDoc.origin || "-"} / ${activeDoc.source_name || "-"}`
+      : "없음";
     return `
-      <tr>
+      <tr data-request-id="${item.id}" style="cursor:pointer;${rowStyle}${selectedStyle}">
         <td>${escapeHtml(item.id)}</td>
         <td>${escapeHtml(item.source_name || "-")}</td>
         <td>${escapeHtml(item.doc_key || "-")}</td>
-        <td>${escapeHtml(item.request_type || "-")}</td>
+        <td>${renderRequestType(item)}</td>
+        <td>${escapeHtml(activeDocText)}</td>
         <td>${escapeHtml(item.collection_key || "-")}</td>
         <td>${escapeHtml(item.status)}</td>
         <td>${usable}</td>
         <td>${escapeHtml(item.change_summary || "-")}</td>
+        <td>${escapeHtml(reasonCode)}</td>
         <td>${escapeHtml(item.created_at || "-")}</td>
         <td>${escapeHtml(item.updated_at || "-")}</td>
         <td>${escapeHtml(managedVersion)}</td>
@@ -113,10 +219,12 @@ function renderRequestTable(items, counts) {
           <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">source</th>
           <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">doc_key</th>
           <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">type</th>
+          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">active_doc</th>
           <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">collection</th>
           <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">status</th>
           <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">usable</th>
           <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">change_summary</th>
+          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">reject_code</th>
           <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">created_at</th>
           <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">updated_at</th>
           <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">managed_version</th>
@@ -130,15 +238,32 @@ function renderRequestTable(items, counts) {
   `;
 
   requestTableWrap.querySelectorAll(".req-approve-btn").forEach((button) => {
-    button.addEventListener("click", () => approveRequest(button.dataset.id));
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      approveRequest(button.dataset.id);
+    });
   });
   requestTableWrap.querySelectorAll(".req-reject-btn").forEach((button) => {
-    button.addEventListener("click", () => rejectRequest(button.dataset.id));
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      rejectRequest(button.dataset.id);
+    });
+  });
+  requestTableWrap.querySelectorAll("tr[data-request-id]").forEach((row) => {
+    row.addEventListener("click", () => {
+      selectRequest(row.dataset.requestId, items);
+    });
   });
 }
 
 function getAdminCode() {
   return adminCode.value.trim();
+}
+
+function selectRequest(requestId, items = []) {
+  selectedRequestId = requestId || "";
+  const request = items.find((item) => item.id === selectedRequestId) || null;
+  renderRequestDetail(request);
 }
 
 async function loadCollections() {
@@ -171,7 +296,13 @@ async function loadRequests() {
       requestMsg.textContent = parseApiErrorMessage(data, "요청 조회 실패");
       return;
     }
-    renderRequestTable(data.requests || [], data.counts || {});
+    const items = data.requests || [];
+    if (!selectedRequestId || !items.some((item) => item.id === selectedRequestId)) {
+      const preferred = items.find((item) => item.status === "pending") || items[0] || null;
+      selectedRequestId = preferred ? preferred.id : "";
+    }
+    renderRequestTable(items, data.counts || {});
+    selectRequest(selectedRequestId, items);
   } catch (error) {
     requestMsg.textContent = String(error);
   }
@@ -211,18 +342,36 @@ async function rejectRequest(requestId) {
     return;
   }
 
-  const reason = prompt("반려 사유를 입력하세요:");
-  if (!reason || !reason.trim()) {
-    adminMsg.textContent = "반려 사유 입력이 취소되었습니다.";
+  const reasonCodeInput = prompt("반려 코드 입력 (FORMAT, DUPLICATE, CONTENT, SCOPE, VALIDATION, OTHER)", "OTHER");
+  if (reasonCodeInput === null) {
+    adminMsg.textContent = "반려가 취소되었습니다.";
     return;
   }
+  const reasonSummary = prompt("반려 사유 요약을 입력하세요:");
+  if (reasonSummary === null || !reasonSummary.trim()) {
+    adminMsg.textContent = "반려 사유 요약 입력이 취소되었습니다.";
+    return;
+  }
+  const decisionNoteInput = prompt("상세 메모가 있으면 입력하세요. 없으면 비워두세요:", reasonSummary.trim());
+  if (decisionNoteInput === null) {
+    adminMsg.textContent = "반려가 취소되었습니다.";
+    return;
+  }
+
+  const reasonCode = reasonCodeInput.trim() || "OTHER";
+  const decisionNote = decisionNoteInput.trim();
 
   adminMsg.textContent = `반려 처리 중: ${requestId}`;
   try {
     const res = await fetch(`/upload-requests/${encodeURIComponent(requestId)}/reject`, {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({code, reason: reason.trim()})
+      body: JSON.stringify({
+        code,
+        reason_code: reasonCode,
+        reason: reasonSummary.trim(),
+        decision_note: decisionNote || reasonSummary.trim()
+      })
     });
     const data = await res.json();
     if (!res.ok) {

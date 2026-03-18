@@ -87,6 +87,7 @@
 - [x] 데스크톱 패키징/배포 하드닝 여부 재검토
 - [x] 문서 업로드/갱신 관리자 워크플로우 설계
 - [x] 문서 업로드/갱신 관리자 워크플로우 구현 1차
+- [x] 문서 업로드/갱신 관리자 워크플로우 구현 2차
 
 진행 메모 (2026-03-17):
 - `desktop/electron`에 Electron PoC를 추가했다.
@@ -103,11 +104,14 @@
 - 승인된 요청은 `chroma_db/managed_docs/` 아래 버전 파일로 저장되고, active 버전 기준으로 재구성된다.
 - `GET /rag-docs`와 `POST /reindex`는 이제 seed 문서 + managed active 문서를 같은 기준으로 본다.
 - `DOC_RAG_AUTO_APPROVE`는 `create` 요청에만 적용되고 `update`에는 적용되지 않는다.
+- `2026-03-18` 구현 2차에서는 관리자 화면에 `pending` 기본 필터, `update` 강조, active 문서 존재/미리보기, 요청 상세 패널을 추가했다.
+- 반려 시 `reason_code`와 `decision_note`를 함께 저장할 수 있게 했고, 목록/검색에서도 이를 사용한다.
 
 검증:
 - [x] `env PYTHONPYCACHEPREFIX=/tmp/trunk_rag_pycache ./.venv/bin/python -m compileall api services core tests`
 - [x] `./.venv/bin/python -m pytest -q tests/api/test_upload_api.py tests/api/test_system_api.py` -> `13 passed in 0.14s` (2026-03-17)
 - [x] `./.venv/bin/python -m pytest -q` -> `34 passed in 4.81s` (2026-03-17)
+- [x] `./.venv/bin/python -m pytest -q tests/api/test_upload_api.py tests/test_eval_query_quality.py tests/test_graphrag_poc_service.py` -> `15 passed in 0.08s` (2026-03-18)
 
 ## GraphRAG 도입 결정 게이트
 
@@ -143,13 +147,29 @@ PoC 범위:
 - 현재 하네스는 대표 질문 6개를 `must_include/must_include_any/must_not_include/route header/min_answer_chars` 기준으로 채점한다.
 - `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md` 기준 Vector RAG 1차 baseline 실측은 완료됐다.
 - 같은 실측에서 `pass_rate=0.3333`, `avg_weighted_score=0.593`, `p95_latency_ms=14277.843`이었고, `GQ-03`은 `VECTORSTORE_EMPTY`, `GQ-05`는 `LLM_TIMEOUT`으로 실패했다.
-- 다음 남은 항목은 같은 fixture 기준 GraphRAG sidecar answer-level 비교와 Go/No-Go 판단이다.
+- `2026-03-18` graph snapshot backend answer-level 비교(`docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_GRAPH_SNAPSHOT.md`)에서는 `graph-candidate` 버킷이 `2/3 pass`, `avg_weighted_score=0.8444`, `p95_latency_ms=0.074`였다.
+- 현재 로컬 컬렉션 상태 확인 결과 `uk=0`, `fr=7`, `ge=7`, `all=37`이어서 `GQ-03` 실패는 실제 `uk` 인덱스 부재로 재현된다.
+- GraphRAG 결정 문서는 `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md`에 고정했다.
+- 결론은 "graph-candidate 개선 신호는 있으나 MVP/기본 경로 통합은 No-Go, 연구용 sidecar 트랙만 유지"다.
 
 Go / No-Go 기준:
-- [ ] 정확도 개선이 실제로 확인된다.
+- [x] 정확도 개선이 실제로 확인된다.
 - [ ] 사이드카 장애 시 기본 질의 경로가 유지된다.
 - [ ] 운영 복잡도 증가가 프로젝트 목표(로컬/경량)를 깨지 않는다.
 - [x] answer-level eval harness가 준비됐다.
+
+## 다음 우선순위 P3 (MVP 기본 경로 신뢰성 복구)
+
+목표:
+- GraphRAG 확장 대신 현재 Vector RAG 기본 경로의 실패/지연 blocker를 먼저 줄인다.
+
+- [ ] `uk` 컬렉션이 비어 있는 원인 정리 및 reindex/운영 가이드 보강
+- [ ] `fr,ge` 명시 다중 컬렉션 질의의 `LLM_TIMEOUT` 재현 및 완화
+- [ ] 같은 fixture 기준 ops-baseline 재측정
+
+완료 기준:
+- [ ] `GQ-03`, `GQ-05`가 현재 기본 경로에서 blocker 없이 재측정 가능하다.
+- [ ] 다음 세션 기준 MVP 기본 경로 안정화 우선순위가 문서로 고정된다.
 
 ## P0 (즉시 착수)
 

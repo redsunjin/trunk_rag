@@ -296,18 +296,29 @@ def test_admin_search_filters_flow(page: Page, live_server_url: str):
             body=json.dumps(
                 {
                     "auto_approve": False,
-                    "counts": {"pending": 0, "approved": 0, "rejected": 1},
+                    "counts": {"pending": 1, "approved": 0, "rejected": 0},
                     "requests": [
                         {
                             "id": "req-admin-1",
                             "source_name": "sample_upload.md",
                             "collection_key": "fr",
-                            "status": "rejected",
-                            "usable": False,
+                            "doc_key": "fr",
+                            "request_type": "update",
+                            "change_summary": "기존 프랑스 문서 갱신",
+                            "status": "pending",
+                            "usable": True,
                             "created_at": "2026-02-26T00:00:00+00:00",
                             "updated_at": "2026-02-26T00:01:00+00:00",
-                            "rejected_reason": "형식 미흡",
-                            "validation": {"reasons": ["헤더 누락"]},
+                            "content_preview": "## 갱신 문서\n핵심 문단 보강",
+                            "validation": {"reasons": [], "warnings": ["기존 문서 갱신"]},
+                            "active_doc_exists": True,
+                            "active_doc": {
+                                "exists": True,
+                                "origin": "seed",
+                                "source_name": "fr.md",
+                                "change_summary": "",
+                                "preview": "## 프랑스 과학 문서",
+                            },
                         }
                     ],
                 }
@@ -318,9 +329,13 @@ def test_admin_search_filters_flow(page: Page, live_server_url: str):
     page.route("**/upload-requests**", upload_requests_handler)
 
     page.goto(f"{live_server_url}/admin", wait_until="domcontentloaded")
-    expect(page.locator("#requestMsg")).to_contain_text("rejected=1", timeout=10000)
-    expect(page.locator("#requestTableWrap")).to_contain_text("형식 미흡")
-    expect(page.locator("#requestTableWrap")).to_contain_text("헤더 누락")
+    expect(page.locator("#statusFilter")).to_have_value("pending", timeout=10000)
+    expect(page.locator("#requestMsg")).to_contain_text("pending=1", timeout=10000)
+    expect(page.locator("#requestTableWrap")).to_contain_text("update")
+    expect(page.locator("#requestTableWrap")).to_contain_text("기존 프랑스 문서 갱신")
+    expect(page.locator("#requestDetailWrap")).to_contain_text("active_doc_exists: 있음")
+    expect(page.locator("#requestDetailWrap")).to_contain_text("기존 프랑스 문서 갱신")
+    expect(page.locator("#requestDetailWrap")).to_contain_text("프랑스 과학 문서")
 
     page.fill("#reasonFilter", "형식")
     page.fill("#searchFilter", "sample")
@@ -331,3 +346,4 @@ def test_admin_search_filters_flow(page: Page, live_server_url: str):
         query.get("reason") == ["형식"] and query.get("q") == ["sample"]
         for query in request_queries
     )
+    assert any(query.get("status") == ["pending"] for query in request_queries)

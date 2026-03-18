@@ -1,4 +1,4 @@
-# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-03-17 기준)
+# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-03-18 기준)
 
 기준 문서:
 - `SPEC.md`
@@ -56,7 +56,10 @@
 6. `docs/reports/GRAPH_RAG_ACTUAL_POC_REPORT_2026-03-17.md` 기준 6개 graph-candidate 질문의 1차 실측 결과는 `avg_latency_ms=0.068`, `avg_expected_entity_hit_ratio=0.9444`였다.
 7. `evals/answer_level_eval_fixtures.jsonl`와 `scripts/eval_query_quality.py`로 answer-level 자동 채점 하네스를 추가했다.
 8. `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md` 기준 Vector RAG 1차 baseline 실측은 `pass_rate=0.3333`, `avg_weighted_score=0.593`, `p95_latency_ms=14277.843`이었다.
-9. 같은 실측에서 `GQ-03`은 `VECTORSTORE_EMPTY`, `GQ-05`는 `LLM_TIMEOUT`으로 실패했고, GraphRAG sidecar와의 answer-level 비교는 아직 남아 있다.
+9. 같은 실측에서 `GQ-03`은 `VECTORSTORE_EMPTY`, `GQ-05`는 `LLM_TIMEOUT`으로 실패했다.
+10. `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_GRAPH_SNAPSHOT.md` 기준 graph snapshot backend의 `graph-candidate` answer-level 비교는 `2/3 pass`, `avg_weighted_score=0.8444`, `p95_latency_ms=0.074`였다.
+11. `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md` 결론은 "MVP 통합 No-Go, 연구용 sidecar 트랙만 유지"다.
+12. `GQ-03`의 직접 원인은 현재 로컬 인덱스 상태에서 `uk=0`이며, `GQ-05`는 `fr,ge` 명시 다중 컬렉션 경로의 `15초` 타임아웃 문제로 본다.
 
 배경:
 - 현재 프로젝트의 운영 모델은 `폐쇄망/로컬/경량 RAG 런타임`이다.
@@ -113,13 +116,14 @@
 검증:
 - `.venv/bin/python -m pytest -q` -> `32 passed in 5.29s`
 
-### C. GraphRAG 결정 게이트
-1. `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md`를 기준선으로 GraphRAG sidecar answer-level 비교 실측
-2. `GQ-03`의 `VECTORSTORE_EMPTY`, `GQ-05`의 `LLM_TIMEOUT` 원인 정리 후 baseline 재측정 여부 판단
-3. Go/No-Go 판단
+### C. MVP 기본 경로 신뢰성 복구
+1. `uk` 컬렉션 인덱스 부재 원인 정리 및 reindex/운영 가이드 보강
+2. `fr,ge` 명시 다중 컬렉션 경로의 `LLM_TIMEOUT` 재현 및 완화
+3. 같은 fixture 기준 ops-baseline 재측정
 
 ### D. 제품화 후속
-1. 업로드/갱신 관리자 워크플로우 구현 2차
+1. 업로드/갱신 관리자 워크플로우 구현 2차 완료 상태 유지
+2. 데스크톱 패키징은 재착수 조건이 충족되기 전까지 보류 유지
 
 원칙:
 - 기본 `/query`는 기존 Vector RAG 유지
@@ -168,28 +172,30 @@
 판단:
 - P3-Prep 게이트(`app_api.py <= 350`, inline script 외부화, 회귀 통과)는 충족됨.
 - 쉬운 RAG 운영 게이트와 성능/품질 게이트는 완료됐고, answer-level eval harness까지 준비됐다.
-- 다음 우선순위는 GraphRAG 결정 게이트 실측 -> 제품화 후속 순이다.
+- 업로드/갱신 관리자 워크플로우 2차는 완료됐고, GraphRAG 결정 게이트는 "MVP 통합 No-Go" 판단까지 끝났다.
+- 다음 우선순위는 GraphRAG 확장이 아니라 Vector baseline 신뢰성 복구다.
 
 ## 4. 현재 남은 작업 범위 (핵심)
 
 즉시 진행 대상 (다음 세션 1순위):
-1. GraphRAG answer-level/vector baseline 비교 실측
-2. 업로드/갱신 관리자 워크플로우 구현 2차
+1. `uk` 인덱스 부재와 `fr,ge` timeout 원인 정리
+2. ops-baseline 재측정
 
 후속 대상 (P3):
-1. GraphRAG answer-level 비교와 Go/No-Go 판단
-2. 업로드/갱신 관리자 워크플로우 구현 2차
+1. GraphRAG는 연구용 sidecar 트랙으로만 유지
+2. 데스크톱 패키징은 embedded Python/설치 전략 결정 전까지 보류 유지
 3. 데스크톱 패키징은 embedded Python/설치 전략 결정 전까지 보류 유지
 
 ## 5. 다음 세션 우선순위 (실행 순서)
 
-### A. GraphRAG 결정 게이트
-1. `QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md` 기준 실패 케이스(`GQ-03`, `GQ-05`) 원인 정리
-2. 같은 fixture로 GraphRAG sidecar answer-level 비교 경로 정리 및 실측
-3. Go/No-Go 판단 문서화
+### A. MVP 기본 경로 복구
+1. `uk` 컬렉션 인덱스 부재 원인 정리와 `/reindex` 운영 가이드 보강
+2. `fr,ge` 명시 다중 컬렉션 질의의 timeout 재현 및 완화
+3. `ops-baseline`만 다시 측정해 기본 경로 안정성 확인
 
-### B. 제품화 후속
-1. 업로드/갱신 관리자 워크플로우 구현 2차
+### B. 보류/유지 항목
+1. GraphRAG는 `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md` 기준으로 연구용 sidecar만 유지
+2. 데스크톱 패키징은 `embedded Python` vs `별도 설치` 결정 전까지 재착수하지 않음
 
 ## 6. 세션 시작 체크리스트 (핸드오버용)
 

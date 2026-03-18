@@ -27,7 +27,10 @@
 - 현재: 승인된 업로드는 `chroma_db/managed_docs/`의 active markdown 원본 기준으로 유지
 - 현재: answer-level eval fixture + `/query` 품질 평가 하네스 추가
 - 현재: Vector RAG answer-level baseline 1차 실측 완료(`pass_rate=0.3333`, `p95=14277.843ms`)
-- 다음 우선순위(P2/P3): GraphRAG sidecar answer-level 비교 실측, 관리자 워크플로우 구현 2차
+- 현재: 업로드 관리자 Slice 2 완료(`pending` 기본 필터, update 강조, active 문서 미리보기, reject reason code/decision_note)
+- 현재: graph snapshot backend의 `graph-candidate` answer-level 비교는 `2/3 pass`, `avg_weighted_score=0.8444`
+- 현재 판단: GraphRAG는 MVP 통합 No-Go, 연구용 sidecar 트랙만 유지
+- 다음 우선순위(P2/P3): `uk` 인덱스 부재와 `fr,ge` timeout 등 기본 경로 신뢰성 복구
 
 비목표(현재 단계):
 - 원본 수집/크롤링
@@ -72,6 +75,8 @@
 - `docs/reports/GRAPH_RAG_ACTUAL_POC_REPORT_2026-03-17.md`: GraphRAG retrieval PoC 1차 실측 결과
 - `docs/reports/GRAPH_RAG_VECTOR_GAP_REPORT_2026-03-17.md`: 현재 Vector RAG 실패 사례와 Graph 후보 범위
 - `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md`: Vector RAG 1차 answer-level baseline 실측 결과
+- `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_GRAPH_SNAPSHOT.md`: graph snapshot backend answer-level 비교 결과
+- `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md`: GraphRAG Go/No-Go 판단 문서
 - `docs/VECTORSTORE_POLICY.md`: 벡터스토어 운영/용량 정책
 - `docs/COLLECTION_ROUTING_POLICY.md`: 분야별 컬렉션/라우팅 정책
 - `docs/FUTURE_EXTERNAL_CONSTRAINTS.md`: 외부 제한사항 중 추후 적용 항목
@@ -167,6 +172,8 @@ npm start
 - 이 스크립트는 GraphRAG 자체를 평가하는 것이 아니라, 현재 Vector RAG 기본 경로의 answer-level 기준선을 만드는 용도입니다.
 - `2026-03-18` 기준 최신 baseline은 `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md`이며, 6개 fixture 중 2개만 통과했습니다.
 - 같은 실측에서 `GQ-03`은 `uk` 컬렉션 인덱스 부재로 `VECTORSTORE_EMPTY`, `GQ-05`는 `fr,ge` 비교 질문에서 `LLM_TIMEOUT`이 발생했습니다.
+- 같은 스크립트는 `--backend graph_snapshot`으로 graph snapshot 비교에도 재사용할 수 있습니다.
+- `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_GRAPH_SNAPSHOT.md` 기준 `graph-candidate` 3개 케이스는 `2/3 pass`였지만, `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md` 기준 MVP 통합은 아직 No-Go입니다.
 - 공식 기본 임베딩 `BAAI/bge-m3` 로컬 캐시가 없는 환경에서는 `DOC_RAG_EMBEDDING_MODEL`에 로컬 경로를 주고, `minishlab/potion-base-4M` 계열은 `DOC_RAG_EMBEDDING_DEVICE=cpu`가 필요할 수 있습니다.
 
 ## API
@@ -185,6 +192,7 @@ npm start
 - 운영 기준은 `docs/UPLOAD_ADMIN_WORKFLOW.md`를 따른다.
 - `GET /rag-docs`는 repo의 seed 문서와 승인된 managed active 문서를 함께 반환한다.
 - `POST /upload-requests`는 선택적으로 `request_type`, `doc_key`, `change_summary`를 받을 수 있다.
+- `POST /upload-requests/{id}/reject`는 `reason_code`, `decision_note`를 함께 받을 수 있다.
 - `DOC_RAG_AUTO_APPROVE`는 `create` 요청에만 적용되고 `update` 요청은 항상 관리자 승인 경로를 사용한다.
 - GraphRAG는 아직 기본 경로가 아니며, 현재는 graph snapshot 기반 retrieval PoC와 1차 측정까지만 반영된 상태다.
 
