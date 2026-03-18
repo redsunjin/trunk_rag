@@ -11,12 +11,13 @@
 - 승인 시 요청 본문을 `chroma_db/managed_docs/`에 버전 파일로 저장하고 active 버전을 전환한다.
 - `GET /rag-docs`와 `POST /reindex`는 seed 문서 + managed active 문서를 같은 기준으로 본다.
 - `DOC_RAG_AUTO_APPROVE`는 `create` 요청에만 적용되고 `update`는 항상 관리자 승인 경로를 거친다.
+- 관리자 화면은 `pending` 기본 필터, `update` 강조, `change summary`, `active_doc` 요약, `reason_code` + note를 노출한다.
 
 ## 현재 구현의 핵심 갭
-1. 업데이트 전후 비교 UI와 diff 요약이 없다.
-2. 버전 이력 조회/rollback 보조 UX가 없다.
-3. 반려 사유가 자유 텍스트 중심이라 reason code 체계가 없다.
-4. 관리자 상세 화면에서 기존 active 문서 미리보기와 신규 제안 문서 미리보기가 분리돼 있지 않다.
+1. 업데이트 전후 비교 UI와 diff 요약 자동화는 아직 없다.
+2. 버전 이력 조회/rollback 보조 UX는 아직 없다.
+3. 반려 사유에 `reason_code + note`는 들어갔지만 운영 표준 코드 체계와 안내 문구는 더 다듬어야 한다.
+4. 관리자 상세 화면의 active 문서/요청 미리보기는 들어갔지만 전용 diff 뷰는 아직 없다.
 
 ## 설계 원칙
 1. 벡터스토어가 아니라 승인된 Markdown 원본이 운영 기준 데이터다.
@@ -115,7 +116,7 @@
   - 요청 생성 시 `request_type`, `doc_key`, `change_summary` 반영 완료
   - 승인 응답에 `managed_doc`, `ingest.mode=reindex`, `ingest.collections` 반영 완료
   - 문서 목록 응답에 `origin=seed|managed`, `doc_key`, `collection_key` 반영 완료
-  - 반려 응답에 `reason_code`, `decision_note`는 아직 미구현
+  - 반려 응답에 `reason_code`, `reason_note` 반영 완료
 
 ### 관리자 UI
 - 기본 필터는 `pending`
@@ -126,7 +127,7 @@
   - validation usable/reasons/warnings
   - change summary
   - 기존 active 문서 존재 여부
-- 1차 UI는 표 기반으로 `request_type/doc_key/change_summary/managed version`까지 노출한다.
+- 현재 UI는 표 기반으로 `request_type/doc_key/change_summary/managed version/reject_code`를 노출하고, 요청 상세 패널에서 `content_preview/active_doc preview`를 함께 보여준다.
 - diff 뷰는 전체 텍스트 라인 diff 대신 "기존 문서 미리보기 / 제안 문서 미리보기" 2열 비교부터 시작한다.
 
 ## 자동 승인 정책
@@ -144,9 +145,9 @@
 - [x] 승인된 신규/갱신 요청이 full reindex 후에도 유지되게 만들기
 
 ### Slice 2
-- 관리자 상세 보기 강화
-- pending 기본 필터, update 강조, change summary 노출 보강
-- reject reason code 정리
+- [x] 관리자 상세 보기 강화
+- [x] pending 기본 필터, update 강조, change summary 노출 보강
+- [x] reject reason code 정리
 
 ### Slice 3
 - 버전 이력 조회
