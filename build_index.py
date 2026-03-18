@@ -1,35 +1,16 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 
-from langchain_chroma import Chroma
-
-from common import (
-    CHUNKING_MODE_CHAR,
-    DEFAULT_TOKEN_ENCODING,
-    DEFAULT_FILE_NAMES,
-    create_embeddings,
-    default_data_dir,
-    default_persist_dir,
-    load_markdown_documents,
-    load_project_env,
-    split_by_markdown_headers,
-)
-from services import runtime_service
+from common import load_project_env
+from core.settings import DEFAULT_COLLECTION_KEY
+from services import collection_service, index_service
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Build a markdown-header Chroma index.")
-    parser.add_argument("--data-dir", type=Path, default=default_data_dir())
-    parser.add_argument("--persist-dir", type=Path, default=default_persist_dir())
-    parser.add_argument("--collection", type=str, default="w2_007_header_rag")
-    parser.add_argument("--embedding-model", type=str)
+    parser = argparse.ArgumentParser(description="Build runtime indexes for default and route collections.")
+    parser.add_argument("--collection-key", type=str, help="Optional collection key to rebuild.")
     parser.add_argument("--reset", action="store_true")
-    parser.add_argument("--chunk-size", type=int, default=800)
-    parser.add_argument("--chunk-overlap", type=int, default=120)
-    parser.add_argument("--chunking-mode", type=str, default=CHUNKING_MODE_CHAR)
-    parser.add_argument("--token-encoding", type=str, default=DEFAULT_TOKEN_ENCODING)
     return parser.parse_args()
 
 
@@ -39,49 +20,29 @@ def main() -> None:
     env_path = load_project_env()
     if env_path:
         print(f"Loaded env: {env_path}")
-    embedding_model = (args.embedding_model or "").strip() or runtime_service.get_embedding_model()
 
-    docs = load_markdown_documents(args.data_dir, DEFAULT_FILE_NAMES)
-    if not docs:
-        raise FileNotFoundError(f"No markdown files loaded from: {args.data_dir}")
+    if args.collection_key:
+        resolved_key = collection_service.resolve_collection_key(args.collection_key)
+        if resolved_key is None:
+            resolved_key = DEFAULT_COLLECTION_KEY
+        target_keys = index_service.expand_reindex_collection_keys(resolved_key)
+    else:
+        resolved_key = DEFAULT_COLLECTION_KEY
+        target_keys = index_service.expand_reindex_collection_keys(DEFAULT_COLLECTION_KEY)
 
-    chunks = split_by_markdown_headers(
-        docs,
-        chunk_size=args.chunk_size,
-        chunk_overlap=args.chunk_overlap,
-        chunking_mode=args.chunking_mode,
-        token_encoding=args.token_encoding,
-    )
-    print(f"Loaded docs: {len(docs)}")
-    print(f"Chunking mode: {args.chunking_mode} (encoding={args.token_encoding})")
-    print(f"Header chunks: {len(chunks)}")
-    print(f"Embedding model: {embedding_model}")
+    print(f"Reindex target keys: {', '.join(target_keys)}")
+    for key in target_keys:
+        result = index_service.reindex_single_collection(reset=args.reset, collection_key=key)
+        print(
+            f"[{key}] docs={result['docs']}/{result['docs_total']} "
+            f"chunks={result['chunks']} vectors={result['vectors']}"
+        )
+        print(f"[{key}] validation={result['validation']['summary_text']}")
 
-    embeddings = create_embeddings(embedding_model)
-
-    args.persist_dir.mkdir(parents=True, exist_ok=True)
-
-    if args.reset:
-        try:
-            tmp_db = Chroma(
-                collection_name=args.collection,
-                embedding_function=embeddings,
-                persist_directory=str(args.persist_dir),
-            )
-            tmp_db.delete_collection()
-            print("Existing collection deleted.")
-        except Exception:
-            print("No existing collection to delete.")
-
-    db = Chroma.from_documents(
-        documents=chunks,
-        embedding=embeddings,
-        collection_name=args.collection,
-        persist_directory=str(args.persist_dir),
-        collection_metadata={"hnsw:space": "cosine"},
-    )
-
-    print(f"Stored vectors: {db._collection.count()}")
+    if resolved_key == DEFAULT_COLLECTION_KEY:
+        print("Default build_index run now refreshes all route collections together.")
+    else:
+        print("Selected collection rebuild also refreshed the default all collection.")
 
 
 if __name__ == "__main__":

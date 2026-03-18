@@ -29,7 +29,7 @@
 1. "쉬운 RAG 운영 경로" 정리는 2026-03-13에 완료됐다.
 2. 성능/품질 게이트는 2026-03-15에 완료됐고, 운영 기본값은 `char` + 자동 다중 라우팅 기준으로 고정됐다.
 3. 데스크톱 래핑 PoC는 2026-03-17에 Electron 기준으로 완료됐고, MVP에는 아직 넣지 않는다.
-4. GraphRAG는 즉시 구현 대상이 아니라, 필요성 입증 후 사이드카 PoC로만 착수한다.
+4. GraphRAG는 즉시 구현 대상이 아니라, 추가 필요성이 다시 확인될 때까지 보관만 한다.
 
 ## 0.1 2026-03-17 제품화 후속 업데이트
 
@@ -59,7 +59,12 @@
 9. 같은 실측에서 `GQ-03`은 `VECTORSTORE_EMPTY`, `GQ-05`는 `LLM_TIMEOUT`으로 실패했다.
 10. `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_GRAPH_SNAPSHOT.md` 기준 graph snapshot backend의 `graph-candidate` answer-level 비교는 `2/3 pass`, `avg_weighted_score=0.8444`, `p95_latency_ms=0.074`였다.
 11. `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md` 결론은 "MVP 통합 No-Go, 연구용 sidecar 트랙만 유지"다.
-12. `GQ-03`의 직접 원인은 현재 로컬 인덱스 상태에서 `uk=0`이며, `GQ-05`는 `fr,ge` 명시 다중 컬렉션 경로의 `15초` 타임아웃 문제로 본다.
+12. GraphRAG 확장은 추가 필요성이 다시 확인되기 전까지 우선순위에서 내리고 문서/리포트로만 보관한다.
+13. `2026-03-19` 기준 `/reindex`와 `build_index.py --reset` 기본 경로는 `all/eu/fr/ge/it/uk` 전체를 함께 재생성한다.
+14. 같은 재인덱싱 후 로컬 벡터 수는 `all=37`, `eu=9`, `fr=7`, `ge=7`, `it=7`, `uk=7`로 확인됐다.
+15. `DOC_RAG_MAX_CONTEXT_CHARS` 미설정 시 기본 `1500`자를 적용하고, 컨텍스트는 그 예산 안에서 잘라 구성한다.
+16. `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_OPS_RELIABILITY.md` 기준 `ops-baseline` 3건은 모두 `200` 응답이며 `VECTORSTORE_EMPTY`/`LLM_TIMEOUT` blocker는 해소됐다.
+17. 다만 같은 실측의 `pass_rate=0.0`, `avg_weighted_score=0.8261`, `p95_latency_ms=9028.629`를 보면 현재 남은 과제는 경로 실패보다 answer completeness다.
 
 배경:
 - 현재 프로젝트의 운영 모델은 `폐쇄망/로컬/경량 RAG 런타임`이다.
@@ -116,10 +121,10 @@
 검증:
 - `.venv/bin/python -m pytest -q` -> `32 passed in 5.29s`
 
-### C. MVP 기본 경로 신뢰성 복구
-1. `uk` 컬렉션 인덱스 부재 원인 정리 및 reindex/운영 가이드 보강
-2. `fr,ge` 명시 다중 컬렉션 경로의 `LLM_TIMEOUT` 재현 및 완화
-3. 같은 fixture 기준 ops-baseline 재측정
+### C. MVP 기본 경로 품질 보정
+1. `ops-baseline` answer completeness 보정(`역할/비교/상징` 표현 정합성 개선)
+2. `QUERY_ANSWER_EVAL_REPORT_2026-03-18_OPS_RELIABILITY.md` 기준으로 재측정 반복
+3. `build_index.py --reset` / `/reindex`의 all-routes 동작을 운영 가이드에 고정
 
 ### D. 제품화 후속
 1. 업로드/갱신 관리자 워크플로우 구현 2차 완료 상태 유지
@@ -167,7 +172,7 @@
 - `web/admin.html`: 70 lines
 - `web/js/app_page.js`: 562 lines
 - `web/js/admin_page.js`: 259 lines
-- 전체 테스트: `34 passed`
+- 전체 테스트: `50 passed`
 
 판단:
 - P3-Prep 게이트(`app_api.py <= 350`, inline script 외부화, 회귀 통과)는 충족됨.
@@ -178,23 +183,22 @@
 ## 4. 현재 남은 작업 범위 (핵심)
 
 즉시 진행 대상 (다음 세션 1순위):
-1. `uk` 인덱스 부재와 `fr,ge` timeout 원인 정리
-2. ops-baseline 재측정
+1. `ops-baseline` answer completeness 보정
+2. 품질 재측정과 가이드 문구 정리
 
 후속 대상 (P3):
-1. GraphRAG는 연구용 sidecar 트랙으로만 유지
+1. GraphRAG는 추가 필요성이 확인될 때까지 문서/리포트로만 보관
 2. 데스크톱 패키징은 embedded Python/설치 전략 결정 전까지 보류 유지
-3. 데스크톱 패키징은 embedded Python/설치 전략 결정 전까지 보류 유지
 
 ## 5. 다음 세션 우선순위 (실행 순서)
 
-### A. MVP 기본 경로 복구
-1. `uk` 컬렉션 인덱스 부재 원인 정리와 `/reindex` 운영 가이드 보강
-2. `fr,ge` 명시 다중 컬렉션 질의의 timeout 재현 및 완화
-3. `ops-baseline`만 다시 측정해 기본 경로 안정성 확인
+### A. MVP 기본 경로 품질 보정
+1. `ops-baseline` answer completeness 보정
+2. `ops-baseline` 재측정으로 pass_rate/score 추이 확인
+3. `build_index.py --reset` / `/reindex`의 all-routes 동작을 가이드와 체크리스트에 반영
 
 ### B. 보류/유지 항목
-1. GraphRAG는 `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md` 기준으로 연구용 sidecar만 유지
+1. GraphRAG는 `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md` 기준으로 우선순위 밖 보관 상태 유지
 2. 데스크톱 패키징은 `embedded Python` vs `별도 설치` 결정 전까지 재착수하지 않음
 
 ## 6. 세션 시작 체크리스트 (핸드오버용)

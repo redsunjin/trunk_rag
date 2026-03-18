@@ -14,6 +14,7 @@ def test_health_returns_200(client):
     assert "persist_dir" in body
     assert body["chunking_mode"] in {"char", "token"}
     assert isinstance(body["embedding_model"], str)
+    assert isinstance(body["max_context_chars"], int)
     assert body["default_llm_provider"] in {"openai", "ollama", "lmstudio"}
     assert isinstance(body["default_llm_model"], str)
 

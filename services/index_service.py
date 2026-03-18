@@ -291,6 +291,16 @@ def index_documents_for_collection(
 
 
 def reindex(reset: bool = True, collection_key: str = DEFAULT_COLLECTION_KEY) -> dict[str, object]:
+    return reindex_with_related(reset=reset, collection_key=collection_key)
+
+
+def expand_reindex_collection_keys(collection_key: str = DEFAULT_COLLECTION_KEY) -> list[str]:
+    if collection_key == DEFAULT_COLLECTION_KEY:
+        return collection_service.list_collection_keys()
+    return collection_service.dedupe_collection_keys([collection_key, DEFAULT_COLLECTION_KEY])
+
+
+def reindex_single_collection(reset: bool = True, collection_key: str = DEFAULT_COLLECTION_KEY) -> dict[str, object]:
     config = collection_service.get_collection_config(collection_key)
     collection_name = str(config["name"])
 
@@ -331,6 +341,19 @@ def reindex(reset: bool = True, collection_key: str = DEFAULT_COLLECTION_KEY) ->
         "chunking": ingest_result["chunking"],
         "validation": validation_summary,
     }
+
+
+def reindex_with_related(reset: bool = True, collection_key: str = DEFAULT_COLLECTION_KEY) -> dict[str, object]:
+    target_keys = expand_reindex_collection_keys(collection_key)
+    results: dict[str, dict[str, object]] = {}
+    for key in target_keys:
+        results[key] = reindex_single_collection(reset=reset, collection_key=key)
+
+    primary = dict(results[collection_key])
+    primary["collections"] = results
+    primary["related_collection_keys"] = target_keys
+    primary["reindex_scope"] = "all_routes" if collection_key == DEFAULT_COLLECTION_KEY else "selected_plus_default"
+    return primary
 
 
 def list_target_docs() -> list[dict[str, int | str]]:

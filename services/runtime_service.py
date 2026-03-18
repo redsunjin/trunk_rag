@@ -19,6 +19,7 @@ from core.settings import (
     AUTO_APPROVE_ENV_KEY,
     CHUNK_TOKEN_ENCODING_ENV_KEY,
     CHUNKING_MODE_ENV_KEY,
+    DEFAULT_MAX_CONTEXT_CHARS,
     DEFAULT_QUERY_TIMEOUT_SECONDS,
     DEFAULT_EMBEDDING_MODEL,
     EMBEDDING_MODEL_ENV_KEY,
@@ -75,15 +76,15 @@ def get_query_timeout_seconds() -> int:
 def get_max_context_chars() -> int | None:
     raw = os.getenv(MAX_CONTEXT_CHARS_ENV_KEY)
     if raw is None:
-        return None
+        return DEFAULT_MAX_CONTEXT_CHARS
     try:
         value = int(raw.strip())
     except (TypeError, ValueError):
-        logger.warning("invalid max context chars: %s (ignored)", raw)
-        return None
+        logger.warning("invalid max context chars: %s (fallback=%s)", raw, DEFAULT_MAX_CONTEXT_CHARS)
+        return DEFAULT_MAX_CONTEXT_CHARS
     if value <= 0:
-        logger.warning("max context chars must be > 0: %s (ignored)", value)
-        return None
+        logger.warning("max context chars must be > 0: %s (fallback=%s)", value, DEFAULT_MAX_CONTEXT_CHARS)
+        return DEFAULT_MAX_CONTEXT_CHARS
     return value
 
 

@@ -159,7 +159,7 @@
   "chunking_mode": "char",
   "embedding_model": "BAAI/bge-m3",
   "query_timeout_seconds": 15,
-  "max_context_chars": null,
+  "max_context_chars": 1500,
   "default_llm_provider": "ollama",
   "default_llm_model": "qwen3:4b",
   "default_llm_base_url": "http://localhost:11434"
@@ -486,12 +486,12 @@ npm start
 
 ## 다음 진행 방향
 ### 1순위
-- MVP 기본 경로 신뢰성 복구
-- 내용: `uk` 컬렉션 인덱스 부재와 `fr,ge` 다중 컬렉션 timeout을 먼저 정리하고 ops-baseline을 재측정한다.
+- MVP 기본 경로 품질 보정
+- 내용: `/reindex`와 `build_index.py --reset` 기본 경로가 all-routes를 함께 재생성하도록 유지하고, `ops-baseline`의 answer completeness를 보정한다.
 
 ### 2순위
-- GraphRAG는 연구용 sidecar 트랙 유지
-- 내용: `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md` 기준으로 MVP 통합은 보류하고, 필요 시에만 fallback 포함 실제 sidecar 경로를 다시 검토한다.
+- 보류 항목 유지
+- 내용: GraphRAG 확장은 추가 필요성이 확인될 때까지 보관만 하고, 업로드 관리자 Slice 2는 현재 구현 상태를 유지한다.
 
 ### 3순위
 - 데스크톱 패키징 실제 착수 재검토

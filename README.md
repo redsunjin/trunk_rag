@@ -29,8 +29,10 @@
 - 현재: Vector RAG answer-level baseline 1차 실측 완료(`pass_rate=0.3333`, `p95=14277.843ms`)
 - 현재: 업로드 관리자 Slice 2 완료(`pending` 기본 필터, update 강조, active 문서 미리보기, reject reason code/decision_note)
 - 현재: graph snapshot backend의 `graph-candidate` answer-level 비교는 `2/3 pass`, `avg_weighted_score=0.8444`
-- 현재 판단: GraphRAG는 MVP 통합 No-Go, 연구용 sidecar 트랙만 유지
-- 다음 우선순위(P2/P3): `uk` 인덱스 부재와 `fr,ge` timeout 등 기본 경로 신뢰성 복구
+- 현재 판단: GraphRAG는 MVP 통합 No-Go이며, 추가 필요성이 확인될 때까지 우선순위 밖 보관 상태로 둔다
+- 현재: `/reindex`와 `build_index.py --reset` 기본 경로는 `all/eu/fr/ge/it/uk`를 함께 재생성한다
+- 현재: `ops-baseline` 재측정 기준 `VECTORSTORE_EMPTY`/`LLM_TIMEOUT` blocker는 해소됐고, 남은 과제는 answer completeness다
+- 다음 우선순위(P2/P3): 기본 경로 품질 보정(`역할/비교/상징` 표현 정합성 개선)
 
 비목표(현재 단계):
 - 원본 수집/크롤링
@@ -115,6 +117,7 @@ cd <repo>
 cd <repo>
 .venv\Scripts\python.exe build_index.py --reset
 ```
+   - 기본 `Reindex`와 `build_index.py --reset`은 이제 `all/eu/fr/ge/it/uk` 전체 라우트 컬렉션을 함께 갱신합니다.
 6. 수동 실행이 필요하면:
 ```powershell
 cd <repo>
@@ -174,6 +177,7 @@ npm start
 - 같은 실측에서 `GQ-03`은 `uk` 컬렉션 인덱스 부재로 `VECTORSTORE_EMPTY`, `GQ-05`는 `fr,ge` 비교 질문에서 `LLM_TIMEOUT`이 발생했습니다.
 - 같은 스크립트는 `--backend graph_snapshot`으로 graph snapshot 비교에도 재사용할 수 있습니다.
 - `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_GRAPH_SNAPSHOT.md` 기준 `graph-candidate` 3개 케이스는 `2/3 pass`였지만, `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md` 기준 MVP 통합은 아직 No-Go입니다.
+- `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_OPS_RELIABILITY.md` 기준 최신 `ops-baseline`은 3건 모두 `200` 응답이며, 남은 문제는 timeout이 아니라 answer completeness입니다.
 - 공식 기본 임베딩 `BAAI/bge-m3` 로컬 캐시가 없는 환경에서는 `DOC_RAG_EMBEDDING_MODEL`에 로컬 경로를 주고, `minishlab/potion-base-4M` 계열은 `DOC_RAG_EMBEDDING_DEVICE=cpu`가 필요할 수 있습니다.
 
 ## API
@@ -204,6 +208,7 @@ npm start
 `default_llm_model`, `default_llm_base_url`가 포함됩니다.
 브라우저 기본 모드는 이 값을 받아 권장 LLM 설정을 자동 적용하고,
 `고급 설정 펼치기`를 누른 경우에만 provider/model/base URL/API key를 직접 수정합니다.
+현재 기본 `max_context_chars`는 미설정 시 `1500`입니다.
 `POST /reindex` 응답에는 실제 인덱싱에 사용된 `chunking` 설정이 포함됩니다.
 `POST /query`에서 `collection`/`collections`를 명시하지 않으면 키워드 기반 자동 라우팅이 동작하고,
 복수 국가 키워드가 동시에 감지되면 최대 2개 컬렉션까지 함께 조회합니다.

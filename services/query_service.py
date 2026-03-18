@@ -15,6 +15,9 @@ PROMPT = ChatPromptTemplate.from_template(
     """당신은 유럽 과학사 질의응답 어시스턴트입니다.
 반드시 [Context]에 있는 정보만 사용해 한국어로 답변하세요.
 근거가 부족하면 '제공된 문서에서 확인되지 않습니다.'라고 답변하세요.
+질문에 들어 있는 핵심 표현(예: 역할, 비교, 상징, 인재 양성)은 답변 문장에 직접 반영하세요.
+비교 질문이면 공통점과 차이점을 모두 적고, 각 대상을 최소 한 번씩 명시하세요.
+답변은 너무 짧게 끝내지 말고 핵심 답변을 2~4문장으로 작성하세요.
 
 [Context]
 {context}
@@ -36,6 +39,31 @@ def format_docs(docs: list[Document]) -> str:
         h2 = doc.metadata.get("h2", "")
         lines.append(f"[{idx}] source={source} h2={h2}\n{doc.page_content}")
     return "\n\n".join(lines)
+
+
+def format_docs_with_limit(docs: list[Document], *, max_chars: int | None) -> str:
+    if max_chars is None:
+        return format_docs(docs)
+
+    lines: list[str] = []
+    current_length = 0
+    for idx, doc in enumerate(docs, 1):
+        source = doc.metadata.get("source", "unknown")
+        h2 = doc.metadata.get("h2", "")
+        rendered = f"[{idx}] source={source} h2={h2}\n{doc.page_content}"
+        separator = "\n\n" if lines else ""
+        remaining = max_chars - current_length - len(separator)
+        if remaining <= 0:
+            break
+        if len(rendered) > remaining:
+            rendered = rendered[:remaining].rstrip()
+            if not rendered:
+                break
+        lines.append(separator + rendered if separator else rendered)
+        current_length += len(lines[-1])
+        if current_length >= max_chars:
+            break
+    return "".join(lines)
 
 
 def build_collection_context(question: str, collection_keys: list[str]) -> str:
@@ -62,11 +90,8 @@ def build_collection_context(question: str, collection_keys: list[str]) -> str:
             docs.append(item)
 
     max_docs = max(SEARCH_K * len(collection_keys), SEARCH_K)
-    context = format_docs(docs[:max_docs])
     max_context_chars = runtime_service.get_max_context_chars()
-    if max_context_chars is not None and len(context) > max_context_chars:
-        return context[:max_context_chars]
-    return context
+    return format_docs_with_limit(docs[:max_docs], max_chars=max_context_chars)
 
 
 def build_query_chain(context_builder, llm):
