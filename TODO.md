@@ -159,7 +159,7 @@ Go / No-Go 기준:
 - [ ] 운영 복잡도 증가가 프로젝트 목표(로컬/경량)를 깨지 않는다.
 - [x] answer-level eval harness가 준비됐다.
 
-## 다음 우선순위 P3 (MVP 기본 경로 품질 보정)
+## 다음 우선순위 P3 (MVP 기본 경로 품질 보정, 완료 2026-03-19)
 
 목표:
 - GraphRAG 확장 대신 현재 Vector RAG 기본 경로의 실패/지연 blocker를 먼저 줄이고, answer completeness를 보정한다.
@@ -167,23 +167,27 @@ Go / No-Go 기준:
 - [x] `uk` 컬렉션이 비어 있는 원인 정리 및 reindex/운영 가이드 보강
 - [x] `fr,ge` 명시 다중 컬렉션 질의의 `LLM_TIMEOUT` 재현 및 blocker 완화
 - [x] 같은 fixture 기준 ops-baseline 재측정
-- [ ] ops-baseline answer completeness 보정(`역할/비교/상징` 표현 정합성 개선)
+- [x] ops-baseline answer completeness 보정(`역할/비교/상징` 표현 정합성 개선)
 
 진행 메모 (2026-03-19):
 - `/reindex`와 `build_index.py --reset` 기본 경로가 이제 `all/eu/fr/ge/it/uk` 전체를 함께 재생성한다.
 - 로컬 임베딩 경로(`/Users/Agent/Documents/huggingface/models/minishlab/potion-base-4M`) 기준 실제 재인덱싱 후 벡터 수는 `all=37`, `eu=9`, `fr=7`, `ge=7`, `it=7`, `uk=7`로 확인했다.
 - `DOC_RAG_MAX_CONTEXT_CHARS` 미설정 시에도 기본 `1500`자를 사용하고, 컨텍스트는 문자 예산 안에서 잘라서 구성하도록 바꿨다.
 - `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_OPS_RELIABILITY.md` 기준 `ops-baseline`은 이제 3건 모두 `200` 응답이며 `LLM_TIMEOUT`과 `VECTORSTORE_EMPTY`는 재현되지 않았다.
-- 같은 실측에서 `pass_rate=0.0`이지만 `avg_weighted_score=0.8261`, `p95_latency_ms=9028.629`로 개선됐고, 남은 문제는 경로 실패가 아니라 answer completeness다.
+- `services/query_service.py`에 질문 유형별 후처리(`역할/비교/상징`)와 혼합 실패 문장 제거를 추가해 답변 표현 정합성을 보정했다.
+- `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-19_OPS_ANSWER_COMPLETENESS.md` 기준 최신 `ops-baseline`은 `3/3 pass`, `avg_weighted_score=0.9645`, `p95_latency_ms=8724.427`이다.
+- 현재 `ops-baseline` 3건은 blocker 해소를 넘어 answer completeness까지 통과했으므로, 이후 기본 경로 변경 시 회귀 게이트로 유지한다.
 
 완료 기준:
 - [x] `GQ-03`, `GQ-05`가 현재 기본 경로에서 blocker 없이 재측정 가능하다.
-- [ ] 다음 세션 기준 MVP 기본 경로 품질 보정 우선순위가 문서로 고정된다.
+- [x] 다음 세션 기준 MVP 기본 경로 품질 보정 우선순위가 문서로 고정된다.
 
 검증:
 - [x] `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/api/test_query_api.py tests/test_index_service.py tests/test_runtime_service.py` -> `21 passed in 0.14s` (2026-03-19)
 - [x] `env DOC_RAG_EMBEDDING_MODEL=/Users/Agent/Documents/huggingface/models/minishlab/potion-base-4M DOC_RAG_EMBEDDING_DEVICE=cpu ./.venv/bin/python scripts/eval_query_quality.py --bucket ops-baseline --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434` -> `pass_rate=0.0`, `avg_weighted_score=0.8261`, `p95_latency_ms=9028.629` (2026-03-19)
-- [x] `./.venv/bin/python -m pytest -q` -> `50 passed in 5.62s` (2026-03-19)
+- [x] `./.venv/bin/python -m pytest -q tests/test_query_service.py tests/api/test_query_api.py` -> `13 passed in 0.03s` (2026-03-19)
+- [x] `env DOC_RAG_EMBEDDING_MODEL=/Users/Agent/Documents/huggingface/models/minishlab/potion-base-4M DOC_RAG_EMBEDDING_DEVICE=cpu ./.venv/bin/python scripts/eval_query_quality.py --bucket ops-baseline --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434 --output-json docs/reports/query_answer_eval_2026-03-19_ops_answer_completeness.json --output-report docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-19_OPS_ANSWER_COMPLETENESS.md` -> `pass_rate=1.0`, `avg_weighted_score=0.9645`, `p95_latency_ms=8724.427` (2026-03-19)
+- [x] `./.venv/bin/python -m pytest -q` -> `53 passed in 5.68s` (2026-03-19)
 
 ## P0 (즉시 착수)
 

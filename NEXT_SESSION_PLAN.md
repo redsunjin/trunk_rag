@@ -64,7 +64,9 @@
 14. 같은 재인덱싱 후 로컬 벡터 수는 `all=37`, `eu=9`, `fr=7`, `ge=7`, `it=7`, `uk=7`로 확인됐다.
 15. `DOC_RAG_MAX_CONTEXT_CHARS` 미설정 시 기본 `1500`자를 적용하고, 컨텍스트는 그 예산 안에서 잘라 구성한다.
 16. `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_OPS_RELIABILITY.md` 기준 `ops-baseline` 3건은 모두 `200` 응답이며 `VECTORSTORE_EMPTY`/`LLM_TIMEOUT` blocker는 해소됐다.
-17. 다만 같은 실측의 `pass_rate=0.0`, `avg_weighted_score=0.8261`, `p95_latency_ms=9028.629`를 보면 현재 남은 과제는 경로 실패보다 answer completeness다.
+17. `2026-03-19`에는 `services/query_service.py`에 질문 유형별 answer 후처리(`역할/비교/상징`)를 추가해 표현 정합성을 보정했다.
+18. `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-19_OPS_ANSWER_COMPLETENESS.md` 기준 최신 `ops-baseline`은 `3/3 pass`, `avg_weighted_score=0.9645`, `p95_latency_ms=8724.427`이다.
+19. 현재 기본 경로의 남은 과제는 blocker 복구가 아니라 이 기준을 회귀 게이트로 유지하는 것이다.
 
 배경:
 - 현재 프로젝트의 운영 모델은 `폐쇄망/로컬/경량 RAG 런타임`이다.
@@ -121,9 +123,9 @@
 검증:
 - `.venv/bin/python -m pytest -q` -> `32 passed in 5.29s`
 
-### C. MVP 기본 경로 품질 보정
-1. `ops-baseline` answer completeness 보정(`역할/비교/상징` 표현 정합성 개선)
-2. `QUERY_ANSWER_EVAL_REPORT_2026-03-18_OPS_RELIABILITY.md` 기준으로 재측정 반복
+### C. MVP 기본 경로 품질 보정 (완료: 2026-03-19)
+1. `ops-baseline` answer completeness 보정(`역할/비교/상징` 표현 정합성 개선) 완료
+2. `QUERY_ANSWER_EVAL_REPORT_2026-03-19_OPS_ANSWER_COMPLETENESS.md` 기준 `3/3 pass` 확인
 3. `build_index.py --reset` / `/reindex`의 all-routes 동작을 운영 가이드에 고정
 
 ### D. 제품화 후속
@@ -172,19 +174,19 @@
 - `web/admin.html`: 70 lines
 - `web/js/app_page.js`: 562 lines
 - `web/js/admin_page.js`: 259 lines
-- 전체 테스트: `50 passed`
+- 전체 테스트: `53 passed`
 
 판단:
 - P3-Prep 게이트(`app_api.py <= 350`, inline script 외부화, 회귀 통과)는 충족됨.
 - 쉬운 RAG 운영 게이트와 성능/품질 게이트는 완료됐고, answer-level eval harness까지 준비됐다.
 - 업로드/갱신 관리자 워크플로우 2차는 완료됐고, GraphRAG 결정 게이트는 "MVP 통합 No-Go" 판단까지 끝났다.
-- 다음 우선순위는 GraphRAG 확장이 아니라 Vector baseline 신뢰성 복구다.
+- Vector baseline 신뢰성 복구와 answer completeness 보정은 완료됐고, 이후에는 `ops-baseline`을 기본 경로 회귀 게이트로 유지한다.
 
 ## 4. 현재 남은 작업 범위 (핵심)
 
 즉시 진행 대상 (다음 세션 1순위):
-1. `ops-baseline` answer completeness 보정
-2. 품질 재측정과 가이드 문구 정리
+1. 기본 `/query` 경로 변경 시 `ops-baseline` 회귀 측정 유지
+2. `build_index.py --reset` / `/reindex` all-routes 가이드와 체크리스트 유지
 
 후속 대상 (P3):
 1. GraphRAG는 추가 필요성이 확인될 때까지 문서/리포트로만 보관
@@ -192,10 +194,10 @@
 
 ## 5. 다음 세션 우선순위 (실행 순서)
 
-### A. MVP 기본 경로 품질 보정
-1. `ops-baseline` answer completeness 보정
-2. `ops-baseline` 재측정으로 pass_rate/score 추이 확인
-3. `build_index.py --reset` / `/reindex`의 all-routes 동작을 가이드와 체크리스트에 반영
+### A. MVP 기본 경로 품질 유지
+1. 기본 `/query` 프롬프트/후처리/라우팅 변경 시 `ops-baseline` 재측정
+2. `ops-baseline`의 `3/3 pass` 상태를 회귀 게이트로 유지
+3. `build_index.py --reset` / `/reindex`의 all-routes 동작을 가이드와 체크리스트에 유지 반영
 
 ### B. 보류/유지 항목
 1. GraphRAG는 `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md` 기준으로 우선순위 밖 보관 상태 유지

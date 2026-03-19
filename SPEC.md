@@ -486,8 +486,8 @@ npm start
 
 ## 다음 진행 방향
 ### 1순위
-- MVP 기본 경로 품질 보정
-- 내용: `/reindex`와 `build_index.py --reset` 기본 경로가 all-routes를 함께 재생성하도록 유지하고, `ops-baseline`의 answer completeness를 보정한다.
+- MVP 기본 경로 품질 유지
+- 내용: `/reindex`와 `build_index.py --reset` 기본 경로가 all-routes를 함께 재생성하도록 유지하고, `ops-baseline`의 `3/3 pass` 상태를 회귀 게이트로 유지한다.
 
 ### 2순위
 - 보류 항목 유지

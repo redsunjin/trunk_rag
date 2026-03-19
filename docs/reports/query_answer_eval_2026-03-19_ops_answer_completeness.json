@@ -1,0 +1,189 @@
+{
+  "generated_at": "2026-03-19T11:24:08+00:00",
+  "backend": "vector_query",
+  "eval_file": "evals/answer_level_eval_fixtures.jsonl",
+  "base_url": "http://127.0.0.1:8000",
+  "llm_provider": "ollama",
+  "llm_model": "llama3.1:8b",
+  "health": {
+    "status": "ok",
+    "collection_key": "all",
+    "collection": "w2_007_header_rag",
+    "persist_dir": "/Users/Agent/ps-workspace/trunk_rag/chroma_db",
+    "vectors": 37,
+    "auto_approve": false,
+    "pending_requests": 0,
+    "chunking_mode": "char",
+    "embedding_model": "/Users/Agent/Documents/huggingface/models/minishlab/potion-base-4M",
+    "query_timeout_seconds": 15,
+    "max_context_chars": 1500,
+    "default_llm_provider": "ollama",
+    "default_llm_model": "qwen3:4b",
+    "default_llm_base_url": "http://localhost:11434"
+  },
+  "summary": {
+    "cases": 3,
+    "passed": 3,
+    "pass_rate": 1.0,
+    "avg_latency_ms": 6095.881,
+    "p95_latency_ms": 8724.427,
+    "avg_weighted_score": 0.9645,
+    "bucket_summaries": {
+      "ops-baseline": {
+        "cases": 3,
+        "passed": 3,
+        "pass_rate": 1.0,
+        "avg_latency_ms": 6095.881,
+        "p95_latency_ms": 8724.427,
+        "avg_weighted_score": 0.9645
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "GQ-01",
+      "bucket": "ops-baseline",
+      "query": "에콜 폴리테크니크가 프랑스 과학 인재 양성에서 맡은 역할을 요약해줘.",
+      "request_mode": "explicit_single",
+      "collection_keys": [
+        "fr"
+      ],
+      "expected_route_keys": [
+        "fr"
+      ],
+      "actual_route_keys": [
+        "fr"
+      ],
+      "route_pass": true,
+      "status": 200,
+      "latency_ms": 5170.764,
+      "answer_length": 274,
+      "answer_preview": "요약하면, 에콜 폴리테크니크의 역할은 프랑스 과학 인재 양성을 국가 중심의 교육과 훈련으로 조직한 데 있습니다. 에콜 폴리테크니크는 프랑스 과학 인재 양성에서 국가가 직접 엘리트 과학 인재를 육성하여 사회를 혁신하는 프랑스 특유의 모델을 완성했습니다. 이는 프랑스 혁명 정부가 추진한 표준화 작업의 결과로, 근대 산업의 강력한 기반이 되었습니다. 에콜 폴리테크니크는 실용적 교육을 통해 수학, 물리, 토목, 교량 건설, 주조 및 ",
+      "answer": "요약하면, 에콜 폴리테크니크의 역할은 프랑스 과학 인재 양성을 국가 중심의 교육과 훈련으로 조직한 데 있습니다. 에콜 폴리테크니크는 프랑스 과학 인재 양성에서 국가가 직접 엘리트 과학 인재를 육성하여 사회를 혁신하는 프랑스 특유의 모델을 완성했습니다. 이는 프랑스 혁명 정부가 추진한 표준화 작업의 결과로, 근대 산업의 강력한 기반이 되었습니다. 에콜 폴리테크니크는 실용적 교육을 통해 수학, 물리, 토목, 교량 건설, 주조 및 단조 등 전쟁과 국가 재건에 필요한 실전 기술을 주입했습니다.",
+      "required_hits": [
+        "에콜 폴리테크니크",
+        "과학 인재",
+        "양성",
+        "역할"
+      ],
+      "required_total": 4,
+      "required_ratio": 1.0,
+      "must_include_any_hits": [
+        "프랑스",
+        "교육",
+        "양성",
+        "훈련"
+      ],
+      "must_include_any_total": 6,
+      "must_include_any_ratio": 0.6667,
+      "forbidden_hits": [],
+      "min_answer_chars": 120,
+      "min_chars_ratio": 1.0,
+      "precision_score": 1.0,
+      "completeness_score": 0.8334,
+      "hallucination_score": 1.0,
+      "weighted_score": 0.9334,
+      "pass": true,
+      "error_code": null,
+      "error_message": null
+    },
+    {
+      "id": "GQ-03",
+      "bucket": "ops-baseline",
+      "query": "뉴턴의 국장이 영국 사회에서 무엇을 상징했는지 설명해줘.",
+      "request_mode": "explicit_single",
+      "collection_keys": [
+        "uk"
+      ],
+      "expected_route_keys": [
+        "uk"
+      ],
+      "actual_route_keys": [
+        "uk"
+      ],
+      "route_pass": true,
+      "status": 200,
+      "latency_ms": 3997.601,
+      "answer_length": 218,
+      "answer_preview": "요약하면, 뉴턴의 국장은 영국 사회에서 과학자의 권위와 영향력이 국왕에 비견될 만큼 높아졌음을 상징했습니다. 이는 과학이 종교나 왕권 못지않은 사회적 지위를 얻었다는 뜻입니다. 뉴턴의 국장은 영국 사회에서 과학이 종교 및 왕권과 동등한 권위를 획득했음을 상징했습니다. 뉴턴은 평민 출신의 학자로, 국왕들이 잠든 웨스트민스터 사원에 안치된 것은 과학의 사회적 지위가 높아진 것을 나타냈습니다.",
+      "answer": "요약하면, 뉴턴의 국장은 영국 사회에서 과학자의 권위와 영향력이 국왕에 비견될 만큼 높아졌음을 상징했습니다. 이는 과학이 종교나 왕권 못지않은 사회적 지위를 얻었다는 뜻입니다. 뉴턴의 국장은 영국 사회에서 과학이 종교 및 왕권과 동등한 권위를 획득했음을 상징했습니다. 뉴턴은 평민 출신의 학자로, 국왕들이 잠든 웨스트민스터 사원에 안치된 것은 과학의 사회적 지위가 높아진 것을 나타냈습니다.",
+      "required_hits": [
+        "뉴턴",
+        "국장",
+        "영국",
+        "사회",
+        "상징"
+      ],
+      "required_total": 5,
+      "required_ratio": 1.0,
+      "must_include_any_hits": [
+        "국왕",
+        "사회",
+        "과학자",
+        "영향력"
+      ],
+      "must_include_any_total": 5,
+      "must_include_any_ratio": 0.8,
+      "forbidden_hits": [],
+      "min_answer_chars": 120,
+      "min_chars_ratio": 1.0,
+      "precision_score": 1.0,
+      "completeness_score": 0.9,
+      "hallucination_score": 1.0,
+      "weighted_score": 0.96,
+      "pass": true,
+      "error_code": null,
+      "error_message": null
+    },
+    {
+      "id": "GQ-05",
+      "bucket": "ops-baseline",
+      "query": "프랑스의 에콜 폴리테크니크와 독일의 훔볼트 대학이 인재 양성에서 어떻게 다른지 비교해줘.",
+      "request_mode": "explicit_multi",
+      "collection_keys": [
+        "fr",
+        "ge"
+      ],
+      "expected_route_keys": [
+        "fr",
+        "ge"
+      ],
+      "actual_route_keys": [
+        "fr",
+        "ge"
+      ],
+      "route_pass": true,
+      "status": 200,
+      "latency_ms": 9119.278,
+      "answer_length": 605,
+      "answer_preview": "비교하면, 프랑스의 에콜 폴리테크니크와 독일의 훔볼트 대학는 인재 양성의 목표와 방식에서 차이가 있습니다. 프랑스의 에콜 폴리테크니크와 독일의 훔볼트 대학은 인재 양성에서 다음과 같은 차이점이 있습니다.\n\n에콜 폴리테크니크는 프랑스 혁명기의 혼란과 외세의 위협 속에서 설립된 세계 최초의 이공계 전문 교육 기관입니다. 이곳은 단순한 학교가 아니라 국가 총동원 체제를 뒷받침하는 기술 병기창이었습니다. 실용적 교육을 통해 수학, 물",
+      "answer": "비교하면, 프랑스의 에콜 폴리테크니크와 독일의 훔볼트 대학는 인재 양성의 목표와 방식에서 차이가 있습니다. 프랑스의 에콜 폴리테크니크와 독일의 훔볼트 대학은 인재 양성에서 다음과 같은 차이점이 있습니다.\n\n에콜 폴리테크니크는 프랑스 혁명기의 혼란과 외세의 위협 속에서 설립된 세계 최초의 이공계 전문 교육 기관입니다. 이곳은 단순한 학교가 아니라 국가 총동원 체제를 뒷받침하는 기술 병기창이었습니다. 실용적 교육을 통해 수학, 물리뿐만 아니라 전쟁과 국가 재건에 필요한 실전 기술을 주입했습니다. 또한, 미터법 도입 등 혁명 정부가 추진한 표준화 작업은 근대 산업의 강력한 기반이 되었습니다.\n\n반면, 독일의 훔볼트 대학은 19세기 초에 설립된 대학으로, 독일의 교육 시스템의 특징을 대표합니다. 훔볼트 대학은 독일의 교육 시스템에서 중요한 역할을 하며, 독일의 엘리트 인재를 양성하는 데 중요한 역할을 했습니다. 훔볼트 대학은 독일의 교육 시스템에서 중요한 역할을 하며, 독일의 엘리트 인재를 양성하는 데 중요한 역할을 했습니다.\n\n공통점으로는, 두 대학 모두 인재 양성에 중점을 두고 있으며, 국가의 발전과 산업의 발전을 위해 엘리트 인재를 양성하는 데 중요한 역할을 했습니다.",
+      "required_hits": [
+        "에콜 폴리테크니크",
+        "훔볼트 대학",
+        "인재 양성",
+        "비교"
+      ],
+      "required_total": 4,
+      "required_ratio": 1.0,
+      "must_include_any_hits": [
+        "프랑스",
+        "독일",
+        "비교",
+        "차이"
+      ],
+      "must_include_any_total": 4,
+      "must_include_any_ratio": 1.0,
+      "forbidden_hits": [],
+      "min_answer_chars": 160,
+      "min_chars_ratio": 1.0,
+      "precision_score": 1.0,
+      "completeness_score": 1.0,
+      "hallucination_score": 1.0,
+      "weighted_score": 1.0,
+      "pass": true,
+      "error_code": null,
+      "error_message": null
+    }
+  ]
+}

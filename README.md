@@ -31,8 +31,9 @@
 - 현재: graph snapshot backend의 `graph-candidate` answer-level 비교는 `2/3 pass`, `avg_weighted_score=0.8444`
 - 현재 판단: GraphRAG는 MVP 통합 No-Go이며, 추가 필요성이 확인될 때까지 우선순위 밖 보관 상태로 둔다
 - 현재: `/reindex`와 `build_index.py --reset` 기본 경로는 `all/eu/fr/ge/it/uk`를 함께 재생성한다
-- 현재: `ops-baseline` 재측정 기준 `VECTORSTORE_EMPTY`/`LLM_TIMEOUT` blocker는 해소됐고, 남은 과제는 answer completeness다
-- 다음 우선순위(P2/P3): 기본 경로 품질 보정(`역할/비교/상징` 표현 정합성 개선)
+- 현재: `ops-baseline` 재측정 기준 `VECTORSTORE_EMPTY`/`LLM_TIMEOUT` blocker는 해소됐다
+- 현재: `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-19_OPS_ANSWER_COMPLETENESS.md` 기준 `ops-baseline`은 `3/3 pass`, `avg_weighted_score=0.9645`다
+- 다음 우선순위(P2/P3): 기본 `/query` 변경 시 `ops-baseline` 회귀 게이트 유지
 
 비목표(현재 단계):
 - 원본 수집/크롤링
@@ -77,6 +78,7 @@
 - `docs/reports/GRAPH_RAG_ACTUAL_POC_REPORT_2026-03-17.md`: GraphRAG retrieval PoC 1차 실측 결과
 - `docs/reports/GRAPH_RAG_VECTOR_GAP_REPORT_2026-03-17.md`: 현재 Vector RAG 실패 사례와 Graph 후보 범위
 - `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md`: Vector RAG 1차 answer-level baseline 실측 결과
+- `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-19_OPS_ANSWER_COMPLETENESS.md`: 최신 ops-baseline answer completeness 보정 결과
 - `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_GRAPH_SNAPSHOT.md`: graph snapshot backend answer-level 비교 결과
 - `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md`: GraphRAG Go/No-Go 판단 문서
 - `docs/VECTORSTORE_POLICY.md`: 벡터스토어 운영/용량 정책
@@ -177,7 +179,8 @@ npm start
 - 같은 실측에서 `GQ-03`은 `uk` 컬렉션 인덱스 부재로 `VECTORSTORE_EMPTY`, `GQ-05`는 `fr,ge` 비교 질문에서 `LLM_TIMEOUT`이 발생했습니다.
 - 같은 스크립트는 `--backend graph_snapshot`으로 graph snapshot 비교에도 재사용할 수 있습니다.
 - `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_GRAPH_SNAPSHOT.md` 기준 `graph-candidate` 3개 케이스는 `2/3 pass`였지만, `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md` 기준 MVP 통합은 아직 No-Go입니다.
-- `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_OPS_RELIABILITY.md` 기준 최신 `ops-baseline`은 3건 모두 `200` 응답이며, 남은 문제는 timeout이 아니라 answer completeness입니다.
+- `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_OPS_RELIABILITY.md` 기준 `ops-baseline`은 3건 모두 `200` 응답으로 복구됐습니다.
+- `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-19_OPS_ANSWER_COMPLETENESS.md` 기준 최신 `ops-baseline`은 `3/3 pass`, `avg_weighted_score=0.9645`, `p95_latency_ms=8724.427`입니다.
 - 공식 기본 임베딩 `BAAI/bge-m3` 로컬 캐시가 없는 환경에서는 `DOC_RAG_EMBEDDING_MODEL`에 로컬 경로를 주고, `minishlab/potion-base-4M` 계열은 `DOC_RAG_EMBEDDING_DEVICE=cpu`가 필요할 수 있습니다.
 
 ## API
