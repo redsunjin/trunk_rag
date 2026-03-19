@@ -67,6 +67,7 @@
 17. `2026-03-19`에는 `services/query_service.py`에 질문 유형별 answer 후처리(`역할/비교/상징`)를 추가해 표현 정합성을 보정했다.
 18. `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-19_OPS_ANSWER_COMPLETENESS.md` 기준 최신 `ops-baseline`은 `3/3 pass`, `avg_weighted_score=0.9645`, `p95_latency_ms=8724.427`이다.
 19. 현재 기본 경로의 남은 과제는 blocker 복구가 아니라 이 기준을 회귀 게이트로 유지하는 것이다.
+20. `scripts/check_ops_baseline_gate.py`로 `all-routes` 벡터 상태와 `ops-baseline` `3/3 pass`를 한 번에 점검할 수 있다.
 
 배경:
 - 현재 프로젝트의 운영 모델은 `폐쇄망/로컬/경량 RAG 런타임`이다.
@@ -174,7 +175,7 @@
 - `web/admin.html`: 70 lines
 - `web/js/app_page.js`: 562 lines
 - `web/js/admin_page.js`: 259 lines
-- 전체 테스트: `53 passed`
+- 전체 테스트: `56 passed`
 
 판단:
 - P3-Prep 게이트(`app_api.py <= 350`, inline script 외부화, 회귀 통과)는 충족됨.
@@ -197,7 +198,7 @@
 ### A. MVP 기본 경로 품질 유지
 1. 기본 `/query` 프롬프트/후처리/라우팅 변경 시 `ops-baseline` 재측정
 2. `ops-baseline`의 `3/3 pass` 상태를 회귀 게이트로 유지
-3. `build_index.py --reset` / `/reindex`의 all-routes 동작을 가이드와 체크리스트에 유지 반영
+3. `scripts/check_ops_baseline_gate.py` 기준으로 `build_index.py --reset` / `/reindex`의 all-routes 동작과 eval 결과를 함께 확인
 
 ### B. 보류/유지 항목
 1. GraphRAG는 `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md` 기준으로 우선순위 밖 보관 상태 유지
@@ -211,7 +212,7 @@
 4. `GET /health` 확인(벡터 수/auto_approve/pending/chunking_mode 확인)
 5. `POST /reindex` 1회 실행(응답 내 `validation.summary_text` 확인)
 6. `/query` 샘플 질의(단일 + 다중 컬렉션 자동 라우팅) 확인
-7. `scripts/eval_query_quality.py` 1회 실행(ops-baseline 우선)
+7. `./.venv\Scripts\python.exe scripts\check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434` 1회 실행
 
 추가 확인:
 8. 기본 모드에서 LLM 세부 설정 없이 질의 가능한지 확인

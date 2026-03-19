@@ -131,6 +131,7 @@
 - `desktop/electron/*`: Electron PoC 런타임/검증 스크립트
 - `services/graphrag_poc_service.py`: GraphRAG snapshot/benchmark 보조 서비스
 - `scripts/eval_query_quality.py`: answer-level `/query` 품질 평가 하네스
+- `scripts/check_ops_baseline_gate.py`: all-routes 벡터 상태 + `ops-baseline` 회귀 게이트 점검
 - `evals/answer_level_eval_fixtures.jsonl`: answer-level 자동 채점 fixture
 - `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md`: Vector RAG 1차 answer-level baseline 실측
 - `web/index.html`: 브라우저 UI

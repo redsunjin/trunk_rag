@@ -59,6 +59,7 @@
 - `scripts/benchmark_query_e2e.py`: `/query` E2E p95 벤치 스크립트
 - `scripts/benchmark_graphrag_sidecar.py`: GraphRAG sidecar retrieval PoC/실측 스크립트
 - `scripts/eval_query_quality.py`: answer-level `/query` 품질 평가 스크립트
+- `scripts/check_ops_baseline_gate.py`: all-routes 벡터 상태와 `ops-baseline` 회귀 게이트를 한 번에 점검하는 스크립트
 - `scripts/runtime_preflight.py`: P1 벤치 전 런타임 준비 상태 점검
 - `run_doc_rag.bat`: 터미널 명령 없이 서버+브라우저 실행
 - `stop_doc_rag.bat`: 실행 중인 로컬 서버 종료
@@ -182,6 +183,18 @@ npm start
 - `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_OPS_RELIABILITY.md` 기준 `ops-baseline`은 3건 모두 `200` 응답으로 복구됐습니다.
 - `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-19_OPS_ANSWER_COMPLETENESS.md` 기준 최신 `ops-baseline`은 `3/3 pass`, `avg_weighted_score=0.9645`, `p95_latency_ms=8724.427`입니다.
 - 공식 기본 임베딩 `BAAI/bge-m3` 로컬 캐시가 없는 환경에서는 `DOC_RAG_EMBEDDING_MODEL`에 로컬 경로를 주고, `minishlab/potion-base-4M` 계열은 `DOC_RAG_EMBEDDING_DEVICE=cpu`가 필요할 수 있습니다.
+
+기본 회귀 게이트는 아래 한 명령으로 확인할 수 있습니다.
+
+```powershell
+.venv\Scripts\python.exe scripts\check_ops_baseline_gate.py `
+  --llm-provider ollama `
+  --llm-model llama3.1:8b `
+  --llm-base-url http://localhost:11434
+```
+
+- 이 스크립트는 `all/eu/fr/ge/it/uk` 컬렉션의 벡터 존재 여부와 `ops-baseline` `3/3 pass`를 함께 확인합니다.
+- 종료 코드 `0`은 게이트 통과, `1`은 컬렉션 비어 있음 또는 eval 실패를 뜻합니다.
 
 ## API
 

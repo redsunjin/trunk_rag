@@ -177,6 +177,7 @@ Go / No-Go 기준:
 - `services/query_service.py`에 질문 유형별 후처리(`역할/비교/상징`)와 혼합 실패 문장 제거를 추가해 답변 표현 정합성을 보정했다.
 - `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-19_OPS_ANSWER_COMPLETENESS.md` 기준 최신 `ops-baseline`은 `3/3 pass`, `avg_weighted_score=0.9645`, `p95_latency_ms=8724.427`이다.
 - 현재 `ops-baseline` 3건은 blocker 해소를 넘어 answer completeness까지 통과했으므로, 이후 기본 경로 변경 시 회귀 게이트로 유지한다.
+- `scripts/check_ops_baseline_gate.py`를 추가해 `all/eu/fr/ge/it/uk` 벡터 상태와 `ops-baseline` `3/3 pass`를 한 번에 점검할 수 있게 했다.
 
 완료 기준:
 - [x] `GQ-03`, `GQ-05`가 현재 기본 경로에서 blocker 없이 재측정 가능하다.
@@ -187,7 +188,7 @@ Go / No-Go 기준:
 - [x] `env DOC_RAG_EMBEDDING_MODEL=/Users/Agent/Documents/huggingface/models/minishlab/potion-base-4M DOC_RAG_EMBEDDING_DEVICE=cpu ./.venv/bin/python scripts/eval_query_quality.py --bucket ops-baseline --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434` -> `pass_rate=0.0`, `avg_weighted_score=0.8261`, `p95_latency_ms=9028.629` (2026-03-19)
 - [x] `./.venv/bin/python -m pytest -q tests/test_query_service.py tests/api/test_query_api.py` -> `13 passed in 0.03s` (2026-03-19)
 - [x] `env DOC_RAG_EMBEDDING_MODEL=/Users/Agent/Documents/huggingface/models/minishlab/potion-base-4M DOC_RAG_EMBEDDING_DEVICE=cpu ./.venv/bin/python scripts/eval_query_quality.py --bucket ops-baseline --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434 --output-json docs/reports/query_answer_eval_2026-03-19_ops_answer_completeness.json --output-report docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-19_OPS_ANSWER_COMPLETENESS.md` -> `pass_rate=1.0`, `avg_weighted_score=0.9645`, `p95_latency_ms=8724.427` (2026-03-19)
-- [x] `./.venv/bin/python -m pytest -q` -> `53 passed in 5.68s` (2026-03-19)
+- [x] `./.venv/bin/python -m pytest -q` -> `56 passed in 5.62s` (2026-03-19)
 
 ## P0 (즉시 착수)
 

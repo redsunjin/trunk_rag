@@ -517,42 +517,57 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main() -> None:
-    args = parse_args()
-    eval_file = (ROOT_DIR / args.eval_file).resolve() if not args.eval_file.is_absolute() else args.eval_file
+def run_evaluation(
+    *,
+    backend: str = DEFAULT_BACKEND,
+    base_url: str = DEFAULT_BASE_URL,
+    timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
+    eval_file: Path = DEFAULT_EVAL_FILE,
+    buckets: set[str] | None = None,
+    case_ids: set[str] | None = None,
+    max_cases: int | None = None,
+    llm_provider: str = "ollama",
+    llm_model: str | None = None,
+    llm_base_url: str | None = None,
+    llm_api_key: str | None = None,
+    graph_collection: str = DEFAULT_COLLECTION_KEY,
+    graph_max_hops: int = 2,
+) -> dict[str, object]:
+    resolved_eval_file = (ROOT_DIR / eval_file).resolve() if not eval_file.is_absolute() else eval_file
     fixtures = load_eval_fixtures(
-        eval_file,
-        buckets={item.strip() for item in args.bucket if item.strip()} or None,
-        case_ids={item.strip() for item in args.case_id if item.strip()} or None,
-        max_cases=args.max_cases,
+        resolved_eval_file,
+        buckets=buckets,
+        case_ids=case_ids,
+        max_cases=max_cases,
     )
     snapshot = None
-    if args.backend == "vector_query":
-        health = health_check(args.base_url, args.timeout_seconds)
-        collections_payload = collections_check(args.base_url, args.timeout_seconds)
+    if backend == "vector_query":
+        health = health_check(base_url, timeout_seconds)
+        collections_payload = collections_check(base_url, timeout_seconds)
         validate_fixture_collections_available(fixtures, collections_payload)
     else:
-        snapshot = graphrag_poc_service.build_graph_snapshot(collection_key=args.graph_collection)
+        collections_payload = None
+        snapshot = graphrag_poc_service.build_graph_snapshot(collection_key=graph_collection)
         health = build_graph_snapshot_health(
             snapshot,
-            collection_key=args.graph_collection,
-            max_hops=args.graph_max_hops,
+            collection_key=graph_collection,
+            max_hops=graph_max_hops,
         )
 
     results: list[dict[str, object]] = []
     for index, case in enumerate(fixtures, start=1):
-        if args.backend == "vector_query":
+        if backend == "vector_query":
             payload, expected_route_keys, request_mode = build_query_payload(
                 case,
-                llm_provider=args.llm_provider,
-                llm_model=args.llm_model,
-                llm_base_url=args.llm_base_url,
-                llm_api_key=args.llm_api_key,
+                llm_provider=llm_provider,
+                llm_model=llm_model,
+                llm_base_url=llm_base_url,
+                llm_api_key=llm_api_key,
             )
             request_id = f"answer-eval-{index:03d}-{case['id']}"
             status, body, latency_ms, headers = call_query(
-                base_url=args.base_url,
-                timeout_seconds=args.timeout_seconds,
+                base_url=base_url,
+                timeout_seconds=timeout_seconds,
                 request_id=request_id,
                 payload=payload,
             )
@@ -566,7 +581,7 @@ def main() -> None:
                 snapshot=filtered_snapshot,
                 question=str(payload["query"]),
                 route_keys=expected_route_keys,
-                max_hops=args.graph_max_hops,
+                max_hops=graph_max_hops,
             )
         results.append(
             evaluate_case_result(
@@ -580,26 +595,48 @@ def main() -> None:
             )
         )
 
-    payload = {
+    return {
         "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
-        "backend": args.backend,
-        "eval_file": str(args.eval_file),
-        "base_url": args.base_url,
-        "llm_provider": args.llm_provider,
-        "llm_model": args.llm_model,
+        "backend": backend,
+        "eval_file": str(eval_file),
+        "base_url": base_url,
+        "llm_provider": llm_provider,
+        "llm_model": llm_model,
         "health": health,
+        "collections": collections_payload,
         "summary": summarize_results(results),
         "results": results,
     }
 
-    output_json = (ROOT_DIR / args.output_json).resolve() if not args.output_json.is_absolute() else args.output_json
-    output_report = (
-        (ROOT_DIR / args.output_report).resolve() if not args.output_report.is_absolute() else args.output_report
-    )
+
+def write_outputs(payload: dict[str, object], *, output_json: Path, output_report: Path) -> None:
+    output_json = (ROOT_DIR / output_json).resolve() if not output_json.is_absolute() else output_json
+    output_report = (ROOT_DIR / output_report).resolve() if not output_report.is_absolute() else output_report
     output_json.parent.mkdir(parents=True, exist_ok=True)
     output_json.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     output_report.parent.mkdir(parents=True, exist_ok=True)
     output_report.write_text(build_markdown_report(payload), encoding="utf-8")
+
+
+def main() -> None:
+    args = parse_args()
+    payload = run_evaluation(
+        backend=args.backend,
+        base_url=args.base_url,
+        timeout_seconds=args.timeout_seconds,
+        eval_file=args.eval_file,
+        buckets={item.strip() for item in args.bucket if item.strip()} or None,
+        case_ids={item.strip() for item in args.case_id if item.strip()} or None,
+        max_cases=args.max_cases,
+        llm_provider=args.llm_provider,
+        llm_model=args.llm_model,
+        llm_base_url=args.llm_base_url,
+        llm_api_key=args.llm_api_key,
+        graph_collection=args.graph_collection,
+        graph_max_hops=args.graph_max_hops,
+    )
+
+    write_outputs(payload, output_json=args.output_json, output_report=args.output_report)
     print(json.dumps(payload["summary"], ensure_ascii=False, indent=2))
 
 
