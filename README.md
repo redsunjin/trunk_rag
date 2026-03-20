@@ -78,6 +78,7 @@
 - `docs/PREPROCESSING_PROMPT_TEMPLATE.md`: 전처리 프롬프트 템플릿
 - `docs/PREPROCESSING_METADATA_SCHEMA.json`: 전처리 메타데이터 스키마
 - `docs/UPLOAD_ADMIN_WORKFLOW.md`: 업로드/갱신 관리자 워크플로우 설계 기준
+- `docs/RELEASE_WEB_MVP_CHECKLIST.md`: 배포형 웹 MVP 릴리즈 체크리스트
 - `docs/GRAPH_RAG_QUESTION_SET.md`: GraphRAG 판단용 관계형 질문셋
 - `evals/answer_level_eval_fixtures.jsonl`: answer-level 평가 fixture
 - `docs/GRAPH_RAG_SIDECAR_CONTRACT.md`: GraphRAG sidecar 계약과 최소 적재 파이프라인
@@ -148,6 +149,8 @@ cd <repo>
 - requirements 설치가 실패하면 네트워크 또는 사내 패키지 미러 접근 상태 확인
 - Ollama/model 미준비 상태면 기본 질의는 실패할 수 있으므로 `qwen3:4b` 또는 운영 기본 모델 준비
 - 임베딩 모델 캐시가 없으면 `DOC_RAG_EMBEDDING_MODEL`에 로컬 경로 지정
+
+릴리즈 직전에는 [RELEASE_WEB_MVP_CHECKLIST.md](/Users/Agent/ps-workspace/trunk_rag/docs/RELEASE_WEB_MVP_CHECKLIST.md)를 기준으로 점검합니다.
 
 ## Optional Desktop Launcher
 

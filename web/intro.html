@@ -62,6 +62,11 @@
       statusMsg.textContent = detail || "";
     }
 
+    function joinReleaseSteps(data) {
+      const steps = Array.isArray(data.release_web_steps) ? data.release_web_steps : [];
+      return steps.join(" | ");
+    }
+
     function parseApiError(data, fallbackMessage) {
       if (!data || typeof data !== "object") {
         return { message: fallbackMessage, hint: "", requestId: "" };
@@ -97,14 +102,24 @@
 	        const llmSummary = data.default_llm_provider && data.default_llm_model
 	          ? `${data.default_llm_provider} / ${data.default_llm_model}`
 	          : "-";
+          const releaseHeadline = data.release_web_headline || "";
+          const releaseSteps = joinReleaseSteps(data);
 	        if ((data.vectors ?? 0) <= 0) {
-	          setStatus("warn", "Ready", `인덱스가 비어 있습니다. 앱으로 이동한 뒤 Reindex를 먼저 실행하세요. | llm=${llmSummary}`);
+	          setStatus("warn", "Ready", `${releaseHeadline} | llm=${llmSummary} | ${releaseSteps}`);
 	          return true;
 	        }
-	        setStatus("ok", "Online", `default=${data.collection_key} vectors=${data.vectors ?? "-"} llm=${llmSummary}`);
+	        setStatus(
+            "ok",
+            "Online",
+            `default=${data.collection_key} vectors=${data.vectors ?? "-"} llm=${llmSummary} | ${releaseHeadline} | ${releaseSteps}`,
+          );
 	        return true;
 	      } catch (error) {
-	        setStatus("error", "Offline", String(error));
+	        setStatus(
+            "error",
+            "Offline",
+            `run_doc_rag.bat로 다시 시작하거나 Python/requirements/Ollama 준비 상태를 확인하세요. | ${String(error)}`,
+          );
         return false;
       }
     }

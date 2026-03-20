@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+from pathlib import Path
 from datetime import datetime, timezone
 
 from fastapi import HTTPException
@@ -130,6 +131,52 @@ def get_default_llm_config() -> dict[str, str | None]:
 def get_embedding_model() -> str:
     value = os.getenv(EMBEDDING_MODEL_ENV_KEY, DEFAULT_EMBEDDING_MODEL).strip()
     return value or DEFAULT_EMBEDDING_MODEL
+
+
+def is_local_path_like(value: str) -> bool:
+    expanded = Path(value).expanduser()
+    return expanded.is_absolute() or value.startswith(".") or value.startswith("~")
+
+
+def build_release_web_guidance(
+    *,
+    vectors: int,
+    default_llm_provider: str,
+    default_llm_model: str | None,
+    default_llm_base_url: str | None,
+    embedding_model: str,
+) -> dict[str, object]:
+    steps = [
+        "기본 시작 경로는 `run_doc_rag.bat` 하나로 유지합니다.",
+    ]
+    status = "ready"
+    headline = "기본 웹 MVP 경로로 바로 사용할 수 있습니다."
+
+    if default_llm_provider == "ollama":
+        target_model = default_llm_model or default_llm_model or "qwen3:4b"
+        base_url = (default_llm_base_url or "http://localhost:11434").strip() or "http://localhost:11434"
+        steps.append(f"Ollama를 `{base_url}`에서 실행하고 기본 모델 `{target_model}`을 준비하세요.")
+    else:
+        steps.append("기본 LLM provider 설정과 연결 상태를 `/intro`에서 먼저 확인하세요.")
+
+    if not is_local_path_like(embedding_model) and embedding_model == DEFAULT_EMBEDDING_MODEL:
+        steps.append(
+            "오프라인 환경이면 `DOC_RAG_EMBEDDING_MODEL`에 로컬 임베딩 경로를 지정하거나 HuggingFace cache를 준비하세요."
+        )
+
+    if vectors <= 0:
+        status = "needs_reindex"
+        headline = "질의 전에 먼저 인덱싱이 필요합니다."
+        steps.append("`/app`에서 Reindex를 실행하거나 `.venv\\Scripts\\python.exe build_index.py --reset`을 실행하세요.")
+    else:
+        steps.append("`/intro -> /app` 경로로 진입해 바로 질의할 수 있습니다.")
+
+    steps.append("실패 시 `/intro`의 상태 메시지와 request_id를 기준으로 원인을 확인하세요.")
+    return {
+        "status": status,
+        "headline": headline,
+        "steps": steps,
+    }
 
 
 def verify_admin_code(code: str) -> None:

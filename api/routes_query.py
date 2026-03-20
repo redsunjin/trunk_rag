@@ -86,7 +86,11 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
                 code="VECTORSTORE_EMPTY",
                 status_code=400,
                 message="선택된 컬렉션에 인덱스가 없습니다. 먼저 /reindex를 실행하세요.",
-                hint=f"collections={hint_value}",
+                hint=(
+                    f"collections={hint_value} | "
+                    "run_doc_rag.bat로 서버를 연 뒤 /intro 상태를 확인하고 "
+                    "Reindex 또는 .venv\\Scripts\\python.exe build_index.py --reset 을 실행하세요."
+                ),
             )
 
         active_collection_names = [collection_service.get_collection_name(key) for key in active_collection_keys]
@@ -107,7 +111,10 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
                 code="LLM_CONNECTION_FAILED",
                 status_code=502,
                 message="LLM 연결에 실패했습니다.",
-                hint="provider/base_url/api_key 설정과 모델 실행 상태를 확인하세요.",
+                hint=(
+                    "run_doc_rag.bat로 서버를 연 뒤 /intro 상태를 확인하고 "
+                    "provider/base_url/api_key 설정과 모델 실행 상태를 점검하세요."
+                ),
             ) from exc
 
         def _context_builder(question: str) -> str:
@@ -128,14 +135,17 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
                 code="LLM_TIMEOUT",
                 status_code=504,
                 message=f"LLM 응답 시간이 제한({query_timeout_seconds}초)을 초과했습니다.",
-                hint="모델 상태를 확인하거나 더 짧은 질문으로 다시 시도하세요.",
+                hint="모델 상태를 확인하고 더 짧은 질문으로 다시 시도하거나 /intro 상태에서 기본 런타임 준비를 다시 확인하세요.",
             ) from exc
         except Exception as exc:
             raise QueryAPIError(
                 code="LLM_CONNECTION_FAILED",
                 status_code=502,
                 message="LLM 응답 생성 중 연결 오류가 발생했습니다.",
-                hint="provider/base_url/api_key 설정과 모델 실행 상태를 확인하세요.",
+                hint=(
+                    "run_doc_rag.bat로 서버를 연 뒤 /intro 상태를 확인하고 "
+                    "provider/base_url/api_key 설정과 모델 실행 상태를 점검하세요."
+                ),
             ) from exc
 
         elapsed_ms = int((time.perf_counter() - started_at) * 1000)

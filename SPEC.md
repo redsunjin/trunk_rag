@@ -148,6 +148,7 @@
 - `web/styles.css`: 공통 스타일
 - `web/js/*.js`: 프론트 로직 모듈
 - `docs/UPLOAD_ADMIN_WORKFLOW.md`: 업로드/갱신 관리자 운영 설계
+- `docs/RELEASE_WEB_MVP_CHECKLIST.md`: 배포형 웹 MVP 릴리즈 체크리스트
 - `docs/GRAPH_RAG_QUESTION_SET.md`: GraphRAG 판단용 질문셋
 - `docs/reports/GRAPH_RAG_VECTOR_GAP_REPORT_2026-03-17.md`: Vector RAG 실패 사례와 Graph 후보 범위
 - `docs/GRAPH_RAG_SIDECAR_CONTRACT.md`: GraphRAG sidecar 계약

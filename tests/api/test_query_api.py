@@ -58,6 +58,7 @@ def test_query_vectorstore_empty(client, monkeypatch):
     )
     body = _assert_query_error_shape(response, 400, "VECTORSTORE_EMPTY")
     assert body["request_id"] == "req-empty-1"
+    assert "run_doc_rag.bat" in (body.get("hint") or "")
 
 
 def test_query_invalid_provider(client, monkeypatch):
@@ -90,7 +91,8 @@ def test_query_llm_connection_failed(client, monkeypatch):
 
     monkeypatch.setattr(routes_query, "create_chat_llm", _raise_connect_fail)
     response = client.post("/query", json={"query": "테스트", "llm_provider": "ollama"})
-    _assert_query_error_shape(response, 502, "LLM_CONNECTION_FAILED")
+    body = _assert_query_error_shape(response, 502, "LLM_CONNECTION_FAILED")
+    assert "/intro" in (body.get("hint") or "")
 
 
 def test_query_timeout(client, monkeypatch):
@@ -113,7 +115,8 @@ def test_query_timeout(client, monkeypatch):
 
     monkeypatch.setattr(routes_query.query_service, "invoke_query_chain", _raise_timeout)
     response = client.post("/query", json={"query": "테스트", "llm_provider": "ollama"})
-    _assert_query_error_shape(response, 504, "LLM_TIMEOUT")
+    body = _assert_query_error_shape(response, 504, "LLM_TIMEOUT")
+    assert "/intro" in (body.get("hint") or "")
 
 
 def test_query_invalid_request_422(client):

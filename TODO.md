@@ -34,8 +34,8 @@
 | --- | --- | --- | --- |
 | LOOP-001 | active | 배포형 웹 MVP 게이트 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
-| LOOP-003 | pending | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
-| LOOP-004 | pending | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
+| LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-005 | blocked | 데스크톱 패키징 재착수 | `embedded Python` vs `별도 설치` 전략 확정 후 재개 |
 | LOOP-006 | archived | GraphRAG 트랙 | `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md` 기준 아카이브 유지 |
 
@@ -71,7 +71,12 @@
 - `run_doc_rag.bat`를 배포형 웹 MVP 기준 단일 엔트리포인트로 승격했다.
 - 첫 실행 시 `scripts/bootstrap_web_release.py`가 `.env`, `.venv`, `requirements.txt` 설치를 자동 준비하도록 추가했다.
 - `LOOP-002` 검증(`tests/test_runtime_preflight.py`, `tests/api/test_system_api.py`)까지 통과했다.
-- 실제 Windows 첫 실행 smoke와 사용자 관점 복구 안내 정리는 후속 `LOOP-003`에서 본다.
+- `/health`와 `/query`가 같은 복구 경로(`run_doc_rag.bat`, `/intro`, Reindex, Ollama`)를 안내하도록 정리했다.
+- `LOOP-003` 검증(`tests/api/test_query_api.py`, `tests/test_runtime_service.py`, `tests/api/test_system_api.py`)까지 통과했다.
+- `docs/RELEASE_WEB_MVP_CHECKLIST.md`를 추가해 릴리즈 전 점검 항목을 단일 문서로 고정했다.
+- `LOOP-004`는 문서 기준 완료 상태다.
+- 다만 `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434` 실측은 `LLM_CONNECTION_FAILED`로 `pass_rate=0.0`이어서 `LOOP-001`은 아직 active 상태를 유지한다.
+- 현재 blocker는 `ollama:llama3.1:8b` 런타임/모델 미준비 또는 연결 실패다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

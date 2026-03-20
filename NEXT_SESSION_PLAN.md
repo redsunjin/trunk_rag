@@ -205,7 +205,11 @@
 - `run_doc_rag.bat`는 이제 웹 MVP 기준 단일 부트스트랩/실행 엔트리포인트다.
 - `scripts/bootstrap_web_release.py`로 `.env`, `.venv`, runtime requirements 준비를 자동화했다.
 - 단일 설치/실행 경로 고정용 타깃 검증(`tests/test_runtime_preflight.py`, `tests/api/test_system_api.py`)은 통과했다.
-- 다음 남은 초점은 실제 첫 실행 성공 경로와 실패 복구 안내를 사용자 관점으로 더 다듬는 것이다.
+- `/health`와 `/query` 복구 안내가 `run_doc_rag.bat`와 `/intro` 기준으로 연결되도록 정리했다.
+- `docs/RELEASE_WEB_MVP_CHECKLIST.md`를 추가해 릴리즈/운영 체크리스트를 단일 문서로 고정했다.
+- 문서/타깃 테스트 기준 `LOOP-004`까지는 완료됐다.
+- 다만 실제 release gate 실측에서 `ops-baseline`이 `LLM_CONNECTION_FAILED`로 `pass_rate=0.0`이라, 현재 active는 유지한다.
+- 다음 실제 blocker는 `ollama:llama3.1:8b` 준비 또는 기본 LLM 런타임 경로 복구다.
 
 후속 대상 (P3):
 1. GraphRAG 관련 문서/PoC는 잠정 중단 상태의 아카이브로만 유지

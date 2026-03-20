@@ -10,17 +10,25 @@ router = APIRouter()
 
 
 @router.get("/health")
-def health() -> dict[str, int | str | bool | None]:
+def health() -> dict[str, object]:
     default_collection = collection_service.get_collection_name(DEFAULT_COLLECTION_KEY)
     pending_count = len(upload_service.list_upload_requests(status=REQUEST_STATUS_PENDING))
     chunking = runtime_service.get_chunking_config()
     default_llm = runtime_service.get_default_llm_config()
+    vectors = index_service.get_vector_count_fast(default_collection)
+    release_web = runtime_service.build_release_web_guidance(
+        vectors=vectors,
+        default_llm_provider=str(default_llm["provider"] or "ollama"),
+        default_llm_model=str(default_llm["model"] or "") or None,
+        default_llm_base_url=str(default_llm["base_url"] or "") or None,
+        embedding_model=runtime_service.get_embedding_model(),
+    )
     return {
         "status": "ok",
         "collection_key": DEFAULT_COLLECTION_KEY,
         "collection": default_collection,
         "persist_dir": PERSIST_DIR,
-        "vectors": index_service.get_vector_count_fast(default_collection),
+        "vectors": vectors,
         "auto_approve": runtime_service.is_auto_approve_enabled(),
         "pending_requests": pending_count,
         "chunking_mode": chunking["mode"],
@@ -30,6 +38,9 @@ def health() -> dict[str, int | str | bool | None]:
         "default_llm_provider": default_llm["provider"],
         "default_llm_model": default_llm["model"],
         "default_llm_base_url": default_llm["base_url"],
+        "release_web_status": release_web["status"],
+        "release_web_headline": release_web["headline"],
+        "release_web_steps": release_web["steps"],
     }
 
 
