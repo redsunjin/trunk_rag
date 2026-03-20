@@ -32,10 +32,12 @@
 
 | id | status | title | verify |
 | --- | --- | --- | --- |
-| LOOP-001 | active | MVP 기본 경로 품질 유지 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434` |
-| LOOP-002 | pending | all-routes 운영 가이드와 체크리스트 유지 | `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/test_index_service.py` |
-| LOOP-003 | blocked | 데스크톱 패키징 재착수 | `embedded Python` vs `별도 설치` 전략 확정 후 재개 |
-| LOOP-004 | archived | GraphRAG 트랙 | `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md` 기준 아카이브 유지 |
+| LOOP-001 | active | 배포형 웹 MVP 게이트 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434` |
+| LOOP-002 | pending | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
+| LOOP-003 | pending | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
+| LOOP-004 | pending | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-005 | blocked | 데스크톱 패키징 재착수 | `embedded Python` vs `별도 설치` 전략 확정 후 재개 |
+| LOOP-006 | archived | GraphRAG 트랙 | `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md` 기준 아카이브 유지 |
 
 ## 2026-03-13 우선순위 재정렬
 
@@ -43,6 +45,27 @@
 - 아래의 `P0/P1/P3-Prep` 섹션은 2026-02-28까지의 완료 이력이다.
 - 현재 작업은 아래 "현재 우선순위" 섹션을 기준으로 진행한다.
 - GraphRAG 관련 구현/평가는 2026-03-20 기준 잠정 중단하고, 기존 문서/PoC는 아카이브로만 유지한다.
+
+## 현재 Active Loop (LOOP-001)
+
+목표:
+- 현재의 "실제 구동 가능한 내부 운영형 MVP"를 "배포 가능한 웹 MVP" 기준으로 끌어올린다.
+- 데스크톱 정식 패키징 없이도 웹 UI 기본 경로만으로 설치, 첫 실행, 기본 운영, 장애 복구가 가능해야 한다.
+
+범위:
+- 포함: 웹 UI 기본 경로, 로컬 서버 실행, 인덱싱, 질의, 관리자 승인, 운영 문서, 복구 가이드
+- 제외: 데스크톱 정식 패키징, GraphRAG 재개, 인증/권한 확장, 분산 배포
+
+완료 기준:
+- 설치/실행 경로가 문서와 스크립트 기준으로 1개 기본 경로로 고정된다.
+- 새 환경 기준 첫 실행에서 `intro -> app/admin` 진입까지 필요한 준비 항목과 실패 안내가 명확하다.
+- `ops-baseline` 회귀 게이트와 기본 부트스트랩 검증이 릴리즈 전 체크리스트로 묶인다.
+- 릴리즈/운영 문서가 "개발자 설명"이 아니라 "운영자 배포 가이드" 기준으로 정리된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

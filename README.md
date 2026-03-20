@@ -3,7 +3,7 @@
 
 # Trunk RAG (Local Server)
 
-폐쇄망/로컬 환경에서 사용하는 경량 RAG 서버입니다.
+폐쇄망/로컬 환경에서 사용하는 경량 RAG 서버이며, 현재 목표는 "배포 가능한 웹 MVP" 기준으로 웹 UI 기본 경로를 닫는 것입니다.
 
 - 문서: 전처리 완료된 `data/*.md` 입력
 - 청킹: `##`, `###`, `####` 헤더 기반 + 문자 분할(기본), 토큰 분할(옵션)
@@ -33,7 +33,7 @@
 - 현재: `/reindex`와 `build_index.py --reset` 기본 경로는 `all/eu/fr/ge/it/uk`를 함께 재생성한다
 - 현재: `ops-baseline` 재측정 기준 `VECTORSTORE_EMPTY`/`LLM_TIMEOUT` blocker는 해소됐다
 - 현재: `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-19_OPS_ANSWER_COMPLETENESS.md` 기준 `ops-baseline`은 `3/3 pass`, `avg_weighted_score=0.9645`다
-- 다음 우선순위(P2/P3): 기본 `/query` 변경 시 `ops-baseline` 회귀 게이트 유지
+- 다음 우선순위(P2/P3): 배포형 웹 MVP 기준 설치/실행/복구 경로를 고정하고, 기본 `/query` 회귀 게이트를 릴리즈 체크리스트로 유지
 
 비목표(현재 단계):
 - 원본 수집/크롤링

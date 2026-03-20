@@ -26,7 +26,7 @@
 ## Session Loop Harness
 
 - current_active_id: `LOOP-001`
-- current_active_title: `MVP 기본 경로 품질 유지`
+- current_active_title: `배포형 웹 MVP 게이트`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
 - default_regression_gate: `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`
 - closeout_rule: `active` 항목은 검증 결과와 문서 반영, 커밋까지 끝난 뒤에만 `done`으로 본다.
@@ -40,6 +40,7 @@
 2. 성능/품질 게이트는 2026-03-15에 완료됐고, 운영 기본값은 `char` + 자동 다중 라우팅 기준으로 고정됐다.
 3. 데스크톱 래핑 PoC는 2026-03-17에 Electron 기준으로 완료됐고, MVP에는 아직 넣지 않는다.
 4. GraphRAG는 2026-03-20 기준 잠정 중단 상태로 두고, 기존 문서/PoC는 아카이브로만 유지한다.
+5. 2026-03-20 이후 active 루프는 "내부 운영형 MVP 유지"가 아니라 "배포형 웹 MVP 게이트"를 닫는 방향으로 본다.
 
 ## 0.1 2026-03-17 제품화 후속 업데이트
 
@@ -87,29 +88,28 @@
 
 ## 1. 현재 즉시 우선순위
 
-### A. 쉬운 RAG 운영 게이트 (완료: 2026-03-13)
-1. 실행/부트스트랩 단순화
-- `run_doc_rag.bat` 경로 fallback 정리
-- 브라우저 오픈 전 `/health` 준비 대기
-- 실패 시 다음 행동 가이드 출력
+### A. 배포형 웹 MVP 게이트 (현재 active)
+1. 단일 부트스트랩/설치 경로 고정
+- 웹 UI 기준 기본 설치/실행 경로를 1개로 고정
+- 운영자가 따라야 할 준비 항목(Python, requirements, 임베딩, LLM)을 문서/스크립트 기준으로 일치시킴
 
-2. 기본값 단일화
-- 기본 provider/model/base_url 1세트 확정
-- `.env.example`, UI 기본값, README 실행법 정렬
+2. 첫 실행 성공 경로 강화
+- `run_doc_rag.bat`와 `/intro`를 기준으로 첫 실행에서 다음 행동이 분명해야 함
+- 실패 시 복구 경로가 사용자 관점 문구로 정리돼야 함
 
-3. 사용자 화면 단순화
-- 기본 모드에서 고급 LLM 설정 숨김 또는 접기
-- 빈 인덱스/오프라인/모델 미실행 상태 안내 강화
-
-4. 문서 등록 단순화
-- 업로드 필수 입력 최소화
-- 자동 추론 가능한 메타데이터 확대
+3. 릴리즈 운영 체크리스트 고정
+- `ops-baseline` 회귀 게이트
+- all-routes 인덱싱 상태 확인
+- 운영 문서/핸드오버 문서 동기화
 
 완료 기준:
-- 새 사용자 기준 "실행 -> 첫 질의 -> 업로드 요청"까지 별도 설명 없이 가능
+- 웹 UI 기본 경로만으로 설치, 실행, 첫 질의, 업로드 요청, 관리자 확인까지 배포 가이드 기준으로 재진입 가능
+- 릴리즈 전 검증 명령과 장애 복구 안내가 문서/스크립트로 고정됨
 
 검증:
-- `.venv/bin/python -m pytest -q` -> `25 passed in 7.26s`
+- `./.venv/bin/python -m pytest -q`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
@@ -197,8 +197,9 @@
 ## 4. 현재 남은 작업 범위 (핵심)
 
 즉시 진행 대상 (다음 세션 1순위):
-1. 기본 `/query` 경로 변경 시 `ops-baseline` 회귀 측정 유지
-2. `build_index.py --reset` / `/reindex` all-routes 가이드와 체크리스트 유지
+1. 배포형 웹 MVP 기준 단일 설치/실행 경로 고정
+2. 첫 실행 성공 경로와 복구 가이드 강화
+3. 릴리즈 체크리스트를 `ops-baseline` + all-routes 게이트와 연결
 
 후속 대상 (P3):
 1. GraphRAG 관련 문서/PoC는 잠정 중단 상태의 아카이브로만 유지
@@ -207,8 +208,8 @@
 ## 5. 다음 세션 우선순위 (실행 순서)
 
 ### A. MVP 기본 경로 품질 유지
-1. 기본 `/query` 프롬프트/후처리/라우팅 변경 시 `ops-baseline` 재측정
-2. `ops-baseline`의 `3/3 pass` 상태를 회귀 게이트로 유지
+1. 릴리즈 전 기본 설치/실행/복구 경로를 문서와 스크립트 기준으로 1개로 고정
+2. `ops-baseline`의 `3/3 pass` 상태를 릴리즈 회귀 게이트로 유지
 3. `scripts/check_ops_baseline_gate.py` 기준으로 `build_index.py --reset` / `/reindex`의 all-routes 동작과 eval 결과를 함께 확인
 
 ### B. 보류/유지 항목
