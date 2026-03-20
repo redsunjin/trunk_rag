@@ -61,9 +61,10 @@
 - `scripts/benchmark_graphrag_sidecar.py`: GraphRAG sidecar retrieval PoC/실측 스크립트
 - `scripts/eval_query_quality.py`: answer-level `/query` 품질 평가 스크립트
 - `scripts/check_ops_baseline_gate.py`: all-routes 벡터 상태와 `ops-baseline` 회귀 게이트를 한 번에 점검하는 스크립트
+- `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩 스크립트
 - `scripts/roadmap_harness.py`: `TODO.md`/`NEXT_SESSION_PLAN.md`의 루프 상태와 active 항목을 점검하는 스크립트
 - `scripts/runtime_preflight.py`: P1 벤치 전 런타임 준비 상태 점검
-- `run_doc_rag.bat`: 터미널 명령 없이 서버+브라우저 실행
+- `run_doc_rag.bat`: 배포형 웹 MVP 기준 단일 부트스트랩/실행 엔트리포인트
 - `run_doc_rag_desktop.bat`: Windows에서 Electron 데스크톱 런처 실행
 - `stop_doc_rag.bat`: 실행 중인 로컬 서버 종료
 - `desktop/electron/*`: 기존 웹 UI를 감싸는 실험용 Electron 데스크톱 래퍼 PoC
@@ -92,33 +93,33 @@
 - `docs/reports/DESKTOP_WRAPPER_POC_REPORT_2026-03-17.md`: 데스크톱 래핑 PoC 결과 및 MVP 반영 판단
 - `docs/reports/DESKTOP_PACKAGING_HARDENING_REVIEW_2026-03-17.md`: 데스크톱 패키징/배포 하드닝 재검토 결과
 
-## Quick Start
+## Release Web MVP Path
 
-1. Python 가상환경 생성(권장):
+배포형 웹 MVP 기준 권장 경로는 `run_doc_rag.bat` 하나입니다. 첫 실행 시 이 스크립트가 `.env`, `.venv`, `requirements.txt` 설치를 가능한 범위에서 자동으로 준비한 뒤 서버와 브라우저를 엽니다.
+
+1. Python 3 설치 확인:
 ```powershell
 cd <repo>
-python -m venv .venv
+python --version
 ```
-2. 런타임 패키지 설치:
-```powershell
-cd <repo>
-.venv\Scripts\python.exe -m pip install -r requirements.txt
-```
-   - 완전 오프라인 환경에서는 임베딩 모델 `BAAI/bge-m3`를 사전에 로컬 캐시에 준비하거나 `DOC_RAG_EMBEDDING_MODEL`로 로컬 경로를 지정해야 합니다.
-3. 환경변수 파일 준비(권장):
-```powershell
-cd <repo>
-copy .env.example .env
-```
-   - `.env.example` 기본값은 로컬 우선 설정(`ollama`, `qwen3:4b`)입니다.
-4. Windows 빠른 실행(권장):
+2. Windows 기본 실행:
 ```powershell
 cd <repo>
 .\run_doc_rag.bat
 ```
-   - `.venv\Scripts\python.exe`가 있으면 우선 사용하고, 없으면 시스템 `python`을 찾습니다.
+   - `.venv`가 없으면 자동 생성합니다.
+   - `.env`가 없으면 `.env.example`을 복사합니다.
+   - 런타임 패키지가 없으면 `requirements.txt` 설치를 시도합니다.
    - `/health`가 준비될 때까지 최대 45초 대기한 뒤 `http://127.0.0.1:8000/intro`를 엽니다.
-4-1. 선택형 데스크톱 런처를 쓰려면:
+   - 완전 오프라인 환경에서는 임베딩 모델 `BAAI/bge-m3`를 사전에 로컬 캐시에 준비하거나 `DOC_RAG_EMBEDDING_MODEL`로 로컬 경로를 지정해야 합니다.
+3. 첫 실행이거나 상태 메시지에 `vectors=0`이 보이면 먼저 인덱싱:
+   - 브라우저 왼쪽 메뉴에서 `Reindex`를 실행하거나
+```powershell
+cd <repo>
+.venv\Scripts\python.exe build_index.py --reset
+```
+   - 기본 `Reindex`와 `build_index.py --reset`은 이제 `all/eu/fr/ge/it/uk` 전체 라우트 컬렉션을 함께 갱신합니다.
+4. 선택형 데스크톱 런처를 쓰려면:
 ```powershell
 cd <repo>\desktop\electron
 npm install
@@ -127,27 +128,26 @@ cd <repo>
 ```
    - 이 경로는 브라우저 대신 Electron 창으로 `/intro`를 여는 선택형 런처입니다.
    - 정식 설치형 앱은 아니며, Python/LLM/임베딩 준비 상태는 여전히 필요합니다.
-5. 첫 실행이거나 상태 메시지에 `vectors=0`이 보이면 먼저 인덱싱:
-   - 브라우저 왼쪽 메뉴에서 `Reindex`를 실행하거나
-```powershell
-cd <repo>
-.venv\Scripts\python.exe build_index.py --reset
-```
-   - 기본 `Reindex`와 `build_index.py --reset`은 이제 `all/eu/fr/ge/it/uk` 전체 라우트 컬렉션을 함께 갱신합니다.
-6. 수동 실행이 필요하면:
+5. 수동 실행이 필요하면:
 ```powershell
 cd <repo>
 .venv\Scripts\python.exe app_api.py
 ```
-7. 브라우저에서 `http://127.0.0.1:8000/intro`가 열리고, `사용자 모드 시작` 버튼으로 `/app` 진입.
+6. 브라우저에서 `http://127.0.0.1:8000/intro`가 열리고, `사용자 모드 시작` 버튼으로 `/app` 진입.
    - 관리자 모드는 인증 코드 입력 후 `/admin` 진입
-8. Windows 배치 실행 종료:
+7. Windows 배치 실행 종료:
 ```powershell
 cd <repo>
 .\stop_doc_rag.bat
 ```
 
 수동 실행 시에는 실행 중인 터미널에서 `Ctrl+C`로 종료할 수 있습니다.
+
+실패 시 기본 복구:
+- Python 자체가 없으면 Python 3 설치 후 다시 `.\run_doc_rag.bat`
+- requirements 설치가 실패하면 네트워크 또는 사내 패키지 미러 접근 상태 확인
+- Ollama/model 미준비 상태면 기본 질의는 실패할 수 있으므로 `qwen3:4b` 또는 운영 기본 모델 준비
+- 임베딩 모델 캐시가 없으면 `DOC_RAG_EMBEDDING_MODEL`에 로컬 경로 지정
 
 ## Optional Desktop Launcher
 

@@ -201,6 +201,12 @@
 2. 첫 실행 성공 경로와 복구 가이드 강화
 3. 릴리즈 체크리스트를 `ops-baseline` + all-routes 게이트와 연결
 
+진행 메모 (2026-03-20):
+- `run_doc_rag.bat`는 이제 웹 MVP 기준 단일 부트스트랩/실행 엔트리포인트다.
+- `scripts/bootstrap_web_release.py`로 `.env`, `.venv`, runtime requirements 준비를 자동화했다.
+- 단일 설치/실행 경로 고정용 타깃 검증(`tests/test_runtime_preflight.py`, `tests/api/test_system_api.py`)은 통과했다.
+- 다음 남은 초점은 실제 첫 실행 성공 경로와 실패 복구 안내를 사용자 관점으로 더 다듬는 것이다.
+
 후속 대상 (P3):
 1. GraphRAG 관련 문서/PoC는 잠정 중단 상태의 아카이브로만 유지
 2. 데스크톱 패키징은 embedded Python/설치 전략 결정 전까지 보류 유지

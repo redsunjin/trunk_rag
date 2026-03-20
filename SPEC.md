@@ -139,6 +139,7 @@
 - `services/graphrag_poc_service.py`: GraphRAG snapshot/benchmark 보조 서비스
 - `scripts/eval_query_quality.py`: answer-level `/query` 품질 평가 하네스
 - `scripts/check_ops_baseline_gate.py`: all-routes 벡터 상태 + `ops-baseline` 회귀 게이트 점검
+- `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩
 - `scripts/roadmap_harness.py`: 실행 큐 상태와 현재 active 항목 점검
 - `evals/answer_level_eval_fixtures.jsonl`: answer-level 자동 채점 fixture
 - `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md`: Vector RAG 1차 answer-level baseline 실측
@@ -496,7 +497,7 @@ npm start
 ## 다음 진행 방향
 ### 1순위
 - MVP 기본 경로 품질 유지
-- 내용: `/reindex`와 `build_index.py --reset` 기본 경로가 all-routes를 함께 재생성하도록 유지하고, `ops-baseline`의 `3/3 pass` 상태를 회귀 게이트로 유지한다.
+- 내용: `run_doc_rag.bat`를 배포형 웹 MVP 기준 단일 부트스트랩/실행 경로로 유지하고, `/reindex`와 `build_index.py --reset` 기본 경로가 all-routes를 함께 재생성하도록 유지하며, `ops-baseline`의 `3/3 pass` 상태를 회귀 게이트로 유지한다.
 
 ### 2순위
 - 보류 항목 유지

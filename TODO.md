@@ -33,7 +33,7 @@
 | id | status | title | verify |
 | --- | --- | --- | --- |
 | LOOP-001 | active | 배포형 웹 MVP 게이트 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434` |
-| LOOP-002 | pending | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
+| LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | pending | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | pending | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-005 | blocked | 데스크톱 패키징 재착수 | `embedded Python` vs `별도 설치` 전략 확정 후 재개 |
@@ -66,6 +66,12 @@
 - `./.venv/bin/python -m pytest -q`
 - `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-03-20):
+- `run_doc_rag.bat`를 배포형 웹 MVP 기준 단일 엔트리포인트로 승격했다.
+- 첫 실행 시 `scripts/bootstrap_web_release.py`가 `.env`, `.venv`, `requirements.txt` 설치를 자동 준비하도록 추가했다.
+- `LOOP-002` 검증(`tests/test_runtime_preflight.py`, `tests/api/test_system_api.py`)까지 통과했다.
+- 실제 Windows 첫 실행 smoke와 사용자 관점 복구 안내 정리는 후속 `LOOP-003`에서 본다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

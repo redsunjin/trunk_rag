@@ -3,20 +3,34 @@ setlocal EnableExtensions
 
 cd /d "%~dp0"
 
-set "PYTHON_EXE=%~dp0.venv\Scripts\python.exe"
-if exist "%PYTHON_EXE%" goto python_ready
+set "BOOTSTRAP_PYTHON=%~dp0.venv\Scripts\python.exe"
+if exist "%BOOTSTRAP_PYTHON%" goto bootstrap_ready
 
 where python >nul 2>nul
 if %ERRORLEVEL%==0 (
-  set "PYTHON_EXE=python"
-  goto python_ready
+  set "BOOTSTRAP_PYTHON=python"
+  goto bootstrap_ready
 )
 
 echo [doc_rag] Python runtime not found.
 echo [doc_rag] Create .venv, install requirements.txt, or install Python 3, then retry.
 exit /b 1
 
-:python_ready
+:bootstrap_ready
+echo [doc_rag] Bootstrapping single web MVP path...
+"%BOOTSTRAP_PYTHON%" scripts\bootstrap_web_release.py --bootstrap-python "%BOOTSTRAP_PYTHON%"
+if not %ERRORLEVEL%==0 (
+  echo [doc_rag] Bootstrap failed.
+  echo [doc_rag] Check Python installation, network access for requirements install, and local runtime prerequisites.
+  exit /b 1
+)
+
+set "PYTHON_EXE=%~dp0.venv\Scripts\python.exe"
+if not exist "%PYTHON_EXE%" (
+  echo [doc_rag] Expected .venv\Scripts\python.exe after bootstrap, but it was not found.
+  exit /b 1
+)
+
 echo [doc_rag] Python: %PYTHON_EXE%
 start "doc_rag_server" cmd /k ""%PYTHON_EXE%" app_api.py"
 
@@ -42,5 +56,6 @@ if %ERRORLEVEL%==0 (
 
 echo [doc_rag] Server launch requested, but /health was not ready within 45 seconds.
 echo [doc_rag] Check the 'doc_rag_server' window for missing dependencies, port conflicts, or runtime errors.
-echo [doc_rag] If packages are missing, run: .venv\Scripts\python.exe -m pip install -r requirements.txt
+echo [doc_rag] First-run bootstrap already prepared .venv, .env, and runtime dependencies when possible.
+echo [doc_rag] If the LLM or embedding model is missing, follow README.md release web MVP guide.
 exit /b 1
