@@ -61,6 +61,7 @@
 - `scripts/benchmark_graphrag_sidecar.py`: GraphRAG sidecar retrieval PoC/실측 스크립트
 - `scripts/eval_query_quality.py`: answer-level `/query` 품질 평가 스크립트
 - `scripts/check_ops_baseline_gate.py`: all-routes 벡터 상태와 `ops-baseline` 회귀 게이트를 한 번에 점검하는 스크립트
+- `scripts/roadmap_harness.py`: `TODO.md`/`NEXT_SESSION_PLAN.md`의 루프 상태와 active 항목을 점검하는 스크립트
 - `scripts/runtime_preflight.py`: P1 벤치 전 런타임 준비 상태 점검
 - `run_doc_rag.bat`: 터미널 명령 없이 서버+브라우저 실행
 - `run_doc_rag_desktop.bat`: Windows에서 Electron 데스크톱 런처 실행
@@ -215,6 +216,19 @@ cd <repo>
 
 - 이 스크립트는 `all/eu/fr/ge/it/uk` 컬렉션의 벡터 존재 여부와 `ops-baseline` `3/3 pass`를 함께 확인합니다.
 - 종료 코드 `0`은 게이트 통과, `1`은 컬렉션 비어 있음 또는 eval 실패를 뜻합니다.
+
+## Roadmap Harness
+
+세션 재진입 시 현재 실행 큐와 active 항목을 확인하려면 아래 명령을 사용합니다.
+
+```powershell
+.venv\Scripts\python.exe scripts\roadmap_harness.py status
+.venv\Scripts\python.exe scripts\roadmap_harness.py validate
+```
+
+- `status`는 현재 `active` 항목, 기본 게이트 명령, 큐 상태를 출력합니다.
+- `validate`는 `TODO.md`의 `Execution Queue`와 `NEXT_SESSION_PLAN.md`의 `Session Loop Harness`가 일치하는지 검사합니다.
+- 현재 규칙은 `active` 항목 1개만 허용하고, `current_active_id`가 실제 active row와 일치해야 합니다.
 
 ## API
 

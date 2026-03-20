@@ -12,6 +12,31 @@
 - `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
 - `Graph_Lang도입검토.md`
 
+## Roadmap Loop Harness
+
+상태 모델:
+- `active`: 현재 세션에서 기본적으로 수행할 유일한 최상위 항목
+- `pending`: 다음 자동 진행 후보
+- `blocked`: 외부 결정/검증 blocker 해소 전까지 멈춘 항목
+- `done`: 완료 조건과 검증, 문서 반영, 커밋까지 끝난 항목
+- `archived`: 잠정 중단 또는 이력 보존용 항목
+
+루프 규칙:
+- 최상위 `active` 항목은 항상 정확히 1개만 둔다.
+- `진행`, `계속`, `이어서` 요청이 오면 `active` 항목부터 수행한다.
+- `active`가 `done`이 되면 가장 먼저 오는 `pending`을 즉시 다음 `active`로 승격한다.
+- `blocked`로 옮길 때는 blocker와 재개 조건을 함께 기록한다.
+- `archived`는 실행 큐에서 제외하고 이력만 보관한다.
+
+### Execution Queue
+
+| id | status | title | verify |
+| --- | --- | --- | --- |
+| LOOP-001 | active | MVP 기본 경로 품질 유지 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434` |
+| LOOP-002 | pending | all-routes 운영 가이드와 체크리스트 유지 | `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/test_index_service.py` |
+| LOOP-003 | blocked | 데스크톱 패키징 재착수 | `embedded Python` vs `별도 설치` 전략 확정 후 재개 |
+| LOOP-004 | archived | GraphRAG 트랙 | `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md` 기준 아카이브 유지 |
+
 ## 2026-03-13 우선순위 재정렬
 
 상태:

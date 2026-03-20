@@ -23,6 +23,16 @@
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
 - 완료/미완료 범위를 재정렬하고, 다음 작업 우선순위를 명확화
 
+## Session Loop Harness
+
+- current_active_id: `LOOP-001`
+- current_active_title: `MVP 기본 경로 품질 유지`
+- session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
+- default_regression_gate: `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`
+- closeout_rule: `active` 항목은 검증 결과와 문서 반영, 커밋까지 끝난 뒤에만 `done`으로 본다.
+- blocked_rule: blocker와 재개 조건 없이 `blocked` 상태로 이동하지 않는다.
+- promotion_rule: 현재 `active`가 `done`이 되면 첫 번째 `pending` 항목을 즉시 다음 `active`로 승격한다.
+
 ## 0. 2026-03-13 우선순위 재정렬
 
 결론:
