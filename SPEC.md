@@ -109,10 +109,12 @@
 
 ### 데스크톱 PoC
 - Electron 기반 최소 래퍼 추가(`desktop/electron`)
+- 루트 `run_doc_rag_desktop.bat`로 선택형 데스크톱 런처 진입점 추가
 - 시작 전 preflight 추가(repo 경로, Python, backend import, 기본 LLM 런타임 점검)
 - 기존 `/intro`, `/app`, `/admin` 웹 UI를 재사용
 - 로컬 서버 미실행 시 `.venv` 또는 시스템 Python으로 `app_api.py`를 부트스트랩
 - 종료 시 Electron이 직접 띄운 Python 프로세스 정리
+- 현재 데스크톱 경로는 정식 패키징이 아니라 선택형 앱 런처로 유지
 
 ### 구조 분해(P3-Prep 완료)
 - `app_api.py`는 앱 조립/예외 처리 중심으로 축소
@@ -130,7 +132,9 @@
 - `build_index.py`: 초기 인덱싱 스크립트
 - `requirements.txt`: 런타임 의존성
 - `requirements-dev.txt`: 테스트/브라우저 의존성
+- `run_doc_rag_desktop.bat`: Windows에서 선택형 Electron 데스크톱 런처 실행
 - `desktop/electron/*`: Electron PoC 런타임/검증 스크립트
+- `desktop/electron/README.md`: 데스크톱 런처 사용 가이드
 - `services/graphrag_poc_service.py`: GraphRAG snapshot/benchmark 보조 서비스
 - `scripts/eval_query_quality.py`: answer-level `/query` 품질 평가 하네스
 - `scripts/check_ops_baseline_gate.py`: all-routes 벡터 상태 + `ops-baseline` 회귀 게이트 점검

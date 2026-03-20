@@ -63,8 +63,10 @@
 - `scripts/check_ops_baseline_gate.py`: all-routes 벡터 상태와 `ops-baseline` 회귀 게이트를 한 번에 점검하는 스크립트
 - `scripts/runtime_preflight.py`: P1 벤치 전 런타임 준비 상태 점검
 - `run_doc_rag.bat`: 터미널 명령 없이 서버+브라우저 실행
+- `run_doc_rag_desktop.bat`: Windows에서 Electron 데스크톱 런처 실행
 - `stop_doc_rag.bat`: 실행 중인 로컬 서버 종료
 - `desktop/electron/*`: 기존 웹 UI를 감싸는 실험용 Electron 데스크톱 래퍼 PoC
+- `desktop/electron/README.md`: 데스크톱 런처 사용 방법과 한계
 - `AGENTS.md`: 에이전트용 상시 작업 정책
 - `WORKFLOW.md`: 사람/에이전트 공통 작업 순서
 - `requirements.txt`: 런타임 의존성
@@ -115,6 +117,15 @@ cd <repo>
 ```
    - `.venv\Scripts\python.exe`가 있으면 우선 사용하고, 없으면 시스템 `python`을 찾습니다.
    - `/health`가 준비될 때까지 최대 45초 대기한 뒤 `http://127.0.0.1:8000/intro`를 엽니다.
+4-1. 선택형 데스크톱 런처를 쓰려면:
+```powershell
+cd <repo>\desktop\electron
+npm install
+cd <repo>
+.\run_doc_rag_desktop.bat
+```
+   - 이 경로는 브라우저 대신 Electron 창으로 `/intro`를 여는 선택형 런처입니다.
+   - 정식 설치형 앱은 아니며, Python/LLM/임베딩 준비 상태는 여전히 필요합니다.
 5. 첫 실행이거나 상태 메시지에 `vectors=0`이 보이면 먼저 인덱싱:
    - 브라우저 왼쪽 메뉴에서 `Reindex`를 실행하거나
 ```powershell
@@ -137,9 +148,9 @@ cd <repo>
 
 수동 실행 시에는 실행 중인 터미널에서 `Ctrl+C`로 종료할 수 있습니다.
 
-## Experimental Desktop PoC
+## Optional Desktop Launcher
 
-기본 운영 경로는 계속 브라우저 UI이지만, `desktop/electron`에 최소 실행 가능한 Electron PoC를 추가했습니다.
+기본 운영 경로는 계속 브라우저 UI이지만, `desktop/electron`에 선택형 Electron 데스크톱 런처를 유지합니다.
 
 ```powershell
 cd <repo>\desktop\electron
@@ -150,11 +161,19 @@ npm run smoke
 npm start
 ```
 
+또는 루트에서 바로:
+
+```powershell
+cd <repo>
+.\run_doc_rag_desktop.bat
+```
+
 - `npm run preflight`는 repo 경로, Python 런타임, `app_api` import, 기존 `/health`, 기본 LLM 런타임 도달 여부를 먼저 점검합니다.
 - `npm run smoke`는 `.venv`의 Python 또는 시스템 Python으로 `app_api.py`를 띄운 뒤 `/health` readiness를 확인합니다.
 - `npm start`는 같은 런타임을 Electron 창에 연결해 `/intro`를 엽니다.
 - Electron 앱 시작 시에도 같은 preflight를 먼저 실행하고, blocking 실패가 있으면 창에서 바로 이유를 보여 줍니다.
-- 현재 PoC는 설치형 제품이 아니라 "기존 웹 UI를 데스크톱 셸로 감쌀 수 있는지"를 검증하는 수준입니다.
+- `run_doc_rag_desktop.bat`는 preflight를 먼저 실행하고, 통과 시 Electron 런처를 시작합니다.
+- 현재 데스크톱 경로는 설치형 제품이 아니라 "기존 웹 UI를 앱 창으로 여는 선택형 런처" 수준입니다.
 - 결론과 리스크는 `docs/reports/DESKTOP_WRAPPER_POC_REPORT_2026-03-17.md`를 기준으로 봅니다.
 - 패키징/배포 하드닝 재검토 결과는 `docs/reports/DESKTOP_PACKAGING_HARDENING_REVIEW_2026-03-17.md`를 기준으로 보며, 현재 판단은 "보류 유지"입니다.
 

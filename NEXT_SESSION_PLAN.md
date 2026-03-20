@@ -44,6 +44,7 @@
 8. `POST /upload-requests`는 `request_type/doc_key/change_summary`를 받고, `GET /rag-docs`와 `POST /reindex`는 seed + managed active 문서를 같은 기준으로 본다.
 9. `DOC_RAG_AUTO_APPROVE`는 `create` 요청에만 적용되고 `update`는 항상 관리자 승인 경로를 탄다.
 10. 데스크톱 패키징/배포 하드닝 재검토 결과, embedded Python/별도 설치 전략이 정해지기 전까지는 보류 유지로 판단했다.
+11. 2026-03-20 기준 Electron 경로는 정식 패키징이 아니라 선택형 앱 런처로 유지한다.
 
 ## 0.2 2026-03-17 GraphRAG 게이트 업데이트 (아카이브)
 
@@ -131,7 +132,7 @@
 
 ### D. 제품화 후속
 1. 업로드/갱신 관리자 워크플로우 구현 2차 완료 상태 유지
-2. 데스크톱 패키징은 재착수 조건이 충족되기 전까지 보류 유지
+2. 데스크톱 경로는 선택형 앱 런처로 유지하고, 패키징은 재착수 조건이 충족되기 전까지 보류 유지
 
 원칙:
 - 기본 `/query`는 기존 Vector RAG 유지

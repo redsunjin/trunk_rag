@@ -107,6 +107,8 @@
 - `DOC_RAG_AUTO_APPROVE`는 `create` 요청에만 적용되고 `update`에는 적용되지 않는다.
 - `2026-03-18` 구현 2차에서는 관리자 화면에 `pending` 기본 필터, `update` 강조, active 문서 존재/미리보기, 요청 상세 패널을 추가했다.
 - 반려 시 `reason_code`와 `decision_note`를 함께 저장할 수 있게 했고, 목록/검색에서도 이를 사용한다.
+- `2026-03-20` 기준 데스크톱 경로는 정식 패키징 대신 선택형 런처로 유지한다.
+- 루트 `run_doc_rag_desktop.bat`로 Electron 런처를 바로 열 수 있게 한다.
 
 검증:
 - [x] `env PYTHONPYCACHEPREFIX=/tmp/trunk_rag_pycache ./.venv/bin/python -m compileall api services core tests`
