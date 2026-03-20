@@ -43,6 +43,7 @@
 - Vector RAG answer-level baseline 리포트(`docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md`)
 - Graph snapshot answer-level 비교 리포트(`docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_GRAPH_SNAPSHOT.md`)
 - GraphRAG Go/No-Go 판단 리포트(`docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md`)
+- GraphRAG 관련 문서/PoC 아카이브 유지
 
 ### 제외(현재 단계)
 - 사용자 인증/권한
@@ -53,6 +54,7 @@
 - 원본 소스 자동 수집/크롤링
 - 대규모 자동 전처리(재작성/요약) 파이프라인 내장
 - cross-encoder rerank/multi-vector 기본 탑재
+- GraphRAG 통합/sidecar 운영
 
 ## 완료된 작업
 ### 백엔드
@@ -75,7 +77,7 @@
 - 헤더 기준 분할 + 모드별 분할(`char`/`token`)
 - 임베딩 생성(`BAAI/bge-m3`)
 - Chroma 인덱싱/조회
-- graph snapshot 기반 entity/relation 추출 PoC
+- graph snapshot 기반 entity/relation 추출 PoC(아카이브)
 
 ### 품질/검증
 - API 회귀 테스트: `tests/api/test_system_api.py`
@@ -492,7 +494,7 @@ npm start
 
 ### 2순위
 - 보류 항목 유지
-- 내용: GraphRAG 확장은 추가 필요성이 확인될 때까지 보관만 하고, 업로드 관리자 Slice 2는 현재 구현 상태를 유지한다.
+- 내용: GraphRAG 트랙은 잠정 중단 상태로 아카이브만 유지하고, 업로드 관리자 Slice 2는 현재 구현 상태를 유지한다.
 
 ### 3순위
 - 데스크톱 패키징 실제 착수 재검토

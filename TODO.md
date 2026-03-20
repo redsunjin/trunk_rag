@@ -17,7 +17,7 @@
 상태:
 - 아래의 `P0/P1/P3-Prep` 섹션은 2026-02-28까지의 완료 이력이다.
 - 현재 작업은 아래 "현재 우선순위" 섹션을 기준으로 진행한다.
-- GraphRAG 확장은 추가 필요성이 다시 확인되기 전까지 보관만 하고, 현재 우선순위에는 두지 않는다.
+- GraphRAG 관련 구현/평가는 2026-03-20 기준 잠정 중단하고, 기존 문서/PoC는 아카이브로만 유지한다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
@@ -114,7 +114,11 @@
 - [x] `./.venv/bin/python -m pytest -q` -> `34 passed in 4.81s` (2026-03-17)
 - [x] `./.venv/bin/python -m pytest -q tests/api/test_upload_api.py tests/test_eval_query_quality.py tests/test_graphrag_poc_service.py` -> `15 passed in 0.08s` (2026-03-18)
 
-## GraphRAG 도입 결정 게이트
+## GraphRAG 도입 결정 게이트 (잠정 중단, 아카이브)
+
+상태:
+- 2026-03-20 기준 GraphRAG 트랙은 잠정 중단 상태다.
+- 아래 내용은 도입 판단 이력 보존용이며, 현재 TODO 우선순위에는 포함하지 않는다.
 
 원칙:
 - [x] 기본 `/query`는 기존 Vector RAG를 유지한다.
@@ -153,11 +157,11 @@ PoC 범위:
 - GraphRAG 결정 문서는 `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md`에 고정했다.
 - 결론은 "graph-candidate 개선 신호는 있으나 MVP/기본 경로 통합은 No-Go, 연구용 sidecar 트랙만 유지"다.
 
-Go / No-Go 기준:
-- [x] 정확도 개선이 실제로 확인된다.
-- [ ] 사이드카 장애 시 기본 질의 경로가 유지된다.
-- [ ] 운영 복잡도 증가가 프로젝트 목표(로컬/경량)를 깨지 않는다.
-- [x] answer-level eval harness가 준비됐다.
+판단 이력:
+- [x] 정확도 개선 신호는 일부 확인됐다.
+- [x] answer-level eval harness는 준비됐다.
+- 보류: 사이드카 장애 시 기본 질의 경로 유지 검증은 잠정 중단으로 추가 진행하지 않는다.
+- 보류: 운영 복잡도 증가 평가도 잠정 중단으로 추가 진행하지 않는다.
 
 ## 다음 우선순위 P3 (MVP 기본 경로 품질 보정, 완료 2026-03-19)
 

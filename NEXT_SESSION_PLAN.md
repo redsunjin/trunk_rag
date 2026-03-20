@@ -1,4 +1,4 @@
-# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-03-18 기준)
+# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-03-20 기준)
 
 기준 문서:
 - `SPEC.md`
@@ -29,7 +29,7 @@
 1. "쉬운 RAG 운영 경로" 정리는 2026-03-13에 완료됐다.
 2. 성능/품질 게이트는 2026-03-15에 완료됐고, 운영 기본값은 `char` + 자동 다중 라우팅 기준으로 고정됐다.
 3. 데스크톱 래핑 PoC는 2026-03-17에 Electron 기준으로 완료됐고, MVP에는 아직 넣지 않는다.
-4. GraphRAG는 즉시 구현 대상이 아니라, 추가 필요성이 다시 확인될 때까지 보관만 한다.
+4. GraphRAG는 2026-03-20 기준 잠정 중단 상태로 두고, 기존 문서/PoC는 아카이브로만 유지한다.
 
 ## 0.1 2026-03-17 제품화 후속 업데이트
 
@@ -45,7 +45,7 @@
 9. `DOC_RAG_AUTO_APPROVE`는 `create` 요청에만 적용되고 `update`는 항상 관리자 승인 경로를 탄다.
 10. 데스크톱 패키징/배포 하드닝 재검토 결과, embedded Python/별도 설치 전략이 정해지기 전까지는 보류 유지로 판단했다.
 
-## 0.2 2026-03-17 GraphRAG 게이트 업데이트
+## 0.2 2026-03-17 GraphRAG 게이트 업데이트 (아카이브)
 
 결론:
 1. `docs/GRAPH_RAG_QUESTION_SET.md`에 관계형/다중 홉 질문 18개를 고정했다.
@@ -58,8 +58,8 @@
 8. `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md` 기준 Vector RAG 1차 baseline 실측은 `pass_rate=0.3333`, `avg_weighted_score=0.593`, `p95_latency_ms=14277.843`이었다.
 9. 같은 실측에서 `GQ-03`은 `VECTORSTORE_EMPTY`, `GQ-05`는 `LLM_TIMEOUT`으로 실패했다.
 10. `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_GRAPH_SNAPSHOT.md` 기준 graph snapshot backend의 `graph-candidate` answer-level 비교는 `2/3 pass`, `avg_weighted_score=0.8444`, `p95_latency_ms=0.074`였다.
-11. `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md` 결론은 "MVP 통합 No-Go, 연구용 sidecar 트랙만 유지"다.
-12. GraphRAG 확장은 추가 필요성이 다시 확인되기 전까지 우선순위에서 내리고 문서/리포트로만 보관한다.
+11. `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md` 결론은 "MVP 통합 No-Go"였다.
+12. 2026-03-20 기준 GraphRAG 관련 신규 구현/평가를 잠정 중단하고, 기존 문서/리포트/PoC만 아카이브로 유지한다.
 13. `2026-03-19` 기준 `/reindex`와 `build_index.py --reset` 기본 경로는 `all/eu/fr/ge/it/uk` 전체를 함께 재생성한다.
 14. 같은 재인덱싱 후 로컬 벡터 수는 `all=37`, `eu=9`, `fr=7`, `ge=7`, `it=7`, `uk=7`로 확인됐다.
 15. `DOC_RAG_MAX_CONTEXT_CHARS` 미설정 시 기본 `1500`자를 적용하고, 컨텍스트는 그 예산 안에서 잘라 구성한다.
@@ -135,8 +135,8 @@
 
 원칙:
 - 기본 `/query`는 기존 Vector RAG 유지
-- GraphRAG는 본체 직접 통합이 아니라 사이드카 우선
-- AuraDB는 기본안이 아니며, 폐쇄망/로컬 요구가 유지되면 self-managed Neo4j 우선 검토
+- GraphRAG는 잠정 중단 상태이며 신규 구현/평가를 진행하지 않음
+- AuraDB는 현재 검토 대상이 아니며, 관련 판단은 GraphRAG 재개 시점에 다시 본다
 
 ## 2. 2026-02-28 세션 업데이트 (이전 세션 반영)
 
@@ -180,7 +180,7 @@
 판단:
 - P3-Prep 게이트(`app_api.py <= 350`, inline script 외부화, 회귀 통과)는 충족됨.
 - 쉬운 RAG 운영 게이트와 성능/품질 게이트는 완료됐고, answer-level eval harness까지 준비됐다.
-- 업로드/갱신 관리자 워크플로우 2차는 완료됐고, GraphRAG 결정 게이트는 "MVP 통합 No-Go" 판단까지 끝났다.
+- 업로드/갱신 관리자 워크플로우 2차는 완료됐고, GraphRAG 트랙은 "MVP 통합 No-Go" 판단 이후 잠정 중단 상태로 정리됐다.
 - Vector baseline 신뢰성 복구와 answer completeness 보정은 완료됐고, 이후에는 `ops-baseline`을 기본 경로 회귀 게이트로 유지한다.
 
 ## 4. 현재 남은 작업 범위 (핵심)
@@ -190,7 +190,7 @@
 2. `build_index.py --reset` / `/reindex` all-routes 가이드와 체크리스트 유지
 
 후속 대상 (P3):
-1. GraphRAG는 추가 필요성이 확인될 때까지 문서/리포트로만 보관
+1. GraphRAG 관련 문서/PoC는 잠정 중단 상태의 아카이브로만 유지
 2. 데스크톱 패키징은 embedded Python/설치 전략 결정 전까지 보류 유지
 
 ## 5. 다음 세션 우선순위 (실행 순서)
@@ -201,7 +201,7 @@
 3. `scripts/check_ops_baseline_gate.py` 기준으로 `build_index.py --reset` / `/reindex`의 all-routes 동작과 eval 결과를 함께 확인
 
 ### B. 보류/유지 항목
-1. GraphRAG는 `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md` 기준으로 우선순위 밖 보관 상태 유지
+1. GraphRAG는 `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md` 기준으로 잠정 중단 상태를 유지하고 신규 구현/평가는 진행하지 않음
 2. 데스크톱 패키징은 `embedded Python` vs `별도 설치` 결정 전까지 재착수하지 않음
 
 ## 6. 세션 시작 체크리스트 (핸드오버용)
@@ -239,10 +239,10 @@
 2. 벤치 환경에 따라 LLM 응답 시간이 크게 변동될 수 있음
 3. 서비스 분해 후 monkeypatch 경로가 바뀌었으므로 신규 테스트 작성 시 모듈 경로 준수 필요
 4. 쉬운 RAG 개선 없이 기능만 추가하면 사용자 마찰이 누적될 수 있음
-5. GraphRAG/AuraDB는 운영 모델(폐쇄망/로컬/경량)과 충돌 가능성이 큼
+5. GraphRAG/AuraDB는 운영 모델(폐쇄망/로컬/경량)과 충돌 가능성이 커서 현재는 잠정 중단 상태를 유지한다.
 6. Electron PoC는 가능성을 확인했지만 설치형 제품으로 가려면 Python/모델 번들링 전략이 별도로 필요하며, 현재는 보류 상태다.
 7. 업로드 관리자 워크플로우는 active 버전/manifest까지는 구현됐지만, diff 뷰/이력 조회/rollback UI는 아직 없다.
-8. Vector RAG baseline 1차 실측은 완료됐지만(`pass_rate=0.3333`, `p95_latency_ms=14277.843`), GraphRAG retrieval PoC의 answer-level 우위는 아직 증명되지 않았다.
+8. GraphRAG 실험 결과는 판단 이력으로는 남아 있지만, 현재 운영 의사결정 기준은 `ops-baseline` 회귀 게이트 유지다.
 9. 현재 answer-level eval fixture는 대표 질문 6개만 포함하고, `uk` 컬렉션 비어 있음/다중 컬렉션 timeout 같은 운영 이슈가 그대로 드러난다.
 
 ## 9. 다음 커밋 목표 (권장)
@@ -252,5 +252,5 @@
 3. `docs(plan): reprioritize roadmap for easy-rag gate and graphrag decision`
 4. `feat(upload): persist managed markdown and active-doc workflow`
 5. `docs(desktop): record packaging hardening hold decision`
-6. `feat(graphrag): add sidecar retrieval poc benchmark`
+6. `docs(plan): archive graphrag track as paused`
 7. `feat(eval): add answer-level query quality harness`

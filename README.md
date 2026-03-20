@@ -28,8 +28,8 @@
 - 현재: answer-level eval fixture + `/query` 품질 평가 하네스 추가
 - 현재: Vector RAG answer-level baseline 1차 실측 완료(`pass_rate=0.3333`, `p95=14277.843ms`)
 - 현재: 업로드 관리자 Slice 2 완료(`pending` 기본 필터, update 강조, active 문서 미리보기, reject reason code/decision_note)
-- 현재: graph snapshot backend의 `graph-candidate` answer-level 비교는 `2/3 pass`, `avg_weighted_score=0.8444`
-- 현재 판단: GraphRAG는 MVP 통합 No-Go이며, 추가 필요성이 확인될 때까지 우선순위 밖 보관 상태로 둔다
+- 아카이브: graph snapshot backend의 `graph-candidate` answer-level 비교는 `2/3 pass`, `avg_weighted_score=0.8444`
+- 현재 판단: GraphRAG 트랙은 잠정 중단 상태이며, 기존 문서/PoC는 참고용 아카이브로만 유지한다
 - 현재: `/reindex`와 `build_index.py --reset` 기본 경로는 `all/eu/fr/ge/it/uk`를 함께 재생성한다
 - 현재: `ops-baseline` 재측정 기준 `VECTORSTORE_EMPTY`/`LLM_TIMEOUT` blocker는 해소됐다
 - 현재: `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-19_OPS_ANSWER_COMPLETENESS.md` 기준 `ops-baseline`은 `3/3 pass`, `avg_weighted_score=0.9645`다
@@ -39,6 +39,7 @@
 - 원본 수집/크롤링
 - 대규모 자동 재작성 파이프라인
 - 무거운 rerank/multi-vector 파이프라인 기본 탑재
+- GraphRAG 통합/sidecar 운영
 
 ## Files
 
@@ -172,14 +173,14 @@ npm start
 ```
 
 - 기본 fixture는 `evals/answer_level_eval_fixtures.jsonl`을 사용합니다.
-- 현재 fixture는 `ops-baseline`과 `graph-candidate`의 대표 질문 일부를 포함합니다.
+- 현재 fixture는 `ops-baseline`과 과거 판단 이력 보존용 `graph-candidate` 질문 일부를 포함합니다.
 - 평가 항목은 `must_include`, `must_include_any`, `must_not_include`, 최소 답변 길이, 실제 route header를 기반으로 점수화됩니다.
 - 현재 `/query`는 최대 2개 컬렉션까지만 직접 선택 가능하므로, 3개 이상 컬렉션이 필요한 graph 질문은 vector baseline 평가 시 `collection=all`로 fallback 합니다.
 - 이 스크립트는 GraphRAG 자체를 평가하는 것이 아니라, 현재 Vector RAG 기본 경로의 answer-level 기준선을 만드는 용도입니다.
 - `2026-03-18` 기준 최신 baseline은 `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md`이며, 6개 fixture 중 2개만 통과했습니다.
 - 같은 실측에서 `GQ-03`은 `uk` 컬렉션 인덱스 부재로 `VECTORSTORE_EMPTY`, `GQ-05`는 `fr,ge` 비교 질문에서 `LLM_TIMEOUT`이 발생했습니다.
-- 같은 스크립트는 `--backend graph_snapshot`으로 graph snapshot 비교에도 재사용할 수 있습니다.
-- `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_GRAPH_SNAPSHOT.md` 기준 `graph-candidate` 3개 케이스는 `2/3 pass`였지만, `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md` 기준 MVP 통합은 아직 No-Go입니다.
+- 같은 스크립트는 `--backend graph_snapshot`으로 과거 GraphRAG 비교를 재현할 수 있지만, 이 경로는 현재 잠정 중단 상태입니다.
+- `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_GRAPH_SNAPSHOT.md` 기준 `graph-candidate` 3개 케이스는 `2/3 pass`였고, `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md` 기준 최종 판단은 MVP 통합 No-Go였습니다.
 - `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_OPS_RELIABILITY.md` 기준 `ops-baseline`은 3건 모두 `200` 응답으로 복구됐습니다.
 - `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-19_OPS_ANSWER_COMPLETENESS.md` 기준 최신 `ops-baseline`은 `3/3 pass`, `avg_weighted_score=0.9645`, `p95_latency_ms=8724.427`입니다.
 - 공식 기본 임베딩 `BAAI/bge-m3` 로컬 캐시가 없는 환경에서는 `DOC_RAG_EMBEDDING_MODEL`에 로컬 경로를 주고, `minishlab/potion-base-4M` 계열은 `DOC_RAG_EMBEDDING_DEVICE=cpu`가 필요할 수 있습니다.
@@ -214,7 +215,7 @@ npm start
 - `POST /upload-requests`는 선택적으로 `request_type`, `doc_key`, `change_summary`를 받을 수 있다.
 - `POST /upload-requests/{id}/reject`는 `reason_code`, `decision_note`를 함께 받을 수 있다.
 - `DOC_RAG_AUTO_APPROVE`는 `create` 요청에만 적용되고 `update` 요청은 항상 관리자 승인 경로를 사용한다.
-- GraphRAG는 아직 기본 경로가 아니며, 현재는 graph snapshot 기반 retrieval PoC와 1차 측정까지만 반영된 상태다.
+- GraphRAG는 기본 경로가 아니며, 관련 PoC/실측은 아카이브 상태로만 유지한다.
 
 `POST /reindex` 응답의 `validation`에는 기계 판독용 필드와 함께
 `summary_text`(예: `total=5, usable=5, rejected=0, warnings=0, usable_ratio=100.00%`)가 포함됩니다.
