@@ -138,7 +138,7 @@
 - `desktop/electron/README.md`: 데스크톱 런처 사용 가이드
 - `services/graphrag_poc_service.py`: GraphRAG snapshot/benchmark 보조 서비스
 - `scripts/eval_query_quality.py`: answer-level `/query` 품질 평가 하네스
-- `scripts/check_ops_baseline_gate.py`: all-routes 벡터 상태 + `ops-baseline` 회귀 게이트 점검
+- `scripts/check_ops_baseline_gate.py`: runtime preflight + all-routes 벡터 상태 + `ops-baseline` 회귀 게이트/diagnostics 점검
 - `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩
 - `scripts/roadmap_harness.py`: 실행 큐 상태와 현재 active 항목 점검
 - `evals/answer_level_eval_fixtures.jsonl`: answer-level 자동 채점 fixture
@@ -451,6 +451,7 @@ npm run smoke
 npm start
 ```
 - 첫 실행 또는 `vectors=0` 상태면 `/app` 왼쪽 메뉴의 `Reindex`를 먼저 실행한다.
+- `/query`가 `VECTORSTORE_EMBEDDING_MISMATCH(409)`를 반환하면 `Reindex` 또는 `build_index.py --reset`을 다시 실행하고 `DOC_RAG_EMBEDDING_MODEL` 설정을 확인한다.
 - UI 접속:
 - 인트로: `http://127.0.0.1:8000/intro`
 - 메인: `http://127.0.0.1:8000/app`

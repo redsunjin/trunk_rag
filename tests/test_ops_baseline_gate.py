@@ -26,6 +26,7 @@ def test_summarize_collection_vectors_reports_missing_route():
 def test_evaluate_gate_ready_requires_full_eval_pass_and_collections():
     assert (
         check_ops_baseline_gate.evaluate_gate_ready(
+            runtime_ready=True,
             collection_summary={"ready": True},
             eval_summary={"cases": 3, "passed": 3, "pass_rate": 1.0},
         )
@@ -33,6 +34,7 @@ def test_evaluate_gate_ready_requires_full_eval_pass_and_collections():
     )
     assert (
         check_ops_baseline_gate.evaluate_gate_ready(
+            runtime_ready=True,
             collection_summary={"ready": False},
             eval_summary={"cases": 3, "passed": 3, "pass_rate": 1.0},
         )
@@ -40,14 +42,39 @@ def test_evaluate_gate_ready_requires_full_eval_pass_and_collections():
     )
     assert (
         check_ops_baseline_gate.evaluate_gate_ready(
+            runtime_ready=True,
             collection_summary={"ready": True},
             eval_summary={"cases": 3, "passed": 2, "pass_rate": 0.6667},
+        )
+        is False
+    )
+    assert (
+        check_ops_baseline_gate.evaluate_gate_ready(
+            runtime_ready=False,
+            collection_summary={"ready": True},
+            eval_summary={"cases": 3, "passed": 3, "pass_rate": 1.0},
         )
         is False
     )
 
 
 def test_build_gate_report_uses_eval_summary_and_collection_state(monkeypatch):
+    monkeypatch.setattr(
+        check_ops_baseline_gate.runtime_preflight,
+        "build_report",
+        lambda **kwargs: {
+            "ready": True,
+            "checks": [
+                {
+                    "name": "app_health",
+                    "ready": True,
+                    "message": "ready",
+                    "payload": {"status": "ok", "vectors": 37},
+                }
+            ],
+        },
+    )
+    monkeypatch.setattr(check_ops_baseline_gate.runtime_service, "get_embedding_model", lambda: "BAAI/bge-m3")
     monkeypatch.setattr(
         check_ops_baseline_gate.eval_query_quality,
         "collections_check",

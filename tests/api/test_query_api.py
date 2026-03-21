@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from chromadb.errors import InvalidDimensionException
+
 from api import routes_query
 
 
@@ -117,6 +119,30 @@ def test_query_timeout(client, monkeypatch):
     response = client.post("/query", json={"query": "테스트", "llm_provider": "ollama"})
     body = _assert_query_error_shape(response, 504, "LLM_TIMEOUT")
     assert "/intro" in (body.get("hint") or "")
+
+
+def test_query_reports_embedding_dimension_mismatch(client, monkeypatch):
+    class DummyDB:
+        def as_retriever(self, **kwargs):
+            return object()
+
+    monkeypatch.setattr(routes_query.index_service, "get_db", lambda *args, **kwargs: DummyDB())
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count", lambda _db: 1)
+    monkeypatch.setattr(
+        routes_query,
+        "resolve_llm_config",
+        lambda **kwargs: ("ollama", "qwen3:4b", None, "http://127.0.0.1:11434"),
+    )
+    monkeypatch.setattr(routes_query, "create_chat_llm", lambda **kwargs: object())
+    monkeypatch.setattr(routes_query.query_service, "build_query_chain", lambda retriever, llm: object())
+
+    def _raise_dimension_mismatch(chain, question, timeout_seconds=15):
+        raise InvalidDimensionException("Embedding dimension 1024 does not match collection dimensionality 128")
+
+    monkeypatch.setattr(routes_query.query_service, "invoke_query_chain", _raise_dimension_mismatch)
+    response = client.post("/query", json={"query": "테스트", "llm_provider": "ollama"})
+    body = _assert_query_error_shape(response, 409, "VECTORSTORE_EMBEDDING_MISMATCH")
+    assert "Reindex" in (body.get("hint") or "")
 
 
 def test_query_invalid_request_422(client):

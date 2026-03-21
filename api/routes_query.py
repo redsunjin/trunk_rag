@@ -4,6 +4,7 @@ import logging
 import time
 
 from fastapi import APIRouter, Request, Response
+from chromadb.errors import InvalidDimensionException
 
 from api.schemas import QueryRequest, QueryResponse
 from core.errors import QueryAPIError
@@ -136,6 +137,17 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
                 status_code=504,
                 message=f"LLM 응답 시간이 제한({query_timeout_seconds}초)을 초과했습니다.",
                 hint="모델 상태를 확인하고 더 짧은 질문으로 다시 시도하거나 /intro 상태에서 기본 런타임 준비를 다시 확인하세요.",
+            ) from exc
+        except InvalidDimensionException as exc:
+            raise QueryAPIError(
+                code="VECTORSTORE_EMBEDDING_MISMATCH",
+                status_code=409,
+                message="현재 임베딩 모델과 저장된 인덱스 차원이 맞지 않습니다.",
+                hint=(
+                    "run_doc_rag.bat로 서버를 연 뒤 /intro 상태를 확인하고 "
+                    "Reindex 또는 .venv\\Scripts\\python.exe build_index.py --reset 을 실행하세요. "
+                    "DOC_RAG_EMBEDDING_MODEL 설정도 함께 확인하세요."
+                ),
             ) from exc
         except Exception as exc:
             raise QueryAPIError(

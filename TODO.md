@@ -77,6 +77,10 @@
 - `LOOP-004`는 문서 기준 완료 상태다.
 - 다만 `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434` 실측은 `LLM_CONNECTION_FAILED`로 `pass_rate=0.0`이어서 `LOOP-001`은 아직 active 상태를 유지한다.
 - 현재 blocker는 `ollama:llama3.1:8b` 런타임/모델 미준비 또는 연결 실패다.
+- `2026-03-21` 기준 `scripts/check_ops_baseline_gate.py`는 `runtime_preflight`를 먼저 실행하고 `APP_HEALTH_UNREACHABLE` / `COLLECTIONS_CHECK_FAILED` / `OPS_EVAL_FAILED` 진단 코드를 함께 출력하도록 보강했다.
+- 같은 날짜 로컬 실행에서는 앱 미기동 상태로 `APP_HEALTH_UNREACHABLE`가 즉시 재현됐고, 기존처럼 모호한 `LLM_CONNECTION_FAILED`만 남기지 않도록 정리했다.
+- `/query`는 Chroma `InvalidDimensionException`을 `VECTORSTORE_EMBEDDING_MISMATCH(409)`로 매핑하고 Reindex + `DOC_RAG_EMBEDDING_MODEL` 확인 경로를 안내한다.
+- 회귀 검증은 `./.venv/bin/python -m pytest -q` -> `69 passed in 7.65s`, `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`까지 확인했다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

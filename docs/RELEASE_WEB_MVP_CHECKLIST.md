@@ -41,6 +41,7 @@
 - [ ] `build_index.py --reset` 또는 `/reindex`로 all-routes 인덱싱 확인
 - [ ] `all/eu/fr/ge/it/uk` 컬렉션 벡터 상태 확인
 - [ ] `ops-baseline` `3/3 pass` 확인
+- [ ] 게이트가 `blocked`면 `Runtime Preflight`와 `Diagnostics`에서 `APP_HEALTH_UNREACHABLE` / `COLLECTIONS_CHECK_FAILED` / `OPS_EVAL_FAILED` 원인 확인
 
 ## 권장 검증 명령
 
@@ -54,4 +55,5 @@
 
 - Ollama/기본 모델 미기동 상태면 질의 게이트를 통과할 수 없다.
 - 로컬 임베딩 모델 캐시 또는 `DOC_RAG_EMBEDDING_MODEL` 경로가 없으면 오프라인 환경 첫 실행이 막힐 수 있다.
+- `scripts/check_ops_baseline_gate.py`가 `blocked`면 먼저 앱 기동 여부와 diagnostics 코드를 확인한 뒤, 필요한 경우 Reindex 또는 LLM 런타임 복구를 진행한다.
 - 위 blocker가 남아 있으면 릴리즈 완료로 닫지 않고, `active` 상태를 유지한다.
