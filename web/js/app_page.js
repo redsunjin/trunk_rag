@@ -108,12 +108,12 @@ function setStatus(type, text, detail) {
 }
 
 function syncDefaults() {
-  if (provider.value === "ollama") {
-    model.value = "qwen3:4b";
-    baseUrl.value = "http://localhost:11434";
-  } else if (provider.value === "lmstudio") {
+  if (provider.value === "lmstudio") {
     model.value = "local-model";
     baseUrl.value = "http://localhost:1234/v1";
+  } else if (provider.value === "ollama") {
+    model.value = "qwen3:4b";
+    baseUrl.value = "http://localhost:11434";
   } else {
     model.value = "gpt-4o-mini";
     baseUrl.value = "";
@@ -166,7 +166,7 @@ function setAdvancedSettingsOpen(open) {
 
 function applyRuntimeDefaults(data, force = false) {
   if (!data) return;
-  const runtimeProvider = data.default_llm_provider || "ollama";
+  const runtimeProvider = data.default_llm_provider || "lmstudio";
   const runtimeModel = data.default_llm_model || "";
   const runtimeBaseUrl = data.default_llm_base_url || "";
 

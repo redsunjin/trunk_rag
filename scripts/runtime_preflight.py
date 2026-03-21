@@ -224,6 +224,53 @@ def check_ollama(base_url: str, model_name: str | None, timeout_seconds: int) ->
     }
 
 
+def check_lmstudio(base_url: str, model_name: str | None, timeout_seconds: int) -> dict[str, object]:
+    target = f"{base_url.rstrip('/')}/models"
+    try:
+        payload = fetch_json(target, timeout_seconds)
+    except urllib.error.URLError as exc:
+        return {
+            "name": "lmstudio",
+            "critical": True,
+            "ready": False,
+            "target": target,
+            "message": f"lmstudio endpoint unreachable: {exc}",
+        }
+    except Exception as exc:
+        return {
+            "name": "lmstudio",
+            "critical": True,
+            "ready": False,
+            "target": target,
+            "message": f"lmstudio check failed: {exc}",
+        }
+
+    models = payload.get("data", [])
+    available = sorted(
+        str(item.get("id"))
+        for item in models
+        if isinstance(item, dict) and item.get("id")
+    )
+    if model_name and model_name not in available:
+        return {
+            "name": "lmstudio",
+            "critical": True,
+            "ready": False,
+            "target": target,
+            "available_models": available,
+            "message": f"required lmstudio model is missing: {model_name}",
+        }
+
+    return {
+        "name": "lmstudio",
+        "critical": True,
+        "ready": True,
+        "target": target,
+        "available_models": available,
+        "message": "ready",
+    }
+
+
 def build_report(
     *,
     app_base_url: str,
@@ -240,6 +287,8 @@ def build_report(
 
     if llm_provider == "ollama":
         checks.append(check_ollama(llm_base_url or "http://localhost:11434", llm_model, timeout_seconds))
+    elif llm_provider == "lmstudio":
+        checks.append(check_lmstudio(llm_base_url or "http://localhost:1234/v1", llm_model, timeout_seconds))
 
     ready = all(bool(check["ready"]) for check in checks if check.get("critical"))
     return {
@@ -288,7 +337,7 @@ def main() -> int:
     report = build_report(
         app_base_url=args.base_url,
         timeout_seconds=args.timeout_seconds,
-        llm_provider=(args.llm_provider or str(default_llm["provider"] or "ollama")).strip(),
+        llm_provider=(args.llm_provider or str(default_llm["provider"] or "lmstudio")).strip(),
         llm_model=(args.llm_model or str(default_llm["model"] or "")).strip() or None,
         llm_base_url=(args.llm_base_url or str(default_llm["base_url"] or "")).strip() or None,
         embedding_model=(args.embedding_model or runtime_service.get_embedding_model()).strip(),

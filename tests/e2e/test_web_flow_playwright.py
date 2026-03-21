@@ -116,9 +116,9 @@ def test_intro_app_flow(page: Page, live_server_url: str):
                     "chunking_mode": "char",
                     "query_timeout_seconds": 15,
                     "max_context_chars": 1500,
-                    "default_llm_provider": "ollama",
-                    "default_llm_model": "qwen3:4b",
-                    "default_llm_base_url": "http://localhost:11434",
+                    "default_llm_provider": "lmstudio",
+                    "default_llm_model": "local-model",
+                    "default_llm_base_url": "http://localhost:1234/v1",
                 }
             ),
         )
@@ -137,8 +137,8 @@ def test_intro_app_flow(page: Page, live_server_url: str):
             body=json.dumps(
                 {
                     "answer": "모킹된 질의 응답",
-                    "provider": "ollama",
-                    "model": "qwen3:4b",
+                    "provider": "lmstudio",
+                    "model": "local-model",
                 }
             ),
         )

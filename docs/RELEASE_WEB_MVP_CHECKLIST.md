@@ -49,12 +49,12 @@
 ```powershell
 .venv\Scripts\python.exe -m pytest -q
 .venv\Scripts\python.exe scripts\roadmap_harness.py validate
-.venv\Scripts\python.exe scripts\check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434
+.venv\Scripts\python.exe scripts\check_ops_baseline_gate.py --llm-provider lmstudio --llm-base-url http://localhost:1234/v1
 ```
 
 ## 현재 릴리즈 blocker 판단
 
-- Ollama/기본 모델 미기동 상태면 질의 게이트를 통과할 수 없다.
+- LM Studio/기본 모델 미기동 상태면 질의 게이트를 통과할 수 없다.
 - 로컬 임베딩 모델 캐시 또는 `DOC_RAG_EMBEDDING_MODEL` 경로가 없으면 오프라인 환경 첫 실행이 막힐 수 있다.
 - `scripts/check_ops_baseline_gate.py`가 `blocked`면 먼저 앱 기동 여부와 diagnostics 코드를 확인한 뒤, 필요한 경우 Reindex 또는 LLM 런타임 복구를 진행한다.
 - `VECTORSTORE_EMBEDDING_MISMATCH(409)`가 보이면 현재 임베딩 기준으로 all-routes를 다시 생성하고, 오프라인 환경이면 `HF_HUB_OFFLINE=1` 경로를 우선 사용한다.

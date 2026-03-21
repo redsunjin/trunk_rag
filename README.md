@@ -8,7 +8,7 @@
 - 문서: 전처리 완료된 `data/*.md` 입력
 - 청킹: `##`, `###`, `####` 헤더 기반 + 문자 분할(기본), 토큰 분할(옵션)
 - 벡터스토어: Chroma (로컬 폴더)
-- LLM: `openai` / `ollama` / `lmstudio` 선택(기본 예시: `ollama` + `qwen3:4b`)
+- LLM: `openai` / `ollama` / `lmstudio` 선택(기본 예시: `lmstudio` + 로드한 로컬 모델명)
 - 인터페이스: FastAPI + 브라우저(`http://127.0.0.1:8000`)
 - 업로드 워크플로우: 사용자 요청(`pending`) -> 관리자 승인/반려
 
@@ -147,7 +147,7 @@ cd <repo>
 실패 시 기본 복구:
 - Python 자체가 없으면 Python 3 설치 후 다시 `.\run_doc_rag.bat`
 - requirements 설치가 실패하면 네트워크 또는 사내 패키지 미러 접근 상태 확인
-- Ollama/model 미준비 상태면 기본 질의는 실패할 수 있으므로 `qwen3:4b` 또는 운영 기본 모델 준비
+- LM Studio/model 미준비 상태면 기본 질의는 실패할 수 있으므로 현재 로드한 모델명을 `LLM_MODEL`과 맞춘 뒤 다시 시도
 - 임베딩 모델 캐시가 없으면 `DOC_RAG_EMBEDDING_MODEL`에 로컬 경로 지정
 
 릴리즈 직전에는 [RELEASE_WEB_MVP_CHECKLIST.md](/Users/Agent/ps-workspace/trunk_rag/docs/RELEASE_WEB_MVP_CHECKLIST.md)를 기준으로 점검합니다.
@@ -188,9 +188,9 @@ cd <repo>
 ```powershell
 .venv\Scripts\python.exe scripts\eval_query_quality.py `
   --base-url http://127.0.0.1:8000 `
-  --llm-provider ollama `
-  --llm-model qwen3:4b `
-  --llm-base-url http://localhost:11434 `
+  --llm-provider lmstudio `
+  --llm-model your-loaded-model `
+  --llm-base-url http://localhost:1234/v1 `
   --output-json docs\reports\query_answer_eval_2026-03-17.json `
   --output-report docs\reports\QUERY_ANSWER_EVAL_REPORT_2026-03-17.md
 ```
@@ -212,15 +212,16 @@ cd <repo>
 
 ```powershell
 .venv\Scripts\python.exe scripts\check_ops_baseline_gate.py `
-  --llm-provider ollama `
-  --llm-model llama3.1:8b `
-  --llm-base-url http://localhost:11434
+  --llm-provider lmstudio `
+  --llm-model your-loaded-model `
+  --llm-base-url http://localhost:1234/v1
 ```
 
 - 이 스크립트는 `all/eu/fr/ge/it/uk` 컬렉션의 벡터 존재 여부와 `ops-baseline` `3/3 pass`를 함께 확인합니다.
 - 실행 순서는 `runtime_preflight -> all-routes collections -> ops-baseline eval`이며, 실패 시 `APP_HEALTH_UNREACHABLE`, `COLLECTIONS_CHECK_FAILED`, `OPS_EVAL_FAILED` 진단 코드를 함께 출력합니다.
 - `2026-03-21` 현재 로컬 검증에서는 앱 미기동 상태에서 `APP_HEALTH_UNREACHABLE`로 즉시 막히는 것을 확인했습니다.
-- 같은 날짜 실측에서는 `env HF_HUB_OFFLINE=1 ./.venv/bin/python build_index.py --reset`으로 all-routes를 다시 생성한 뒤, `llama3.1:8b` 게이트가 `3/3 pass`, `avg_weighted_score=0.9645`, `p95_latency_ms=13501.527`로 통과했습니다.
+- 과거 `2026-03-21` 실측에서는 `env HF_HUB_OFFLINE=1 ./.venv/bin/python build_index.py --reset` 뒤 `ollama + llama3.1:8b` 게이트가 `3/3 pass`, `avg_weighted_score=0.9645`, `p95_latency_ms=13501.527`로 통과했습니다.
+- 현재 로컬 기본 경로는 `LM Studio` 기준이며, 위 명령의 `your-loaded-model` 자리에 실제 로드한 모델명을 넣어 검증합니다.
 - 종료 코드 `0`은 게이트 통과, `1`은 컬렉션 비어 있음 또는 eval 실패를 뜻합니다.
 
 ## Roadmap Harness
@@ -276,7 +277,7 @@ curl http://127.0.0.1:8000/health
 
 curl -X POST http://127.0.0.1:8000/query `
   -H "Content-Type: application/json" `
-  -d "{\"query\":\"각 국가별 대표적인 과학적 성과\",\"collection\":\"all\",\"llm_provider\":\"ollama\",\"llm_model\":\"qwen3:4b\",\"llm_base_url\":\"http://localhost:11434\"}"
+  -d "{\"query\":\"각 국가별 대표적인 과학적 성과\",\"collection\":\"all\",\"llm_provider\":\"lmstudio\",\"llm_model\":\"your-loaded-model\",\"llm_base_url\":\"http://localhost:1234/v1\"}"
 ```
 
 ### `/query` 에러 응답 규격
@@ -285,8 +286,8 @@ curl -X POST http://127.0.0.1:8000/query `
 ```json
 {
   "answer": "...",
-  "provider": "ollama",
-  "model": "qwen3:4b"
+  "provider": "lmstudio",
+  "model": "your-loaded-model"
 }
 ```
 
@@ -351,15 +352,15 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 
 `.env.example`를 복사해 `.env` 생성 후 사용.
 
-- 기본 예시는 `LLM_PROVIDER=ollama`, `LLM_MODEL=qwen3:4b`
-- 로컬 기본 경로에서는 `OLLAMA_BASE_URL=http://localhost:11434`
+- 기본 예시는 `LLM_PROVIDER=lmstudio`, `LLM_MODEL=<LM Studio loaded model>`
+- 로컬 기본 경로에서는 `LMSTUDIO_BASE_URL=http://localhost:1234/v1`
 - 오프라인 운영 시에는 `DOC_RAG_EMBEDDING_MODEL`로 지정한 경로 또는 `BAAI/bge-m3` 로컬 캐시가 필요
-- Ollama 기본 경로를 쓰려면 대상 모델이 로컬에 pull/run 된 상태여야 함
+- LM Studio 기본 경로를 쓰려면 서버가 열려 있고 `LLM_MODEL`이 현재 로드한 모델명과 일치해야 함
 
 - OpenAI 사용 시: `OPENAI_API_KEY`
+- LM Studio 사용 시: `LMSTUDIO_BASE_URL`, `LMSTUDIO_API_KEY`
 - Ollama 사용 시: `OLLAMA_BASE_URL`
 - Ollama 응답 길이 제한(선택): `DOC_RAG_OLLAMA_NUM_PREDICT` (예: `8`, 미설정 시 모델 기본값)
-- LM Studio 사용 시: `LMSTUDIO_BASE_URL`, `LMSTUDIO_API_KEY`
 - 관리자 모드 인증 코드(선택): `DOC_RAG_ADMIN_CODE` (기본값: `admin1234`)
 - 개인 운영 자동 승인(선택): `DOC_RAG_AUTO_APPROVE` (`1/true/on`이면 요청 생성 즉시 승인/인덱싱)
 - 질의 타임아웃(선택): `DOC_RAG_QUERY_TIMEOUT_SECONDS` (기본 `15`, 단위 초)
@@ -445,9 +446,9 @@ npm run smoke
 ```powershell
 .venv\Scripts\python.exe scripts\benchmark_query_e2e.py `
   --base-url http://127.0.0.1:8010 `
-  --llm-provider ollama `
-  --llm-model phi3:mini `
-  --llm-base-url http://localhost:11434 `
+  --llm-provider lmstudio `
+  --llm-model your-loaded-model `
+  --llm-base-url http://localhost:1234/v1 `
   --rounds 2 `
   --warmup 1 `
   --query-timeout-seconds 120 `

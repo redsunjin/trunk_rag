@@ -32,7 +32,7 @@
 
 | id | status | title | verify |
 | --- | --- | --- | --- |
-| LOOP-001 | active | 배포형 웹 MVP 게이트 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434` |
+| LOOP-001 | active | 배포형 웹 MVP 게이트 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider lmstudio --llm-base-url http://localhost:1234/v1` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -64,7 +64,7 @@
 
 검증:
 - `./.venv/bin/python -m pytest -q`
-- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider lmstudio --llm-base-url http://localhost:1234/v1`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 진행 메모 (2026-03-20):
@@ -78,6 +78,8 @@
 - `2026-03-21` 실측에서는 앱 기동 후 첫 게이트 실행이 `VECTORSTORE_EMBEDDING_MISMATCH(409)`로 막혔고, all-routes 인덱스가 현재 임베딩 차원과 맞지 않는 상태임을 확인했다.
 - 같은 날짜 `env HF_HUB_OFFLINE=1 ./.venv/bin/python build_index.py --reset`으로 all-routes를 다시 생성한 뒤 `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434 --json` 실측은 `pass_rate=1.0`, `avg_weighted_score=0.9645`, `p95_latency_ms=13501.527`로 통과했다.
 - 오프라인/폐쇄망 재인덱싱은 HuggingFace cache가 이미 있는 경우 `HF_HUB_OFFLINE=1`을 함께 주는 경로를 운영 복구안으로 본다.
+- `2026-03-21`부터 본 로컬 PC 기본 경로는 `LM Studio` 기준으로 정렬하며, 회귀 게이트 기본 명령은 `--llm-provider lmstudio --llm-base-url http://localhost:1234/v1`를 사용한다.
+- `LM Studio` live gate는 `.env`의 `LLM_MODEL`이 현재 로드한 모델명과 일치할 때만 통과 여부를 판단할 수 있다.
 - `2026-03-21` 기준 `scripts/check_ops_baseline_gate.py`는 `runtime_preflight`를 먼저 실행하고 `APP_HEALTH_UNREACHABLE` / `COLLECTIONS_CHECK_FAILED` / `OPS_EVAL_FAILED` 진단 코드를 함께 출력하도록 보강했다.
 - 같은 날짜 로컬 실행에서는 앱 미기동 상태로 `APP_HEALTH_UNREACHABLE`가 즉시 재현됐고, 기존처럼 모호한 `LLM_CONNECTION_FAILED`만 남기지 않도록 정리했다.
 - `/query`는 Chroma `InvalidDimensionException`을 `VECTORSTORE_EMBEDDING_MISMATCH(409)`로 매핑하고 Reindex + `DOC_RAG_EMBEDDING_MODEL` 확인 경로를 안내한다.

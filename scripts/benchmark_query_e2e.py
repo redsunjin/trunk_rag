@@ -239,7 +239,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--scenario", action="append", help="Collection keys, example: fr,ge")
     parser.add_argument("--query", action="append", help="Custom query. Can be repeated.")
     parser.add_argument("--rounds", type=int, default=DEFAULT_ROUNDS)
-    parser.add_argument("--llm-provider", type=str, default="ollama")
+    parser.add_argument("--llm-provider", type=str, default="lmstudio")
     parser.add_argument("--llm-model", type=str)
     parser.add_argument("--llm-base-url", type=str)
     parser.add_argument("--llm-api-key", type=str)

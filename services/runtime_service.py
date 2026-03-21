@@ -108,12 +108,12 @@ def get_chunking_config() -> dict[str, str]:
 
 
 def get_default_llm_config() -> dict[str, str | None]:
-    raw_provider = os.getenv("LLM_PROVIDER", "ollama")
+    raw_provider = os.getenv("LLM_PROVIDER", "lmstudio")
     try:
         provider = normalize_provider(raw_provider)
     except ValueError:
-        logger.warning("invalid default llm provider: %s (fallback=ollama)", raw_provider)
-        provider = "ollama"
+        logger.warning("invalid default llm provider: %s (fallback=lmstudio)", raw_provider)
+        provider = "lmstudio"
 
     raw_model = os.getenv("LLM_MODEL")
     model = (raw_model or "").strip() or default_llm_model(provider)
@@ -153,9 +153,18 @@ def build_release_web_guidance(
     headline = "기본 웹 MVP 경로로 바로 사용할 수 있습니다."
 
     if default_llm_provider == "ollama":
-        target_model = default_llm_model or default_llm_model or "qwen3:4b"
+        target_model = default_llm_model or "qwen3:4b"
         base_url = (default_llm_base_url or "http://localhost:11434").strip() or "http://localhost:11434"
         steps.append(f"Ollama를 `{base_url}`에서 실행하고 기본 모델 `{target_model}`을 준비하세요.")
+    elif default_llm_provider == "lmstudio":
+        target_model = default_llm_model or "local-model"
+        base_url = (default_llm_base_url or "http://localhost:1234/v1").strip() or "http://localhost:1234/v1"
+        if target_model == "local-model":
+            steps.append(
+                f"LM Studio 서버를 `{base_url}`에서 실행하고, 현재 로드한 모델명을 `.env`의 `LLM_MODEL`에 반영하세요."
+            )
+        else:
+            steps.append(f"LM Studio 서버를 `{base_url}`에서 실행하고 기본 모델 `{target_model}`을 준비하세요.")
     else:
         steps.append("기본 LLM provider 설정과 연결 상태를 `/intro`에서 먼저 확인하세요.")
 

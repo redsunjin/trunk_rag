@@ -45,18 +45,18 @@
             <div class="input-group">
               <label for="provider">LLM Provider</label>
               <select id="provider">
-                <option value="ollama" selected>ollama</option>
+                <option value="ollama">ollama</option>
                 <option value="openai">openai</option>
-                <option value="lmstudio">lmstudio</option>
+                <option value="lmstudio" selected>lmstudio</option>
               </select>
             </div>
             <div class="input-group">
               <label for="model">LLM Model</label>
-              <input type="text" id="model" value="qwen3:4b">
+              <input type="text" id="model" value="local-model">
             </div>
             <div class="input-group">
               <label for="baseUrl">Base URL (optional)</label>
-              <input type="text" id="baseUrl" value="http://localhost:11434">
+              <input type="text" id="baseUrl" value="http://localhost:1234/v1">
             </div>
             <div class="input-group">
               <label for="apiKey">API Key (optional)</label>

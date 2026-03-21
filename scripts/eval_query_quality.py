@@ -506,7 +506,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--bucket", action="append", default=[])
     parser.add_argument("--case-id", action="append", default=[])
     parser.add_argument("--max-cases", type=int, default=None)
-    parser.add_argument("--llm-provider", default="ollama")
+    parser.add_argument("--llm-provider", default="lmstudio")
     parser.add_argument("--llm-model", default=None)
     parser.add_argument("--llm-base-url", default=None)
     parser.add_argument("--llm-api-key", default=None)
@@ -526,7 +526,7 @@ def run_evaluation(
     buckets: set[str] | None = None,
     case_ids: set[str] | None = None,
     max_cases: int | None = None,
-    llm_provider: str = "ollama",
+    llm_provider: str = "lmstudio",
     llm_model: str | None = None,
     llm_base_url: str | None = None,
     llm_api_key: str | None = None,

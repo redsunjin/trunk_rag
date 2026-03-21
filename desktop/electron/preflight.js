@@ -61,7 +61,7 @@ function defaultLlmModel(provider) {
 
 function resolveConfiguredLlm(rootDir) {
   const envFile = parseEnvFile(rootDir);
-  const provider = (process.env.LLM_PROVIDER || envFile.LLM_PROVIDER || "ollama").trim().toLowerCase();
+  const provider = (process.env.LLM_PROVIDER || envFile.LLM_PROVIDER || "lmstudio").trim().toLowerCase();
   const model = (
     process.env.LLM_MODEL ||
     envFile.LLM_MODEL ||

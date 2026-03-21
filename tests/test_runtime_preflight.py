@@ -54,3 +54,30 @@ def test_find_local_embedding_model_rejects_incomplete_hf_cache(tmp_path: Path):
     resolved = runtime_preflight.find_local_embedding_model("BAAI/bge-m3", roots=[hub_dir])
 
     assert resolved is None
+
+
+def test_check_lmstudio_reports_missing_model(monkeypatch):
+    monkeypatch.setattr(
+        runtime_preflight,
+        "fetch_json",
+        lambda target, timeout_seconds: {"data": [{"id": "loaded-model"}]},
+    )
+
+    result = runtime_preflight.check_lmstudio("http://localhost:1234/v1", "local-model", 5)
+
+    assert result["name"] == "lmstudio"
+    assert result["ready"] is False
+    assert "required lmstudio model is missing" in result["message"]
+
+
+def test_check_lmstudio_accepts_loaded_model(monkeypatch):
+    monkeypatch.setattr(
+        runtime_preflight,
+        "fetch_json",
+        lambda target, timeout_seconds: {"data": [{"id": "local-model"}]},
+    )
+
+    result = runtime_preflight.check_lmstudio("http://localhost:1234/v1", "local-model", 5)
+
+    assert result["name"] == "lmstudio"
+    assert result["ready"] is True
