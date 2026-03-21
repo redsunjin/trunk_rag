@@ -372,6 +372,24 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 - 임베딩 모델(선택): `DOC_RAG_EMBEDDING_MODEL` (기본 `BAAI/bge-m3`, 로컬 경로 가능)
 - 임베딩 디바이스(선택): `DOC_RAG_EMBEDDING_DEVICE` (예: Apple Silicon 로컬 모델은 `cpu` 권장)
 
+## Local Hardware Guidance
+
+로컬 LLM 경로는 "연결 가능"보다 "ops-baseline 게이트를 시간 제한 안에 안정적으로 통과하는지"를 기준으로 판단합니다.
+
+- 현재 실측 기준 운영 권장 프로파일은 `groq + llama-3.1-8b-instant`입니다.
+- 로컬 Ollama 기준에서는 `llama3.1:8b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`이 최소 통과 프로파일이었습니다.
+- `qwen3.5:4b`, `qwen3.5:9b`, `LM Studio qwen3.5-4b-mlx-4bit`는 현재 로컬 Mac mini Pro 실측에서 `ops-baseline`을 안정 통과하지 못했습니다.
+
+로컬 하드웨어 권고선(추론):
+- 최소 로컬 운영선: Apple Silicon `M4 Pro` 급 + `64GB unified memory`
+- 현실적인 권장선: `Mac Studio M4 Max` 급 + `64GB` 이상
+- 그 아래 구성은 엣지 실험 경로로는 가능하지만, 현재 `trunk_rag` 운영 프로파일 기준으로는 비권장입니다.
+
+운영 판단 메모:
+- 현재 RAG 경로는 단순 채팅이 아니라 `retrieval + context build + 설명형 answer generation` 조합이어서 메모리 대역폭과 토큰 생성 속도 영향을 크게 받습니다.
+- 로컬 모델은 `ollama ps` 기준 `100% GPU`에 가깝게 올라가지 않으면 응답 지연이 크게 흔들릴 수 있습니다.
+- 오프라인/로컬 운영이 반드시 필요하면 모델 선택보다 먼저 하드웨어와 timeout/profile을 함께 설계해야 합니다.
+
 운영 기본값 결정 메모(2026-03-15):
 - 기본 청킹 모드는 계속 `char`를 사용합니다.
 - `token_800_120`은 로컬 벤치에서 소폭 더 빨랐지만, 샘플 질의 품질 차이가 없어 기본값을 바꾸지 않았습니다.

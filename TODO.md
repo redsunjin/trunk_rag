@@ -86,6 +86,9 @@
 - 같은 날짜 로컬 실행에서는 앱 미기동 상태로 `APP_HEALTH_UNREACHABLE`가 즉시 재현됐고, 기존처럼 모호한 `LLM_CONNECTION_FAILED`만 남기지 않도록 정리했다.
 - `/query`는 Chroma `InvalidDimensionException`을 `VECTORSTORE_EMBEDDING_MISMATCH(409)`로 매핑하고 Reindex + `DOC_RAG_EMBEDDING_MODEL` 확인 경로를 안내한다.
 - 회귀 검증은 `./.venv/bin/python -m pytest -q` -> `69 passed in 7.65s`, `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`까지 확인했다.
+- `2026-03-22` 실측에서는 로컬 Ollama/LM Studio의 `4B/9B/12B` 후보가 운영 게이트를 안정 통과하지 못했고, `llama3.1:8b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`만 `3/3 pass`였다.
+- 같은 날짜 `groq + llama-3.1-8b-instant`는 `ops-baseline 3/3 pass`, `avg_latency_ms=709.273`, `p95_latency_ms=831.045`로 가장 안정적인 운영 프로파일이었다.
+- 현재 판단상 `trunk_rag`는 Mac mini Pro 급 로컬 엣지 환경만으로 기본 운영을 보장하기 어렵고, 로컬 최소 권고선은 사실상 `M4 Pro + 64GB unified memory` 이상이다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
