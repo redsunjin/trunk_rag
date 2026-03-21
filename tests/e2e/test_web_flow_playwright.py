@@ -117,8 +117,8 @@ def test_intro_app_flow(page: Page, live_server_url: str):
                     "query_timeout_seconds": 15,
                     "max_context_chars": 1500,
                     "default_llm_provider": "lmstudio",
-                    "default_llm_model": "local-model",
-                    "default_llm_base_url": "http://localhost:1234/v1",
+                    "default_llm_model": "qwen3.5-4b-mlx-4bit",
+                    "default_llm_base_url": "http://127.0.0.1:1337/v1",
                 }
             ),
         )
@@ -138,7 +138,7 @@ def test_intro_app_flow(page: Page, live_server_url: str):
                 {
                     "answer": "모킹된 질의 응답",
                     "provider": "lmstudio",
-                    "model": "local-model",
+                    "model": "qwen3.5-4b-mlx-4bit",
                 }
             ),
         )

@@ -49,7 +49,7 @@
 ```powershell
 .venv\Scripts\python.exe -m pytest -q
 .venv\Scripts\python.exe scripts\roadmap_harness.py validate
-.venv\Scripts\python.exe scripts\check_ops_baseline_gate.py --llm-provider lmstudio --llm-base-url http://localhost:1234/v1
+.venv\Scripts\python.exe scripts\check_ops_baseline_gate.py --llm-provider lmstudio --llm-model qwen3.5-4b-mlx-4bit --llm-base-url http://127.0.0.1:1337/v1
 ```
 
 ## 현재 릴리즈 blocker 판단

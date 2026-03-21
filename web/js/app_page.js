@@ -109,8 +109,8 @@ function setStatus(type, text, detail) {
 
 function syncDefaults() {
   if (provider.value === "lmstudio") {
-    model.value = "local-model";
-    baseUrl.value = "http://localhost:1234/v1";
+    model.value = "qwen3.5-4b-mlx-4bit";
+    baseUrl.value = "http://127.0.0.1:1337/v1";
   } else if (provider.value === "ollama") {
     model.value = "qwen3:4b";
     baseUrl.value = "http://localhost:11434";

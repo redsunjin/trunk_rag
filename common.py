@@ -124,7 +124,7 @@ def default_llm_model(provider: str) -> str:
     defaults = {
         "openai": "gpt-4o-mini",
         "ollama": "qwen3:4b",
-        "lmstudio": "local-model",
+        "lmstudio": "qwen3.5-4b-mlx-4bit",
     }
     return defaults[value]
 
@@ -147,7 +147,7 @@ def resolve_llm_config(
         base_url_value = base_url_value or os.getenv("OPENAI_API_BASE")
     elif value == "lmstudio":
         api_key_value = api_key_value or os.getenv("LMSTUDIO_API_KEY") or "lm-studio"
-        base_url_value = base_url_value or os.getenv("LMSTUDIO_BASE_URL") or "http://localhost:1234/v1"
+        base_url_value = base_url_value or os.getenv("LMSTUDIO_BASE_URL") or "http://127.0.0.1:1337/v1"
     else:
         base_url_value = base_url_value or os.getenv("OLLAMA_BASE_URL") or "http://localhost:11434"
 
@@ -185,7 +185,7 @@ def create_chat_llm(
             model=model,
             temperature=temperature,
             openai_api_key=api_key or "lm-studio",
-            openai_api_base=base_url or "http://localhost:1234/v1",
+            openai_api_base=base_url or "http://127.0.0.1:1337/v1",
         )
 
     return build_ollama_chat_runnable(

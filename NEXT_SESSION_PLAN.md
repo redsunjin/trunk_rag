@@ -28,7 +28,7 @@
 - current_active_id: `LOOP-001`
 - current_active_title: `배포형 웹 MVP 게이트`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
-- default_regression_gate: `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider lmstudio --llm-base-url http://localhost:1234/v1`
+- default_regression_gate: `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider lmstudio --llm-model qwen3.5-4b-mlx-4bit --llm-base-url http://127.0.0.1:1337/v1`
 - closeout_rule: `active` 항목은 검증 결과와 문서 반영, 커밋까지 끝난 뒤에만 `done`으로 본다.
 - blocked_rule: blocker와 재개 조건 없이 `blocked` 상태로 이동하지 않는다.
 - promotion_rule: 현재 `active`가 `done`이 되면 첫 번째 `pending` 항목을 즉시 다음 `active`로 승격한다.
@@ -108,7 +108,7 @@
 
 검증:
 - `./.venv/bin/python -m pytest -q`
-- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider lmstudio --llm-base-url http://localhost:1234/v1`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider lmstudio --llm-model qwen3.5-4b-mlx-4bit --llm-base-url http://127.0.0.1:1337/v1`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
@@ -211,8 +211,10 @@
 - `2026-03-21` 실측에서는 앱 기동 후 첫 release gate가 `VECTORSTORE_EMBEDDING_MISMATCH(409)`로 막혔고, all-routes 인덱스를 현재 임베딩 차원으로 다시 생성해야 함을 확인했다.
 - 같은 날짜 `env HF_HUB_OFFLINE=1 ./.venv/bin/python build_index.py --reset` 뒤 `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434 --json` 결과는 `pass_rate=1.0`, `avg_weighted_score=0.9645`, `p95_latency_ms=13501.527`로 통과했다.
 - 오프라인/폐쇄망 환경에서는 HuggingFace cache가 이미 있으면 `HF_HUB_OFFLINE=1`을 붙인 재인덱싱 경로를 우선 복구안으로 사용한다.
-- `2026-03-21`부터 본 로컬 PC 기본 경로는 `LM Studio` 기준으로 정렬하며, 회귀 게이트 기본 명령은 `--llm-provider lmstudio --llm-base-url http://localhost:1234/v1`를 사용한다.
-- `LM Studio` live gate는 `.env`의 `LLM_MODEL`이 현재 로드한 모델명과 일치할 때만 통과 여부를 판단할 수 있다.
+- `2026-03-21`부터 본 로컬 PC 기본 경로는 `LM Studio` 기준으로 정렬하며, 회귀 게이트 기본 명령은 `--llm-provider lmstudio --llm-model qwen3.5-4b-mlx-4bit --llm-base-url http://127.0.0.1:1337/v1`를 사용한다.
+- `LM Studio` live gate는 `qwen3.5-4b-mlx-4bit`가 실제로 로드되어 있을 때만 통과 여부를 판단할 수 있다.
+- 같은 날짜 `LM Studio` `qwen3.5-4b-mlx-4bit` + `http://127.0.0.1:1337/v1` live gate 실측에서는 runtime/all-routes는 모두 ready였지만 `ops-baseline` 3건이 전부 `LLM_TIMEOUT`으로 실패했다.
+- `DOC_RAG_QUERY_TIMEOUT_SECONDS=30`으로 재실험해도 `pass_rate=0.0`, `p95_latency_ms=35668.911`로 여전히 timeout이어서, 현재 blocker는 연결이 아니라 LM Studio 기본 모델의 응답 지연이다.
 - `2026-03-21`에는 `scripts/check_ops_baseline_gate.py`가 `runtime_preflight` 선행 + `APP_HEALTH_UNREACHABLE` / `COLLECTIONS_CHECK_FAILED` / `OPS_EVAL_FAILED` 진단 출력을 하도록 보강됐다.
 - 같은 날짜 로컬 게이트 실행에서는 서버 미기동 상태가 `APP_HEALTH_UNREACHABLE`로 즉시 드러났고, `/query`는 임베딩 차원 불일치를 `VECTORSTORE_EMBEDDING_MISMATCH(409)`로 안내하도록 정리됐다.
 - 회귀 검증은 `./.venv/bin/python -m pytest -q` -> `69 passed in 7.65s`, `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`까지 확인했다.
@@ -240,7 +242,7 @@
 4. `GET /health` 확인(벡터 수/auto_approve/pending/chunking_mode 확인)
 5. `POST /reindex` 1회 실행(응답 내 `validation.summary_text` 확인)
 6. `/query` 샘플 질의(단일 + 다중 컬렉션 자동 라우팅) 확인
-7. `./.venv\Scripts\python.exe scripts\check_ops_baseline_gate.py --llm-provider lmstudio --llm-base-url http://localhost:1234/v1` 1회 실행
+7. `./.venv\Scripts\python.exe scripts\check_ops_baseline_gate.py --llm-provider lmstudio --llm-model qwen3.5-4b-mlx-4bit --llm-base-url http://127.0.0.1:1337/v1` 1회 실행
 
 추가 확인:
 8. 기본 모드에서 LLM 세부 설정 없이 질의 가능한지 확인
