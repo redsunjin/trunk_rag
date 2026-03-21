@@ -114,7 +114,7 @@ def parse_optional_positive_int_env(name: str) -> int | None:
 
 def normalize_provider(provider: str) -> str:
     value = provider.strip().lower()
-    if value not in {"openai", "ollama", "lmstudio"}:
+    if value not in {"openai", "ollama", "lmstudio", "groq"}:
         raise ValueError(f"Unsupported provider: {provider}")
     return value
 
@@ -125,6 +125,7 @@ def default_llm_model(provider: str) -> str:
         "openai": "gpt-4o-mini",
         "ollama": "qwen3:4b",
         "lmstudio": "local-model",
+        "groq": "groq-model",
     }
     return defaults[value]
 
@@ -145,6 +146,9 @@ def resolve_llm_config(
     if value == "openai":
         api_key_value = api_key_value or os.getenv("OPENAI_API_KEY")
         base_url_value = base_url_value or os.getenv("OPENAI_API_BASE")
+    elif value == "groq":
+        api_key_value = api_key_value or os.getenv("GROQ_API_KEY")
+        base_url_value = base_url_value or os.getenv("GROQ_BASE_URL") or "https://api.groq.com/openai/v1"
     elif value == "lmstudio":
         api_key_value = api_key_value or os.getenv("LMSTUDIO_API_KEY") or "lm-studio"
         base_url_value = base_url_value or os.getenv("LMSTUDIO_BASE_URL") or "http://localhost:1234/v1"
@@ -177,6 +181,18 @@ def create_chat_llm(
         if base_url:
             kwargs["openai_api_base"] = base_url
         return ChatOpenAI(**kwargs)
+
+    if provider == "groq":
+        if ChatOpenAI is None:
+            raise ImportError("`langchain-openai` is not installed.")
+        if not api_key:
+            raise ValueError("GROQ_API_KEY is required for groq provider.")
+        return ChatOpenAI(
+            model=model,
+            temperature=temperature,
+            openai_api_key=api_key,
+            openai_api_base=base_url or "https://api.groq.com/openai/v1",
+        )
 
     if provider == "lmstudio":
         if ChatOpenAI is None:

@@ -8,7 +8,7 @@
 - 문서: 전처리 완료된 `data/*.md` 입력
 - 청킹: `##`, `###`, `####` 헤더 기반 + 문자 분할(기본), 토큰 분할(옵션)
 - 벡터스토어: Chroma (로컬 폴더)
-- LLM: `openai` / `ollama` / `lmstudio` 선택(기본 예시: `ollama` + `qwen3:4b`)
+- LLM: `openai` / `ollama` / `lmstudio` / `groq` 선택(기본 예시: `ollama` + `qwen3:4b`)
 - 인터페이스: FastAPI + 브라우저(`http://127.0.0.1:8000`)
 - 업로드 워크플로우: 사용자 요청(`pending`) -> 관리자 승인/반려
 
@@ -359,6 +359,7 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 - LM Studio 로컬 경로를 쓰려면 서버가 열려 있고 원하는 모델이 로드되어 있어야 함
 
 - OpenAI 사용 시: `OPENAI_API_KEY`
+- Groq 사용 시: `GROQ_API_KEY`, `GROQ_BASE_URL`
 - LM Studio 사용 시: `LMSTUDIO_BASE_URL`, `LMSTUDIO_API_KEY`
 - Ollama 사용 시: `OLLAMA_BASE_URL`
 - Ollama 응답 길이 제한(선택): `DOC_RAG_OLLAMA_NUM_PREDICT` (예: `8`, 미설정 시 모델 기본값)

@@ -17,7 +17,7 @@
 - 로컬 문서 로딩: `data/*.md` (현재 샘플 5개 파일)
 - 헤더 기반 청킹: `##`, `###`, `####` + 모드(`char` 기본, `token` 옵션)
 - 임베딩 + 로컬 벡터스토어: HuggingFace + Chroma
-- LLM provider 선택: `ollama`, `lmstudio`, `openai`
+- LLM provider 선택: `ollama`, `lmstudio`, `openai`, `groq`
 - FastAPI 서버 + 브라우저 UI
 - `/query` 표준 에러 응답 + 요청 ID 추적
 - 컬렉션 라우팅(`collection` 선택 + 키워드 fallback)

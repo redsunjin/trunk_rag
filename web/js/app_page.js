@@ -111,6 +111,9 @@ function syncDefaults() {
   if (provider.value === "lmstudio") {
     model.value = "local-model";
     baseUrl.value = "http://localhost:1234/v1";
+  } else if (provider.value === "groq") {
+    model.value = "groq-model";
+    baseUrl.value = "https://api.groq.com/openai/v1";
   } else if (provider.value === "ollama") {
     model.value = "qwen3:4b";
     baseUrl.value = "http://localhost:11434";
@@ -197,6 +200,9 @@ function buildGuidedErrorMessage(rawError, parsedError) {
     }
     if (provider.value === "lmstudio") {
       return `${base} | next: LM Studio 서버 주소와 모델 로드 상태를 확인하세요.`;
+    }
+    if (provider.value === "groq") {
+      return `${base} | next: GROQ_API_KEY, base URL, 모델명을 확인하세요.`;
     }
     return `${base} | next: API 키와 base URL 설정을 확인하세요.`;
   }

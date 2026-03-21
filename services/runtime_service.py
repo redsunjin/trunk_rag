@@ -156,6 +156,12 @@ def build_release_web_guidance(
         target_model = default_llm_model or "qwen3:4b"
         base_url = (default_llm_base_url or "http://localhost:11434").strip() or "http://localhost:11434"
         steps.append(f"Ollama를 `{base_url}`에서 실행하고 기본 모델 `{target_model}`을 준비하세요.")
+    elif default_llm_provider == "groq":
+        target_model = default_llm_model or "groq-model"
+        base_url = (default_llm_base_url or "https://api.groq.com/openai/v1").strip() or "https://api.groq.com/openai/v1"
+        steps.append(
+            f"Groq API를 `{base_url}`로 사용하고 `.env`의 `GROQ_API_KEY`와 `LLM_MODEL`을 실제 값으로 설정하세요."
+        )
     elif default_llm_provider == "lmstudio":
         target_model = default_llm_model or "local-model"
         base_url = (default_llm_base_url or "http://localhost:1234/v1").strip() or "http://localhost:1234/v1"

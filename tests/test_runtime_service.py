@@ -60,3 +60,16 @@ def test_get_default_llm_config_defaults_to_ollama(monkeypatch):
         "model": "qwen3:4b",
         "base_url": "http://localhost:11434",
     }
+
+
+def test_build_release_web_guidance_supports_groq():
+    guidance = runtime_service.build_release_web_guidance(
+        vectors=7,
+        default_llm_provider="groq",
+        default_llm_model="llama-3.3-70b-versatile",
+        default_llm_base_url="https://api.groq.com/openai/v1",
+        embedding_model="/models/local-bge-m3",
+    )
+
+    assert guidance["status"] == "ready"
+    assert any("GROQ_API_KEY" in step for step in guidance["steps"])

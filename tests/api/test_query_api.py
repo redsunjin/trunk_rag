@@ -72,7 +72,7 @@ def test_query_invalid_provider(client, monkeypatch):
     monkeypatch.setattr(routes_query.index_service, "get_vector_count", lambda _db: 1)
     response = client.post("/query", json={"query": "테스트", "llm_provider": "bad-provider"})
     body = _assert_query_error_shape(response, 400, "INVALID_PROVIDER")
-    assert "openai" in (body.get("hint") or "")
+    assert "groq" in (body.get("hint") or "")
 
 
 def test_query_llm_connection_failed(client, monkeypatch):

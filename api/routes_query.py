@@ -38,12 +38,12 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
                 base_url=req.llm_base_url,
             )
         except ValueError as exc:
-            raise QueryAPIError(
-                code="INVALID_PROVIDER",
-                status_code=400,
-                message="지원하지 않는 llm_provider입니다.",
-                hint="openai, ollama, lmstudio 중 하나를 사용하세요.",
-            ) from exc
+                raise QueryAPIError(
+                    code="INVALID_PROVIDER",
+                    status_code=400,
+                    message="지원하지 않는 llm_provider입니다.",
+                    hint="openai, ollama, lmstudio, groq 중 하나를 사용하세요.",
+                ) from exc
 
         log_provider = provider
         log_model = model
