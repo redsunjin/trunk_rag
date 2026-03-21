@@ -344,7 +344,7 @@ def main() -> int:
         base_url=args.base_url,
         timeout_seconds=args.timeout_seconds,
         eval_file=args.eval_file,
-        llm_provider=(args.llm_provider or str(default_llm["provider"] or "lmstudio")).strip(),
+        llm_provider=(args.llm_provider or str(default_llm["provider"] or "ollama")).strip(),
         llm_model=(args.llm_model or str(default_llm["model"] or "")).strip() or None,
         llm_base_url=(args.llm_base_url or str(default_llm["base_url"] or "")).strip() or None,
         llm_api_key=(args.llm_api_key or "").strip() or None,

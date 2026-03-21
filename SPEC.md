@@ -171,9 +171,9 @@
   "embedding_model": "BAAI/bge-m3",
   "query_timeout_seconds": 15,
   "max_context_chars": 1500,
-  "default_llm_provider": "lmstudio",
-  "default_llm_model": "qwen3.5-4b-mlx-4bit",
-  "default_llm_base_url": "http://127.0.0.1:1337/v1"
+  "default_llm_provider": "ollama",
+  "default_llm_model": "qwen3:4b",
+  "default_llm_base_url": "http://localhost:11434"
 }
 ```
 - 메인 UI 기본 모드는 `default_llm_*` 값을 자동 사용한다.
@@ -231,10 +231,10 @@
 {
   "query": "각 국가별 대표적인 과학적 성과를 요약해줘",
   "collection": "all",
-  "llm_provider": "lmstudio",
-  "llm_model": "qwen3.5-4b-mlx-4bit",
+  "llm_provider": "ollama",
+  "llm_model": "qwen3:4b",
   "llm_api_key": null,
-  "llm_base_url": "http://127.0.0.1:1337/v1"
+  "llm_base_url": "http://localhost:11434"
 }
 ```
 - `collection`/`collections`를 생략하면 키워드 기반 자동 라우팅을 사용한다.
@@ -400,8 +400,8 @@
 ```json
 {
   "answer": "...",
-  "provider": "lmstudio",
-  "model": "qwen3.5-4b-mlx-4bit"
+  "provider": "ollama",
+  "model": "qwen3:4b"
 }
 ```
 
@@ -421,7 +421,7 @@ cd <repo>
 cd <repo>
 copy .env.example .env
 ```
-- `.env.example` 기본값은 로컬 우선(`lmstudio`, `qwen3.5-4b-mlx-4bit`)이며, `LMSTUDIO_BASE_URL`은 `http://127.0.0.1:1337/v1`을 사용한다.
+- `.env.example` 기본값은 로컬 우선(`ollama`, `qwen3:4b`)이며, `OLLAMA_BASE_URL`은 `http://localhost:11434`를 사용한다.
 - 임베딩 모델은 `DOC_RAG_EMBEDDING_MODEL`로 override 가능하며, HuggingFace 모델 ID 또는 로컬 경로를 받을 수 있다.
 - 로컬 embedding 모델이 `MPS`에서 불안정하면 `DOC_RAG_EMBEDDING_DEVICE=cpu`로 강제할 수 있다.
 - 인덱스 생성:

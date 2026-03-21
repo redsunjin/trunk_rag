@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 class QueryRequest(BaseModel):
     query: str = Field(..., min_length=1)
-    llm_provider: str = Field(default="lmstudio")
+    llm_provider: str = Field(default="ollama")
     llm_model: str | None = None
     llm_api_key: str | None = None
     llm_base_url: str | None = None

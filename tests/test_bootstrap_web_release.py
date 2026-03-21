@@ -6,12 +6,12 @@ from scripts import bootstrap_web_release
 
 
 def test_ensure_env_file_copies_example(tmp_path: Path):
-    (tmp_path / ".env.example").write_text("LLM_PROVIDER=lmstudio\n", encoding="utf-8")
+    (tmp_path / ".env.example").write_text("LLM_PROVIDER=ollama\n", encoding="utf-8")
 
     result = bootstrap_web_release.ensure_env_file(tmp_path)
 
     assert result["created"] is True
-    assert (tmp_path / ".env").read_text(encoding="utf-8") == "LLM_PROVIDER=lmstudio\n"
+    assert (tmp_path / ".env").read_text(encoding="utf-8") == "LLM_PROVIDER=ollama\n"
 
 
 def test_ensure_virtualenv_skips_existing(tmp_path: Path):
@@ -29,7 +29,7 @@ def test_bootstrap_release_web_installs_requirements_when_import_probe_fails(
     tmp_path: Path,
     monkeypatch,
 ):
-    (tmp_path / ".env.example").write_text("LLM_PROVIDER=lmstudio\n", encoding="utf-8")
+    (tmp_path / ".env.example").write_text("LLM_PROVIDER=ollama\n", encoding="utf-8")
     python_path = bootstrap_web_release.venv_python_path(tmp_path)
     python_path.parent.mkdir(parents=True, exist_ok=True)
     python_path.write_text("", encoding="utf-8")
@@ -68,7 +68,7 @@ def test_bootstrap_release_web_creates_env_and_venv_without_install_when_ready(
     tmp_path: Path,
     monkeypatch,
 ):
-    (tmp_path / ".env.example").write_text("LLM_PROVIDER=lmstudio\n", encoding="utf-8")
+    (tmp_path / ".env.example").write_text("LLM_PROVIDER=ollama\n", encoding="utf-8")
     python_path = bootstrap_web_release.venv_python_path(tmp_path)
 
     def fake_run_command(args: list[str], *, cwd: Path):

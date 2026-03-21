@@ -109,8 +109,8 @@ function setStatus(type, text, detail) {
 
 function syncDefaults() {
   if (provider.value === "lmstudio") {
-    model.value = "qwen3.5-4b-mlx-4bit";
-    baseUrl.value = "http://127.0.0.1:1337/v1";
+    model.value = "local-model";
+    baseUrl.value = "http://localhost:1234/v1";
   } else if (provider.value === "ollama") {
     model.value = "qwen3:4b";
     baseUrl.value = "http://localhost:11434";
@@ -166,7 +166,7 @@ function setAdvancedSettingsOpen(open) {
 
 function applyRuntimeDefaults(data, force = false) {
   if (!data) return;
-  const runtimeProvider = data.default_llm_provider || "lmstudio";
+  const runtimeProvider = data.default_llm_provider || "ollama";
   const runtimeModel = data.default_llm_model || "";
   const runtimeBaseUrl = data.default_llm_base_url || "";
 

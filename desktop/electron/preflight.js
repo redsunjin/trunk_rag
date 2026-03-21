@@ -54,14 +54,14 @@ function defaultLlmModel(provider) {
     return "gpt-4o-mini";
   }
   if (provider === "lmstudio") {
-    return "qwen3.5-4b-mlx-4bit";
+    return "local-model";
   }
   return "qwen3:4b";
 }
 
 function resolveConfiguredLlm(rootDir) {
   const envFile = parseEnvFile(rootDir);
-  const provider = (process.env.LLM_PROVIDER || envFile.LLM_PROVIDER || "lmstudio").trim().toLowerCase();
+  const provider = (process.env.LLM_PROVIDER || envFile.LLM_PROVIDER || "ollama").trim().toLowerCase();
   const model = (
     process.env.LLM_MODEL ||
     envFile.LLM_MODEL ||
@@ -84,7 +84,7 @@ function resolveConfiguredLlm(rootDir) {
       baseUrl:
         process.env.LMSTUDIO_BASE_URL ||
         envFile.LMSTUDIO_BASE_URL ||
-        "http://127.0.0.1:1337/v1",
+        "http://localhost:1234/v1",
       source: Object.keys(envFile).length ? ".env" : "defaults",
     };
   }

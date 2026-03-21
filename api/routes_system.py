@@ -18,7 +18,7 @@ def health() -> dict[str, object]:
     vectors = index_service.get_vector_count_fast(default_collection)
     release_web = runtime_service.build_release_web_guidance(
         vectors=vectors,
-        default_llm_provider=str(default_llm["provider"] or "lmstudio"),
+        default_llm_provider=str(default_llm["provider"] or "ollama"),
         default_llm_model=str(default_llm["model"] or "") or None,
         default_llm_base_url=str(default_llm["base_url"] or "") or None,
         embedding_model=runtime_service.get_embedding_model(),

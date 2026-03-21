@@ -288,7 +288,7 @@ def build_report(
     if llm_provider == "ollama":
         checks.append(check_ollama(llm_base_url or "http://localhost:11434", llm_model, timeout_seconds))
     elif llm_provider == "lmstudio":
-        checks.append(check_lmstudio(llm_base_url or "http://127.0.0.1:1337/v1", llm_model, timeout_seconds))
+        checks.append(check_lmstudio(llm_base_url or "http://localhost:1234/v1", llm_model, timeout_seconds))
 
     ready = all(bool(check["ready"]) for check in checks if check.get("critical"))
     return {
@@ -337,7 +337,7 @@ def main() -> int:
     report = build_report(
         app_base_url=args.base_url,
         timeout_seconds=args.timeout_seconds,
-        llm_provider=(args.llm_provider or str(default_llm["provider"] or "lmstudio")).strip(),
+        llm_provider=(args.llm_provider or str(default_llm["provider"] or "ollama")).strip(),
         llm_model=(args.llm_model or str(default_llm["model"] or "")).strip() or None,
         llm_base_url=(args.llm_base_url or str(default_llm["base_url"] or "")).strip() or None,
         embedding_model=(args.embedding_model or runtime_service.get_embedding_model()).strip(),

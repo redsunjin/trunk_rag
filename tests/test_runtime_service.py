@@ -22,41 +22,41 @@ def test_get_max_context_chars_invalid_value_falls_back(monkeypatch):
 def test_build_release_web_guidance_marks_reindex_when_vectors_empty():
     guidance = runtime_service.build_release_web_guidance(
         vectors=0,
-        default_llm_provider="lmstudio",
-        default_llm_model="qwen3.5-4b-mlx-4bit",
-        default_llm_base_url="http://127.0.0.1:1337/v1",
+        default_llm_provider="ollama",
+        default_llm_model="qwen3:4b",
+        default_llm_base_url="http://localhost:11434",
         embedding_model="BAAI/bge-m3",
     )
 
     assert guidance["status"] == "needs_reindex"
     assert "인덱싱" in guidance["headline"]
     assert any("build_index.py --reset" in step for step in guidance["steps"])
-    assert any("LM Studio" in step for step in guidance["steps"])
+    assert any("Ollama" in step for step in guidance["steps"])
 
 
 def test_build_release_web_guidance_marks_ready_when_vectors_exist():
     guidance = runtime_service.build_release_web_guidance(
         vectors=7,
-        default_llm_provider="lmstudio",
-        default_llm_model="qwen3.5-4b-mlx-4bit",
-        default_llm_base_url="http://127.0.0.1:1337/v1",
+        default_llm_provider="ollama",
+        default_llm_model="qwen3:4b",
+        default_llm_base_url="http://localhost:11434",
         embedding_model="/models/local-bge-m3",
     )
 
     assert guidance["status"] == "ready"
     assert any("/app" in step for step in guidance["steps"])
-    assert any("qwen3.5-4b-mlx-4bit" in step for step in guidance["steps"])
+    assert any("qwen3:4b" in step for step in guidance["steps"])
 
 
-def test_get_default_llm_config_defaults_to_lmstudio(monkeypatch):
+def test_get_default_llm_config_defaults_to_ollama(monkeypatch):
     monkeypatch.delenv("LLM_PROVIDER", raising=False)
     monkeypatch.delenv("LLM_MODEL", raising=False)
-    monkeypatch.delenv("LMSTUDIO_BASE_URL", raising=False)
+    monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
 
     resolved = runtime_service.get_default_llm_config()
 
     assert resolved == {
-        "provider": "lmstudio",
-        "model": "qwen3.5-4b-mlx-4bit",
-        "base_url": "http://127.0.0.1:1337/v1",
+        "provider": "ollama",
+        "model": "qwen3:4b",
+        "base_url": "http://localhost:11434",
     }
