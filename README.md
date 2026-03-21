@@ -220,6 +220,7 @@ cd <repo>
 - 이 스크립트는 `all/eu/fr/ge/it/uk` 컬렉션의 벡터 존재 여부와 `ops-baseline` `3/3 pass`를 함께 확인합니다.
 - 실행 순서는 `runtime_preflight -> all-routes collections -> ops-baseline eval`이며, 실패 시 `APP_HEALTH_UNREACHABLE`, `COLLECTIONS_CHECK_FAILED`, `OPS_EVAL_FAILED` 진단 코드를 함께 출력합니다.
 - `2026-03-21` 현재 로컬 검증에서는 앱 미기동 상태에서 `APP_HEALTH_UNREACHABLE`로 즉시 막히는 것을 확인했습니다.
+- 같은 날짜 실측에서는 `env HF_HUB_OFFLINE=1 ./.venv/bin/python build_index.py --reset`으로 all-routes를 다시 생성한 뒤, `llama3.1:8b` 게이트가 `3/3 pass`, `avg_weighted_score=0.9645`, `p95_latency_ms=13501.527`로 통과했습니다.
 - 종료 코드 `0`은 게이트 통과, `1`은 컬렉션 비어 있음 또는 eval 실패를 뜻합니다.
 
 ## Roadmap Harness

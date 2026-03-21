@@ -208,8 +208,9 @@
 - `/health`와 `/query` 복구 안내가 `run_doc_rag.bat`와 `/intro` 기준으로 연결되도록 정리했다.
 - `docs/RELEASE_WEB_MVP_CHECKLIST.md`를 추가해 릴리즈/운영 체크리스트를 단일 문서로 고정했다.
 - 문서/타깃 테스트 기준 `LOOP-004`까지는 완료됐다.
-- 다만 실제 release gate 실측에서 `ops-baseline`이 `LLM_CONNECTION_FAILED`로 `pass_rate=0.0`이라, 현재 active는 유지한다.
-- 다음 실제 blocker는 `ollama:llama3.1:8b` 준비 또는 기본 LLM 런타임 경로 복구다.
+- `2026-03-21` 실측에서는 앱 기동 후 첫 release gate가 `VECTORSTORE_EMBEDDING_MISMATCH(409)`로 막혔고, all-routes 인덱스를 현재 임베딩 차원으로 다시 생성해야 함을 확인했다.
+- 같은 날짜 `env HF_HUB_OFFLINE=1 ./.venv/bin/python build_index.py --reset` 뒤 `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434 --json` 결과는 `pass_rate=1.0`, `avg_weighted_score=0.9645`, `p95_latency_ms=13501.527`로 통과했다.
+- 오프라인/폐쇄망 환경에서는 HuggingFace cache가 이미 있으면 `HF_HUB_OFFLINE=1`을 붙인 재인덱싱 경로를 우선 복구안으로 사용한다.
 - `2026-03-21`에는 `scripts/check_ops_baseline_gate.py`가 `runtime_preflight` 선행 + `APP_HEALTH_UNREACHABLE` / `COLLECTIONS_CHECK_FAILED` / `OPS_EVAL_FAILED` 진단 출력을 하도록 보강됐다.
 - 같은 날짜 로컬 게이트 실행에서는 서버 미기동 상태가 `APP_HEALTH_UNREACHABLE`로 즉시 드러났고, `/query`는 임베딩 차원 불일치를 `VECTORSTORE_EMBEDDING_MISMATCH(409)`로 안내하도록 정리됐다.
 - 회귀 검증은 `./.venv/bin/python -m pytest -q` -> `69 passed in 7.65s`, `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`까지 확인했다.
