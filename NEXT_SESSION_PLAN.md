@@ -28,7 +28,7 @@
 - current_active_id: `LOOP-001`
 - current_active_title: `배포형 웹 MVP 게이트`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
-- default_regression_gate: `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model qwen3:4b --llm-base-url http://localhost:11434`
+- default_regression_gate: `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`
 - closeout_rule: `active` 항목은 검증 결과와 문서 반영, 커밋까지 끝난 뒤에만 `done`으로 본다.
 - blocked_rule: blocker와 재개 조건 없이 `blocked` 상태로 이동하지 않는다.
 - promotion_rule: 현재 `active`가 `done`이 되면 첫 번째 `pending` 항목을 즉시 다음 `active`로 승격한다.
@@ -108,7 +108,7 @@
 
 검증:
 - `./.venv/bin/python -m pytest -q`
-- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model qwen3:4b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
@@ -225,6 +225,7 @@
 - 같은 날짜 단일 질문(`uk`, 뉴턴 국장 상징) 실측에서는 `qwen3.5:4b` 첫 요청이 `active_collection_probe_ms=6464.292`, `context.elapsed_ms=146.055`, `invoke.invoke_ms=15005.260(timeout)`이었고, warm-up 이후 두 번째 요청도 `active_collection_probe_ms=5.556`, `invoke.invoke_ms=15005.289(timeout)`으로 다시 실패했다.
 - 동일 질문에서 `llama3.1:8b`는 `active_collection_probe_ms=4.140`, `context.elapsed_ms=146.360`, `invoke.invoke_ms=14076.086(ok)`, `groq + llama-3.1-8b-instant`는 `active_collection_probe_ms=3.456`, `context.elapsed_ms=28.126`, `llm_init_ms=177.596`, `invoke.invoke_ms=666.962(ok)`였다.
 - 다음 판단 기준은 retrieval이 아니라 local invoke 처리량이며, cold start는 첫 요청 지연을 키우지만 반복 timeout의 주원인은 아니었다.
+- `2026-03-23` 기준 해결책 1차로 로컬 기본 Ollama 프로파일과 릴리즈 회귀 게이트를 `llama3.1:8b + 기본 timeout 30초`로 승격하고, `qwen3:4b`는 기본값/게이트 기준에서 제외했다.
 
 후속 대상 (P3):
 1. GraphRAG 관련 문서/PoC는 잠정 중단 상태의 아카이브로만 유지
@@ -249,7 +250,7 @@
 4. `GET /health` 확인(벡터 수/auto_approve/pending/chunking_mode 확인)
 5. `POST /reindex` 1회 실행(응답 내 `validation.summary_text` 확인)
 6. `/query` 샘플 질의(단일 + 다중 컬렉션 자동 라우팅) 확인
-7. `./.venv\Scripts\python.exe scripts\check_ops_baseline_gate.py --llm-provider ollama --llm-model qwen3:4b --llm-base-url http://localhost:11434` 1회 실행
+7. `./.venv\Scripts\python.exe scripts\check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434` 1회 실행
 
 추가 확인:
 8. 기본 모드에서 LLM 세부 설정 없이 질의 가능한지 확인

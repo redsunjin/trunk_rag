@@ -23,7 +23,7 @@ def test_build_release_web_guidance_marks_reindex_when_vectors_empty():
     guidance = runtime_service.build_release_web_guidance(
         vectors=0,
         default_llm_provider="ollama",
-        default_llm_model="qwen3:4b",
+        default_llm_model="llama3.1:8b",
         default_llm_base_url="http://localhost:11434",
         embedding_model="BAAI/bge-m3",
     )
@@ -38,14 +38,14 @@ def test_build_release_web_guidance_marks_ready_when_vectors_exist():
     guidance = runtime_service.build_release_web_guidance(
         vectors=7,
         default_llm_provider="ollama",
-        default_llm_model="qwen3:4b",
+        default_llm_model="llama3.1:8b",
         default_llm_base_url="http://localhost:11434",
         embedding_model="/models/local-bge-m3",
     )
 
     assert guidance["status"] == "ready"
     assert any("/app" in step for step in guidance["steps"])
-    assert any("qwen3:4b" in step for step in guidance["steps"])
+    assert any("llama3.1:8b" in step for step in guidance["steps"])
 
 
 def test_get_default_llm_config_defaults_to_ollama(monkeypatch):
@@ -57,7 +57,7 @@ def test_get_default_llm_config_defaults_to_ollama(monkeypatch):
 
     assert resolved == {
         "provider": "ollama",
-        "model": "qwen3:4b",
+        "model": "llama3.1:8b",
         "base_url": "http://localhost:11434",
     }
 

@@ -153,7 +153,7 @@ def build_release_web_guidance(
     headline = "기본 웹 MVP 경로로 바로 사용할 수 있습니다."
 
     if default_llm_provider == "ollama":
-        target_model = default_llm_model or "qwen3:4b"
+        target_model = default_llm_model or "llama3.1:8b"
         base_url = (default_llm_base_url or "http://localhost:11434").strip() or "http://localhost:11434"
         steps.append(f"Ollama를 `{base_url}`에서 실행하고 기본 모델 `{target_model}`을 준비하세요.")
     elif default_llm_provider == "groq":

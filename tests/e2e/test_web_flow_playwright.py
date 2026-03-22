@@ -114,10 +114,10 @@ def test_intro_app_flow(page: Page, live_server_url: str):
                     "auto_approve": False,
                     "pending_requests": 0,
                     "chunking_mode": "char",
-                    "query_timeout_seconds": 15,
+                    "query_timeout_seconds": 30,
                     "max_context_chars": 1500,
                     "default_llm_provider": "ollama",
-                    "default_llm_model": "qwen3:4b",
+                    "default_llm_model": "llama3.1:8b",
                     "default_llm_base_url": "http://localhost:11434",
                 }
             ),
@@ -138,7 +138,7 @@ def test_intro_app_flow(page: Page, live_server_url: str):
                 {
                     "answer": "모킹된 질의 응답",
                     "provider": "ollama",
-                    "model": "qwen3:4b",
+                    "model": "llama3.1:8b",
                 }
             ),
         )
@@ -158,10 +158,10 @@ def test_intro_app_flow(page: Page, live_server_url: str):
             body=json.dumps(
                 {
                     "code": "LLM_TIMEOUT",
-                    "message": "LLM 응답 시간이 제한(15초)을 초과했습니다.",
+                    "message": "LLM 응답 시간이 제한(30초)을 초과했습니다.",
                     "hint": "모델 상태를 확인하거나 더 짧은 질문으로 다시 시도하세요.",
                     "request_id": "req-e2e-timeout",
-                    "detail": "LLM 응답 시간이 제한(15초)을 초과했습니다.",
+                    "detail": "LLM 응답 시간이 제한(30초)을 초과했습니다.",
                 }
             ),
             headers={"X-Request-ID": "req-e2e-timeout"},

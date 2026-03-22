@@ -8,7 +8,7 @@
 - 문서: 전처리 완료된 `data/*.md` 입력
 - 청킹: `##`, `###`, `####` 헤더 기반 + 문자 분할(기본), 토큰 분할(옵션)
 - 벡터스토어: Chroma (로컬 폴더)
-- LLM: `openai` / `ollama` / `lmstudio` / `groq` 선택(기본 예시: `ollama` + `qwen3:4b`)
+- LLM: `openai` / `ollama` / `lmstudio` / `groq` 선택(기본 예시: `ollama` + `llama3.1:8b`)
 - 인터페이스: FastAPI + 브라우저(`http://127.0.0.1:8000`)
 - 업로드 워크플로우: 사용자 요청(`pending`) -> 관리자 승인/반려
 
@@ -189,7 +189,7 @@ cd <repo>
 .venv\Scripts\python.exe scripts\eval_query_quality.py `
   --base-url http://127.0.0.1:8000 `
   --llm-provider ollama `
-  --llm-model qwen3:4b `
+  --llm-model llama3.1:8b `
   --llm-base-url http://localhost:11434 `
   --output-json docs\reports\query_answer_eval_2026-03-17.json `
   --output-report docs\reports\QUERY_ANSWER_EVAL_REPORT_2026-03-17.md
@@ -213,7 +213,7 @@ cd <repo>
 ```powershell
 .venv\Scripts\python.exe scripts\check_ops_baseline_gate.py `
   --llm-provider ollama `
-  --llm-model qwen3:4b `
+  --llm-model llama3.1:8b `
   --llm-base-url http://localhost:11434
 ```
 
@@ -278,7 +278,7 @@ curl http://127.0.0.1:8000/health
 
 curl -X POST http://127.0.0.1:8000/query `
   -H "Content-Type: application/json" `
-  -d "{\"query\":\"각 국가별 대표적인 과학적 성과\",\"collection\":\"all\",\"llm_provider\":\"ollama\",\"llm_model\":\"qwen3:4b\",\"llm_base_url\":\"http://localhost:11434\"}"
+  -d "{\"query\":\"각 국가별 대표적인 과학적 성과\",\"collection\":\"all\",\"llm_provider\":\"ollama\",\"llm_model\":\"llama3.1:8b\",\"llm_base_url\":\"http://localhost:11434\"}"
 ```
 
 ### `/query` 에러 응답 규격
@@ -288,7 +288,7 @@ curl -X POST http://127.0.0.1:8000/query `
 {
   "answer": "...",
   "provider": "ollama",
-  "model": "qwen3:4b"
+  "model": "llama3.1:8b"
 }
 ```
 
@@ -296,14 +296,14 @@ curl -X POST http://127.0.0.1:8000/query `
 ```json
 {
   "code": "LLM_TIMEOUT",
-  "message": "LLM 응답 시간이 제한(15초)을 초과했습니다.",
+  "message": "LLM 응답 시간이 제한(30초)을 초과했습니다.",
   "hint": "모델 상태를 확인하거나 더 짧은 질문으로 다시 시도하세요.",
   "request_id": "uuid-or-client-id",
-  "detail": "LLM 응답 시간이 제한(15초)을 초과했습니다."
+  "detail": "LLM 응답 시간이 제한(30초)을 초과했습니다."
 }
 ```
 
-- 타임아웃은 기본 `15초`이며 `DOC_RAG_QUERY_TIMEOUT_SECONDS`로 조정할 수 있습니다.
+- 타임아웃은 기본 `30초`이며 `DOC_RAG_QUERY_TIMEOUT_SECONDS`로 조정할 수 있습니다.
 
 업로드 요청 생성 예시:
 
@@ -353,7 +353,7 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 
 `.env.example`를 복사해 `.env` 생성 후 사용.
 
-- 기본 예시는 `LLM_PROVIDER=ollama`, `LLM_MODEL=qwen3:4b`
+- 기본 예시는 `LLM_PROVIDER=ollama`, `LLM_MODEL=llama3.1:8b`
 - 로컬 기본 경로에서는 `OLLAMA_BASE_URL=http://localhost:11434`
 - 오프라인 운영 시에는 `DOC_RAG_EMBEDDING_MODEL`로 지정한 경로 또는 `BAAI/bge-m3` 로컬 캐시가 필요
 - LM Studio 로컬 경로를 쓰려면 서버가 열려 있고 원하는 모델이 로드되어 있어야 함
@@ -365,7 +365,7 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 - Ollama 응답 길이 제한(선택): `DOC_RAG_OLLAMA_NUM_PREDICT` (예: `8`, 미설정 시 모델 기본값)
 - 관리자 모드 인증 코드(선택): `DOC_RAG_ADMIN_CODE` (기본값: `admin1234`)
 - 개인 운영 자동 승인(선택): `DOC_RAG_AUTO_APPROVE` (`1/true/on`이면 요청 생성 즉시 승인/인덱싱)
-- 질의 타임아웃(선택): `DOC_RAG_QUERY_TIMEOUT_SECONDS` (기본 `15`, 단위 초)
+- 질의 타임아웃(선택): `DOC_RAG_QUERY_TIMEOUT_SECONDS` (기본 `30`, 단위 초)
 - 컨텍스트 길이 제한(선택): `DOC_RAG_MAX_CONTEXT_CHARS` (미설정 시 제한 없음)
 - 청킹 모드(선택): `DOC_RAG_CHUNKING_MODE` (`char` 기본, `token` 옵션)
 - 토큰 인코딩(선택): `DOC_RAG_CHUNK_TOKEN_ENCODING` (기본 `cl100k_base`)
@@ -467,7 +467,7 @@ npm run smoke
 .venv\Scripts\python.exe scripts\benchmark_query_e2e.py `
   --base-url http://127.0.0.1:8010 `
   --llm-provider ollama `
-  --llm-model qwen3:4b `
+  --llm-model llama3.1:8b `
   --llm-base-url http://localhost:11434 `
   --rounds 2 `
   --warmup 1 `

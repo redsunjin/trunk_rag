@@ -115,7 +115,7 @@ function syncDefaults() {
     model.value = "groq-model";
     baseUrl.value = "https://api.groq.com/openai/v1";
   } else if (provider.value === "ollama") {
-    model.value = "qwen3:4b";
+    model.value = "llama3.1:8b";
     baseUrl.value = "http://localhost:11434";
   } else {
     model.value = "gpt-4o-mini";

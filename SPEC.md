@@ -66,7 +66,7 @@
 - `GET /rag-docs`, `GET /rag-docs/{doc_name}` 구현
 - 승인된 요청의 managed markdown runtime 저장소/manifest 구현
 - `/query` 표준 실패 응답(`code`, `message`, `hint`, `request_id`, `detail`) 구현
-- `/query` 타임아웃 정책(15초, 재시도 없음) 적용
+- `/query` 타임아웃 정책(30초 기본, 재시도 없음) 적용
 - `/query` 성공/실패 응답에 `X-Request-ID` 헤더 제공
 - `/` -> `/intro` 리다이렉트
 - `/intro` 인트로 페이지, `/app` 메인 RAG UI 제공
@@ -169,10 +169,10 @@
   "pending_requests": 2,
   "chunking_mode": "char",
   "embedding_model": "BAAI/bge-m3",
-  "query_timeout_seconds": 15,
+  "query_timeout_seconds": 30,
   "max_context_chars": 1500,
   "default_llm_provider": "ollama",
-  "default_llm_model": "qwen3:4b",
+  "default_llm_model": "llama3.1:8b",
   "default_llm_base_url": "http://localhost:11434"
 }
 ```
@@ -232,7 +232,7 @@
   "query": "각 국가별 대표적인 과학적 성과를 요약해줘",
   "collection": "all",
   "llm_provider": "ollama",
-  "llm_model": "qwen3:4b",
+  "llm_model": "llama3.1:8b",
   "llm_api_key": null,
   "llm_base_url": "http://localhost:11434"
 }
@@ -401,7 +401,7 @@
 {
   "answer": "...",
   "provider": "ollama",
-  "model": "qwen3:4b"
+  "model": "llama3.1:8b"
 }
 ```
 
@@ -421,7 +421,7 @@ cd <repo>
 cd <repo>
 copy .env.example .env
 ```
-- `.env.example` 기본값은 로컬 우선(`ollama`, `qwen3:4b`)이며, `OLLAMA_BASE_URL`은 `http://localhost:11434`를 사용한다.
+- `.env.example` 기본값은 로컬 우선(`ollama`, `llama3.1:8b`)이며, `OLLAMA_BASE_URL`은 `http://localhost:11434`를 사용한다.
 - 임베딩 모델은 `DOC_RAG_EMBEDDING_MODEL`로 override 가능하며, HuggingFace 모델 ID 또는 로컬 경로를 받을 수 있다.
 - 로컬 embedding 모델이 `MPS`에서 불안정하면 `DOC_RAG_EMBEDDING_DEVICE=cpu`로 강제할 수 있다.
 - 인덱스 생성:

@@ -32,7 +32,7 @@
 
 | id | status | title | verify |
 | --- | --- | --- | --- |
-| LOOP-001 | active | 배포형 웹 MVP 게이트 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model qwen3:4b --llm-base-url http://localhost:11434` |
+| LOOP-001 | active | 배포형 웹 MVP 게이트 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -64,7 +64,7 @@
 
 검증:
 - `./.venv/bin/python -m pytest -q`
-- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model qwen3:4b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 진행 메모 (2026-03-20):
@@ -93,6 +93,7 @@
 - 같은 날짜 단일 질문(`uk`, 뉴턴 국장 상징) 진단에서는 `qwen3.5:4b` 첫 요청이 `active_collection_probe_ms=6464.292`, `context.elapsed_ms=146.055`, `invoke.invoke_ms=15005.260(timeout)`이었고, 두 번째 요청도 `active_collection_probe_ms=5.556`으로 내려간 뒤 `invoke.invoke_ms=15005.289(timeout)`으로 다시 실패했다.
 - 동일 질문에서 `llama3.1:8b`는 `active_collection_probe_ms=4.140`, `context.elapsed_ms=146.360`, `invoke.invoke_ms=14076.086(ok)`이었고, `groq + llama-3.1-8b-instant`는 `active_collection_probe_ms=3.456`, `context.elapsed_ms=28.126`, `llm_init_ms=177.596`, `invoke.invoke_ms=666.962(ok)`였다.
 - 현재 실측 결론은 retrieval/context stuffing보다 로컬 LLM invoke 처리량이 주병목이며, 첫 요청의 임베딩 warm-up 비용은 부가 지연이지만 반복 timeout의 주원인은 아니다.
+- `2026-03-23` 기준 해결책 1차로 로컬 기본 Ollama 프로파일과 릴리즈 회귀 게이트를 `llama3.1:8b + 기본 timeout 30초`로 승격하고, `qwen3:4b`는 기본값에서 제외했다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
