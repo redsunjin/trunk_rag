@@ -90,6 +90,9 @@
 - 같은 날짜 `groq + llama-3.1-8b-instant`는 `ops-baseline 3/3 pass`, `avg_latency_ms=709.273`, `p95_latency_ms=831.045`로 가장 안정적인 운영 프로파일이었다.
 - 현재 판단상 `trunk_rag`는 Mac mini Pro 급 로컬 엣지 환경만으로 기본 운영을 보장하기 어렵고, 로컬 최소 권고선은 사실상 `M4 Pro + 64GB unified memory` 이상이다.
 - `2026-03-22`에는 `/query` 단계별 병목을 분리하기 위해 라우팅, active collection probe, LLM init, context build, invoke timing 로그를 추가했다.
+- 같은 날짜 단일 질문(`uk`, 뉴턴 국장 상징) 진단에서는 `qwen3.5:4b` 첫 요청이 `active_collection_probe_ms=6464.292`, `context.elapsed_ms=146.055`, `invoke.invoke_ms=15005.260(timeout)`이었고, 두 번째 요청도 `active_collection_probe_ms=5.556`으로 내려간 뒤 `invoke.invoke_ms=15005.289(timeout)`으로 다시 실패했다.
+- 동일 질문에서 `llama3.1:8b`는 `active_collection_probe_ms=4.140`, `context.elapsed_ms=146.360`, `invoke.invoke_ms=14076.086(ok)`이었고, `groq + llama-3.1-8b-instant`는 `active_collection_probe_ms=3.456`, `context.elapsed_ms=28.126`, `llm_init_ms=177.596`, `invoke.invoke_ms=666.962(ok)`였다.
+- 현재 실측 결론은 retrieval/context stuffing보다 로컬 LLM invoke 처리량이 주병목이며, 첫 요청의 임베딩 warm-up 비용은 부가 지연이지만 반복 timeout의 주원인은 아니다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

@@ -222,6 +222,9 @@
 - 같은 날짜 `groq + llama-3.1-8b-instant`는 `ops-baseline 3/3 pass`, `avg_latency_ms=709.273`, `p95_latency_ms=831.045`로 가장 안정적인 운영 프로파일이었다.
 - 현재 판단상 Mac mini Pro 급 로컬 엣지 환경만으로는 기본 운영 보장이 어렵고, 로컬 최소 권고선은 사실상 `M4 Pro + 64GB unified memory` 이상이다.
 - 같은 날짜 `/query` 단계별 timing 로그를 추가해 라우팅, context build, LLM invoke 병목을 실제 숫자로 분리할 수 있게 했다.
+- 같은 날짜 단일 질문(`uk`, 뉴턴 국장 상징) 실측에서는 `qwen3.5:4b` 첫 요청이 `active_collection_probe_ms=6464.292`, `context.elapsed_ms=146.055`, `invoke.invoke_ms=15005.260(timeout)`이었고, warm-up 이후 두 번째 요청도 `active_collection_probe_ms=5.556`, `invoke.invoke_ms=15005.289(timeout)`으로 다시 실패했다.
+- 동일 질문에서 `llama3.1:8b`는 `active_collection_probe_ms=4.140`, `context.elapsed_ms=146.360`, `invoke.invoke_ms=14076.086(ok)`, `groq + llama-3.1-8b-instant`는 `active_collection_probe_ms=3.456`, `context.elapsed_ms=28.126`, `llm_init_ms=177.596`, `invoke.invoke_ms=666.962(ok)`였다.
+- 다음 판단 기준은 retrieval이 아니라 local invoke 처리량이며, cold start는 첫 요청 지연을 키우지만 반복 timeout의 주원인은 아니었다.
 
 후속 대상 (P3):
 1. GraphRAG 관련 문서/PoC는 잠정 중단 상태의 아카이브로만 유지
