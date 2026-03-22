@@ -30,6 +30,26 @@ from core.settings import (
 
 logger = logging.getLogger("doc_rag.api")
 
+RUNTIME_PROFILE_VERIFIED = "verified"
+RUNTIME_PROFILE_EXPERIMENTAL = "experimental"
+RUNTIME_PROFILE_NOT_RECOMMENDED = "not_recommended"
+VERIFIED_LOCAL_OLLAMA_MODEL = "llama3.1:8b"
+VERIFIED_LOCAL_OLLAMA_TIMEOUT_SECONDS = 30
+VERIFIED_GROQ_MODEL = "llama-3.1-8b-instant"
+
+NOT_RECOMMENDED_RUNTIME_MODELS: dict[str, set[str]] = {
+    "ollama": {
+        "qwen3:4b",
+        "qwen3.5:4b",
+        "qwen3.5:9b",
+        "gemma3:12b",
+    },
+    "lmstudio": {
+        "qwen3.5-2b-mlx-4bit",
+        "qwen3.5-4b-mlx-4bit",
+    },
+}
+
 
 def get_admin_code() -> str:
     value = os.getenv(ADMIN_CODE_ENV_KEY, "admin1234").strip()
@@ -133,6 +153,82 @@ def get_embedding_model() -> str:
     return value or DEFAULT_EMBEDDING_MODEL
 
 
+def build_runtime_profile(
+    *,
+    provider: str,
+    model: str | None,
+    timeout_seconds: int,
+) -> dict[str, object]:
+    normalized_provider = normalize_provider(provider)
+    normalized_model = (model or "").strip()
+
+    if normalized_provider == "groq" and normalized_model == VERIFIED_GROQ_MODEL:
+        return {
+            "status": RUNTIME_PROFILE_VERIFIED,
+            "scope": "cloud",
+            "message": (
+                "현재 Groq 런타임 프로파일은 ops-baseline 실측에서 검증됐습니다."
+            ),
+            "recommendation": "운영 안정성과 지연시간 기준으로 현재 가장 권장되는 경로입니다.",
+        }
+
+    if normalized_provider == "ollama" and normalized_model == VERIFIED_LOCAL_OLLAMA_MODEL:
+        if timeout_seconds >= VERIFIED_LOCAL_OLLAMA_TIMEOUT_SECONDS:
+            return {
+                "status": RUNTIME_PROFILE_VERIFIED,
+                "scope": "local",
+                "message": (
+                    "현재 Ollama 런타임 프로파일은 로컬 ops-baseline 실측에서 검증됐습니다."
+                ),
+                "recommendation": (
+                    f"`DOC_RAG_QUERY_TIMEOUT_SECONDS={VERIFIED_LOCAL_OLLAMA_TIMEOUT_SECONDS}` 이상을 유지하세요."
+                ),
+            }
+        return {
+            "status": RUNTIME_PROFILE_EXPERIMENTAL,
+            "scope": "local",
+            "message": (
+                "모델은 검증된 로컬 후보지만 현재 timeout이 낮아 운영 게이트 재현 가능성이 떨어집니다."
+            ),
+            "recommendation": (
+                f"`{VERIFIED_LOCAL_OLLAMA_MODEL}`를 유지하고 "
+                f"`DOC_RAG_QUERY_TIMEOUT_SECONDS={VERIFIED_LOCAL_OLLAMA_TIMEOUT_SECONDS}` 이상으로 올리세요."
+            ),
+        }
+
+    if normalized_model and normalized_model in NOT_RECOMMENDED_RUNTIME_MODELS.get(normalized_provider, set()):
+        recommendation = (
+            f"로컬 기본 경로는 `{VERIFIED_LOCAL_OLLAMA_MODEL}` + "
+            f"`DOC_RAG_QUERY_TIMEOUT_SECONDS={VERIFIED_LOCAL_OLLAMA_TIMEOUT_SECONDS}`를 권장합니다."
+        )
+        if normalized_provider == "groq":
+            recommendation = f"클라우드 운영은 `{VERIFIED_GROQ_MODEL}` 경로를 우선 검토하세요."
+        return {
+            "status": RUNTIME_PROFILE_NOT_RECOMMENDED,
+            "scope": "local" if normalized_provider in {"ollama", "lmstudio"} else "cloud",
+            "message": "현재 런타임 프로파일은 local ops-baseline 실측에서 반복 실패한 모델 조합입니다.",
+            "recommendation": recommendation,
+        }
+
+    scope = "local" if normalized_provider in {"ollama", "lmstudio"} else "cloud"
+    if normalized_provider == "groq":
+        recommendation = f"운영 검증 기준은 `{VERIFIED_GROQ_MODEL}`입니다."
+    elif normalized_provider == "ollama":
+        recommendation = (
+            f"로컬 기본 운영은 `{VERIFIED_LOCAL_OLLAMA_MODEL}` + "
+            f"`DOC_RAG_QUERY_TIMEOUT_SECONDS={VERIFIED_LOCAL_OLLAMA_TIMEOUT_SECONDS}`를 먼저 기준으로 삼으세요."
+        )
+    else:
+        recommendation = "현재 provider/model 조합은 연결 가능 여부와 별도로 ops-baseline 실측이 필요합니다."
+
+    return {
+        "status": RUNTIME_PROFILE_EXPERIMENTAL,
+        "scope": scope,
+        "message": "현재 런타임 프로파일은 연결 가능 여부만 확인됐고 운영 게이트는 아직 미검증입니다.",
+        "recommendation": recommendation,
+    }
+
+
 def is_local_path_like(value: str) -> bool:
     expanded = Path(value).expanduser()
     return expanded.is_absolute() or value.startswith(".") or value.startswith("~")
@@ -144,6 +240,7 @@ def build_release_web_guidance(
     default_llm_provider: str,
     default_llm_model: str | None,
     default_llm_base_url: str | None,
+    query_timeout_seconds: int,
     embedding_model: str,
 ) -> dict[str, object]:
     steps = [
@@ -151,6 +248,11 @@ def build_release_web_guidance(
     ]
     status = "ready"
     headline = "기본 웹 MVP 경로로 바로 사용할 수 있습니다."
+    runtime_profile = build_runtime_profile(
+        provider=default_llm_provider,
+        model=default_llm_model,
+        timeout_seconds=query_timeout_seconds,
+    )
 
     if default_llm_provider == "ollama":
         target_model = default_llm_model or "llama3.1:8b"
@@ -179,6 +281,17 @@ def build_release_web_guidance(
             "오프라인 환경이면 `DOC_RAG_EMBEDDING_MODEL`에 로컬 임베딩 경로를 지정하거나 HuggingFace cache를 준비하세요."
         )
 
+    if runtime_profile["status"] == RUNTIME_PROFILE_EXPERIMENTAL:
+        status = "runtime_warning"
+        headline = "현재 런타임 프로파일은 연결 가능하지만 운영 기본값으로는 아직 미검증입니다."
+        steps.append(str(runtime_profile["recommendation"]))
+    elif runtime_profile["status"] == RUNTIME_PROFILE_NOT_RECOMMENDED:
+        status = "needs_verified_runtime"
+        headline = "현재 런타임 프로파일은 기본 운영 경로로 비권장입니다."
+        steps.append(str(runtime_profile["recommendation"]))
+    else:
+        steps.append(str(runtime_profile["recommendation"]))
+
     if vectors <= 0:
         status = "needs_reindex"
         headline = "질의 전에 먼저 인덱싱이 필요합니다."
@@ -191,6 +304,7 @@ def build_release_web_guidance(
         "status": status,
         "headline": headline,
         "steps": steps,
+        "runtime_profile": runtime_profile,
     }
 
 

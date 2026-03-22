@@ -25,6 +25,7 @@ def test_build_release_web_guidance_marks_reindex_when_vectors_empty():
         default_llm_provider="ollama",
         default_llm_model="llama3.1:8b",
         default_llm_base_url="http://localhost:11434",
+        query_timeout_seconds=30,
         embedding_model="BAAI/bge-m3",
     )
 
@@ -40,12 +41,14 @@ def test_build_release_web_guidance_marks_ready_when_vectors_exist():
         default_llm_provider="ollama",
         default_llm_model="llama3.1:8b",
         default_llm_base_url="http://localhost:11434",
+        query_timeout_seconds=30,
         embedding_model="/models/local-bge-m3",
     )
 
     assert guidance["status"] == "ready"
     assert any("/app" in step for step in guidance["steps"])
     assert any("llama3.1:8b" in step for step in guidance["steps"])
+    assert guidance["runtime_profile"]["status"] == "verified"
 
 
 def test_get_default_llm_config_defaults_to_ollama(monkeypatch):
@@ -68,8 +71,42 @@ def test_build_release_web_guidance_supports_groq():
         default_llm_provider="groq",
         default_llm_model="llama-3.3-70b-versatile",
         default_llm_base_url="https://api.groq.com/openai/v1",
+        query_timeout_seconds=30,
         embedding_model="/models/local-bge-m3",
     )
 
-    assert guidance["status"] == "ready"
+    assert guidance["status"] == "runtime_warning"
     assert any("GROQ_API_KEY" in step for step in guidance["steps"])
+
+
+def test_build_runtime_profile_marks_verified_local_ollama():
+    profile = runtime_service.build_runtime_profile(
+        provider="ollama",
+        model="llama3.1:8b",
+        timeout_seconds=30,
+    )
+
+    assert profile["status"] == "verified"
+    assert profile["scope"] == "local"
+
+
+def test_build_runtime_profile_marks_low_timeout_as_experimental():
+    profile = runtime_service.build_runtime_profile(
+        provider="ollama",
+        model="llama3.1:8b",
+        timeout_seconds=15,
+    )
+
+    assert profile["status"] == "experimental"
+    assert "30" in str(profile["recommendation"])
+
+
+def test_build_runtime_profile_marks_qwen_as_not_recommended():
+    profile = runtime_service.build_runtime_profile(
+        provider="ollama",
+        model="qwen3:4b",
+        timeout_seconds=30,
+    )
+
+    assert profile["status"] == "not_recommended"
+    assert "llama3.1:8b" in str(profile["recommendation"])

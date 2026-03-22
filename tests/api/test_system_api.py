@@ -17,6 +17,10 @@ def test_health_returns_200(client):
     assert isinstance(body["max_context_chars"], int)
     assert body["default_llm_provider"] in {"openai", "ollama", "lmstudio", "groq"}
     assert isinstance(body["default_llm_model"], str)
+    assert body["runtime_profile_status"] in {"verified", "experimental", "not_recommended"}
+    assert body["runtime_profile_scope"] in {"local", "cloud"}
+    assert isinstance(body["runtime_profile_message"], str)
+    assert isinstance(body["runtime_profile_recommendation"], str)
 
 
 def test_collections_returns_200(client):

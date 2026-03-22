@@ -219,6 +219,7 @@ cd <repo>
 
 - 이 스크립트는 `all/eu/fr/ge/it/uk` 컬렉션의 벡터 존재 여부와 `ops-baseline` `3/3 pass`를 함께 확인합니다.
 - 실행 순서는 `runtime_preflight -> all-routes collections -> ops-baseline eval`이며, 실패 시 `APP_HEALTH_UNREACHABLE`, `COLLECTIONS_CHECK_FAILED`, `OPS_EVAL_FAILED` 진단 코드를 함께 출력합니다.
+- `runtime_preflight`는 이제 `/health`의 `runtime_profile_*`와 같은 기준으로 현재 모델을 `verified / experimental / not_recommended`로 판정합니다.
 - `2026-03-21` 현재 로컬 검증에서는 앱 미기동 상태에서 `APP_HEALTH_UNREACHABLE`로 즉시 막히는 것을 확인했습니다.
 - 과거 `2026-03-21` 실측에서는 `env HF_HUB_OFFLINE=1 ./.venv/bin/python build_index.py --reset` 뒤 `ollama + llama3.1:8b` 게이트가 `3/3 pass`, `avg_weighted_score=0.9645`, `p95_latency_ms=13501.527`로 통과했습니다.
 - 프로젝트 기본 경로는 `Ollama` 기준이며, 로컬 환경에 따라 `LM Studio` OpenAI 호환 경로를 별도 실측할 수 있습니다.
@@ -379,6 +380,7 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 - 현재 실측 기준 운영 권장 프로파일은 `groq + llama-3.1-8b-instant`입니다.
 - 로컬 Ollama 기준에서는 `llama3.1:8b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`이 최소 통과 프로파일이었습니다.
 - `qwen3.5:4b`, `qwen3.5:9b`, `LM Studio qwen3.5-4b-mlx-4bit`는 현재 로컬 Mac mini Pro 실측에서 `ops-baseline`을 안정 통과하지 못했습니다.
+- `/health`의 `runtime_profile_status/message/recommendation`과 `runtime_preflight` 결과를 보면 현재 프로파일이 기본 운영 경로로 적합한지 바로 판단할 수 있습니다.
 
 로컬 하드웨어 권고선(추론):
 - 최소 로컬 운영선: Apple Silicon `M4 Pro` 급 + `64GB unified memory`

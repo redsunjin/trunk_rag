@@ -81,3 +81,20 @@ def test_check_lmstudio_accepts_loaded_model(monkeypatch):
 
     assert result["name"] == "lmstudio"
     assert result["ready"] is True
+
+
+def test_check_runtime_profile_blocks_not_recommended_model():
+    result = runtime_preflight.check_runtime_profile("ollama", "qwen3:4b", 30)
+
+    assert result["name"] == "runtime_profile"
+    assert result["ready"] is False
+    assert result["status"] == "not_recommended"
+    assert "llama3.1:8b" in str(result["recommendation"])
+
+
+def test_check_runtime_profile_accepts_verified_local_model():
+    result = runtime_preflight.check_runtime_profile("ollama", "llama3.1:8b", 30)
+
+    assert result["name"] == "runtime_profile"
+    assert result["ready"] is True
+    assert result["status"] == "verified"

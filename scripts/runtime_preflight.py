@@ -26,6 +26,8 @@ REQUIRED_HEALTH_KEYS = {
     "embedding_model",
     "default_llm_provider",
     "default_llm_model",
+    "runtime_profile_status",
+    "runtime_profile_message",
 }
 
 
@@ -271,6 +273,24 @@ def check_lmstudio(base_url: str, model_name: str | None, timeout_seconds: int) 
     }
 
 
+def check_runtime_profile(llm_provider: str, llm_model: str | None, timeout_seconds: int) -> dict[str, object]:
+    profile = runtime_service.build_runtime_profile(
+        provider=llm_provider,
+        model=llm_model,
+        timeout_seconds=timeout_seconds,
+    )
+    ready = profile["status"] == runtime_service.RUNTIME_PROFILE_VERIFIED
+    return {
+        "name": "runtime_profile",
+        "critical": True,
+        "ready": ready,
+        "status": profile["status"],
+        "scope": profile["scope"],
+        "message": profile["message"],
+        "recommendation": profile["recommendation"],
+    }
+
+
 def build_report(
     *,
     app_base_url: str,
@@ -283,6 +303,7 @@ def build_report(
     checks = [
         check_app_health(app_base_url, timeout_seconds),
         check_embedding_model(embedding_model),
+        check_runtime_profile(llm_provider, llm_model, timeout_seconds),
     ]
 
     if llm_provider == "ollama":
@@ -324,7 +345,10 @@ def print_human_readable(report: dict[str, object]) -> None:
     print(f"  llm={report['llm_provider']}:{report['llm_model']}")
     for check in report["checks"]:
         status = "ready" if check["ready"] else "blocked"
-        print(f"- {check['name']}: {status} - {check['message']}")
+        suffix = ""
+        if check["name"] == "runtime_profile" and check.get("recommendation"):
+            suffix = f" / next: {check['recommendation']}"
+        print(f"- {check['name']}: {status} - {check['message']}{suffix}")
 
 
 def main() -> int:

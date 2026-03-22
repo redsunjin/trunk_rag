@@ -94,6 +94,7 @@
 - 동일 질문에서 `llama3.1:8b`는 `active_collection_probe_ms=4.140`, `context.elapsed_ms=146.360`, `invoke.invoke_ms=14076.086(ok)`이었고, `groq + llama-3.1-8b-instant`는 `active_collection_probe_ms=3.456`, `context.elapsed_ms=28.126`, `llm_init_ms=177.596`, `invoke.invoke_ms=666.962(ok)`였다.
 - 현재 실측 결론은 retrieval/context stuffing보다 로컬 LLM invoke 처리량이 주병목이며, 첫 요청의 임베딩 warm-up 비용은 부가 지연이지만 반복 timeout의 주원인은 아니다.
 - `2026-03-23` 기준 해결책 1차로 로컬 기본 Ollama 프로파일과 릴리즈 회귀 게이트를 `llama3.1:8b + 기본 timeout 30초`로 승격하고, `qwen3:4b`는 기본값에서 제외했다.
+- 같은 날짜 `runtime_preflight`와 `/health`는 현재 provider/model/timeout 조합을 `verified / experimental / not_recommended`로 판정하고, 비권장 로컬 모델이면 권장 프로파일로 바로 유도하도록 보강했다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
