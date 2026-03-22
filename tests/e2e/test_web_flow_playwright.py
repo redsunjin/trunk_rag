@@ -71,6 +71,7 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     page.goto(f"{live_server_url}/intro", wait_until="domcontentloaded")
     expect(page.locator("#statusIndicator .status-text")).to_have_text(re.compile(r"Online|Ready"), timeout=15000)
     expect(page.locator("#statusMsg")).to_contain_text("llm=", timeout=15000)
+    expect(page.locator("#runtimeProfileMsg")).to_contain_text("runtime=", timeout=15000)
 
     page.click("#userStartBtn")
     expect(page).to_have_url(re.compile(r".*/app$"), timeout=10000)
@@ -119,6 +120,10 @@ def test_intro_app_flow(page: Page, live_server_url: str):
                     "default_llm_provider": "ollama",
                     "default_llm_model": "llama3.1:8b",
                     "default_llm_base_url": "http://localhost:11434",
+                    "runtime_profile_status": "verified",
+                    "runtime_profile_scope": "local",
+                    "runtime_profile_message": "현재 Ollama 런타임 프로파일은 로컬 ops-baseline 실측에서 검증됐습니다.",
+                    "runtime_profile_recommendation": "`DOC_RAG_QUERY_TIMEOUT_SECONDS=30` 이상을 유지하세요.",
                 }
             ),
         )
@@ -126,6 +131,7 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     page.route("**/health", health_success)
     page.click("#healthBtn")
     expect(page.locator("#statusMsg")).to_contain_text("vectors=37")
+    expect(page.locator("#runtimeProfileMsg")).to_contain_text("verified")
 
     query_payload: dict[str, object] = {}
 

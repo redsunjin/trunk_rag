@@ -381,6 +381,7 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 - 로컬 Ollama 기준에서는 `llama3.1:8b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`이 최소 통과 프로파일이었습니다.
 - `qwen3.5:4b`, `qwen3.5:9b`, `LM Studio qwen3.5-4b-mlx-4bit`는 현재 로컬 Mac mini Pro 실측에서 `ops-baseline`을 안정 통과하지 못했습니다.
 - `/health`의 `runtime_profile_status/message/recommendation`과 `runtime_preflight` 결과를 보면 현재 프로파일이 기본 운영 경로로 적합한지 바로 판단할 수 있습니다.
+- `/intro`와 `/app` 화면도 같은 `runtime_profile_*` 값을 바로 보여 주므로, 브라우저만 열어도 현재 모델이 `verified / experimental / not_recommended`인지 확인할 수 있습니다.
 
 로컬 하드웨어 권고선(추론):
 - 최소 로컬 운영선: Apple Silicon `M4 Pro` 급 + `64GB unified memory`

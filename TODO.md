@@ -95,6 +95,7 @@
 - 현재 실측 결론은 retrieval/context stuffing보다 로컬 LLM invoke 처리량이 주병목이며, 첫 요청의 임베딩 warm-up 비용은 부가 지연이지만 반복 timeout의 주원인은 아니다.
 - `2026-03-23` 기준 해결책 1차로 로컬 기본 Ollama 프로파일과 릴리즈 회귀 게이트를 `llama3.1:8b + 기본 timeout 30초`로 승격하고, `qwen3:4b`는 기본값에서 제외했다.
 - 같은 날짜 `runtime_preflight`와 `/health`는 현재 provider/model/timeout 조합을 `verified / experimental / not_recommended`로 판정하고, 비권장 로컬 모델이면 권장 프로파일로 바로 유도하도록 보강했다.
+- 같은 날짜 `/intro`와 `/app`도 `runtime_profile_*` 경고를 직접 표시하도록 바꿔, 브라우저 기본 경로만으로도 현재 모델 적합성을 즉시 확인할 수 있게 했다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

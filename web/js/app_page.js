@@ -10,6 +10,7 @@ const model = document.getElementById("model");
 const baseUrl = document.getElementById("baseUrl");
 const apiKey = document.getElementById("apiKey");
 const runtimeSummary = document.getElementById("runtimeSummary");
+const runtimeProfileMsg = document.getElementById("runtimeProfileMsg");
 const advancedSettings = document.getElementById("advancedSettings");
 const advancedSettingsToggle = document.getElementById("advancedSettingsToggle");
 const collection = document.getElementById("collection");
@@ -123,6 +124,14 @@ function syncDefaults() {
   }
 }
 
+function formatRuntimeProfile(data) {
+  const status = data.runtime_profile_status || "unknown";
+  const scope = data.runtime_profile_scope || "-";
+  const message = data.runtime_profile_message || "";
+  const recommendation = data.runtime_profile_recommendation || "";
+  return `런타임 프로파일: ${status} (${scope}) | ${message}${recommendation ? ` | next: ${recommendation}` : ""}`;
+}
+
 function defaultUploadCountry(collectionKey) {
   const mapping = {
     all: "all",
@@ -185,6 +194,9 @@ function applyRuntimeDefaults(data, force = false) {
   if (runtimeSummary) {
     const baseUrlText = runtimeBaseUrl ? ` | ${runtimeBaseUrl}` : "";
     runtimeSummary.textContent = `기본 질의 설정: ${runtimeProvider} / ${runtimeModel}${baseUrlText}`;
+  }
+  if (runtimeProfileMsg) {
+    runtimeProfileMsg.textContent = formatRuntimeProfile(data);
   }
 }
 
@@ -344,6 +356,9 @@ async function healthCheck() {
     if (!res.ok) {
       const error = parseApiError(data, "health check 실패");
       setStatus("error", "Error", formatApiError(error));
+      if (runtimeProfileMsg) {
+        runtimeProfileMsg.textContent = "런타임 프로파일 정보를 가져오지 못했습니다.";
+      }
       return;
     }
 
@@ -366,6 +381,9 @@ async function healthCheck() {
   } catch (err) {
     lastHealth = null;
     setStatus("error", "Offline", String(err));
+    if (runtimeProfileMsg) {
+      runtimeProfileMsg.textContent = "런타임 프로파일을 확인할 수 없습니다.";
+    }
   }
 }
 
