@@ -141,6 +141,7 @@
 - `scripts/check_ops_baseline_gate.py`: runtime preflight + all-routes 벡터 상태 + `ops-baseline` 회귀 게이트/diagnostics 점검
 - `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩
 - `scripts/roadmap_harness.py`: 실행 큐 상태와 현재 active 항목 점검
+- `scripts/diagnose_ollama_runtime.py`: Ollama 직접 호출 기준 prompt/eval 처리량 진단
 - `evals/answer_level_eval_fixtures.jsonl`: answer-level 자동 채점 fixture
 - `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md`: Vector RAG 1차 answer-level baseline 실측
 - `web/index.html`: 브라우저 UI

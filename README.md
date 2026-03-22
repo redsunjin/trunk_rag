@@ -64,6 +64,7 @@
 - `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩 스크립트
 - `scripts/roadmap_harness.py`: `TODO.md`/`NEXT_SESSION_PLAN.md`의 루프 상태와 active 항목을 점검하는 스크립트
 - `scripts/runtime_preflight.py`: P1 벤치 전 런타임 준비 상태 점검
+- `scripts/diagnose_ollama_runtime.py`: Ollama 직접 호출 기준 `eval_tokens_per_second`/wall time 진단 스크립트
 - `run_doc_rag.bat`: 배포형 웹 MVP 기준 단일 부트스트랩/실행 엔트리포인트
 - `run_doc_rag_desktop.bat`: Windows에서 Electron 데스크톱 런처 실행
 - `stop_doc_rag.bat`: 실행 중인 로컬 서버 종료
@@ -382,6 +383,7 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 - `qwen3.5:4b`, `qwen3.5:9b`, `LM Studio qwen3.5-4b-mlx-4bit`는 현재 로컬 Mac mini Pro 실측에서 `ops-baseline`을 안정 통과하지 못했습니다.
 - `/health`의 `runtime_profile_status/message/recommendation`과 `runtime_preflight` 결과를 보면 현재 프로파일이 기본 운영 경로로 적합한지 바로 판단할 수 있습니다.
 - `/intro`와 `/app` 화면도 같은 `runtime_profile_*` 값을 바로 보여 주므로, 브라우저만 열어도 현재 모델이 `verified / experimental / not_recommended`인지 확인할 수 있습니다.
+- `ollama ps`가 불안정하거나 offload 상태를 바로 보기 어려우면 `scripts/diagnose_ollama_runtime.py`로 직접 prompt 처리량을 재서 모델 처리량을 먼저 확인할 수 있습니다.
 
 로컬 하드웨어 권고선(추론):
 - 최소 로컬 운영선: Apple Silicon `M4 Pro` 급 + `64GB unified memory`
@@ -391,6 +393,16 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 운영 판단 메모:
 - 현재 RAG 경로는 단순 채팅이 아니라 `retrieval + context build + 설명형 answer generation` 조합이어서 메모리 대역폭과 토큰 생성 속도 영향을 크게 받습니다.
 - 로컬 모델은 `ollama ps` 기준 `100% GPU`에 가깝게 올라가지 않으면 응답 지연이 크게 흔들릴 수 있습니다.
+- 이 환경처럼 `ollama ps` 자체가 불안정하면 아래 직접 진단 스크립트로 `eval_tokens_per_second`와 wall time을 우선 확인합니다.
+
+```powershell
+.venv\Scripts\python.exe scripts\diagnose_ollama_runtime.py `
+  --base-url http://localhost:11434 `
+  --model llama3.1:8b `
+  --repeat 3
+```
+
+- 출력의 `assessment=slow`면 context-heavy RAG에서 timeout 가능성이 크고, `borderline`이면 짧은 context에서만 버틸 수 있으며, `promising`이면 로컬 RAG 후보로 볼 수 있습니다.
 - 오프라인/로컬 운영이 반드시 필요하면 모델 선택보다 먼저 하드웨어와 timeout/profile을 함께 설계해야 합니다.
 
 운영 기본값 결정 메모(2026-03-15):
