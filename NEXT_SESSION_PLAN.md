@@ -221,6 +221,7 @@
 - `2026-03-22` 추가 실측에서는 로컬 Ollama/LM Studio의 `4B/9B/12B` 후보가 운영 게이트를 안정 통과하지 못했고, `llama3.1:8b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`만 `3/3 pass`였다.
 - 같은 날짜 `groq + llama-3.1-8b-instant`는 `ops-baseline 3/3 pass`, `avg_latency_ms=709.273`, `p95_latency_ms=831.045`로 가장 안정적인 운영 프로파일이었다.
 - 현재 판단상 Mac mini Pro 급 로컬 엣지 환경만으로는 기본 운영 보장이 어렵고, 로컬 최소 권고선은 사실상 `M4 Pro + 64GB unified memory` 이상이다.
+- 같은 날짜 `/query` 단계별 timing 로그를 추가해 라우팅, context build, LLM invoke 병목을 실제 숫자로 분리할 수 있게 했다.
 
 후속 대상 (P3):
 1. GraphRAG 관련 문서/PoC는 잠정 중단 상태의 아카이브로만 유지

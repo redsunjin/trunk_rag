@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import inspect
+import json
 import logging
 import time
 
@@ -16,6 +18,24 @@ router = APIRouter()
 logger = logging.getLogger("doc_rag.api")
 
 
+def _serialize_stage_timings(
+    *,
+    route_reason: str | None,
+    stage_timings: dict[str, int | float | str | list[str]],
+    context_trace: dict[str, object],
+    invoke_trace: dict[str, object],
+) -> str:
+    payload: dict[str, object] = {
+        "route_reason": route_reason or "-",
+        "stages": stage_timings,
+    }
+    if context_trace:
+        payload["context"] = context_trace
+    if invoke_trace:
+        payload["invoke"] = invoke_trace
+    return json.dumps(payload, ensure_ascii=False, sort_keys=True)
+
+
 @router.post("/query", response_model=QueryResponse)
 def query(req: QueryRequest, request: Request, response: Response) -> QueryResponse:
     from core.http import get_or_create_request_id
@@ -26,10 +46,15 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
     log_provider = req.llm_provider
     log_model = req.llm_model or "-"
     log_collection = collection_service.get_collection_name(DEFAULT_COLLECTION_KEY)
+    route_reason = "-"
+    stage_timings: dict[str, int | float | str | list[str]] = {}
+    context_trace: dict[str, object] = {}
+    invoke_trace: dict[str, object] = {}
 
     try:
         query_timeout_seconds = runtime_service.get_query_timeout_seconds()
         try:
+            config_started_at = time.perf_counter()
             desired_model = req.llm_model or default_llm_model(req.llm_provider)
             provider, model, api_key, base_url = resolve_llm_config(
                 provider=req.llm_provider,
@@ -37,23 +62,27 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
                 api_key=req.llm_api_key,
                 base_url=req.llm_base_url,
             )
+            stage_timings["resolve_config_ms"] = round((time.perf_counter() - config_started_at) * 1000, 3)
         except ValueError as exc:
-                raise QueryAPIError(
-                    code="INVALID_PROVIDER",
-                    status_code=400,
-                    message="지원하지 않는 llm_provider입니다.",
-                    hint="openai, ollama, lmstudio, groq 중 하나를 사용하세요.",
-                ) from exc
+            raise QueryAPIError(
+                code="INVALID_PROVIDER",
+                status_code=400,
+                message="지원하지 않는 llm_provider입니다.",
+                hint="openai, ollama, lmstudio, groq 중 하나를 사용하세요.",
+            ) from exc
 
         log_provider = provider
         log_model = model
 
         try:
+            route_started_at = time.perf_counter()
             collection_keys, route_reason, allow_default_fallback = collection_service.resolve_collection_keys_for_query(
                 req.query,
                 req.collection,
                 req.collections,
             )
+            stage_timings["resolve_route_ms"] = round((time.perf_counter() - route_started_at) * 1000, 3)
+            stage_timings["requested_collections"] = list(collection_keys)
         except ValueError as exc:
             supported = ", ".join(collection_service.list_collection_keys())
             raise QueryAPIError(
@@ -64,6 +93,7 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
             ) from exc
 
         active_collection_keys: list[str] = []
+        collection_probe_started_at = time.perf_counter()
         for key in collection_keys:
             db = index_service.get_db(key)
             if index_service.get_vector_count(db) > 0:
@@ -79,6 +109,11 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
             if fallback_vector_count > 0:
                 active_collection_keys = [DEFAULT_COLLECTION_KEY]
                 route_reason = f"{route_reason}->fallback"
+        stage_timings["active_collection_probe_ms"] = round(
+            (time.perf_counter() - collection_probe_started_at) * 1000,
+            3,
+        )
+        stage_timings["active_collections"] = list(active_collection_keys)
 
         if not active_collection_keys:
             selected_names = [collection_service.get_collection_name(key) for key in collection_keys]
@@ -100,6 +135,7 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
         response.headers["X-RAG-Collections"] = ",".join(active_collection_names)
 
         try:
+            llm_started_at = time.perf_counter()
             llm = create_chat_llm(
                 provider=provider,
                 model=model,
@@ -107,6 +143,7 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
                 api_key=api_key,
                 base_url=base_url,
             )
+            stage_timings["llm_init_ms"] = round((time.perf_counter() - llm_started_at) * 1000, 3)
         except Exception as exc:
             raise QueryAPIError(
                 code="LLM_CONNECTION_FAILED",
@@ -122,15 +159,21 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
             return query_service.build_collection_context(
                 question=question,
                 collection_keys=active_collection_keys,
+                trace=context_trace,
             )
 
+        chain_started_at = time.perf_counter()
         chain = query_service.build_query_chain(_context_builder, llm)
+        stage_timings["chain_build_ms"] = round((time.perf_counter() - chain_started_at) * 1000, 3)
         try:
-            answer = query_service.invoke_query_chain(
-                chain=chain,
-                question=req.query,
-                timeout_seconds=query_timeout_seconds,
-            )
+            invoke_kwargs = {
+                "chain": chain,
+                "question": req.query,
+                "timeout_seconds": query_timeout_seconds,
+            }
+            if "trace" in inspect.signature(query_service.invoke_query_chain).parameters:
+                invoke_kwargs["trace"] = invoke_trace
+            answer = query_service.invoke_query_chain(**invoke_kwargs)
         except TimeoutError as exc:
             raise QueryAPIError(
                 code="LLM_TIMEOUT",
@@ -162,36 +205,54 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
 
         elapsed_ms = int((time.perf_counter() - started_at) * 1000)
         logger.info(
-            "query request_id=%s code=OK provider=%s model=%s collection=%s route=%s elapsed_ms=%d",
+            "query request_id=%s code=OK provider=%s model=%s collection=%s route=%s elapsed_ms=%d timings=%s",
             request_id,
             log_provider,
             log_model,
             log_collection,
             route_reason,
             elapsed_ms,
+            _serialize_stage_timings(
+                route_reason=route_reason,
+                stage_timings=stage_timings,
+                context_trace=context_trace,
+                invoke_trace=invoke_trace,
+            ),
         )
         return QueryResponse(answer=answer, provider=provider, model=model)
     except QueryAPIError as exc:
         elapsed_ms = int((time.perf_counter() - started_at) * 1000)
         logger.warning(
-            "query request_id=%s code=%s provider=%s model=%s collection=%s elapsed_ms=%d",
+            "query request_id=%s code=%s provider=%s model=%s collection=%s elapsed_ms=%d timings=%s",
             request_id,
             exc.code,
             log_provider,
             log_model,
             log_collection,
             elapsed_ms,
+            _serialize_stage_timings(
+                route_reason=route_reason,
+                stage_timings=stage_timings,
+                context_trace=context_trace,
+                invoke_trace=invoke_trace,
+            ),
         )
         raise exc
     except Exception as exc:
         elapsed_ms = int((time.perf_counter() - started_at) * 1000)
         logger.exception(
-            "query request_id=%s code=INTERNAL_ERROR provider=%s model=%s collection=%s elapsed_ms=%d",
+            "query request_id=%s code=INTERNAL_ERROR provider=%s model=%s collection=%s elapsed_ms=%d timings=%s",
             request_id,
             log_provider,
             log_model,
             log_collection,
             elapsed_ms,
+            _serialize_stage_timings(
+                route_reason=route_reason,
+                stage_timings=stage_timings,
+                context_trace=context_trace,
+                invoke_trace=invoke_trace,
+            ),
         )
         raise QueryAPIError(
             code="INTERNAL_ERROR",

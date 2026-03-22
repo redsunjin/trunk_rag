@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import time
+
+from langchain_core.documents import Document
+
 from services import query_service
 
 
@@ -50,3 +54,72 @@ def test_postprocess_answer_adds_comparison_lead_when_keyword_missing():
     assert "에콜 폴리테크니크" in resolved
     assert "훔볼트 대학" in resolved
     assert "인재 양성" in resolved
+
+
+def test_build_collection_context_populates_trace(monkeypatch):
+    class DummyRetriever:
+        def invoke(self, question):
+            assert question == "테스트 질문"
+            return [
+                Document(page_content="A", metadata={"source": "fr.md", "h2": "역할"}),
+                Document(page_content="A", metadata={"source": "fr.md", "h2": "역할"}),
+                Document(page_content="B", metadata={"source": "fr.md", "h2": "교육"}),
+            ]
+
+    class DummyDB:
+        def as_retriever(self, **kwargs):
+            return DummyRetriever()
+
+    monkeypatch.setattr(query_service.index_service, "get_db", lambda key: DummyDB())
+    monkeypatch.setattr(query_service.runtime_service, "get_max_context_chars", lambda: 100)
+
+    trace: dict[str, object] = {}
+    context = query_service.build_collection_context("테스트 질문", ["fr"], trace=trace)
+
+    assert context
+    assert trace["collections"] == ["fr"]
+    assert trace["docs_total"] == 2
+    assert trace["max_docs"] >= 1
+    assert trace["context_chars"] == len(context)
+    assert trace["elapsed_ms"] >= 0
+    assert trace["collection_stats"] == [
+        {
+            "key": "fr",
+            "retrieved_docs": 3,
+            "unique_docs": 2,
+            "elapsed_ms": trace["collection_stats"][0]["elapsed_ms"],
+        }
+    ]
+
+
+def test_invoke_query_chain_populates_trace():
+    class DummyChain:
+        def invoke(self, question):
+            assert question == "질문"
+            return "짧은 답변"
+
+    trace: dict[str, object] = {}
+    answer = query_service.invoke_query_chain(DummyChain(), "질문", timeout_seconds=1, trace=trace)
+
+    assert answer
+    assert trace["status"] == "ok"
+    assert trace["invoke_ms"] >= 0
+
+
+def test_invoke_query_chain_populates_timeout_trace():
+    class DummyChain:
+        def invoke(self, question):
+            time.sleep(0.05)
+            return "늦은 답변"
+
+    trace: dict[str, object] = {}
+
+    try:
+        query_service.invoke_query_chain(DummyChain(), "질문", timeout_seconds=0.01, trace=trace)
+    except TimeoutError:
+        pass
+    else:
+        raise AssertionError("TimeoutError was not raised")
+
+    assert trace["status"] == "timeout"
+    assert trace["invoke_ms"] >= 0

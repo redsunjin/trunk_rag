@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import logging
 import re
+import time
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FuturesTimeoutError
 
@@ -11,6 +13,8 @@ from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 
 from core.settings import DEFAULT_QUERY_TIMEOUT_SECONDS, SEARCH_FETCH_K, SEARCH_K, SEARCH_LAMBDA
 from services import index_service, runtime_service
+
+logger = logging.getLogger("doc_rag.query")
 
 PROMPT = ChatPromptTemplate.from_template(
     """당신은 유럽 과학사 질의응답 어시스턴트입니다.
@@ -151,11 +155,18 @@ def format_docs_with_limit(docs: list[Document], *, max_chars: int | None) -> st
     return "".join(lines)
 
 
-def build_collection_context(question: str, collection_keys: list[str]) -> str:
+def build_collection_context(
+    question: str,
+    collection_keys: list[str],
+    trace: dict[str, Any] | None = None,
+) -> str:
+    started_at = time.perf_counter()
     docs: list[Document] = []
     fingerprints: set[str] = set()
+    collection_stats: list[dict[str, Any]] = []
 
     for key in collection_keys:
+        collection_started_at = time.perf_counter()
         db = index_service.get_db(key)
         retriever = db.as_retriever(
             search_type="mmr",
@@ -165,7 +176,9 @@ def build_collection_context(question: str, collection_keys: list[str]) -> str:
                 "lambda_mult": SEARCH_LAMBDA,
             },
         )
-        for item in retriever.invoke(question):
+        items = retriever.invoke(question)
+        unique_before = len(docs)
+        for item in items:
             source = str(item.metadata.get("source", ""))
             h2 = str(item.metadata.get("h2", ""))
             fingerprint = f"{source}|{h2}|{item.page_content}"
@@ -173,10 +186,44 @@ def build_collection_context(question: str, collection_keys: list[str]) -> str:
                 continue
             fingerprints.add(fingerprint)
             docs.append(item)
+        collection_stats.append(
+            {
+                "key": key,
+                "retrieved_docs": len(items),
+                "unique_docs": len(docs) - unique_before,
+                "elapsed_ms": round((time.perf_counter() - collection_started_at) * 1000, 3),
+            }
+        )
 
     max_docs = max(SEARCH_K * len(collection_keys), SEARCH_K)
     max_context_chars = runtime_service.get_max_context_chars()
-    return format_docs_with_limit(docs[:max_docs], max_chars=max_context_chars)
+    context = format_docs_with_limit(docs[:max_docs], max_chars=max_context_chars)
+    elapsed_ms = round((time.perf_counter() - started_at) * 1000, 3)
+
+    if trace is not None:
+        trace.update(
+            {
+                "collections": list(collection_keys),
+                "collection_stats": collection_stats,
+                "docs_total": len(docs),
+                "max_docs": max_docs,
+                "max_context_chars": max_context_chars,
+                "context_chars": len(context),
+                "elapsed_ms": elapsed_ms,
+            }
+        )
+
+    logger.info(
+        "context_build collections=%s docs_total=%d max_docs=%d context_chars=%d max_context_chars=%s elapsed_ms=%.3f per_collection=%s",
+        ",".join(collection_keys),
+        len(docs),
+        max_docs,
+        len(context),
+        max_context_chars,
+        elapsed_ms,
+        collection_stats,
+    )
+    return context
 
 
 def build_query_chain(context_builder, llm):
@@ -195,14 +242,24 @@ def invoke_query_chain(
     chain,
     question: str,
     timeout_seconds: int = DEFAULT_QUERY_TIMEOUT_SECONDS,
+    trace: dict[str, Any] | None = None,
 ) -> str:
+    started_at = time.perf_counter()
     executor = ThreadPoolExecutor(max_workers=1)
     future = executor.submit(chain.invoke, question)
     try:
         answer = future.result(timeout=timeout_seconds)
+        elapsed_ms = round((time.perf_counter() - started_at) * 1000, 3)
+        if trace is not None:
+            trace["invoke_ms"] = elapsed_ms
+            trace["status"] = "ok"
         return postprocess_answer(question, str(answer or ""))
     except FuturesTimeoutError as exc:
         future.cancel()
+        elapsed_ms = round((time.perf_counter() - started_at) * 1000, 3)
+        if trace is not None:
+            trace["invoke_ms"] = elapsed_ms
+            trace["status"] = "timeout"
         raise TimeoutError("LLM invocation timed out.") from exc
     finally:
         executor.shutdown(wait=False, cancel_futures=True)
