@@ -229,6 +229,10 @@
 - 같은 날짜 `runtime_preflight`와 `/health`는 현재 provider/model/timeout 조합을 `verified / experimental / not_recommended`로 판정하고, 비권장 로컬 모델이면 권장 프로파일로 바로 유도하도록 보강했다.
 - 같은 날짜 `/intro`와 `/app`도 `runtime_profile_*` 경고를 직접 표시하도록 바꿔, 브라우저 기본 경로만으로도 현재 모델 적합성을 즉시 확인할 수 있게 했다.
 - 같은 날짜 `scripts/diagnose_ollama_runtime.py`를 추가해 `ollama ps`가 불안정한 환경에서도 직접 prompt 기준 `eval_tokens_per_second`와 wall time으로 로컬 모델 처리량을 진단할 수 있게 했다.
+- `2026-03-25` 구현에서는 Chroma handle 캐시 + vector count snapshot TTL 캐시를 추가해 `/query` hot path의 active collection probe를 경량화했다.
+- 같은 날짜 `runtime_service.plan_query_budget()`로 runtime profile과 single/multi 조합별 query budget 정책을 고정했고, `/query`는 `X-RAG-Budget-Profile`, `X-RAG-Route-Reason` 헤더를 함께 반환한다.
+- 같은 날짜 reindex는 컬렉션별 embedding fingerprint를 저장하고, `/health`/`runtime_preflight`는 `runtime_query_budget_*`, `embedding_fingerprint_*`를 노출해 query 전 mismatch를 먼저 드러내도록 정리했다.
+- `2026-03-25` 전체 회귀 검증은 `./.venv/bin/python -m pytest -q` -> `98 passed in 5.52s`였다.
 
 후속 대상 (P3):
 1. GraphRAG 관련 문서/PoC는 잠정 중단 상태의 아카이브로만 유지

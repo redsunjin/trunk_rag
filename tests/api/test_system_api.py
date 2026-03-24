@@ -21,6 +21,9 @@ def test_health_returns_200(client):
     assert body["runtime_profile_scope"] in {"local", "cloud"}
     assert isinstance(body["runtime_profile_message"], str)
     assert isinstance(body["runtime_profile_recommendation"], str)
+    assert isinstance(body["runtime_query_budget_profile"], str)
+    assert isinstance(body["runtime_query_budget_summary"], str)
+    assert body["embedding_fingerprint_status"] in {"ready", "missing", "mismatch", "empty"}
 
 
 def test_collections_returns_200(client):

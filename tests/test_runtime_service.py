@@ -110,3 +110,50 @@ def test_build_runtime_profile_marks_qwen_as_not_recommended():
 
     assert profile["status"] == "not_recommended"
     assert "llama3.1:8b" in str(profile["recommendation"])
+
+
+def test_plan_query_budget_keeps_verified_local_single_budget():
+    budget = runtime_service.plan_query_budget(
+        provider="ollama",
+        model="llama3.1:8b",
+        timeout_seconds=30,
+        collection_count=1,
+        route_reason="default",
+    )
+
+    assert budget["profile"] == "verified_local_single"
+    assert budget["per_collection_k"] == 3
+    assert budget["per_collection_fetch_k"] == 10
+    assert budget["max_total_docs"] == 3
+    assert budget["generation_budget_profile"] == "standard"
+
+
+def test_plan_query_budget_reduces_verified_local_multi_budget():
+    budget = runtime_service.plan_query_budget(
+        provider="ollama",
+        model="llama3.1:8b",
+        timeout_seconds=30,
+        collection_count=2,
+        route_reason="keyword_multi",
+    )
+
+    assert budget["profile"] == "verified_local_multi"
+    assert budget["per_collection_k"] == 2
+    assert budget["per_collection_fetch_k"] == 4
+    assert budget["max_total_docs"] == 4
+    assert budget["generation_budget_profile"] == "compact"
+
+
+def test_plan_query_budget_restricts_not_recommended_local_runtime():
+    budget = runtime_service.plan_query_budget(
+        provider="ollama",
+        model="qwen3:4b",
+        timeout_seconds=30,
+        collection_count=1,
+        route_reason="default",
+    )
+
+    assert budget["profile"] == "not_recommended_local"
+    assert budget["per_collection_k"] == 1
+    assert budget["max_total_docs"] == 1
+    assert budget["generation_budget_profile"] == "restricted"

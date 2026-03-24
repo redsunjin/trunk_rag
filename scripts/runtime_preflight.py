@@ -28,6 +28,9 @@ REQUIRED_HEALTH_KEYS = {
     "default_llm_model",
     "runtime_profile_status",
     "runtime_profile_message",
+    "runtime_query_budget_profile",
+    "runtime_query_budget_summary",
+    "embedding_fingerprint_status",
 }
 
 
@@ -166,6 +169,15 @@ def check_app_health(base_url: str, timeout_seconds: int) -> dict[str, object]:
     vectors = payload.get("vectors")
     if isinstance(vectors, int) and vectors < 1:
         errors.append("vectors=0 입니다. 벤치 전에 Reindex가 필요합니다.")
+    embedding_fingerprint_status = str(payload.get("embedding_fingerprint_status", "")).strip().lower()
+    if embedding_fingerprint_status == "mismatch":
+        errors.append(
+            str(payload.get("embedding_fingerprint_message", "embedding fingerprint mismatch"))
+        )
+    if embedding_fingerprint_status == "missing" and isinstance(vectors, int) and vectors > 0:
+        errors.append(
+            str(payload.get("embedding_fingerprint_message", "embedding fingerprint metadata is missing"))
+        )
 
     ready = not errors
     message = "ready" if ready else " / ".join(errors)
@@ -175,6 +187,7 @@ def check_app_health(base_url: str, timeout_seconds: int) -> dict[str, object]:
         "ready": ready,
         "target": target,
         "payload": payload,
+        "budget_profile": payload.get("runtime_query_budget_profile"),
         "message": message,
     }
 

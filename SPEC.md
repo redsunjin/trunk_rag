@@ -30,6 +30,8 @@
 - `/rag-docs`와 `reindex`가 seed + managed active 문서를 같은 기준으로 사용
 - Electron 패키징/배포 하드닝 재검토 완료(현재 판단: 보류 유지)
 - `/health` 기반 런타임 기본 LLM 설정 노출
+- `/health` 기반 runtime query budget profile/summary 노출
+- 컬렉션별 embedding fingerprint 저장 및 `/health`/preflight 선검사
 - 기본 모드 UI에서 고급 LLM 설정 기본 숨김
 - 빈 인덱스/LLM 연결 오류에 대한 가이드 메시지
 - API/프론트 최소 회귀 테스트 체계(pytest + Playwright)
@@ -68,6 +70,8 @@
 - `/query` 표준 실패 응답(`code`, `message`, `hint`, `request_id`, `detail`) 구현
 - `/query` 타임아웃 정책(30초 기본, 재시도 없음) 적용
 - `/query` 성공/실패 응답에 `X-Request-ID` 헤더 제공
+- `/query` hot path의 Chroma handle/vector count snapshot 캐시 적용
+- `/query` budget profile 헤더(`X-RAG-Budget-Profile`, `X-RAG-Route-Reason`) 제공
 - `/` -> `/intro` 리다이렉트
 - `/intro` 인트로 페이지, `/app` 메인 RAG UI 제공
 - `/admin` 관리자 상태 페이지 제공(MVP)
@@ -174,11 +178,16 @@
   "max_context_chars": 1500,
   "default_llm_provider": "ollama",
   "default_llm_model": "llama3.1:8b",
-  "default_llm_base_url": "http://localhost:11434"
+  "default_llm_base_url": "http://localhost:11434",
+  "runtime_query_budget_profile": "verified_local_single",
+  "runtime_query_budget_summary": "profile=verified_local_single | k=3 | fetch_k=10 | max_docs=3 | context=1500 | generation=standard | max_output_tokens=192",
+  "embedding_fingerprint_status": "ready"
 }
 ```
 - 메인 UI 기본 모드는 `default_llm_*` 값을 자동 사용한다.
 - `vectors=0`이면 사용자가 질의하기 전에 `Reindex`를 먼저 실행하도록 안내한다.
+- `runtime_query_budget_*`는 현재 기본 런타임이 어떤 경량 query budget으로 동작하는지 보여 준다.
+- `embedding_fingerprint_status`가 `mismatch` 또는 `missing`이면 query 전에 reindex를 다시 실행하는 것이 기본 복구 경로다.
 
 ### GET `/collections`
 - 목적: 컬렉션별 벡터 수/cap 사용률 조회
@@ -239,6 +248,12 @@
 }
 ```
 - `collection`/`collections`를 생략하면 키워드 기반 자동 라우팅을 사용한다.
+- 응답 헤더:
+  - `X-Request-ID`
+  - `X-RAG-Collection`
+  - `X-RAG-Collections`
+  - `X-RAG-Budget-Profile`
+  - `X-RAG-Route-Reason`
 - 자동 라우팅은 최대 2개 컬렉션까지 확장한다.
 - 키워드가 없거나 과도하게 많이 매칭되면 기본 컬렉션 `all`로 fallback 한다.
 - 응답 헤더 `X-RAG-Collection`, `X-RAG-Collections`에 실제 사용 컬렉션이 담긴다.

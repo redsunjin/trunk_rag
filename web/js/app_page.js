@@ -129,7 +129,17 @@ function formatRuntimeProfile(data) {
   const scope = data.runtime_profile_scope || "-";
   const message = data.runtime_profile_message || "";
   const recommendation = data.runtime_profile_recommendation || "";
-  return `런타임 프로파일: ${status} (${scope}) | ${message}${recommendation ? ` | next: ${recommendation}` : ""}`;
+  const budgetProfile = data.runtime_query_budget_profile || "-";
+  const budgetSummary = data.runtime_query_budget_summary || "";
+  const embeddingStatus = data.embedding_fingerprint_status || "-";
+  const embeddingMessage = data.embedding_fingerprint_message || "";
+  return (
+    `런타임 프로파일: ${status} (${scope}) | budget=${budgetProfile} | ${message}` +
+    `${recommendation ? ` | next: ${recommendation}` : ""}` +
+    `${budgetSummary ? ` | budget_summary: ${budgetSummary}` : ""}` +
+    `${embeddingStatus ? ` | embedding=${embeddingStatus}` : ""}` +
+    `${embeddingMessage ? ` | embedding_next: ${embeddingMessage}` : ""}`
+  );
 }
 
 function defaultUploadCountry(collectionKey) {

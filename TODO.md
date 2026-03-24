@@ -97,6 +97,11 @@
 - 같은 날짜 `runtime_preflight`와 `/health`는 현재 provider/model/timeout 조합을 `verified / experimental / not_recommended`로 판정하고, 비권장 로컬 모델이면 권장 프로파일로 바로 유도하도록 보강했다.
 - 같은 날짜 `/intro`와 `/app`도 `runtime_profile_*` 경고를 직접 표시하도록 바꿔, 브라우저 기본 경로만으로도 현재 모델 적합성을 즉시 확인할 수 있게 했다.
 - 같은 날짜 `scripts/diagnose_ollama_runtime.py`를 추가해 `ollama ps`가 불안정한 환경에서도 직접 prompt 기준 `eval_tokens_per_second`와 wall time으로 로컬 모델 처리량을 진단할 수 있게 했다.
+- `2026-03-25` 구현에서는 `index_service`에 Chroma handle 캐시와 vector count snapshot TTL 캐시를 추가해 `/query`의 active collection probe가 매 요청 DB 재생성을 피하도록 정리했다.
+- 같은 날짜 `runtime_service.plan_query_budget()`를 추가해 `verified/experimental/not_recommended`와 `single/multi` 조합별 query budget(`k`, `fetch_k`, `max_total_docs`, `max_context_chars`, `generation_budget_profile`)을 내부 정책으로 고정했다.
+- 같은 날짜 `/query`는 `X-RAG-Budget-Profile`, `X-RAG-Route-Reason` 헤더를 반환하고, active collection 기준 embedding fingerprint mismatch를 invoke 전에 먼저 차단하도록 보강했다.
+- 같은 날짜 reindex는 컬렉션별 embedding fingerprint를 `chroma_db/embedding_fingerprints.json`에 저장하고, `/health`와 `runtime_preflight`는 `runtime_query_budget_*`, `embedding_fingerprint_*`를 함께 노출/검사하도록 정리했다.
+- `2026-03-25` 회귀 검증은 `./.venv/bin/python -m pytest -q` -> `98 passed in 5.52s`까지 확인했다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

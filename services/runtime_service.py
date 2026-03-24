@@ -24,6 +24,8 @@ from core.settings import (
     DEFAULT_QUERY_TIMEOUT_SECONDS,
     DEFAULT_EMBEDDING_MODEL,
     EMBEDDING_MODEL_ENV_KEY,
+    SEARCH_FETCH_K,
+    SEARCH_K,
     MAX_CONTEXT_CHARS_ENV_KEY,
     QUERY_TIMEOUT_SECONDS_ENV_KEY,
 )
@@ -49,6 +51,11 @@ NOT_RECOMMENDED_RUNTIME_MODELS: dict[str, set[str]] = {
         "qwen3.5-4b-mlx-4bit",
     },
 }
+
+GENERATION_BUDGET_STANDARD = "standard"
+GENERATION_BUDGET_COMPACT = "compact"
+GENERATION_BUDGET_RESTRICTED = "restricted"
+GENERATION_BUDGET_CLOUD_BALANCED = "cloud_balanced"
 
 
 def get_admin_code() -> str:
@@ -226,6 +233,145 @@ def build_runtime_profile(
         "scope": scope,
         "message": "현재 런타임 프로파일은 연결 가능 여부만 확인됐고 운영 게이트는 아직 미검증입니다.",
         "recommendation": recommendation,
+    }
+
+
+def _bounded_context_limit(target: int) -> int:
+    return min(get_max_context_chars() or DEFAULT_MAX_CONTEXT_CHARS, target)
+
+
+def _build_budget_summary(
+    *,
+    profile_name: str,
+    per_collection_k: int,
+    per_collection_fetch_k: int,
+    max_total_docs: int,
+    max_context_chars: int,
+    generation_budget_profile: str,
+    max_output_tokens: int | None,
+) -> str:
+    output_text = "-" if max_output_tokens is None else str(max_output_tokens)
+    return (
+        f"profile={profile_name} | k={per_collection_k} | fetch_k={per_collection_fetch_k} | "
+        f"max_docs={max_total_docs} | context={max_context_chars} | "
+        f"generation={generation_budget_profile} | max_output_tokens={output_text}"
+    )
+
+
+def plan_query_budget(
+    *,
+    provider: str,
+    model: str | None,
+    timeout_seconds: int,
+    collection_count: int,
+    route_reason: str,
+) -> dict[str, object]:
+    runtime_profile = build_runtime_profile(
+        provider=provider,
+        model=model,
+        timeout_seconds=timeout_seconds,
+    )
+    is_multi = collection_count > 1 or "multi" in route_reason
+    default_context = get_max_context_chars() or DEFAULT_MAX_CONTEXT_CHARS
+
+    if runtime_profile["status"] == RUNTIME_PROFILE_VERIFIED and runtime_profile["scope"] == "local":
+        if is_multi:
+            profile_name = "verified_local_multi"
+            per_collection_k = 2
+            per_collection_fetch_k = 4
+            max_total_docs = 4
+            max_context_chars = min(default_context, 1200)
+            generation_budget_profile = GENERATION_BUDGET_COMPACT
+            max_output_tokens = 160
+        else:
+            profile_name = "verified_local_single"
+            per_collection_k = SEARCH_K
+            per_collection_fetch_k = SEARCH_FETCH_K
+            max_total_docs = SEARCH_K
+            max_context_chars = default_context
+            generation_budget_profile = GENERATION_BUDGET_STANDARD
+            max_output_tokens = 192
+    elif runtime_profile["status"] == RUNTIME_PROFILE_VERIFIED and runtime_profile["scope"] == "cloud":
+        if is_multi:
+            profile_name = "verified_cloud_multi"
+            per_collection_k = 2
+            per_collection_fetch_k = 5
+            max_total_docs = 4
+            max_context_chars = min(default_context, 1600)
+            generation_budget_profile = GENERATION_BUDGET_CLOUD_BALANCED
+            max_output_tokens = 224
+        else:
+            profile_name = "verified_cloud_single"
+            per_collection_k = SEARCH_K
+            per_collection_fetch_k = SEARCH_FETCH_K
+            max_total_docs = SEARCH_K
+            max_context_chars = min(default_context, 1800)
+            generation_budget_profile = GENERATION_BUDGET_CLOUD_BALANCED
+            max_output_tokens = 256
+    elif runtime_profile["status"] == RUNTIME_PROFILE_NOT_RECOMMENDED and runtime_profile["scope"] == "local":
+        profile_name = "not_recommended_local"
+        per_collection_k = 1
+        per_collection_fetch_k = 2 if is_multi else 3
+        max_total_docs = 2 if is_multi else 1
+        max_context_chars = _bounded_context_limit(700 if is_multi else 900)
+        generation_budget_profile = GENERATION_BUDGET_RESTRICTED
+        max_output_tokens = 96
+    elif runtime_profile["scope"] == "local":
+        if is_multi:
+            profile_name = "experimental_local_multi"
+            per_collection_k = 1
+            per_collection_fetch_k = 3
+            max_total_docs = 2
+            max_context_chars = _bounded_context_limit(900)
+            generation_budget_profile = GENERATION_BUDGET_RESTRICTED
+            max_output_tokens = 128
+        else:
+            profile_name = "experimental_local_single"
+            per_collection_k = 2
+            per_collection_fetch_k = 6
+            max_total_docs = 2
+            max_context_chars = _bounded_context_limit(1200)
+            generation_budget_profile = GENERATION_BUDGET_COMPACT
+            max_output_tokens = 160
+    else:
+        if is_multi:
+            profile_name = "experimental_cloud_multi"
+            per_collection_k = 2
+            per_collection_fetch_k = 5
+            max_total_docs = 4
+            max_context_chars = min(default_context, 1500)
+            generation_budget_profile = GENERATION_BUDGET_CLOUD_BALANCED
+            max_output_tokens = 192
+        else:
+            profile_name = "experimental_cloud_single"
+            per_collection_k = SEARCH_K
+            per_collection_fetch_k = SEARCH_FETCH_K
+            max_total_docs = SEARCH_K
+            max_context_chars = min(default_context, 1600)
+            generation_budget_profile = GENERATION_BUDGET_CLOUD_BALANCED
+            max_output_tokens = 224
+
+    summary = _build_budget_summary(
+        profile_name=profile_name,
+        per_collection_k=per_collection_k,
+        per_collection_fetch_k=per_collection_fetch_k,
+        max_total_docs=max_total_docs,
+        max_context_chars=max_context_chars,
+        generation_budget_profile=generation_budget_profile,
+        max_output_tokens=max_output_tokens,
+    )
+    return {
+        "profile": profile_name,
+        "summary": summary,
+        "runtime_profile": runtime_profile,
+        "collection_count": collection_count,
+        "route_reason": route_reason,
+        "per_collection_k": per_collection_k,
+        "per_collection_fetch_k": per_collection_fetch_k,
+        "max_total_docs": max_total_docs,
+        "max_context_chars": max_context_chars,
+        "generation_budget_profile": generation_budget_profile,
+        "max_output_tokens": max_output_tokens,
     }
 
 

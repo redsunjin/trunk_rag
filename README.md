@@ -33,6 +33,9 @@
 - 현재: `/reindex`와 `build_index.py --reset` 기본 경로는 `all/eu/fr/ge/it/uk`를 함께 재생성한다
 - 현재: `ops-baseline` 재측정 기준 `VECTORSTORE_EMPTY`/`LLM_TIMEOUT` blocker는 해소됐다
 - 현재: `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-19_OPS_ANSWER_COMPLETENESS.md` 기준 `ops-baseline`은 `3/3 pass`, `avg_weighted_score=0.9645`다
+- 현재: `/query`는 runtime profile 기반 query budget(`single/multi`, `verified/experimental/not_recommended`)을 내부 정책으로 적용한다
+- 현재: `/health`는 `runtime_query_budget_*`, `embedding_fingerprint_*` 상태를 노출해 경량 경로와 인덱스 호환 상태를 먼저 보여 준다
+- 현재: reindex 시 컬렉션별 embedding fingerprint를 저장하고, `/query`는 mismatch를 invoke 전에 먼저 차단한다
 - 다음 우선순위(P2/P3): 배포형 웹 MVP 기준 설치/실행/복구 경로를 고정하고, 기본 `/query` 회귀 게이트를 릴리즈 체크리스트로 유지
 
 비목표(현재 단계):
@@ -65,6 +68,7 @@
 - `scripts/roadmap_harness.py`: `TODO.md`/`NEXT_SESSION_PLAN.md`의 루프 상태와 active 항목을 점검하는 스크립트
 - `scripts/runtime_preflight.py`: P1 벤치 전 런타임 준비 상태 점검
 - `scripts/diagnose_ollama_runtime.py`: Ollama 직접 호출 기준 `eval_tokens_per_second`/wall time 진단 스크립트
+- `chroma_db/embedding_fingerprints.json`: 컬렉션별 임베딩 fingerprint 메타데이터
 - `run_doc_rag.bat`: 배포형 웹 MVP 기준 단일 부트스트랩/실행 엔트리포인트
 - `run_doc_rag_desktop.bat`: Windows에서 Electron 데스크톱 런처 실행
 - `stop_doc_rag.bat`: 실행 중인 로컬 서버 종료
@@ -221,6 +225,8 @@ cd <repo>
 - 이 스크립트는 `all/eu/fr/ge/it/uk` 컬렉션의 벡터 존재 여부와 `ops-baseline` `3/3 pass`를 함께 확인합니다.
 - 실행 순서는 `runtime_preflight -> all-routes collections -> ops-baseline eval`이며, 실패 시 `APP_HEALTH_UNREACHABLE`, `COLLECTIONS_CHECK_FAILED`, `OPS_EVAL_FAILED` 진단 코드를 함께 출력합니다.
 - `runtime_preflight`는 이제 `/health`의 `runtime_profile_*`와 같은 기준으로 현재 모델을 `verified / experimental / not_recommended`로 판정합니다.
+- `/health`는 `runtime_query_budget_profile`, `runtime_query_budget_summary`, `embedding_fingerprint_status`도 함께 노출합니다.
+- `embedding_fingerprint_status=mismatch` 또는 `missing`이면 reindex 후 다시 게이트를 실행하는 것이 기본 복구 경로입니다.
 - `2026-03-21` 현재 로컬 검증에서는 앱 미기동 상태에서 `APP_HEALTH_UNREACHABLE`로 즉시 막히는 것을 확인했습니다.
 - 과거 `2026-03-21` 실측에서는 `env HF_HUB_OFFLINE=1 ./.venv/bin/python build_index.py --reset` 뒤 `ollama + llama3.1:8b` 게이트가 `3/3 pass`, `avg_weighted_score=0.9645`, `p95_latency_ms=13501.527`로 통과했습니다.
 - 프로젝트 기본 경로는 `Ollama` 기준이며, 로컬 환경에 따라 `LM Studio` OpenAI 호환 경로를 별도 실측할 수 있습니다.

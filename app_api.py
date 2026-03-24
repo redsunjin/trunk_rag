@@ -141,6 +141,9 @@ get_embeddings = index_service.get_embeddings
 get_db = index_service.get_db
 get_vector_count = index_service.get_vector_count
 get_vector_count_fast = index_service.get_vector_count_fast
+get_vector_count_snapshot = index_service.get_vector_count_snapshot
+invalidate_runtime_state = index_service.invalidate_runtime_state
+get_embedding_fingerprint_status = index_service.get_embedding_fingerprint_status
 index_documents_for_collection = index_service.index_documents_for_collection
 collect_rejected_items = index_service.collect_rejected_items
 build_validation_summary = index_service.build_validation_summary
@@ -152,6 +155,7 @@ format_docs = query_service.format_docs
 build_collection_context = query_service.build_collection_context
 build_query_chain = query_service.build_query_chain
 invoke_query_chain = query_service.invoke_query_chain
+plan_query_budget = runtime_service.plan_query_budget
 
 
 if __name__ == "__main__":

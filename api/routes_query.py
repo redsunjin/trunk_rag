@@ -50,6 +50,7 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
     stage_timings: dict[str, int | float | str | list[str]] = {}
     context_trace: dict[str, object] = {}
     invoke_trace: dict[str, object] = {}
+    query_budget: dict[str, object] | None = None
 
     try:
         query_timeout_seconds = runtime_service.get_query_timeout_seconds()
@@ -95,8 +96,11 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
         active_collection_keys: list[str] = []
         collection_probe_started_at = time.perf_counter()
         for key in collection_keys:
-            db = index_service.get_db(key)
-            if index_service.get_vector_count(db) > 0:
+            vectors = index_service.get_vector_count_snapshot(key)
+            if vectors is None:
+                db = index_service.get_db(key)
+                vectors = index_service.get_vector_count(db)
+            if (vectors or 0) > 0:
                 active_collection_keys.append(key)
 
         if (
@@ -104,9 +108,11 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
             and allow_default_fallback
             and DEFAULT_COLLECTION_KEY not in collection_keys
         ):
-            fallback_db = index_service.get_db(DEFAULT_COLLECTION_KEY)
-            fallback_vector_count = index_service.get_vector_count(fallback_db)
-            if fallback_vector_count > 0:
+            fallback_vector_count = index_service.get_vector_count_snapshot(DEFAULT_COLLECTION_KEY)
+            if fallback_vector_count is None:
+                fallback_db = index_service.get_db(DEFAULT_COLLECTION_KEY)
+                fallback_vector_count = index_service.get_vector_count(fallback_db)
+            if (fallback_vector_count or 0) > 0:
                 active_collection_keys = [DEFAULT_COLLECTION_KEY]
                 route_reason = f"{route_reason}->fallback"
         stage_timings["active_collection_probe_ms"] = round(
@@ -133,6 +139,31 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
         log_collection = ",".join(active_collection_names)
         response.headers["X-RAG-Collection"] = active_collection_names[0]
         response.headers["X-RAG-Collections"] = ",".join(active_collection_names)
+        response.headers["X-RAG-Route-Reason"] = route_reason
+
+        embedding_status = index_service.get_embedding_fingerprint_status(active_collection_keys)
+        stage_timings["embedding_fingerprint_status"] = str(embedding_status["status"])
+        if embedding_status["status"] == "mismatch":
+            raise QueryAPIError(
+                code="VECTORSTORE_EMBEDDING_MISMATCH",
+                status_code=409,
+                message="현재 임베딩 모델과 저장된 인덱스 fingerprint가 맞지 않습니다.",
+                hint=(
+                    "run_doc_rag.bat로 서버를 연 뒤 /intro 상태를 확인하고 "
+                    "Reindex 또는 .venv\\Scripts\\python.exe build_index.py --reset 을 실행하세요. "
+                    "DOC_RAG_EMBEDDING_MODEL 설정도 함께 확인하세요."
+                ),
+            )
+
+        query_budget = runtime_service.plan_query_budget(
+            provider=provider,
+            model=model,
+            timeout_seconds=query_timeout_seconds,
+            collection_count=len(active_collection_keys),
+            route_reason=route_reason,
+        )
+        response.headers["X-RAG-Budget-Profile"] = str(query_budget["profile"])
+        stage_timings["budget_profile"] = str(query_budget["profile"])
 
         try:
             llm_started_at = time.perf_counter()
@@ -142,6 +173,7 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
                 temperature=0.0,
                 api_key=api_key,
                 base_url=base_url,
+                max_output_tokens=int(query_budget["max_output_tokens"]) if query_budget.get("max_output_tokens") else None,
             )
             stage_timings["llm_init_ms"] = round((time.perf_counter() - llm_started_at) * 1000, 3)
         except Exception as exc:
@@ -160,6 +192,7 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
                 question=question,
                 collection_keys=active_collection_keys,
                 trace=context_trace,
+                budget=query_budget,
             )
 
         chain_started_at = time.perf_counter()

@@ -98,3 +98,32 @@ def test_check_runtime_profile_accepts_verified_local_model():
     assert result["name"] == "runtime_profile"
     assert result["ready"] is True
     assert result["status"] == "verified"
+
+
+def test_check_app_health_blocks_embedding_fingerprint_mismatch(monkeypatch):
+    monkeypatch.setattr(
+        runtime_preflight,
+        "fetch_json",
+        lambda target, timeout_seconds: {
+            "status": "ok",
+            "collection_key": "all",
+            "collection": "w2_007_header_rag",
+            "persist_dir": "mock",
+            "vectors": 37,
+            "chunking_mode": "char",
+            "embedding_model": "BAAI/bge-m3",
+            "default_llm_provider": "ollama",
+            "default_llm_model": "llama3.1:8b",
+            "runtime_profile_status": "verified",
+            "runtime_profile_message": "ok",
+            "runtime_query_budget_profile": "verified_local_single",
+            "runtime_query_budget_summary": "profile=verified_local_single",
+            "embedding_fingerprint_status": "mismatch",
+            "embedding_fingerprint_message": "fingerprint mismatch",
+        },
+    )
+
+    result = runtime_preflight.check_app_health("http://127.0.0.1:8000", 5)
+
+    assert result["ready"] is False
+    assert "fingerprint mismatch" in result["message"]

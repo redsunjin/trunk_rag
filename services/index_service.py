@@ -1,7 +1,10 @@
 from __future__ import annotations
 
-from functools import lru_cache
+import hashlib
+import json
 from pathlib import Path
+import threading
+import time
 
 from fastapi import HTTPException
 from langchain_chroma import Chroma
@@ -23,10 +26,22 @@ from core.settings import (
 from scripts.validate_rag_doc import validate_loaded_documents
 from services import collection_service, runtime_service, upload_service
 
+EMBEDDING_FINGERPRINTS_FILE = "embedding_fingerprints.json"
+VECTOR_COUNT_CACHE_TTL_SECONDS = 5.0
+_EMBEDDINGS_CACHE: dict[str, object] = {}
+_DB_CACHE: dict[tuple[str, str], Chroma] = {}
+_VECTOR_COUNT_CACHE: dict[str, tuple[float, int | None]] = {}
+_CACHE_LOCK = threading.RLock()
 
-@lru_cache(maxsize=4)
+
 def _get_embeddings_cached(model_name: str):
-    return create_embeddings(model_name)
+    with _CACHE_LOCK:
+        cached = _EMBEDDINGS_CACHE.get(model_name)
+        if cached is not None:
+            return cached
+        embeddings = create_embeddings(model_name)
+        _EMBEDDINGS_CACHE[model_name] = embeddings
+        return embeddings
 
 
 def get_embeddings(model_name: str | None = None):
@@ -34,16 +49,33 @@ def get_embeddings(model_name: str | None = None):
     return _get_embeddings_cached(resolved_model)
 
 
+def _db_cache_key(collection_key: str, embedding_model: str) -> tuple[str, str]:
+    return collection_key, embedding_model
+
+
+def _set_cached_db(collection_key: str, embedding_model: str, db: Chroma) -> None:
+    with _CACHE_LOCK:
+        _DB_CACHE[_db_cache_key(collection_key, embedding_model)] = db
+
+
 def get_db(collection_key: str = DEFAULT_COLLECTION_KEY) -> Chroma:
     persist_path = Path(PERSIST_DIR)
     persist_path.mkdir(parents=True, exist_ok=True)
     collection_name = collection_service.get_collection_name(collection_key)
     embedding_model = runtime_service.get_embedding_model()
-    return Chroma(
+    cache_key = _db_cache_key(collection_key, embedding_model)
+    with _CACHE_LOCK:
+        cached = _DB_CACHE.get(cache_key)
+    if cached is not None:
+        return cached
+
+    db = Chroma(
         collection_name=collection_name,
         embedding_function=get_embeddings(embedding_model),
         persist_directory=str(persist_path),
     )
+    _set_cached_db(collection_key, embedding_model, db)
+    return db
 
 
 def get_vector_count(db: Chroma) -> int:
@@ -62,6 +94,202 @@ def get_vector_count_fast(collection_name: str) -> int | None:
         return collection.count()
     except Exception:
         return None
+
+
+def _set_vector_count_snapshot(collection_name: str, vectors: int | None) -> None:
+    with _CACHE_LOCK:
+        _VECTOR_COUNT_CACHE[collection_name] = (time.monotonic(), vectors)
+
+
+def get_vector_count_snapshot(
+    collection_key: str = DEFAULT_COLLECTION_KEY,
+    *,
+    max_age_seconds: float = VECTOR_COUNT_CACHE_TTL_SECONDS,
+) -> int | None:
+    collection_name = collection_service.get_collection_name(collection_key)
+    now = time.monotonic()
+    with _CACHE_LOCK:
+        cached = _VECTOR_COUNT_CACHE.get(collection_name)
+        if cached is not None:
+            cached_at, vectors = cached
+            if (now - cached_at) <= max_age_seconds:
+                return vectors
+
+    vectors = get_vector_count_fast(collection_name)
+    _set_vector_count_snapshot(collection_name, vectors)
+    return vectors
+
+
+def invalidate_runtime_state(collection_keys: list[str] | None = None) -> None:
+    with _CACHE_LOCK:
+        if collection_keys is None:
+            _DB_CACHE.clear()
+            _VECTOR_COUNT_CACHE.clear()
+            return
+
+        key_set = set(collection_keys)
+        collection_names = {
+            collection_service.get_collection_name(key)
+            for key in collection_keys
+        }
+        db_keys = [key for key in _DB_CACHE if key[0] in key_set]
+        for key in db_keys:
+            _DB_CACHE.pop(key, None)
+        for collection_name in collection_names:
+            _VECTOR_COUNT_CACHE.pop(collection_name, None)
+
+
+def embedding_fingerprint_manifest_path() -> Path:
+    persist_path = Path(PERSIST_DIR)
+    persist_path.mkdir(parents=True, exist_ok=True)
+    return persist_path / EMBEDDING_FINGERPRINTS_FILE
+
+
+def _load_embedding_fingerprint_manifest_unlocked() -> dict[str, object]:
+    path = embedding_fingerprint_manifest_path()
+    if not path.exists():
+        return {"items": {}}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {"items": {}}
+    if isinstance(payload, dict) and isinstance(payload.get("items"), dict):
+        return payload
+    return {"items": {}}
+
+
+def _save_embedding_fingerprint_manifest_unlocked(payload: dict[str, object]) -> None:
+    embedding_fingerprint_manifest_path().write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
+def normalize_embedding_identity(model_name: str) -> str:
+    value = model_name.strip()
+    path = Path(value).expanduser()
+    if path.exists():
+        return str(path.resolve())
+    return value
+
+
+def build_embedding_fingerprint(model_name: str) -> str:
+    normalized = normalize_embedding_identity(model_name)
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def record_collection_embedding_fingerprint(
+    collection_key: str,
+    *,
+    model_name: str | None = None,
+    vector_count: int | None = None,
+) -> dict[str, object]:
+    resolved_model = (model_name or runtime_service.get_embedding_model()).strip()
+    item = {
+        "collection_key": collection_key,
+        "collection_name": collection_service.get_collection_name(collection_key),
+        "embedding_model": normalize_embedding_identity(resolved_model),
+        "embedding_fingerprint": build_embedding_fingerprint(resolved_model),
+        "updated_at": runtime_service.utc_now_iso(),
+        "vector_count": vector_count,
+    }
+    with _CACHE_LOCK:
+        payload = _load_embedding_fingerprint_manifest_unlocked()
+        items = payload.setdefault("items", {})
+        if not isinstance(items, dict):
+            items = {}
+            payload["items"] = items
+        items[collection_key] = item
+        _save_embedding_fingerprint_manifest_unlocked(payload)
+    return item
+
+
+def get_collection_embedding_record(collection_key: str) -> dict[str, object] | None:
+    with _CACHE_LOCK:
+        payload = _load_embedding_fingerprint_manifest_unlocked()
+        items = payload.get("items", {})
+        if not isinstance(items, dict):
+            return None
+        item = items.get(collection_key)
+        if isinstance(item, dict):
+            return item
+        return None
+
+
+def get_embedding_fingerprint_status(
+    collection_keys: list[str] | None = None,
+    *,
+    model_name: str | None = None,
+) -> dict[str, object]:
+    keys = collection_keys or collection_service.list_collection_keys()
+    resolved_model = (model_name or runtime_service.get_embedding_model()).strip()
+    expected_fingerprint = build_embedding_fingerprint(resolved_model)
+    expected_model = normalize_embedding_identity(resolved_model)
+
+    items: list[dict[str, object]] = []
+    aggregate_status = "ready"
+    any_ready = False
+    missing_keys: list[str] = []
+    mismatch_keys: list[str] = []
+
+    for key in keys:
+        vectors = get_vector_count_snapshot(key, max_age_seconds=0.0)
+        record = get_collection_embedding_record(key)
+        if not vectors or vectors <= 0:
+            status = "empty"
+        elif record is None:
+            status = "missing"
+            missing_keys.append(key)
+        elif str(record.get("embedding_fingerprint", "")) != expected_fingerprint:
+            status = "mismatch"
+            mismatch_keys.append(key)
+        else:
+            status = "ready"
+            any_ready = True
+
+        items.append(
+            {
+                "collection_key": key,
+                "vectors": vectors or 0,
+                "status": status,
+                "stored_embedding_model": None if record is None else record.get("embedding_model"),
+                "stored_embedding_fingerprint": None if record is None else record.get("embedding_fingerprint"),
+            }
+        )
+
+    if mismatch_keys:
+        aggregate_status = "mismatch"
+    elif missing_keys:
+        aggregate_status = "missing"
+    elif any_ready:
+        aggregate_status = "ready"
+    else:
+        aggregate_status = "empty"
+
+    if aggregate_status == "mismatch":
+        message = (
+            "현재 임베딩 모델과 저장된 컬렉션 fingerprint가 다릅니다. "
+            "Reindex 또는 build_index.py --reset이 필요합니다."
+        )
+    elif aggregate_status == "missing":
+        message = (
+            "현재 컬렉션의 embedding fingerprint 메타데이터가 없습니다. "
+            "운영 게이트 전에 Reindex를 다시 실행하세요."
+        )
+    elif aggregate_status == "empty":
+        message = "아직 fingerprint 비교 대상이 되는 벡터가 없습니다."
+    else:
+        message = "현재 임베딩 모델과 저장된 컬렉션 fingerprint가 일치합니다."
+
+    return {
+        "status": aggregate_status,
+        "message": message,
+        "expected_embedding_model": expected_model,
+        "expected_embedding_fingerprint": expected_fingerprint,
+        "missing_keys": missing_keys,
+        "mismatch_keys": mismatch_keys,
+        "items": items,
+    }
 
 
 def collect_rejected_items(validation_reports: list[dict[str, object]]) -> list[dict[str, object]]:
@@ -224,6 +452,7 @@ def index_documents_for_collection(
 ) -> dict[str, object]:
     collection_name = collection_service.get_collection_name(collection_key)
     chunking = runtime_service.get_chunking_config()
+    embedding_model = runtime_service.get_embedding_model()
     chunks = split_by_markdown_headers(
         docs,
         chunk_size=CHUNK_SIZE,
@@ -249,9 +478,10 @@ def index_documents_for_collection(
 
     persist_dir = Path(PERSIST_DIR)
     persist_dir.mkdir(parents=True, exist_ok=True)
-    embeddings = get_embeddings(runtime_service.get_embedding_model())
+    embeddings = get_embeddings(embedding_model)
 
     if reset:
+        invalidate_runtime_state([collection_key])
         try:
             temp_db = Chroma(
                 collection_name=collection_name,
@@ -268,12 +498,19 @@ def index_documents_for_collection(
             persist_directory=str(persist_dir),
             collection_metadata={"hnsw:space": "cosine"},
         )
+        _set_cached_db(collection_key, embedding_model, db)
     else:
         db = get_db(collection_key)
         if chunks:
             db.add_documents(chunks)
 
     vectors = get_vector_count(db)
+    _set_vector_count_snapshot(collection_name, vectors)
+    record_collection_embedding_fingerprint(
+        collection_key,
+        model_name=embedding_model,
+        vector_count=vectors,
+    )
     cap_status = collection_service.calculate_cap_status(vectors)
     return {
         "chunks_added": len(chunks),
@@ -345,6 +582,7 @@ def reindex_single_collection(reset: bool = True, collection_key: str = DEFAULT_
 
 def reindex_with_related(reset: bool = True, collection_key: str = DEFAULT_COLLECTION_KEY) -> dict[str, object]:
     target_keys = expand_reindex_collection_keys(collection_key)
+    invalidate_runtime_state(target_keys)
     results: dict[str, dict[str, object]] = {}
     for key in target_keys:
         results[key] = reindex_single_collection(reset=reset, collection_key=key)

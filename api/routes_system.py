@@ -16,7 +16,15 @@ def health() -> dict[str, object]:
     chunking = runtime_service.get_chunking_config()
     default_llm = runtime_service.get_default_llm_config()
     query_timeout_seconds = runtime_service.get_query_timeout_seconds()
-    vectors = index_service.get_vector_count_fast(default_collection)
+    vectors = index_service.get_vector_count_fast(default_collection) or 0
+    runtime_budget = runtime_service.plan_query_budget(
+        provider=str(default_llm["provider"] or "ollama"),
+        model=str(default_llm["model"] or "") or None,
+        timeout_seconds=query_timeout_seconds,
+        collection_count=1,
+        route_reason="default",
+    )
+    embedding_status = index_service.get_embedding_fingerprint_status()
     release_web = runtime_service.build_release_web_guidance(
         vectors=vectors,
         default_llm_provider=str(default_llm["provider"] or "ollama"),
@@ -44,6 +52,11 @@ def health() -> dict[str, object]:
         "runtime_profile_scope": release_web["runtime_profile"]["scope"],
         "runtime_profile_message": release_web["runtime_profile"]["message"],
         "runtime_profile_recommendation": release_web["runtime_profile"]["recommendation"],
+        "runtime_query_budget_profile": runtime_budget["profile"],
+        "runtime_query_budget_summary": runtime_budget["summary"],
+        "embedding_fingerprint_status": embedding_status["status"],
+        "embedding_fingerprint_message": embedding_status["message"],
+        "embedding_fingerprint_details": embedding_status["items"],
         "release_web_status": release_web["status"],
         "release_web_headline": release_web["headline"],
         "release_web_steps": release_web["steps"],

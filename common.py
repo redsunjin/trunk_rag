@@ -164,6 +164,7 @@ def create_chat_llm(
     temperature: float = 0.0,
     api_key: str | None = None,
     base_url: str | None = None,
+    max_output_tokens: int | None = None,
 ):
     provider, model, api_key, base_url = resolve_llm_config(
         provider=provider,
@@ -176,6 +177,8 @@ def create_chat_llm(
         if ChatOpenAI is None:
             raise ImportError("`langchain-openai` is not installed.")
         kwargs = {"model": model, "temperature": temperature}
+        if max_output_tokens is not None:
+            kwargs["max_tokens"] = max_output_tokens
         if api_key:
             kwargs["openai_api_key"] = api_key
         if base_url:
@@ -187,27 +190,34 @@ def create_chat_llm(
             raise ImportError("`langchain-openai` is not installed.")
         if not api_key:
             raise ValueError("GROQ_API_KEY is required for groq provider.")
-        return ChatOpenAI(
-            model=model,
-            temperature=temperature,
-            openai_api_key=api_key,
-            openai_api_base=base_url or "https://api.groq.com/openai/v1",
-        )
+        kwargs = {
+            "model": model,
+            "temperature": temperature,
+            "openai_api_key": api_key,
+            "openai_api_base": base_url or "https://api.groq.com/openai/v1",
+        }
+        if max_output_tokens is not None:
+            kwargs["max_tokens"] = max_output_tokens
+        return ChatOpenAI(**kwargs)
 
     if provider == "lmstudio":
         if ChatOpenAI is None:
             raise ImportError("`langchain-openai` is not installed.")
-        return ChatOpenAI(
-            model=model,
-            temperature=temperature,
-            openai_api_key=api_key or "lm-studio",
-            openai_api_base=base_url or "http://localhost:1234/v1",
-        )
+        kwargs = {
+            "model": model,
+            "temperature": temperature,
+            "openai_api_key": api_key or "lm-studio",
+            "openai_api_base": base_url or "http://localhost:1234/v1",
+        }
+        if max_output_tokens is not None:
+            kwargs["max_tokens"] = max_output_tokens
+        return ChatOpenAI(**kwargs)
 
     return build_ollama_chat_runnable(
         model=model,
         temperature=temperature,
         base_url=base_url or "http://localhost:11434",
+        num_predict=max_output_tokens,
     )
 
 
@@ -268,11 +278,14 @@ def invoke_ollama_chat(
     model: str,
     temperature: float,
     base_url: str,
+    num_predict: int | None = None,
 ) -> AIMessage:
-    num_predict = parse_optional_positive_int_env(OLLAMA_NUM_PREDICT_ENV_KEY)
+    resolved_num_predict = num_predict
+    if resolved_num_predict is None:
+        resolved_num_predict = parse_optional_positive_int_env(OLLAMA_NUM_PREDICT_ENV_KEY)
     options: dict[str, Any] = {"temperature": temperature}
-    if num_predict is not None:
-        options["num_predict"] = num_predict
+    if resolved_num_predict is not None:
+        options["num_predict"] = resolved_num_predict
 
     body = {
         "model": model,
@@ -307,6 +320,7 @@ def build_ollama_chat_runnable(
     model: str,
     temperature: float,
     base_url: str,
+    num_predict: int | None = None,
 ):
     return RunnableLambda(
         lambda prompt: invoke_ollama_chat(
@@ -314,6 +328,7 @@ def build_ollama_chat_runnable(
             model=model,
             temperature=temperature,
             base_url=base_url,
+            num_predict=num_predict,
         )
     )
 

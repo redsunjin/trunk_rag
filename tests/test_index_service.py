@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import json
+import time
+from pathlib import Path
+
 from services import index_service
 
 
@@ -44,3 +48,63 @@ def test_reindex_with_related_returns_nested_results(monkeypatch):
     assert result["related_collection_keys"] == ["uk", "all"]
     assert result["collections"]["uk"]["vectors"] == 3
     assert result["collections"]["all"]["vectors"] == 3
+
+
+def test_record_collection_embedding_fingerprint_persists_manifest(monkeypatch, tmp_path: Path):
+    monkeypatch.setattr(index_service, "PERSIST_DIR", str(tmp_path))
+    monkeypatch.setattr(index_service.runtime_service, "get_embedding_model", lambda: "BAAI/bge-m3")
+    monkeypatch.setattr(index_service.runtime_service, "utc_now_iso", lambda: "2026-03-25T00:00:00+00:00")
+
+    record = index_service.record_collection_embedding_fingerprint("all", vector_count=37)
+
+    manifest = json.loads((tmp_path / "embedding_fingerprints.json").read_text(encoding="utf-8"))
+    assert record["collection_key"] == "all"
+    assert manifest["items"]["all"]["vector_count"] == 37
+    assert manifest["items"]["all"]["embedding_fingerprint"] == record["embedding_fingerprint"]
+
+
+def test_get_embedding_fingerprint_status_reports_mismatch(monkeypatch):
+    monkeypatch.setattr(index_service, "get_vector_count_snapshot", lambda collection_key="all", max_age_seconds=5.0: 1)
+    monkeypatch.setattr(
+        index_service,
+        "get_collection_embedding_record",
+        lambda key: {"embedding_fingerprint": "old", "embedding_model": "old-model"},
+    )
+    monkeypatch.setattr(index_service.runtime_service, "get_embedding_model", lambda: "BAAI/bge-m3")
+
+    status = index_service.get_embedding_fingerprint_status(["all"])
+
+    assert status["status"] == "mismatch"
+    assert status["mismatch_keys"] == ["all"]
+
+
+def test_get_vector_count_snapshot_uses_ttl_cache(monkeypatch):
+    collection_name = index_service.collection_service.get_collection_name("all")
+    calls: list[str] = []
+    monkeypatch.setattr(
+        index_service,
+        "get_vector_count_fast",
+        lambda name: calls.append(name) or 7,
+    )
+    index_service.invalidate_runtime_state()
+
+    first = index_service.get_vector_count_snapshot("all", max_age_seconds=10.0)
+    second = index_service.get_vector_count_snapshot("all", max_age_seconds=10.0)
+
+    assert first == 7
+    assert second == 7
+    assert calls == [collection_name]
+
+
+def test_invalidate_runtime_state_clears_vector_count_snapshot(monkeypatch):
+    collection_name = index_service.collection_service.get_collection_name("all")
+    values = iter([5, 9])
+    monkeypatch.setattr(index_service, "get_vector_count_fast", lambda name: next(values))
+    index_service.invalidate_runtime_state()
+
+    cached = index_service.get_vector_count_snapshot("all", max_age_seconds=10.0)
+    index_service.invalidate_runtime_state(["all"])
+    refreshed = index_service.get_vector_count_snapshot("all", max_age_seconds=10.0)
+
+    assert cached == 5
+    assert refreshed == 9

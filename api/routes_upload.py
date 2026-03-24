@@ -32,7 +32,9 @@ def _approve_request_item_unlocked(
     )
 
     ingest_results: dict[str, object] = {}
-    for key in upload_service.affected_collection_keys(collection_key):
+    affected_keys = upload_service.affected_collection_keys(collection_key)
+    index_service.invalidate_runtime_state(affected_keys)
+    for key in affected_keys:
         ingest_results[key] = index_service.reindex(reset=True, collection_key=key)
 
     request_item["status"] = REQUEST_STATUS_APPROVED
@@ -205,6 +207,7 @@ def reject_upload_request(request_id: str, action: UploadRequestRejectAction) ->
         item["updated_at"] = now
         item["approved_at"] = None
         item["ingest"] = None
+        index_service.invalidate_runtime_state(upload_service.affected_collection_keys(str(item.get("collection_key", DEFAULT_COLLECTION_KEY))))
         items[index] = item
         upload_service._save_upload_requests_unlocked(items)
 

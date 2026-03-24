@@ -23,6 +23,12 @@ def test_query_success_case(client, monkeypatch):
 
     monkeypatch.setattr(routes_query.index_service, "get_db", lambda *args, **kwargs: DummyDB())
     monkeypatch.setattr(routes_query.index_service, "get_vector_count", lambda _db: 1)
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count_snapshot", lambda key="all": 1)
+    monkeypatch.setattr(
+        routes_query.index_service,
+        "get_embedding_fingerprint_status",
+        lambda keys=None: {"status": "ready", "message": "ok"},
+    )
     monkeypatch.setattr(
         routes_query,
         "resolve_llm_config",
@@ -43,6 +49,8 @@ def test_query_success_case(client, monkeypatch):
     )
     assert response.status_code == 200
     assert response.headers.get("X-Request-ID") == "req-success-1"
+    assert response.headers.get("X-RAG-Budget-Profile") == "not_recommended_local"
+    assert response.headers.get("X-RAG-Route-Reason") == "default"
     assert response.json() == {
         "answer": "모킹 응답",
         "provider": "ollama",
@@ -51,8 +59,7 @@ def test_query_success_case(client, monkeypatch):
 
 
 def test_query_vectorstore_empty(client, monkeypatch):
-    monkeypatch.setattr(routes_query.index_service, "get_db", lambda *args, **kwargs: object())
-    monkeypatch.setattr(routes_query.index_service, "get_vector_count", lambda _db: 0)
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count_snapshot", lambda key="all": 0)
     response = client.post(
         "/query",
         json={"query": "테스트", "llm_provider": "ollama"},
@@ -70,6 +77,7 @@ def test_query_invalid_provider(client, monkeypatch):
 
     monkeypatch.setattr(routes_query.index_service, "get_db", lambda *args, **kwargs: DummyDB())
     monkeypatch.setattr(routes_query.index_service, "get_vector_count", lambda _db: 1)
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count_snapshot", lambda key="all": 1)
     response = client.post("/query", json={"query": "테스트", "llm_provider": "bad-provider"})
     body = _assert_query_error_shape(response, 400, "INVALID_PROVIDER")
     assert "groq" in (body.get("hint") or "")
@@ -82,6 +90,12 @@ def test_query_llm_connection_failed(client, monkeypatch):
 
     monkeypatch.setattr(routes_query.index_service, "get_db", lambda *args, **kwargs: DummyDB())
     monkeypatch.setattr(routes_query.index_service, "get_vector_count", lambda _db: 1)
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count_snapshot", lambda key="all": 1)
+    monkeypatch.setattr(
+        routes_query.index_service,
+        "get_embedding_fingerprint_status",
+        lambda keys=None: {"status": "ready", "message": "ok"},
+    )
     monkeypatch.setattr(
         routes_query,
         "resolve_llm_config",
@@ -104,6 +118,12 @@ def test_query_timeout(client, monkeypatch):
 
     monkeypatch.setattr(routes_query.index_service, "get_db", lambda *args, **kwargs: DummyDB())
     monkeypatch.setattr(routes_query.index_service, "get_vector_count", lambda _db: 1)
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count_snapshot", lambda key="all": 1)
+    monkeypatch.setattr(
+        routes_query.index_service,
+        "get_embedding_fingerprint_status",
+        lambda keys=None: {"status": "ready", "message": "ok"},
+    )
     monkeypatch.setattr(
         routes_query,
         "resolve_llm_config",
@@ -128,6 +148,12 @@ def test_query_reports_embedding_dimension_mismatch(client, monkeypatch):
 
     monkeypatch.setattr(routes_query.index_service, "get_db", lambda *args, **kwargs: DummyDB())
     monkeypatch.setattr(routes_query.index_service, "get_vector_count", lambda _db: 1)
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count_snapshot", lambda key="all": 1)
+    monkeypatch.setattr(
+        routes_query.index_service,
+        "get_embedding_fingerprint_status",
+        lambda keys=None: {"status": "ready", "message": "ok"},
+    )
     monkeypatch.setattr(
         routes_query,
         "resolve_llm_config",
@@ -183,6 +209,12 @@ def test_query_with_two_collections(client, monkeypatch):
 
     monkeypatch.setattr(routes_query.index_service, "get_db", lambda key="all": DummyDB(key))
     monkeypatch.setattr(routes_query.index_service, "get_vector_count", lambda _db: 1)
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count_snapshot", lambda key="all": 1)
+    monkeypatch.setattr(
+        routes_query.index_service,
+        "get_embedding_fingerprint_status",
+        lambda keys=None: {"status": "ready", "message": "ok"},
+    )
     monkeypatch.setattr(
         routes_query,
         "resolve_llm_config",
@@ -212,6 +244,8 @@ def test_query_with_two_collections(client, monkeypatch):
             routes_query.collection_service.get_collection_name("ge"),
         ]
     )
+    assert response.headers.get("X-RAG-Budget-Profile") == "not_recommended_local"
+    assert response.headers.get("X-RAG-Route-Reason") == "explicit_multi"
     assert response.json()["answer"] == "다중 컬렉션 응답"
 
 
@@ -225,6 +259,12 @@ def test_query_auto_routes_multi_country_keywords(client, monkeypatch):
 
     monkeypatch.setattr(routes_query.index_service, "get_db", lambda key="all": DummyDB(key))
     monkeypatch.setattr(routes_query.index_service, "get_vector_count", lambda _db: 1)
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count_snapshot", lambda key="all": 1)
+    monkeypatch.setattr(
+        routes_query.index_service,
+        "get_embedding_fingerprint_status",
+        lambda keys=None: {"status": "ready", "message": "ok"},
+    )
     monkeypatch.setattr(
         routes_query,
         "resolve_llm_config",
@@ -254,4 +294,20 @@ def test_query_auto_routes_multi_country_keywords(client, monkeypatch):
             routes_query.collection_service.get_collection_name("ge"),
         ]
     )
+    assert response.headers.get("X-RAG-Budget-Profile") == "not_recommended_local"
+    assert response.headers.get("X-RAG-Route-Reason") == "keyword_multi"
     assert response.json()["answer"] == "자동 다중 라우팅 응답"
+
+
+def test_query_blocks_embedding_fingerprint_mismatch(client, monkeypatch):
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count_snapshot", lambda key="all": 1)
+    monkeypatch.setattr(
+        routes_query.index_service,
+        "get_embedding_fingerprint_status",
+        lambda keys=None: {"status": "mismatch", "message": "fingerprint mismatch"},
+    )
+
+    response = client.post("/query", json={"query": "테스트", "llm_provider": "ollama"})
+
+    body = _assert_query_error_shape(response, 409, "VECTORSTORE_EMBEDDING_MISMATCH")
+    assert "DOC_RAG_EMBEDDING_MODEL" in (body.get("hint") or "")

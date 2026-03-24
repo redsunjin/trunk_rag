@@ -5,6 +5,7 @@ import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FuturesTimeoutError
+from typing import Any
 
 from langchain_core.documents import Document
 from langchain_core.output_parsers import StrOutputParser
@@ -159,11 +160,23 @@ def build_collection_context(
     question: str,
     collection_keys: list[str],
     trace: dict[str, Any] | None = None,
+    budget: dict[str, object] | None = None,
 ) -> str:
     started_at = time.perf_counter()
     docs: list[Document] = []
     fingerprints: set[str] = set()
     collection_stats: list[dict[str, Any]] = []
+    per_collection_k = int(budget.get("per_collection_k", SEARCH_K)) if budget else SEARCH_K
+    per_collection_fetch_k = int(budget.get("per_collection_fetch_k", SEARCH_FETCH_K)) if budget else SEARCH_FETCH_K
+    max_total_docs = int(budget.get("max_total_docs", max(SEARCH_K * len(collection_keys), SEARCH_K))) if budget else max(
+        SEARCH_K * len(collection_keys),
+        SEARCH_K,
+    )
+    max_context_chars = (
+        int(budget["max_context_chars"])
+        if budget and isinstance(budget.get("max_context_chars"), int)
+        else runtime_service.get_max_context_chars()
+    )
 
     for key in collection_keys:
         collection_started_at = time.perf_counter()
@@ -171,8 +184,8 @@ def build_collection_context(
         retriever = db.as_retriever(
             search_type="mmr",
             search_kwargs={
-                "k": SEARCH_K,
-                "fetch_k": SEARCH_FETCH_K,
+                "k": per_collection_k,
+                "fetch_k": per_collection_fetch_k,
                 "lambda_mult": SEARCH_LAMBDA,
             },
         )
@@ -195,9 +208,7 @@ def build_collection_context(
             }
         )
 
-    max_docs = max(SEARCH_K * len(collection_keys), SEARCH_K)
-    max_context_chars = runtime_service.get_max_context_chars()
-    context = format_docs_with_limit(docs[:max_docs], max_chars=max_context_chars)
+    context = format_docs_with_limit(docs[:max_total_docs], max_chars=max_context_chars)
     elapsed_ms = round((time.perf_counter() - started_at) * 1000, 3)
 
     if trace is not None:
@@ -206,9 +217,12 @@ def build_collection_context(
                 "collections": list(collection_keys),
                 "collection_stats": collection_stats,
                 "docs_total": len(docs),
-                "max_docs": max_docs,
+                "max_docs": max_total_docs,
                 "max_context_chars": max_context_chars,
                 "context_chars": len(context),
+                "budget_profile": None if budget is None else budget.get("profile"),
+                "per_collection_k": per_collection_k,
+                "per_collection_fetch_k": per_collection_fetch_k,
                 "elapsed_ms": elapsed_ms,
             }
         )
@@ -217,7 +231,7 @@ def build_collection_context(
         "context_build collections=%s docs_total=%d max_docs=%d context_chars=%d max_context_chars=%s elapsed_ms=%.3f per_collection=%s",
         ",".join(collection_keys),
         len(docs),
-        max_docs,
+        max_total_docs,
         len(context),
         max_context_chars,
         elapsed_ms,
