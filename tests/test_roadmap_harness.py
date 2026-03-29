@@ -45,6 +45,7 @@ def test_build_report_requires_exact_active_match():
     report = roadmap_harness.build_report(
         todo_text=TODO_TEXT,
         next_session_text=NEXT_SESSION_TEXT,
+        current_branch="main",
     )
 
     assert report["ready"] is True
@@ -58,6 +59,7 @@ def test_build_report_detects_active_mismatch():
     report = roadmap_harness.build_report(
         todo_text=TODO_TEXT,
         next_session_text=bad_next_session,
+        current_branch="main",
     )
 
     assert report["ready"] is False
@@ -73,7 +75,33 @@ def test_validate_queue_rejects_multiple_active_items():
     report = roadmap_harness.build_report(
         todo_text=bad_todo,
         next_session_text=NEXT_SESSION_TEXT,
+        current_branch="main",
     )
 
     assert report["ready"] is False
     assert "Expected exactly one active item" in report["errors"][0]
+
+
+def test_build_report_detects_active_title_mismatch():
+    bad_next_session = NEXT_SESSION_TEXT.replace("Active Task", "Wrong Title", 1)
+
+    report = roadmap_harness.build_report(
+        todo_text=TODO_TEXT,
+        next_session_text=bad_next_session,
+        current_branch="main",
+    )
+
+    assert report["ready"] is False
+    assert "current_active_title does not match" in report["errors"][0]
+
+
+def test_build_report_warns_on_non_main_branch():
+    report = roadmap_harness.build_report(
+        todo_text=TODO_TEXT,
+        next_session_text=NEXT_SESSION_TEXT,
+        current_branch="feature/v1.5-agent-ready-runtime",
+    )
+
+    assert report["ready"] is True
+    assert report["warnings"]
+    assert "Non-main branch detected" in report["warnings"][0]
