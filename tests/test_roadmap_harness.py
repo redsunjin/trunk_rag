@@ -25,8 +25,12 @@ NEXT_SESSION_TEXT = """
 
 - current_active_id: `LOOP-001`
 - current_active_title: `Active Task`
+- current_version_track: `V1`
+- current_harness_mode: `v1_operating_loop`
 - session_start_command: `python scripts/roadmap_harness.py status`
 - default_regression_gate: `python scripts/check_ops_baseline_gate.py`
+- branch_execution_policy: `non-main branches do not override official active loop without explicit redirect or queue promotion`
+- branch_plan_doc: `docs/V1_5_AGENT_READY_PLAN.md`
 - closeout_rule: `done after docs and commit`
 - blocked_rule: `record blocker and reopen rule`
 - promotion_rule: `promote first pending item`
@@ -51,6 +55,19 @@ def test_build_report_requires_exact_active_match():
     assert report["ready"] is True
     assert report["active_item"]["id"] == "LOOP-001"
     assert report["counts"]["pending"] == 1
+
+
+def test_build_report_rejects_invalid_harness_mode():
+    bad_next_session = NEXT_SESSION_TEXT.replace("v1_operating_loop", "bad_mode", 1)
+
+    report = roadmap_harness.build_report(
+        todo_text=TODO_TEXT,
+        next_session_text=bad_next_session,
+        current_branch="main",
+    )
+
+    assert report["ready"] is False
+    assert "Invalid current_harness_mode" in report["errors"][0]
 
 
 def test_build_report_detects_active_mismatch():

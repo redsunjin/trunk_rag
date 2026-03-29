@@ -11,6 +11,13 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 TODO_PATH = ROOT_DIR / "TODO.md"
 NEXT_SESSION_PLAN_PATH = ROOT_DIR / "NEXT_SESSION_PLAN.md"
 VALID_STATUSES = {"active", "pending", "blocked", "done", "archived"}
+VALID_VERSION_TRACKS = {"V1", "V1.5", "V2", "V3"}
+VALID_HARNESS_MODES = {
+    "v1_operating_loop",
+    "v1_5_agent_ready_loop",
+    "v2_single_agent_loop",
+    "v3_agent_system_loop",
+}
 
 
 def get_current_branch(root_dir: Path = ROOT_DIR) -> str | None:
@@ -134,13 +141,21 @@ def build_report(
     active_item = queue_validation["active_item"]
     session_active_id = session.get("current_active_id", "")
     session_active_title = session.get("current_active_title", "")
+    version_track = session.get("current_version_track", "")
+    harness_mode = session.get("current_harness_mode", "")
+    branch_execution_policy = session.get("branch_execution_policy", "")
+    branch_plan_doc = session.get("branch_plan_doc", "")
     errors: list[str] = []
     warnings: list[str] = []
     required_session_keys = {
         "current_active_id",
         "current_active_title",
+        "current_version_track",
+        "current_harness_mode",
         "session_start_command",
         "default_regression_gate",
+        "branch_execution_policy",
+        "branch_plan_doc",
         "closeout_rule",
         "blocked_rule",
         "promotion_rule",
@@ -153,6 +168,10 @@ def build_report(
     missing_session_keys = sorted(required_session_keys - set(session.keys()))
     if missing_session_keys:
         errors.append(f"Session Loop Harness missing keys: {', '.join(missing_session_keys)}")
+    if version_track and version_track not in VALID_VERSION_TRACKS:
+        errors.append(f"Invalid current_version_track: {version_track}")
+    if harness_mode and harness_mode not in VALID_HARNESS_MODES:
+        errors.append(f"Invalid current_harness_mode: {harness_mode}")
     if queue_validation["active_count"] != 1:
         errors.append(f"Expected exactly one active item, found {queue_validation['active_count']}")
     if active_item and session_active_id != active_item["id"]:
@@ -170,6 +189,17 @@ def build_report(
             "Non-main branch detected; TODO/NEXT_SESSION active loop remains authoritative "
             "unless the user explicitly redirects or the queue is promoted."
         )
+    if branch_plan_doc and branch_plan_doc != "-":
+        branch_plan_path = ROOT_DIR / branch_plan_doc
+        if not branch_plan_path.exists():
+            errors.append(f"branch_plan_doc does not exist: {branch_plan_doc}")
+    if current_branch in {"main", "HEAD"} and branch_plan_doc and branch_plan_doc != "-":
+        warnings.append(
+            "branch_plan_doc is set while on main/HEAD; confirm whether this branch-scoped plan "
+            "should remain active in NEXT_SESSION_PLAN."
+        )
+    if current_branch and current_branch not in {"main", "HEAD"} and not branch_execution_policy:
+        errors.append("branch_execution_policy is required on non-main branches")
 
     counts = {status: 0 for status in VALID_STATUSES}
     for row in queue:
@@ -218,8 +248,12 @@ def print_status(report: dict[str, object]) -> None:
         f" archived={counts['archived']}"
     )
     session = report["session"]
+    print(f"  version={session.get('current_version_track', '-')}")
+    print(f"  harness_mode={session.get('current_harness_mode', '-')}")
     print(f"  start={session.get('session_start_command', '-')}")
     print(f"  gate={session.get('default_regression_gate', '-')}")
+    print(f"  branch_policy={session.get('branch_execution_policy', '-')}")
+    print(f"  branch_plan_doc={session.get('branch_plan_doc', '-')}")
     print(f"  closeout={session.get('closeout_rule', '-')}")
     if report["errors"]:
         print("  errors:")

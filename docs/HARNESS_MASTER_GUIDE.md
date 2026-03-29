@@ -35,6 +35,7 @@
 
 현재 프로젝트 적용:
 - `TODO.md`, `NEXT_SESSION_PLAN.md`, `VERSION_ROADMAP.md`, `docs/V1_5_AGENT_READY_PLAN.md` 같은 문서가 이 역할을 맡는다.
+- 버전별 하네스 모드와 세션 메타데이터는 `docs/HARNESS_EVOLUTION_PLAN.md`에 고정한다.
 
 ### 2. 에이전트는 큰 설명서보다 맵을 더 잘 따른다
 - OpenAI 글은 거대한 단일 지침서보다, 짧은 인덱스와 연결된 문서 구조를 선호한다.

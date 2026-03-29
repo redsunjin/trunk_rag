@@ -29,8 +29,12 @@
 
 - current_active_id: `LOOP-001`
 - current_active_title: `배포형 웹 MVP 게이트`
+- current_version_track: `V1`
+- current_harness_mode: `v1_operating_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
 - default_regression_gate: `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`
+- branch_execution_policy: `non-main branches do not override official active loop without explicit redirect or queue promotion`
+- branch_plan_doc: `docs/V1_5_AGENT_READY_PLAN.md`
 - closeout_rule: `active` 항목은 검증 결과와 문서 반영, 커밋까지 끝난 뒤에만 `done`으로 본다.
 - blocked_rule: blocker와 재개 조건 없이 `blocked` 상태로 이동하지 않는다.
 - promotion_rule: 현재 `active`가 `done`이 되면 첫 번째 `pending` 항목을 즉시 다음 `active`로 승격한다.

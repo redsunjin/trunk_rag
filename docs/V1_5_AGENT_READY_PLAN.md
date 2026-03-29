@@ -5,6 +5,7 @@
 - `trunk_rag`의 다음 단계는 곧바로 agent product로 점프하지 않고, 먼저 `agent-ready runtime`을 만든다.
 - 이 문서는 `V1.5` 브랜치 전략, 범위, 첫 구현 순서를 고정한다.
 - 하네스 설계 원칙과 워크북 템플릿은 `docs/HARNESS_MASTER_GUIDE.md`를 따른다.
+- 버전별 하네스 모드와 세션 메타데이터 계약은 `docs/HARNESS_EVOLUTION_PLAN.md`를 따른다.
 
 ## Branch Strategy
 - 안정 기준선: `main`
