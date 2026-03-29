@@ -1,0 +1,106 @@
+# V1.5 Agent-ready Runtime Plan
+
+## Purpose
+- `V1` 운영 기준선을 유지한 채 `V2`로 넘어가기 위한 준비 작업을 분리한다.
+- `trunk_rag`의 다음 단계는 곧바로 agent product로 점프하지 않고, 먼저 `agent-ready runtime`을 만든다.
+- 이 문서는 `V1.5` 브랜치 전략, 범위, 첫 구현 순서를 고정한다.
+
+## Branch Strategy
+- 안정 기준선: `main`
+- 현재 준비 브랜치: `feature/v1.5-agent-ready-runtime`
+- 현재 브랜치는 `docs/version-roadmap-v2-architecture`에서 갈라졌다.
+- 따라서 `PR #1`이 `main`에 머지되면, 이 브랜치는 최신 `main` 기준으로 rebase 또는 merge 정리 후 계속 진행한다.
+
+원칙:
+- `main`은 `V1` 안정화와 소규모 hotfix만 받는다.
+- `V1.5` 준비 작업은 이 브랜치에서만 진행한다.
+- 운영 중 발견된 `V1` 오류 수정은 별도 `hotfix/v1.0.x-*` 브랜치에서 처리한다.
+
+## Product Position
+- 현재 제품: `V1 = RAG product`
+- 현재 목표: `V1`을 깨지 않고 `V2`를 위한 내부 구조를 준비
+- 이번 단계 결과물: 여전히 `RAG product`
+
+즉, `V1.5`는 새 제품 출시가 아니라 내부 구조 준비 단계다.
+
+## Scope
+
+### In
+- 기존 기능을 internal tool로 추상화할 준비
+- 공통 `middleware chain` 초안 도입
+- request 단위 `execution trace` 구조 정의
+- agent runtime이 얹힐 자리와 계약 정의
+
+### Out
+- 최종 단일 agent product 출시
+- skill 자동 선택 로직 전체 구현
+- MCP client/server 통합
+- planner/worker 멀티에이전트
+- GraphRAG 재개
+
+## First Work Packages
+
+### WP1. Internal Tool Registry Skeleton
+- 기존 기능을 그대로 유지한 채 tool registry 인터페이스를 만든다.
+- 1차 후보:
+  - `search_docs`
+  - `read_doc`
+  - `list_collections`
+  - `health_check`
+  - `reindex`
+  - `list_upload_requests`
+  - `approve_upload_request`
+  - `reject_upload_request`
+
+완료 기준:
+- tool definition schema가 생긴다.
+- 기존 service 호출을 감싸는 thin adapter가 생긴다.
+- 기존 `/query` 기본 경로를 깨지 않는다.
+
+### WP2. Middleware Chain Skeleton
+- tool/runtime 실행 전후에 공통 정책을 넣을 수 있는 체인을 추가한다.
+- 1차 미들웨어:
+  - request id
+  - timeout budget
+  - tool allowlist
+  - audit log
+  - unsafe action guard
+
+완료 기준:
+- 미들웨어를 순차 적용할 수 있는 최소 실행기 구조가 생긴다.
+- 기존 runtime profile/budget 정보가 미들웨어 입력으로 연결된다.
+
+### WP3. Execution Trace Contract
+- 한 요청에서 어떤 단계와 tool이 실행됐는지 구조적으로 남긴다.
+- 현재 `request_id`, runtime profile, route reason, budget profile을 trace seed로 사용한다.
+
+완료 기준:
+- trace schema가 고정된다.
+- tool 실행 결과와 실패 원인이 trace에 남는다.
+
+### WP4. Agent Runtime Entry Draft
+- 기존 `/query`를 대체하지 않고 별도 실험 엔트리로 시작한다.
+- 예: `/agent/query` 또는 내부 service entry
+
+완료 기준:
+- 단일 입력을 받아 tool call 흐름을 테스트할 수 있다.
+- 실제 사용자 기본 경로는 계속 `/query`다.
+
+## Suggested Order
+1. `WP1` tool registry skeleton
+2. `WP2` middleware chain skeleton
+3. `WP3` execution trace contract
+4. `WP4` agent runtime entry draft
+
+## Validation Rules
+- `V1` 회귀 게이트를 항상 유지한다.
+- 기본 검증:
+  - `./.venv/bin/python -m pytest -q`
+  - `./.venv/bin/python scripts/roadmap_harness.py validate`
+- `V1.5` 새 구조는 가능한 한 기존 API 계약을 깨지 않는 방식으로 추가한다.
+
+## Exit Criteria
+- 내부 tool registry가 최소 1차 범위 기능을 감싼다.
+- middleware chain이 최소 정책(request id, timeout, allowlist, audit)을 적용할 수 있다.
+- execution trace 구조가 고정된다.
+- 이후 `V2`에서 단일 agent runtime을 얹을 수 있는 안정된 진입점이 생긴다.

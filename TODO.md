@@ -8,6 +8,7 @@
 - `NEXT_SESSION_PLAN.md`
 - `SPEC.md`
 - `VERSION_ROADMAP.md`
+- `docs/V1_5_AGENT_READY_PLAN.md`
 - `docs/PREPROCESSING_RULES.md`
 - `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md`
 - `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
@@ -110,6 +111,7 @@
 - 같은 날짜 후속 정리로 빈 `DOC_RAG_MAX_CONTEXT_CHARS`를 정상 fallback으로 처리해 불필요한 warning을 제거했고, `app_api.py`/`build_index.py`는 import 전에 `.env`를 읽도록 바꿔 telemetry 비활성화 설정이 더 이른 시점에 적용되게 했다.
 - 같은 날짜 `VERSION_ROADMAP.md`를 추가해 현재 제품을 `V1 = RAG product`, 다음 단계를 `V2 = Agent-enabled RAG`, 장기 목표를 `V3 = Agent system`으로 고정했다.
 - `V2`의 공식 준비 범위는 `tool registry`, `middleware chain`, `skill registry`, `execution state`, `agent runtime`이며, 이는 `LOOP-001` 종료 이후 후속 트랙으로 본다.
+- `V1.5` 준비 브랜치는 `feature/v1.5-agent-ready-runtime`으로 분리했고, 첫 작업 순서와 브랜치 운영 규칙은 `docs/V1_5_AGENT_READY_PLAN.md`에 고정한다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
