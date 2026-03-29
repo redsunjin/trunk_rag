@@ -12,6 +12,13 @@
 - 무거운 파이프라인 대신 "가벼운 RAG 런타임" 유지
 - 개발자 전용 데모가 아니라 배포 가능한 웹 MVP 기준으로 설치/실행/운영 경로 고정
 
+## 버전 포지셔닝
+- 현재 제품 정체성은 `V1 = RAG product`다.
+- `V1`의 중심은 인덱싱 + 질의 + 업로드 요청/관리자 승인 + 운영 게이트다.
+- `V2 = Agent-enabled RAG`는 `tool/skill/middleware`를 갖춘 단일 agent runtime을 얹는 다음 단계다.
+- `V3 = Agent system`은 planner/worker, MCP ecosystem, 다단계 orchestration을 포함하는 장기 단계다.
+- 버전 경계와 `V2` 아키텍처 초안은 `VERSION_ROADMAP.md`를 기준으로 유지한다.
+
 ## 현재 범위
 ### 포함
 - 로컬 문서 로딩: `data/*.md` (현재 샘플 5개 파일)
@@ -133,6 +140,7 @@
 - `services/*.py`: 인덱싱/질의/업로드 서비스 계층
 - `core/*.py`: 설정/에러/HTTP 공통 계층
 - `common.py`: 문서/청킹/임베딩/LLM 공통 유틸
+- `VERSION_ROADMAP.md`: `V1/V2/V3` 경계와 `V2` agent architecture 초안
 - `scripts/validate_rag_doc.py`: 등록 전 문서 검증
 - `build_index.py`: 초기 인덱싱 스크립트
 - `requirements.txt`: 런타임 의존성

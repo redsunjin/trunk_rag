@@ -4,6 +4,7 @@
 - `SPEC.md`
 - `README.md`
 - `TODO.md`
+- `VERSION_ROADMAP.md`
 - `docs/GRAPH_RAG_QUESTION_SET.md`
 - `docs/GRAPH_RAG_SIDECAR_CONTRACT.md`
 - `docs/UPLOAD_ADMIN_WORKFLOW.md`
@@ -238,6 +239,8 @@
 - 같은 날짜 `/health` 실측은 `runtime_profile_status=verified`, `runtime_query_budget_profile=verified_local_single`, `embedding_fingerprint_status=ready`였고, release gate 재진입 조건이 복구됐다.
 - 같은 날짜 `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`는 `3/3 pass`, `avg_weighted_score=0.9645`, `p95_latency_ms=13694.613`으로 다시 통과했다.
 - 같은 날짜 후속 정리로 빈 `DOC_RAG_MAX_CONTEXT_CHARS`는 warning 없이 기본값으로 처리하도록 바꿨고, `app_api.py`/`build_index.py`는 import 전에 `.env`를 읽어 telemetry 비활성화 설정이 더 이른 시점에 적용되게 했다.
+- 같은 날짜 `VERSION_ROADMAP.md`를 추가해 현재 `trunk_rag`를 `V1 = RAG product`로 고정하고, 다음 제품을 `V2 = Agent-enabled RAG`, 장기 목표를 `V3 = Agent system`으로 정의했다.
+- `V2`의 공식 아키텍처 초안은 `internal tools first, MCP second` 원칙과 `tool registry + middleware + skill registry + execution state + single-agent runtime` 조합을 기준으로 한다.
 
 후속 대상 (P3):
 1. GraphRAG 관련 문서/PoC는 잠정 중단 상태의 아카이브로만 유지
@@ -253,6 +256,11 @@
 ### B. 보류/유지 항목
 1. GraphRAG는 `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md` 기준으로 잠정 중단 상태를 유지하고 신규 구현/평가는 진행하지 않음
 2. 데스크톱 패키징은 `embedded Python` vs `별도 설치` 결정 전까지 재착수하지 않음
+
+### C. `LOOP-001` 이후 버전 후속
+1. `V1.5` 후보로 내부 기능을 `tool registry`로 재정리
+2. `middleware chain`과 `execution trace`를 붙여 agent-ready runtime 기반을 준비
+3. `V2.0`은 단일 agent runtime + skill registry + 내부 tool automation 순서로 진행
 
 ## 6. 세션 시작 체크리스트 (핸드오버용)
 
