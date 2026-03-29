@@ -5,6 +5,8 @@
 
 폐쇄망/로컬 환경에서 사용하는 경량 RAG 서버이며, 현재 목표는 "배포 가능한 웹 MVP" 기준으로 웹 UI 기본 경로를 닫는 것입니다.
 
+현재 버전 기준은 `V1 = RAG product`다. 다음 단계는 `V2 = Agent-enabled RAG`, 장기 목표는 `V3 = Agent system`이며, 버전 경계와 후속 아키텍처 기준은 `VERSION_ROADMAP.md`를 따른다.
+
 - 문서: 전처리 완료된 `data/*.md` 입력
 - 청킹: `##`, `###`, `####` 헤더 기반 + 문자 분할(기본), 토큰 분할(옵션)
 - 벡터스토어: Chroma (로컬 폴더)
@@ -15,6 +17,9 @@
 ## Operating Model (현행화)
 
 `trunk_rag`는 "가벼운 RAG 런타임" 역할에 집중합니다.
+
+- 현재 제품 경계: `V1`
+- 현재 범위 밖: `tool registry`, `skill registry`, `middleware chain`, `agent runtime`, `MCP` 기반 외부 tool orchestration
 
 1. 외부 전처리 단계(별도 프로세스, 클라우드 LLM 포함 가능)
 - 원본 소스를 정제해 RAG 정책에 맞는 Markdown으로 변환
@@ -76,6 +81,7 @@
 - `desktop/electron/README.md`: 데스크톱 런처 사용 방법과 한계
 - `AGENTS.md`: 에이전트용 상시 작업 정책
 - `WORKFLOW.md`: 사람/에이전트 공통 작업 순서
+- `VERSION_ROADMAP.md`: `V1/V2/V3` 버전 경계와 `V2` agent architecture 기준
 - `requirements.txt`: 런타임 의존성
 - `requirements-dev.txt`: 테스트/브라우저 의존성
 - `.env.example`: 환경변수 템플릿

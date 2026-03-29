@@ -3,6 +3,9 @@ from __future__ import annotations
 import argparse
 
 from common import load_project_env
+
+BOOT_ENV_PATH = load_project_env()
+
 from core.settings import DEFAULT_COLLECTION_KEY
 from services import collection_service, index_service
 
@@ -17,9 +20,8 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
 
-    env_path = load_project_env()
-    if env_path:
-        print(f"Loaded env: {env_path}")
+    if BOOT_ENV_PATH:
+        print(f"Loaded env: {BOOT_ENV_PATH}")
 
     if args.collection_key:
         resolved_key = collection_service.resolve_collection_key(args.collection_key)

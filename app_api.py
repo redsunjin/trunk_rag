@@ -3,6 +3,10 @@ from __future__ import annotations
 import logging
 from contextlib import asynccontextmanager
 
+from common import load_project_env
+
+BOOT_ENV_PATH = load_project_env()
+
 from fastapi import FastAPI, Request
 from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
@@ -13,7 +17,7 @@ from api.routes_docs_ui import router as docs_ui_router
 from api.routes_query import router as query_router
 from api.routes_system import router as system_router
 from api.routes_upload import router as upload_router
-from common import create_chat_llm, default_llm_model, load_project_env, resolve_llm_config
+from common import create_chat_llm, default_llm_model, resolve_llm_config
 from core.errors import QueryAPIError, build_query_error_payload, build_validation_hint
 from core.http import get_or_create_request_id
 from core.settings import (
@@ -48,9 +52,8 @@ logger = logging.getLogger("doc_rag.api")
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    env_path = load_project_env()
-    if env_path:
-        print(f"Loaded env: {env_path}")
+    if BOOT_ENV_PATH:
+        print(f"Loaded env: {BOOT_ENV_PATH}")
     yield
 
 

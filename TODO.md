@@ -7,6 +7,7 @@
 참조:
 - `NEXT_SESSION_PLAN.md`
 - `SPEC.md`
+- `VERSION_ROADMAP.md`
 - `docs/PREPROCESSING_RULES.md`
 - `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md`
 - `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
@@ -102,6 +103,13 @@
 - 같은 날짜 `/query`는 `X-RAG-Budget-Profile`, `X-RAG-Route-Reason` 헤더를 반환하고, active collection 기준 embedding fingerprint mismatch를 invoke 전에 먼저 차단하도록 보강했다.
 - 같은 날짜 reindex는 컬렉션별 embedding fingerprint를 `chroma_db/embedding_fingerprints.json`에 저장하고, `/health`와 `runtime_preflight`는 `runtime_query_budget_*`, `embedding_fingerprint_*`를 함께 노출/검사하도록 정리했다.
 - `2026-03-25` 회귀 검증은 `./.venv/bin/python -m pytest -q` -> `98 passed in 5.52s`까지 확인했다.
+- `2026-03-29`에는 실제 `.env`를 권장 기본값(`LLM_MODEL=llama3.1:8b`, `DOC_RAG_QUERY_TIMEOUT_SECONDS=30`)으로 다시 맞췄다.
+- 같은 날짜 `env HF_HUB_OFFLINE=1 ./.venv/bin/python build_index.py --reset`으로 all-routes를 재생성해 embedding fingerprint 메타데이터를 채웠다.
+- 같은 날짜 `/health` 실측은 `runtime_profile_status=verified`, `runtime_query_budget_profile=verified_local_single`, `embedding_fingerprint_status=ready`로 복구됐다.
+- 같은 날짜 `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434` 실측은 `3/3 pass`, `avg_weighted_score=0.9645`, `p95_latency_ms=13694.613`으로 통과했다.
+- 같은 날짜 후속 정리로 빈 `DOC_RAG_MAX_CONTEXT_CHARS`를 정상 fallback으로 처리해 불필요한 warning을 제거했고, `app_api.py`/`build_index.py`는 import 전에 `.env`를 읽도록 바꿔 telemetry 비활성화 설정이 더 이른 시점에 적용되게 했다.
+- 같은 날짜 `VERSION_ROADMAP.md`를 추가해 현재 제품을 `V1 = RAG product`, 다음 단계를 `V2 = Agent-enabled RAG`, 장기 목표를 `V3 = Agent system`으로 고정했다.
+- `V2`의 공식 준비 범위는 `tool registry`, `middleware chain`, `skill registry`, `execution state`, `agent runtime`이며, 이는 `LOOP-001` 종료 이후 후속 트랙으로 본다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
