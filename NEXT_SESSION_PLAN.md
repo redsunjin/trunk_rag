@@ -237,6 +237,7 @@
 - 같은 날짜 `env HF_HUB_OFFLINE=1 ./.venv/bin/python build_index.py --reset`으로 all-routes를 다시 생성해 embedding fingerprint 메타데이터를 채웠다.
 - 같은 날짜 `/health` 실측은 `runtime_profile_status=verified`, `runtime_query_budget_profile=verified_local_single`, `embedding_fingerprint_status=ready`였고, release gate 재진입 조건이 복구됐다.
 - 같은 날짜 `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`는 `3/3 pass`, `avg_weighted_score=0.9645`, `p95_latency_ms=13694.613`으로 다시 통과했다.
+- 같은 날짜 후속 정리로 빈 `DOC_RAG_MAX_CONTEXT_CHARS`는 warning 없이 기본값으로 처리하도록 바꿨고, `app_api.py`/`build_index.py`는 import 전에 `.env`를 읽어 telemetry 비활성화 설정이 더 이른 시점에 적용되게 했다.
 
 후속 대상 (P3):
 1. GraphRAG 관련 문서/PoC는 잠정 중단 상태의 아카이브로만 유지

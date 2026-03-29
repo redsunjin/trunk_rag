@@ -105,6 +105,8 @@ def get_max_context_chars() -> int | None:
     raw = os.getenv(MAX_CONTEXT_CHARS_ENV_KEY)
     if raw is None:
         return DEFAULT_MAX_CONTEXT_CHARS
+    if not raw.strip():
+        return DEFAULT_MAX_CONTEXT_CHARS
     try:
         value = int(raw.strip())
     except (TypeError, ValueError):

@@ -106,6 +106,7 @@
 - 같은 날짜 `env HF_HUB_OFFLINE=1 ./.venv/bin/python build_index.py --reset`으로 all-routes를 재생성해 embedding fingerprint 메타데이터를 채웠다.
 - 같은 날짜 `/health` 실측은 `runtime_profile_status=verified`, `runtime_query_budget_profile=verified_local_single`, `embedding_fingerprint_status=ready`로 복구됐다.
 - 같은 날짜 `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434` 실측은 `3/3 pass`, `avg_weighted_score=0.9645`, `p95_latency_ms=13694.613`으로 통과했다.
+- 같은 날짜 후속 정리로 빈 `DOC_RAG_MAX_CONTEXT_CHARS`를 정상 fallback으로 처리해 불필요한 warning을 제거했고, `app_api.py`/`build_index.py`는 import 전에 `.env`를 읽도록 바꿔 telemetry 비활성화 설정이 더 이른 시점에 적용되게 했다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

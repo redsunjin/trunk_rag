@@ -19,6 +19,14 @@ def test_get_max_context_chars_invalid_value_falls_back(monkeypatch):
     assert resolved == 1500
 
 
+def test_get_max_context_chars_blank_value_uses_default_without_warning(monkeypatch):
+    monkeypatch.setenv("DOC_RAG_MAX_CONTEXT_CHARS", "")
+
+    resolved = runtime_service.get_max_context_chars()
+
+    assert resolved == 1500
+
+
 def test_build_release_web_guidance_marks_reindex_when_vectors_empty():
     guidance = runtime_service.build_release_web_guidance(
         vectors=0,
