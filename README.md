@@ -89,6 +89,7 @@
 - `docs/PREPROCESSING_PROMPT_TEMPLATE.md`: 전처리 프롬프트 템플릿
 - `docs/PREPROCESSING_METADATA_SCHEMA.json`: 전처리 메타데이터 스키마
 - `docs/UPLOAD_ADMIN_WORKFLOW.md`: 업로드/갱신 관리자 워크플로우 설계 기준
+- `docs/HARNESS_MASTER_GUIDE.md`: 하네스 설계 원칙, 워크북 템플릿, 현재 구조 심사 기준
 - `docs/RELEASE_WEB_MVP_CHECKLIST.md`: 배포형 웹 MVP 릴리즈 체크리스트
 - `docs/GRAPH_RAG_QUESTION_SET.md`: GraphRAG 판단용 관계형 질문셋
 - `evals/answer_level_eval_fixtures.jsonl`: answer-level 평가 fixture
