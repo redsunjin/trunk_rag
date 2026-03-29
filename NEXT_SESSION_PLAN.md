@@ -233,6 +233,10 @@
 - 같은 날짜 `runtime_service.plan_query_budget()`로 runtime profile과 single/multi 조합별 query budget 정책을 고정했고, `/query`는 `X-RAG-Budget-Profile`, `X-RAG-Route-Reason` 헤더를 함께 반환한다.
 - 같은 날짜 reindex는 컬렉션별 embedding fingerprint를 저장하고, `/health`/`runtime_preflight`는 `runtime_query_budget_*`, `embedding_fingerprint_*`를 노출해 query 전 mismatch를 먼저 드러내도록 정리했다.
 - `2026-03-25` 전체 회귀 검증은 `./.venv/bin/python -m pytest -q` -> `98 passed in 5.52s`였다.
+- `2026-03-29`에는 실제 `.env`를 권장 기본값(`LLM_MODEL=llama3.1:8b`, `DOC_RAG_QUERY_TIMEOUT_SECONDS=30`)으로 다시 맞췄다.
+- 같은 날짜 `env HF_HUB_OFFLINE=1 ./.venv/bin/python build_index.py --reset`으로 all-routes를 다시 생성해 embedding fingerprint 메타데이터를 채웠다.
+- 같은 날짜 `/health` 실측은 `runtime_profile_status=verified`, `runtime_query_budget_profile=verified_local_single`, `embedding_fingerprint_status=ready`였고, release gate 재진입 조건이 복구됐다.
+- 같은 날짜 `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`는 `3/3 pass`, `avg_weighted_score=0.9645`, `p95_latency_ms=13694.613`으로 다시 통과했다.
 
 후속 대상 (P3):
 1. GraphRAG 관련 문서/PoC는 잠정 중단 상태의 아카이브로만 유지
