@@ -46,10 +46,12 @@
 
 ## 권장 검증 명령
 
+현재 verified 로컬 운영 프로파일은 `.env` 기본값 기준 `ollama + llama3.1:8b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`이다.
+
 ```powershell
 .venv\Scripts\python.exe -m pytest -q
 .venv\Scripts\python.exe scripts\roadmap_harness.py validate
-.venv\Scripts\python.exe scripts\check_ops_baseline_gate.py --llm-provider ollama --llm-model qwen3:4b --llm-base-url http://localhost:11434
+.venv\Scripts\python.exe scripts\check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434
 ```
 
 ## 현재 릴리즈 blocker 판단

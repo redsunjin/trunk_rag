@@ -244,6 +244,7 @@
 - 같은 날짜 `/health` 실측은 `runtime_profile_status=verified`, `runtime_query_budget_profile=verified_local_single`, `embedding_fingerprint_status=ready`였고, release gate 재진입 조건이 복구됐다.
 - 같은 날짜 `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`는 `3/3 pass`, `avg_weighted_score=0.9645`, `p95_latency_ms=13694.613`으로 다시 통과했다.
 - 같은 날짜 후속 정리로 빈 `DOC_RAG_MAX_CONTEXT_CHARS`는 warning 없이 기본값으로 처리하도록 바꿨고, `app_api.py`/`build_index.py`는 import 전에 `.env`를 읽어 telemetry 비활성화 설정이 더 이른 시점에 적용되게 했다.
+- `2026-03-31`에는 `docs/RELEASE_WEB_MVP_CHECKLIST.md`의 권장 게이트 명령을 verified 운영 프로파일(`ollama + llama3.1:8b`)로 정렬해 릴리즈 문서와 실제 기본 회귀 게이트 기준을 다시 맞췄다.
 - 같은 날짜 `VERSION_ROADMAP.md`를 추가해 현재 `trunk_rag`를 `V1 = RAG product`로 고정하고, 다음 제품을 `V2 = Agent-enabled RAG`, 장기 목표를 `V3 = Agent system`으로 정의했다.
 - `V2`의 공식 아키텍처 초안은 `internal tools first, MCP second` 원칙과 `tool registry + middleware + skill registry + execution state + single-agent runtime` 조합을 기준으로 한다.
 - 같은 날짜 `feature/v1.5-agent-ready-runtime` 브랜치를 분리하고, `V1.5`의 첫 작업 묶음(`tool registry -> middleware -> execution trace -> agent entry`)을 `docs/V1_5_AGENT_READY_PLAN.md`에 고정했다.
