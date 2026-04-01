@@ -169,6 +169,19 @@
         </div>
       </header>
 
+      <section class="card app-overview-card">
+        <h3>현재 운영 기준</h3>
+        <p class="status-msg">
+          폐쇄망/로컬 환경용 경량 RAG 웹 서버입니다. 현재 기본 경로는 `run_doc_rag.bat`로 시작해 `/intro`, `/app`, `/admin`으로 이어지는 운영형 웹 MVP입니다.
+        </p>
+        <p class="status-msg">
+          현재 범위는 인덱싱, 질의, 업로드 요청, 관리자 승인, 운영 게이트이며 GraphRAG 운영과 무거운 검색 확장은 기본 경로에 포함하지 않습니다.
+        </p>
+        <p id="appOverviewRuntime" class="status-msg">
+          기본 런타임과 복구 경로를 확인 중입니다.
+        </p>
+      </section>
+
       <section class="chat-layout">
         <div class="main-chat-container" id="chatContainer">
           <div class="chat-message bot">
@@ -179,6 +192,7 @@
           <textarea id="userInput" rows="2" placeholder="질문을 입력하세요..."></textarea>
           <button id="sendBtn" class="primary-btn">Send</button>
         </div>
+        <p class="helper-text" style="margin-top:8px;">답변 아래의 `실행 상세 보기`에서 route, budget, stage timing, source 요약을 확인할 수 있습니다.</p>
       </section>
 
       <section class="doc-viewer-layout">

@@ -192,6 +192,7 @@ def build_collection_context(
         items = retriever.invoke(question)
         unique_before = len(docs)
         for item in items:
+            item.metadata.setdefault("collection_key", key)
             source = str(item.metadata.get("source", ""))
             h2 = str(item.metadata.get("h2", ""))
             fingerprint = f"{source}|{h2}|{item.page_content}"
@@ -208,7 +209,8 @@ def build_collection_context(
             }
         )
 
-    context = format_docs_with_limit(docs[:max_total_docs], max_chars=max_context_chars)
+    selected_docs = docs[:max_total_docs]
+    context = format_docs_with_limit(selected_docs, max_chars=max_context_chars)
     elapsed_ms = round((time.perf_counter() - started_at) * 1000, 3)
 
     if trace is not None:
@@ -224,6 +226,14 @@ def build_collection_context(
                 "per_collection_k": per_collection_k,
                 "per_collection_fetch_k": per_collection_fetch_k,
                 "elapsed_ms": elapsed_ms,
+                "sources": [
+                    {
+                        "source": str(doc.metadata.get("source", "unknown")),
+                        "h2": str(doc.metadata.get("h2", "")),
+                        "collection_key": str(doc.metadata.get("collection_key", "")),
+                    }
+                    for doc in selected_docs
+                ],
             }
         )
 

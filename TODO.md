@@ -8,6 +8,7 @@
 - `NEXT_SESSION_PLAN.md`
 - `SPEC.md`
 - `VERSION_ROADMAP.md`
+- `docs/V1_5_AGENT_READY_PLAN.md`
 - `docs/PREPROCESSING_RULES.md`
 - `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md`
 - `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
@@ -108,8 +109,21 @@
 - 같은 날짜 `/health` 실측은 `runtime_profile_status=verified`, `runtime_query_budget_profile=verified_local_single`, `embedding_fingerprint_status=ready`로 복구됐다.
 - 같은 날짜 `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434` 실측은 `3/3 pass`, `avg_weighted_score=0.9645`, `p95_latency_ms=13694.613`으로 통과했다.
 - 같은 날짜 후속 정리로 빈 `DOC_RAG_MAX_CONTEXT_CHARS`를 정상 fallback으로 처리해 불필요한 warning을 제거했고, `app_api.py`/`build_index.py`는 import 전에 `.env`를 읽도록 바꿔 telemetry 비활성화 설정이 더 이른 시점에 적용되게 했다.
+- `2026-03-31`에는 `docs/RELEASE_WEB_MVP_CHECKLIST.md`의 권장 게이트 명령을 verified 운영 프로파일(`ollama + llama3.1:8b`) 기준으로 다시 맞춰 공식 릴리즈 문서와 실제 회귀 게이트 기준을 일치시켰다.
 - 같은 날짜 `VERSION_ROADMAP.md`를 추가해 현재 제품을 `V1 = RAG product`, 다음 단계를 `V2 = Agent-enabled RAG`, 장기 목표를 `V3 = Agent system`으로 고정했다.
 - `V2`의 공식 준비 범위는 `tool registry`, `middleware chain`, `skill registry`, `execution state`, `agent runtime`이며, 이는 `LOOP-001` 종료 이후 후속 트랙으로 본다.
+- `V1.5` 준비 브랜치는 `feature/v1.5-agent-ready-runtime`으로 분리했고, 첫 작업 순서와 브랜치 운영 규칙은 `docs/V1_5_AGENT_READY_PLAN.md`에 고정한다.
+
+LOOP-001 개선 실행 순서 (2026-04-01):
+1. [x] 문서/인트로 톤 정리 + `/query` 실행 상세(trace/source) 노출
+2. [pending] 최신 `ops-baseline` 상태를 읽기 전용 API/카드로 노출
+3. [pending] citation/support label을 경량 메타데이터로 추가
+4. [pending] lexical boost 같은 검색 보정은 `LOOP-001` 종료 이후 후보로만 보관
+
+실행 원칙:
+- 1, 2는 현재 `배포형 웹 MVP 게이트` 범위 안에서 바로 반영한다.
+- 3은 기본 응답 계약을 크게 늘리지 않는 선에서 후속 보강한다.
+- 4는 현재 active loop에서 구현하지 않고 로드맵 후보로만 유지한다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

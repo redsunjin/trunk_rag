@@ -8,7 +8,7 @@ import time
 from fastapi import APIRouter, Request, Response
 from chromadb.errors import InvalidDimensionException
 
-from api.schemas import QueryRequest, QueryResponse
+from api.schemas import QueryMeta, QueryRequest, QueryResponse, QuerySource
 from core.errors import QueryAPIError
 from core.settings import DEFAULT_COLLECTION_KEY, MAX_QUERY_COLLECTIONS
 from services import collection_service, index_service, query_service, runtime_service
@@ -252,7 +252,27 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
                 invoke_trace=invoke_trace,
             ),
         )
-        return QueryResponse(answer=answer, provider=provider, model=model)
+        response_meta = None
+        if req.debug:
+            response_meta = QueryMeta(
+                request_id=request_id,
+                collections=active_collection_keys,
+                route_reason=route_reason,
+                budget_profile=str(query_budget["profile"]) if query_budget else None,
+                stage_timings=stage_timings,
+                context={key: value for key, value in context_trace.items() if key != "sources"},
+                invoke=invoke_trace,
+                sources=[
+                    QuerySource(
+                        source=str(item.get("source", "unknown")),
+                        h2=str(item.get("h2", "")),
+                        collection_key=str(item.get("collection_key", "")),
+                    )
+                    for item in context_trace.get("sources", [])
+                    if isinstance(item, dict)
+                ],
+            )
+        return QueryResponse(answer=answer, provider=provider, model=model, meta=response_meta)
     except QueryAPIError as exc:
         elapsed_ms = int((time.perf_counter() - started_at) * 1000)
         logger.warning(

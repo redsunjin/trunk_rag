@@ -5,6 +5,7 @@
 - `README.md`
 - `TODO.md`
 - `VERSION_ROADMAP.md`
+- `docs/V1_5_AGENT_READY_PLAN.md`
 - `docs/GRAPH_RAG_QUESTION_SET.md`
 - `docs/GRAPH_RAG_SIDECAR_CONTRACT.md`
 - `docs/UPLOAD_ADMIN_WORKFLOW.md`
@@ -28,8 +29,12 @@
 
 - current_active_id: `LOOP-001`
 - current_active_title: `배포형 웹 MVP 게이트`
+- current_version_track: `V1`
+- current_harness_mode: `v1_operating_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
 - default_regression_gate: `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`
+- branch_execution_policy: `non-main branches do not override official active loop without explicit redirect or queue promotion`
+- branch_plan_doc: `docs/V1_5_AGENT_READY_PLAN.md`
 - closeout_rule: `active` 항목은 검증 결과와 문서 반영, 커밋까지 끝난 뒤에만 `done`으로 본다.
 - blocked_rule: blocker와 재개 조건 없이 `blocked` 상태로 이동하지 않는다.
 - promotion_rule: 현재 `active`가 `done`이 되면 첫 번째 `pending` 항목을 즉시 다음 `active`로 승격한다.
@@ -102,6 +107,12 @@
 - `ops-baseline` 회귀 게이트
 - all-routes 인덱싱 상태 확인
 - 운영 문서/핸드오버 문서 동기화
+
+실행 순서 (2026-04-01 업데이트):
+1. 문서/인트로 톤 정리 + `/query` 실행 상세(trace/source) 노출
+2. 최신 `ops-baseline` 상태를 읽기 전용 API/카드로 노출
+3. citation/support label을 경량 메타데이터로 추가
+4. lexical boost 등 검색 보정은 `LOOP-001` 종료 후 후보로만 보관
 
 완료 기준:
 - 웹 UI 기본 경로만으로 설치, 실행, 첫 질의, 업로드 요청, 관리자 확인까지 배포 가이드 기준으로 재진입 가능
@@ -239,8 +250,10 @@
 - 같은 날짜 `/health` 실측은 `runtime_profile_status=verified`, `runtime_query_budget_profile=verified_local_single`, `embedding_fingerprint_status=ready`였고, release gate 재진입 조건이 복구됐다.
 - 같은 날짜 `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`는 `3/3 pass`, `avg_weighted_score=0.9645`, `p95_latency_ms=13694.613`으로 다시 통과했다.
 - 같은 날짜 후속 정리로 빈 `DOC_RAG_MAX_CONTEXT_CHARS`는 warning 없이 기본값으로 처리하도록 바꿨고, `app_api.py`/`build_index.py`는 import 전에 `.env`를 읽어 telemetry 비활성화 설정이 더 이른 시점에 적용되게 했다.
+- `2026-03-31`에는 `docs/RELEASE_WEB_MVP_CHECKLIST.md`의 권장 게이트 명령을 verified 운영 프로파일(`ollama + llama3.1:8b`)로 정렬해 릴리즈 문서와 실제 기본 회귀 게이트 기준을 다시 맞췄다.
 - 같은 날짜 `VERSION_ROADMAP.md`를 추가해 현재 `trunk_rag`를 `V1 = RAG product`로 고정하고, 다음 제품을 `V2 = Agent-enabled RAG`, 장기 목표를 `V3 = Agent system`으로 정의했다.
 - `V2`의 공식 아키텍처 초안은 `internal tools first, MCP second` 원칙과 `tool registry + middleware + skill registry + execution state + single-agent runtime` 조합을 기준으로 한다.
+- 같은 날짜 `feature/v1.5-agent-ready-runtime` 브랜치를 분리하고, `V1.5`의 첫 작업 묶음(`tool registry -> middleware -> execution trace -> agent entry`)을 `docs/V1_5_AGENT_READY_PLAN.md`에 고정했다.
 
 후속 대상 (P3):
 1. GraphRAG 관련 문서/PoC는 잠정 중단 상태의 아카이브로만 유지

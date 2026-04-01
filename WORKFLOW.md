@@ -38,6 +38,7 @@
 2. `active` 항목이 끝나기 전에는 같은 우선순위의 다른 최상위 항목으로 이동하지 않는다.
 3. `blocked`로 옮길 때는 blocker와 재개 조건을 `TODO.md`에 함께 남긴다.
 4. `done` 처리 뒤에는 `NEXT_SESSION_PLAN.md`의 `current_active_id`도 즉시 동기화한다.
+5. 기능 브랜치나 버전 준비 브랜치에 있더라도, 별도 지시나 공식 승격이 없으면 `TODO.md`의 `active`가 기본 실행 대상이다.
 
 ## 현재 우선순위 기준
 

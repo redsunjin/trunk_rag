@@ -72,9 +72,11 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     expect(page.locator("#statusIndicator .status-text")).to_have_text(re.compile(r"Online|Ready"), timeout=15000)
     expect(page.locator("#statusMsg")).to_contain_text("llm=", timeout=15000)
     expect(page.locator("#runtimeProfileMsg")).to_contain_text("runtime=", timeout=15000)
+    expect(page.locator("#releaseGuideMsg")).to_contain_text("기본 복구", timeout=15000)
 
     page.click("#userStartBtn")
     expect(page).to_have_url(re.compile(r".*/app$"), timeout=10000)
+    expect(page.locator(".app-overview-card")).to_contain_text("현재 운영 기준")
     expect(page.locator("#runtimeSummary")).to_contain_text("기본 질의 설정", timeout=10000)
     expect(page.locator("#advancedSettings")).to_be_hidden()
     expect(page.locator("#uploadMetadataFields")).to_be_hidden()
@@ -124,6 +126,12 @@ def test_intro_app_flow(page: Page, live_server_url: str):
                     "runtime_profile_scope": "local",
                     "runtime_profile_message": "현재 Ollama 런타임 프로파일은 로컬 ops-baseline 실측에서 검증됐습니다.",
                     "runtime_profile_recommendation": "`DOC_RAG_QUERY_TIMEOUT_SECONDS=30` 이상을 유지하세요.",
+                    "runtime_query_budget_profile": "verified_local_single",
+                    "runtime_query_budget_summary": "profile=verified_local_single | k=3",
+                    "embedding_fingerprint_status": "ready",
+                    "embedding_fingerprint_message": "ok",
+                    "release_web_headline": "run_doc_rag.bat 기준 기본 경로 확인",
+                    "release_web_steps": ["run_doc_rag.bat 실행", "/intro 확인", "/app 진입"],
                 }
             ),
         )
@@ -145,6 +153,19 @@ def test_intro_app_flow(page: Page, live_server_url: str):
                     "answer": "모킹된 질의 응답",
                     "provider": "ollama",
                     "model": "llama3.1:8b",
+                    "meta": {
+                        "request_id": "req-e2e-1",
+                        "collections": ["fr", "ge"],
+                        "route_reason": "explicit_multi",
+                        "budget_profile": "verified_local_multi",
+                        "stage_timings": {"resolve_route_ms": 1.2},
+                        "context": {"docs_total": 2, "context_chars": 240},
+                        "invoke": {"invoke_ms": 420.5, "status": "ok"},
+                        "sources": [
+                            {"source": "fr_doc.md", "h2": "프랑스", "collection_key": "fr"},
+                            {"source": "ge_doc.md", "h2": "독일", "collection_key": "ge"},
+                        ],
+                    },
                 }
             ),
         )
@@ -152,9 +173,13 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     page.route("**/query", query_success)
     page.fill("#userInput", "정상 응답 테스트")
     page.click("#sendBtn")
-    expect(page.locator(".chat-message.bot").last).to_have_text("모킹된 질의 응답", timeout=10000)
+    expect(page.locator(".chat-message.bot").last).to_contain_text("모킹된 질의 응답", timeout=10000)
+    page.locator(".chat-message.bot").last.locator("summary").click()
+    expect(page.locator(".chat-message.bot").last).to_contain_text("request_id=req-e2e-1")
+    expect(page.locator(".chat-message.bot").last).to_contain_text("fr_doc.md")
     assert query_payload["body"]["collection"] == "fr"
     assert query_payload["body"]["collections"] == ["fr", "ge"]
+    assert query_payload["body"]["debug"] is True
     page.unroute("**/query", query_success)
 
     def query_failure(route):

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -11,12 +13,31 @@ class QueryRequest(BaseModel):
     llm_base_url: str | None = None
     collection: str | None = None
     collections: list[str] | None = None
+    debug: bool = False
+
+
+class QuerySource(BaseModel):
+    source: str
+    h2: str = ""
+    collection_key: str = ""
+
+
+class QueryMeta(BaseModel):
+    request_id: str
+    collections: list[str] = Field(default_factory=list)
+    route_reason: str = "-"
+    budget_profile: str | None = None
+    stage_timings: dict[str, Any] = Field(default_factory=dict)
+    context: dict[str, Any] = Field(default_factory=dict)
+    invoke: dict[str, Any] = Field(default_factory=dict)
+    sources: list[QuerySource] = Field(default_factory=list)
 
 
 class QueryResponse(BaseModel):
     answer: str
     provider: str
     model: str
+    meta: QueryMeta | None = None
 
 
 class ReindexRequest(BaseModel):

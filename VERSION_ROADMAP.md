@@ -143,6 +143,7 @@
 - middleware 기본 체인 도입
 - request/state/audit 구조 준비
 - 아직 제품 정체성은 `RAG product`
+- 실행 브랜치와 첫 작업 묶음은 `docs/V1_5_AGENT_READY_PLAN.md`를 따른다.
 
 ### `V2.0` Single Agent
 - 단일 agent runtime 도입

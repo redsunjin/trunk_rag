@@ -14,6 +14,15 @@
 - 인터페이스: FastAPI + 브라우저(`http://127.0.0.1:8000`)
 - 업로드 워크플로우: 사용자 요청(`pending`) -> 관리자 승인/반려
 
+## Current Operating Baseline
+
+- 제품 성격: 폐쇄망/로컬 환경용 경량 RAG 웹 서버
+- 검증된 기본 경로: `run_doc_rag.bat` -> `/intro` -> `/app`
+- 현재 중심 기능: 인덱싱, 질의, 업로드 요청, 관리자 승인, 운영 게이트
+- 현재 범위 밖: GraphRAG 운영, 무거운 rerank, 설치형 데스크톱 제품화
+
+현재 문서는 과장된 성능 약속보다 "지금 무엇이 준비돼 있고 어떤 경로가 검증됐는지"를 우선 보여 주는 기준으로 유지합니다.
+
 ## Operating Model (현행화)
 
 `trunk_rag`는 "가벼운 RAG 런타임" 역할에 집중합니다.
@@ -89,6 +98,8 @@
 - `docs/PREPROCESSING_PROMPT_TEMPLATE.md`: 전처리 프롬프트 템플릿
 - `docs/PREPROCESSING_METADATA_SCHEMA.json`: 전처리 메타데이터 스키마
 - `docs/UPLOAD_ADMIN_WORKFLOW.md`: 업로드/갱신 관리자 워크플로우 설계 기준
+- `docs/HARNESS_MASTER_GUIDE.md`: 하네스 설계 원칙, 워크북 템플릿, 현재 구조 심사 기준
+- `docs/HARNESS_EVOLUTION_PLAN.md`: 버전별 하네스 모드와 세션 메타데이터 계약
 - `docs/RELEASE_WEB_MVP_CHECKLIST.md`: 배포형 웹 MVP 릴리즈 체크리스트
 - `docs/GRAPH_RAG_QUESTION_SET.md`: GraphRAG 판단용 관계형 질문셋
 - `evals/answer_level_eval_fixtures.jsonl`: answer-level 평가 fixture
