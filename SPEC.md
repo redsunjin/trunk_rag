@@ -38,6 +38,7 @@
 - Electron 패키징/배포 하드닝 재검토 완료(현재 판단: 보류 유지)
 - `/health` 기반 런타임 기본 LLM 설정 노출
 - `/health` 기반 runtime query budget profile/summary 노출
+- 최신 `ops-baseline` 상태 조회(`/ops-baseline/latest`) + intro/app 카드 노출
 - 컬렉션별 embedding fingerprint 저장 및 `/health`/preflight 선검사
 - 기본 모드 UI에서 고급 LLM 설정 기본 숨김
 - 빈 인덱스/LLM 연결 오류에 대한 가이드 메시지
@@ -69,6 +70,7 @@
 ## 완료된 작업
 ### 백엔드
 - `GET /health`, `POST /reindex`, `POST /query` 구현
+- `GET /ops-baseline/latest` 구현
 - `GET /collections`, `POST /admin/auth` 구현
 - `GET /upload-requests`, `POST /upload-requests` 구현
 - `POST /upload-requests/{id}/approve`, `POST /upload-requests/{id}/reject` 구현
@@ -219,6 +221,30 @@
   ]
 }
 ```
+
+### GET `/ops-baseline/latest`
+- 목적: 최근 `ops-baseline` 게이트 결과를 읽기 전용으로 조회
+- 응답 예:
+```json
+{
+  "status": "ok",
+  "ready": true,
+  "generated_at": "2026-04-01T00:00:00Z",
+  "summary": {
+    "cases": 3,
+    "passed": 3,
+    "pass_rate": 1.0,
+    "avg_weighted_score": 0.9645,
+    "avg_latency_ms": 6095.881,
+    "p95_latency_ms": 8724.427
+  },
+  "collections_ready": true,
+  "runtime_ready": true,
+  "missing_keys": [],
+  "diagnostics": []
+}
+```
+- 최신 보고서가 없으면 `status=missing`, `ready=false`와 함께 생성 명령 힌트를 반환한다.
 
 ### POST `/reindex`
 - 목적: seed 문서 + managed active 문서 기준 벡터 재생성

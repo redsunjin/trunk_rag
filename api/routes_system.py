@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from fastapi import APIRouter, HTTPException
 
 from api.schemas import AdminAuthRequest, ReindexRequest
@@ -7,6 +10,51 @@ from core.settings import DEFAULT_COLLECTION_KEY, PERSIST_DIR, REQUEST_STATUS_PE
 from services import collection_service, index_service, runtime_service, upload_service
 
 router = APIRouter()
+OPS_BASELINE_REPORT_PATH = Path(__file__).resolve().parents[1] / "docs/reports/ops_baseline_gate_latest.json"
+
+
+def _empty_ops_baseline_summary() -> dict[str, object]:
+    return {
+        "cases": 0,
+        "passed": 0,
+        "pass_rate": 0.0,
+        "avg_latency_ms": 0.0,
+        "p95_latency_ms": 0.0,
+        "avg_weighted_score": 0.0,
+    }
+
+
+def _ops_baseline_payload(
+    *,
+    status: str,
+    message: str,
+    hint: str,
+    ready: bool = False,
+    generated_at: str | None = None,
+    summary: dict[str, object] | None = None,
+    diagnostics: list[dict[str, object]] | None = None,
+    collections_ready: bool = False,
+    missing_keys: list[str] | None = None,
+    runtime_ready: bool = False,
+) -> dict[str, object]:
+    repo_root = Path(__file__).resolve().parents[1]
+    try:
+        report_path = str(OPS_BASELINE_REPORT_PATH.relative_to(repo_root))
+    except ValueError:
+        report_path = str(OPS_BASELINE_REPORT_PATH)
+    return {
+        "status": status,
+        "message": message,
+        "hint": hint,
+        "report_path": report_path,
+        "ready": ready,
+        "generated_at": generated_at,
+        "summary": summary or _empty_ops_baseline_summary(),
+        "diagnostics": diagnostics or [],
+        "collections_ready": collections_ready,
+        "missing_keys": missing_keys or [],
+        "runtime_ready": runtime_ready,
+    }
 
 
 @router.get("/health")
@@ -70,6 +118,53 @@ def collections() -> dict[str, object]:
         "auto_approve": runtime_service.is_auto_approve_enabled(),
         "collections": collection_service.list_collection_statuses(index_service.get_vector_count_fast),
     }
+
+
+@router.get("/ops-baseline/latest")
+def ops_baseline_latest() -> dict[str, object]:
+    if not OPS_BASELINE_REPORT_PATH.exists():
+        return _ops_baseline_payload(
+            status="missing",
+            message="최근 ops-baseline 게이트 보고서가 없습니다.",
+            hint="`./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`를 실행해 최신 보고서를 생성하세요.",
+        )
+
+    try:
+        payload = json.loads(OPS_BASELINE_REPORT_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return _ops_baseline_payload(
+            status="invalid",
+            message="ops-baseline 게이트 보고서를 읽을 수 없습니다.",
+            hint="보고서 JSON 형식을 확인하고 `scripts/check_ops_baseline_gate.py`를 다시 실행하세요.",
+        )
+
+    if not isinstance(payload, dict):
+        return _ops_baseline_payload(
+            status="invalid",
+            message="ops-baseline 게이트 보고서 형식이 올바르지 않습니다.",
+            hint="보고서 JSON 형식을 확인하고 `scripts/check_ops_baseline_gate.py`를 다시 실행하세요.",
+        )
+
+    eval_payload = payload.get("eval", {})
+    eval_summary = eval_payload.get("summary", {}) if isinstance(eval_payload, dict) else {}
+    collections_payload = payload.get("collections", {})
+    runtime_payload = payload.get("runtime", {})
+    diagnostics = payload.get("diagnostics", [])
+    return _ops_baseline_payload(
+        status="ok",
+        message="최근 ops-baseline 게이트 보고서를 읽었습니다.",
+        hint="릴리즈 전에는 최신 보고서 시각과 pass/fail 상태를 함께 확인하세요.",
+        ready=bool(payload.get("ready", False)),
+        generated_at=str(payload.get("generated_at")) if payload.get("generated_at") else None,
+        summary=eval_summary if isinstance(eval_summary, dict) else _empty_ops_baseline_summary(),
+        diagnostics=diagnostics if isinstance(diagnostics, list) else [],
+        collections_ready=bool(collections_payload.get("ready", False)) if isinstance(collections_payload, dict) else False,
+        missing_keys=[
+            str(item)
+            for item in collections_payload.get("missing_keys", [])
+        ] if isinstance(collections_payload, dict) and isinstance(collections_payload.get("missing_keys", []), list) else [],
+        runtime_ready=bool(runtime_payload.get("ready", False)) if isinstance(runtime_payload, dict) else False,
+    )
 
 
 @router.get("/upload-requests")

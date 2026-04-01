@@ -110,7 +110,7 @@
 
 실행 순서 (2026-04-01 업데이트):
 1. 문서/인트로 톤 정리 + `/query` 실행 상세(trace/source) 노출
-2. 최신 `ops-baseline` 상태를 읽기 전용 API/카드로 노출
+2. 최신 `ops-baseline` 상태를 읽기 전용 API/카드로 노출 완료
 3. citation/support label을 경량 메타데이터로 추가
 4. lexical boost 등 검색 보정은 `LOOP-001` 종료 후 후보로만 보관
 
