@@ -22,7 +22,7 @@
 - 현재 범위 밖: GraphRAG 운영, 무거운 rerank, 설치형 데스크톱 제품화
 
 현재 문서는 과장된 성능 약속보다 "지금 무엇이 준비돼 있고 어떤 경로가 검증됐는지"를 우선 보여 주는 기준으로 유지합니다.
-`/intro`, `/app`, `/ops-baseline/latest`는 최신 운영 게이트 상태를 같은 기준으로 보여 주도록 맞춥니다.
+`/intro`, `/app`, `/ops-baseline/latest`는 최신 운영 게이트 상태를 같은 기준으로 보여 주고, `/app` 답변에는 경량 citation/support label을 함께 노출합니다.
 
 ## Operating Model (현행화)
 

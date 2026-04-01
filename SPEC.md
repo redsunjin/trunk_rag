@@ -39,6 +39,7 @@
 - `/health` 기반 런타임 기본 LLM 설정 노출
 - `/health` 기반 runtime query budget profile/summary 노출
 - 최신 `ops-baseline` 상태 조회(`/ops-baseline/latest`) + intro/app 카드 노출
+- `/query` debug 메타의 citation/support label 노출
 - 컬렉션별 embedding fingerprint 저장 및 `/health`/preflight 선검사
 - 기본 모드 UI에서 고급 LLM 설정 기본 숨김
 - 빈 인덱스/LLM 연결 오류에 대한 가이드 메시지
@@ -81,6 +82,7 @@
 - `/query` 성공/실패 응답에 `X-Request-ID` 헤더 제공
 - `/query` hot path의 Chroma handle/vector count snapshot 캐시 적용
 - `/query` budget profile 헤더(`X-RAG-Budget-Profile`, `X-RAG-Route-Reason`) 제공
+- `/query` debug 응답의 support level/citation summary 제공
 - `/` -> `/intro` 리다이렉트
 - `/intro` 인트로 페이지, `/app` 메인 RAG UI 제공
 - `/admin` 관리자 상태 페이지 제공(MVP)
@@ -282,6 +284,7 @@
 }
 ```
 - `collection`/`collections`를 생략하면 키워드 기반 자동 라우팅을 사용한다.
+- `debug=true`면 route/budget/stage timing/source/support 메타를 함께 반환한다.
 - 응답 헤더:
   - `X-Request-ID`
   - `X-RAG-Collection`

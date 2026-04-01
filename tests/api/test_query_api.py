@@ -119,6 +119,9 @@ def test_query_debug_response_includes_meta(client, monkeypatch):
     assert body["meta"]["collections"] == ["fr", "ge"]
     assert body["meta"]["route_reason"] == "explicit_multi"
     assert body["meta"]["budget_profile"] == "not_recommended_local"
+    assert body["meta"]["support_level"] == "limited"
+    assert body["meta"]["support_reason"] == "single_or_short_context"
+    assert body["meta"]["citations"] == ["fr_doc.md > 프랑스"]
     assert body["meta"]["invoke"]["status"] == "ok"
     assert body["meta"]["sources"]
     assert body["meta"]["sources"][0]["collection_key"] in {"fr", "ge"}

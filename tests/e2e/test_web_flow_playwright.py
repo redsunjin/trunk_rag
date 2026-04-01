@@ -186,6 +186,9 @@ def test_intro_app_flow(page: Page, live_server_url: str):
                         "collections": ["fr", "ge"],
                         "route_reason": "explicit_multi",
                         "budget_profile": "verified_local_multi",
+                        "support_level": "supported",
+                        "support_reason": "multiple_context_segments",
+                        "citations": ["fr_doc.md > 프랑스", "ge_doc.md > 독일"],
                         "stage_timings": {"resolve_route_ms": 1.2},
                         "context": {"docs_total": 2, "context_chars": 240},
                         "invoke": {"invoke_ms": 420.5, "status": "ok"},
@@ -202,6 +205,8 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     page.fill("#userInput", "정상 응답 테스트")
     page.click("#sendBtn")
     expect(page.locator(".chat-message.bot").last).to_contain_text("모킹된 질의 응답", timeout=10000)
+    expect(page.locator(".chat-message.bot").last).to_contain_text("근거 수준=supported")
+    expect(page.locator(".chat-message.bot").last).to_contain_text("fr_doc.md > 프랑스")
     page.locator(".chat-message.bot").last.locator("summary").click()
     expect(page.locator(".chat-message.bot").last).to_contain_text("request_id=req-e2e-1")
     expect(page.locator(".chat-message.bot").last).to_contain_text("fr_doc.md")

@@ -163,12 +163,29 @@ function buildResponseDetails(meta) {
   return details;
 }
 
+function buildSupportSummary(meta) {
+  if (!meta || typeof meta !== "object") return null;
+  const support = document.createElement("div");
+  support.className = "response-support";
+  const level = meta.support_level || "insufficient_context";
+  const reason = meta.support_reason || "-";
+  const citations = Array.isArray(meta.citations) && meta.citations.length
+    ? meta.citations.join(" | ")
+    : "표시할 citation이 없습니다.";
+  support.textContent = `근거 수준=${level} | reason=${reason} | citations=${citations}`;
+  return support;
+}
+
 function renderBotResponse(messageNode, text, meta) {
   messageNode.replaceChildren();
   const body = document.createElement("div");
   body.className = "message-text";
   body.textContent = text;
   messageNode.appendChild(body);
+  const support = buildSupportSummary(meta);
+  if (support) {
+    messageNode.appendChild(support);
+  }
   const details = buildResponseDetails(meta);
   if (details) {
     messageNode.appendChild(details);

@@ -27,6 +27,9 @@ class QueryMeta(BaseModel):
     collections: list[str] = Field(default_factory=list)
     route_reason: str = "-"
     budget_profile: str | None = None
+    support_level: str = "insufficient_context"
+    support_reason: str = "retrieved_context_empty"
+    citations: list[str] = Field(default_factory=list)
     stage_timings: dict[str, Any] = Field(default_factory=dict)
     context: dict[str, Any] = Field(default_factory=dict)
     invoke: dict[str, Any] = Field(default_factory=dict)
