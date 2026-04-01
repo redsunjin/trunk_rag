@@ -55,7 +55,73 @@ def test_query_success_case(client, monkeypatch):
         "answer": "모킹 응답",
         "provider": "ollama",
         "model": "qwen3:4b",
+        "meta": None,
     }
+
+
+def test_query_debug_response_includes_meta(client, monkeypatch):
+    class DummyRetriever:
+        def invoke(self, question):
+            from langchain_core.documents import Document
+
+            return [
+                Document(
+                    page_content="테스트 문서 본문",
+                    metadata={"source": "fr_doc.md", "h2": "프랑스"},
+                )
+            ]
+
+    class DummyDB:
+        def __init__(self, key: str):
+            self.key = key
+
+        def as_retriever(self, **kwargs):
+            return DummyRetriever()
+
+    monkeypatch.setattr(routes_query.index_service, "get_db", lambda key="all": DummyDB(key))
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count", lambda _db: 1)
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count_snapshot", lambda key="all": 1)
+    monkeypatch.setattr(
+        routes_query.index_service,
+        "get_embedding_fingerprint_status",
+        lambda keys=None: {"status": "ready", "message": "ok"},
+    )
+    monkeypatch.setattr(
+        routes_query,
+        "resolve_llm_config",
+        lambda **kwargs: ("ollama", "qwen3:4b", None, "http://localhost:11434"),
+    )
+    monkeypatch.setattr(routes_query, "create_chat_llm", lambda **kwargs: object())
+
+    def _build_query_chain(context_builder, llm):
+        return context_builder
+
+    def _invoke_query_chain(chain, question, timeout_seconds=15, trace=None):
+        chain(question)
+        if trace is not None:
+            trace["invoke_ms"] = 123.4
+            trace["status"] = "ok"
+        return "메타 포함 응답"
+
+    monkeypatch.setattr(routes_query.query_service, "build_query_chain", _build_query_chain)
+    monkeypatch.setattr(routes_query.query_service, "invoke_query_chain", _invoke_query_chain)
+
+    response = client.post(
+        "/query",
+        json={"query": "프랑스와 독일 비교", "llm_provider": "ollama", "collections": ["fr", "ge"], "debug": True},
+        headers={"X-Request-ID": "req-debug-1"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["answer"] == "메타 포함 응답"
+    assert body["meta"]["request_id"] == "req-debug-1"
+    assert body["meta"]["collections"] == ["fr", "ge"]
+    assert body["meta"]["route_reason"] == "explicit_multi"
+    assert body["meta"]["budget_profile"] == "not_recommended_local"
+    assert body["meta"]["invoke"]["status"] == "ok"
+    assert body["meta"]["sources"]
+    assert body["meta"]["sources"][0]["collection_key"] in {"fr", "ge"}
 
 
 def test_query_vectorstore_empty(client, monkeypatch):

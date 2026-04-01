@@ -11,6 +11,7 @@ const baseUrl = document.getElementById("baseUrl");
 const apiKey = document.getElementById("apiKey");
 const runtimeSummary = document.getElementById("runtimeSummary");
 const runtimeProfileMsg = document.getElementById("runtimeProfileMsg");
+const appOverviewRuntime = document.getElementById("appOverviewRuntime");
 const advancedSettings = document.getElementById("advancedSettings");
 const advancedSettingsToggle = document.getElementById("advancedSettingsToggle");
 const collection = document.getElementById("collection");
@@ -97,8 +98,80 @@ function renderMarkdownBasic(markdown) {
 function appendMessage(role, text) {
   const message = document.createElement("div");
   message.className = "chat-message " + role;
-  message.textContent = text;
+  const body = document.createElement("div");
+  body.className = "message-text";
+  body.textContent = text;
+  message.appendChild(body);
   chatContainer.appendChild(message);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+  return message;
+}
+
+function formatJsonBlock(value) {
+  return escapeHtml(JSON.stringify(value || {}, null, 2));
+}
+
+function renderSourceSummary(sources) {
+  if (!Array.isArray(sources) || !sources.length) {
+    return "<p class='trace-empty'>source 요약이 없습니다.</p>";
+  }
+  return `
+    <ul class="trace-source-list">
+      ${sources.map((item) => `
+        <li>
+          <strong>${escapeHtml(item.source || "unknown")}</strong>
+          <span>${escapeHtml(item.h2 || "-")}</span>
+          <small>collection=${escapeHtml(item.collection_key || "-")}</small>
+        </li>
+      `).join("")}
+    </ul>
+  `;
+}
+
+function buildResponseDetails(meta) {
+  if (!meta || typeof meta !== "object") return null;
+  const details = document.createElement("details");
+  details.className = "response-details";
+  details.innerHTML = `
+    <summary>실행 상세 보기</summary>
+    <div class="response-detail-section">
+      <p class="trace-summary">
+        request_id=${escapeHtml(meta.request_id || "-")} |
+        collections=${escapeHtml((meta.collections || []).join(",") || "-")} |
+        route=${escapeHtml(meta.route_reason || "-")} |
+        budget=${escapeHtml(meta.budget_profile || "-")}
+      </p>
+      <div class="trace-block">
+        <h4>Source Summary</h4>
+        ${renderSourceSummary(meta.sources)}
+      </div>
+      <div class="trace-block">
+        <h4>Stage Timings</h4>
+        <pre>${formatJsonBlock(meta.stage_timings || {})}</pre>
+      </div>
+      <div class="trace-block">
+        <h4>Context Trace</h4>
+        <pre>${formatJsonBlock(meta.context || {})}</pre>
+      </div>
+      <div class="trace-block">
+        <h4>Invoke Trace</h4>
+        <pre>${formatJsonBlock(meta.invoke || {})}</pre>
+      </div>
+    </div>
+  `;
+  return details;
+}
+
+function renderBotResponse(messageNode, text, meta) {
+  messageNode.replaceChildren();
+  const body = document.createElement("div");
+  body.className = "message-text";
+  body.textContent = text;
+  messageNode.appendChild(body);
+  const details = buildResponseDetails(meta);
+  if (details) {
+    messageNode.appendChild(details);
+  }
   chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
@@ -140,6 +213,14 @@ function formatRuntimeProfile(data) {
     `${embeddingStatus ? ` | embedding=${embeddingStatus}` : ""}` +
     `${embeddingMessage ? ` | embedding_next: ${embeddingMessage}` : ""}`
   );
+}
+
+function formatAppOverview(data) {
+  const headline = data.release_web_headline || "기본 경로 점검 필요";
+  const steps = Array.isArray(data.release_web_steps) ? data.release_web_steps.join(" -> ") : "";
+  const runtime = data.runtime_profile_status || "unknown";
+  const embedding = data.embedding_fingerprint_status || "-";
+  return `운영 경로: ${headline} | runtime=${runtime} | embedding=${embedding}${steps ? ` | next: ${steps}` : ""}`;
 }
 
 function defaultUploadCountry(collectionKey) {
@@ -207,6 +288,9 @@ function applyRuntimeDefaults(data, force = false) {
   }
   if (runtimeProfileMsg) {
     runtimeProfileMsg.textContent = formatRuntimeProfile(data);
+  }
+  if (appOverviewRuntime) {
+    appOverviewRuntime.textContent = formatAppOverview(data);
   }
 }
 
@@ -407,8 +491,7 @@ async function sendQuestion() {
   }
 
   appendMessage("user", question);
-  appendMessage("bot", "생성 중...");
-  const pending = chatContainer.lastElementChild;
+  const pending = appendMessage("bot", "생성 중...");
   const selectedCollections = getSelectedCollectionKeys();
 
   const payload = {
@@ -419,6 +502,7 @@ async function sendQuestion() {
     llm_base_url: baseUrl.value || null,
     collection: selectedCollections[0] || null,
     collections: selectedCollections.length ? selectedCollections : null,
+    debug: true,
   };
 
   try {
@@ -430,12 +514,12 @@ async function sendQuestion() {
     const data = await res.json();
     if (!res.ok) {
       const error = parseApiError(data, "요청 실패");
-      pending.textContent = buildGuidedErrorMessage(data, error);
+      renderBotResponse(pending, buildGuidedErrorMessage(data, error), null);
       return;
     }
-    pending.textContent = data.answer;
+    renderBotResponse(pending, data.answer, data.meta || null);
   } catch (err) {
-    pending.textContent = "오류: " + err;
+    renderBotResponse(pending, "오류: " + err, null);
   }
 
   userInput.value = "";

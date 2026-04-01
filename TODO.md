@@ -114,6 +114,17 @@
 - `V2`의 공식 준비 범위는 `tool registry`, `middleware chain`, `skill registry`, `execution state`, `agent runtime`이며, 이는 `LOOP-001` 종료 이후 후속 트랙으로 본다.
 - `V1.5` 준비 브랜치는 `feature/v1.5-agent-ready-runtime`으로 분리했고, 첫 작업 순서와 브랜치 운영 규칙은 `docs/V1_5_AGENT_READY_PLAN.md`에 고정한다.
 
+LOOP-001 개선 실행 순서 (2026-04-01):
+1. [x] 문서/인트로 톤 정리 + `/query` 실행 상세(trace/source) 노출
+2. [pending] 최신 `ops-baseline` 상태를 읽기 전용 API/카드로 노출
+3. [pending] citation/support label을 경량 메타데이터로 추가
+4. [pending] lexical boost 같은 검색 보정은 `LOOP-001` 종료 이후 후보로만 보관
+
+실행 원칙:
+- 1, 2는 현재 `배포형 웹 MVP 게이트` 범위 안에서 바로 반영한다.
+- 3은 기본 응답 계약을 크게 늘리지 않는 선에서 후속 보강한다.
+- 4는 현재 active loop에서 구현하지 않고 로드맵 후보로만 유지한다.
+
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
 목표:

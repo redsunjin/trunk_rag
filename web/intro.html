@@ -13,7 +13,7 @@
       <section class="card" style="max-width:700px;width:100%;">
         <h2 style="margin-bottom:12px;">doc_rag Local Server</h2>
         <p class="status-msg" style="margin-bottom:16px;">
-          사용자/관리자 모드를 선택하세요.
+          폐쇄망/로컬 환경용 경량 RAG 웹 서버입니다. 검증된 기본 경로는 `run_doc_rag.bat`로 시작해 `/intro`에서 상태를 확인한 뒤 `/app` 또는 `/admin`으로 진입하는 흐름입니다.
         </p>
 
         <div id="statusIndicator" class="status-indicator" style="margin-bottom:10px;">
@@ -22,6 +22,13 @@
         </div>
         <p id="statusMsg" class="status-msg" style="margin-bottom:18px;">서버 상태 확인 중입니다.</p>
         <p id="runtimeProfileMsg" class="status-msg" style="margin-bottom:18px;">런타임 프로파일을 확인 중입니다.</p>
+        <p id="releaseGuideMsg" class="status-msg" style="margin-bottom:18px;">기본 복구 경로를 확인 중입니다.</p>
+
+        <div class="card" style="padding:16px;background:#f8f9fa;box-shadow:none;border:1px solid #dee2e6;margin-bottom:16px;">
+          <h3 style="margin-bottom:10px;">현재 운영 범위</h3>
+          <p class="status-msg" style="margin-bottom:8px;">포함: 인덱싱, 질의, 업로드 요청, 관리자 승인, 운영 게이트</p>
+          <p class="status-msg">제외: GraphRAG 운영, 무거운 rerank, 설치형 데스크톱 제품화</p>
+        </div>
 
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
           <button id="refreshBtn" class="secondary-btn">상태 새로고침</button>
@@ -57,6 +64,7 @@
     const adminEnterBtn = document.getElementById("adminEnterBtn");
     const adminCloseBtn = document.getElementById("adminCloseBtn");
     const adminMsg = document.getElementById("adminMsg");
+    const releaseGuideMsg = document.getElementById("releaseGuideMsg");
 
     function setStatus(type, text, detail) {
       statusIndicator.className = "status-indicator " + type;
@@ -110,39 +118,42 @@
       return parts.join(" | ");
     }
 
-	    async function healthCheck() {
-	      try {
-	        const res = await fetch("/health");
-	        const data = await res.json();
+    async function healthCheck() {
+      try {
+        const res = await fetch("/health");
+        const data = await res.json();
         if (!res.ok) {
           const error = parseApiError(data, "health check 실패");
           setStatus("error", "Error", formatApiError(error));
           runtimeProfileMsg.textContent = "런타임 프로파일 정보를 가져오지 못했습니다.";
+          releaseGuideMsg.textContent = "기본 복구 경로를 가져오지 못했습니다.";
           return false;
         }
-	        const llmSummary = data.default_llm_provider && data.default_llm_model
-	          ? `${data.default_llm_provider} / ${data.default_llm_model}`
-	          : "-";
-          const releaseHeadline = data.release_web_headline || "";
-          const releaseSteps = joinReleaseSteps(data);
-          runtimeProfileMsg.textContent = formatRuntimeProfile(data);
-	        if ((data.vectors ?? 0) <= 0) {
-	          setStatus("warn", "Ready", `${releaseHeadline} | llm=${llmSummary} | ${releaseSteps}`);
-	          return true;
-	        }
-	        setStatus(
-            "ok",
-            "Online",
-            `default=${data.collection_key} vectors=${data.vectors ?? "-"} llm=${llmSummary} | ${releaseHeadline} | ${releaseSteps}`,
-          );
-	        return true;
-	      } catch (error) {
-	        setStatus(
-            "error",
-            "Offline",
-            `run_doc_rag.bat로 다시 시작하거나 Python/requirements/Ollama 준비 상태를 확인하세요. | ${String(error)}`,
-          );
-          runtimeProfileMsg.textContent = "런타임 프로파일을 확인할 수 없습니다.";
+        const llmSummary = data.default_llm_provider && data.default_llm_model
+          ? `${data.default_llm_provider} / ${data.default_llm_model}`
+          : "-";
+        const releaseHeadline = data.release_web_headline || "";
+        const releaseSteps = joinReleaseSteps(data);
+        runtimeProfileMsg.textContent = formatRuntimeProfile(data);
+        releaseGuideMsg.textContent = `기본 복구: ${releaseHeadline} | ${releaseSteps}`;
+        if ((data.vectors ?? 0) <= 0) {
+          setStatus("warn", "Ready", `${releaseHeadline} | llm=${llmSummary} | ${releaseSteps}`);
+          return true;
+        }
+        setStatus(
+          "ok",
+          "Online",
+          `default=${data.collection_key} vectors=${data.vectors ?? "-"} llm=${llmSummary} | ${releaseHeadline} | ${releaseSteps}`,
+        );
+        return true;
+      } catch (error) {
+        setStatus(
+          "error",
+          "Offline",
+          `run_doc_rag.bat로 다시 시작하거나 Python/requirements/Ollama 준비 상태를 확인하세요. | ${String(error)}`,
+        );
+        runtimeProfileMsg.textContent = "런타임 프로파일을 확인할 수 없습니다.";
+        releaseGuideMsg.textContent = "기본 복구 경로를 확인할 수 없습니다.";
         return false;
       }
     }
