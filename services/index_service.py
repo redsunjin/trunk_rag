@@ -10,11 +10,8 @@ from fastapi import HTTPException
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 
-from common import (
-    COUNTRY_BY_STEM,
-    create_embeddings,
-    split_by_markdown_headers,
-)
+from common import create_embeddings, split_by_markdown_headers
+from core.collection_manifest import build_seed_document_metadata, get_seed_document_collection_key
 from core.settings import (
     CHUNK_OVERLAP,
     CHUNK_SIZE,
@@ -331,13 +328,7 @@ def build_validation_summary(
 
 
 def _collection_key_for_seed_file(file_name: str) -> str:
-    for key in collection_service.list_collection_keys():
-        if key == DEFAULT_COLLECTION_KEY:
-            continue
-        config = collection_service.get_collection_config(key)
-        if file_name in set(config.get("file_names", [])):
-            return key
-    return DEFAULT_COLLECTION_KEY
+    return get_seed_document_collection_key(file_name)
 
 
 def _load_seed_source_records(collection_key: str) -> list[dict[str, object]]:
@@ -353,6 +344,7 @@ def _load_seed_source_records(collection_key: str) -> list[dict[str, object]]:
 
         stem = path.stem
         stat = path.stat()
+        metadata = build_seed_document_metadata(path.name, doc_key=stem.lower())
         records.append(
             {
                 "name": path.name,
@@ -363,11 +355,7 @@ def _load_seed_source_records(collection_key: str) -> list[dict[str, object]]:
                 "size": stat.st_size,
                 "updated_at": int(stat.st_mtime),
                 "metadata": {
-                    "source": path.name,
-                    "topic": "europe_science_history",
-                    "country": COUNTRY_BY_STEM.get(stem, "unknown"),
-                    "doc_type": "summary" if stem == "eu_summry" else "country",
-                    "doc_key": stem.lower(),
+                    **metadata,
                     "origin": "seed",
                 },
             }

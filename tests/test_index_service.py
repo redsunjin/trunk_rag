@@ -50,6 +50,21 @@ def test_reindex_with_related_returns_nested_results(monkeypatch):
     assert result["collections"]["all"]["vectors"] == 3
 
 
+def test_build_collection_source_records_uses_manifest_seed_metadata(monkeypatch):
+    monkeypatch.setattr(index_service, "_load_managed_source_records", lambda collection_key="all": [])
+
+    records = index_service.build_collection_source_records("fr")
+
+    assert len(records) == 1
+    record = records[0]
+    assert record["collection_key"] == "fr"
+    assert record["metadata"]["dataset"] == "sample-eu-science-history"
+    assert record["metadata"]["source_type"] == "seed_markdown"
+    assert record["metadata"]["country"] == "france"
+    assert record["metadata"]["doc_type"] == "country"
+    assert record["metadata"]["tags"] == ["sample-pack", "country:france"]
+
+
 def test_record_collection_embedding_fingerprint_persists_manifest(monkeypatch, tmp_path: Path):
     monkeypatch.setattr(index_service, "PERSIST_DIR", str(tmp_path))
     monkeypatch.setattr(index_service.runtime_service, "get_embedding_model", lambda: "BAAI/bge-m3")

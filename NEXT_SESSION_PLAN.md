@@ -166,8 +166,10 @@ closeout 메모:
 진행 메모 (2026-04-04):
 - 1차 구현으로 `config/collection_manifest.json`를 추가했고, `core/settings.py`가 컬렉션 이름/레이블/키워드/기본 메타데이터를 manifest에서 읽도록 바꿨다.
 - `services/collection_service.py`의 `default_country_for_collection`, `default_doc_type_for_collection`도 manifest 기반으로 전환해 `COUNTRY_BY_COLLECTION_KEY`와 조건문 하드코딩 의존을 줄였다.
+- `2026-04-05`에는 manifest를 `seed_documents` + `seed_doc_keys` 구조로 확장하고 `core/collection_manifest.py`를 추가해 `common.py`, `services/index_service.py`, `scripts/validate_rag_doc.py`의 sample-pack 파일명/metadata 하드코딩을 manifest 기준으로 치환했다.
+- 같은 변경으로 seed 문서 메타데이터에 `dataset`, `source_type`, `tags`를 넣어 본체 코드에서 `topic=europe_science_history`와 stem 기반 `country/doc_type` 파생을 제거했다.
 - 현재 단계는 구조 분리 1차라서 `all/eu/fr/ge/it/uk` 키와 기존 업로드 기본값, 질의 라우팅 동작은 그대로 유지한다.
-- 다음 구현 단위는 `common.py`/`services/index_service.py`에 남아 있는 sample-pack 파일명/metadata 하드코딩을 manifest 또는 dataset descriptor로 옮기는 것이다.
+- 다음 구현 단위는 `services/query_service.py`의 유럽사 전용 시스템 프롬프트와 `역할/비교/상징` 후처리 규칙을 feature flag 또는 sample-pack 전용 계층 뒤로 옮기는 것이다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

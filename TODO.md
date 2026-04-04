@@ -164,8 +164,10 @@ LOOP-007 범위 메모 (2026-04-04 초안):
 - `config/collection_manifest.json`를 추가해 샘플팩 컬렉션 정의를 코드 상수에서 외부 manifest로 이동했다.
 - `core/settings.py`는 default collection key, collection name, keywords, 업로드 기본 메타데이터를 manifest 기준으로 로드하도록 변경했다.
 - `services/collection_service.py`의 `default_country/default_doc_type`도 manifest 기반으로 전환해 국가/문서유형 기본값 하드코딩을 제거했다.
+- `2026-04-05`에는 seed 문서 정의를 `seed_documents` + `seed_doc_keys` 구조로 확장하고, `core/collection_manifest.py`를 추가해 `common.py`, `services/index_service.py`, `scripts/validate_rag_doc.py`가 샘플팩 파일명/metadata를 manifest 기준으로 읽도록 정리했다.
+- 같은 변경으로 seed 문서 메타데이터에 `dataset`, `source_type`, `tags`를 부여해 본체 코드에서 `topic=europe_science_history`와 stem 기반 `country/doc_type` 하드코딩을 제거했다.
 - 현재 단계는 동작 유지 목적의 구조 분리 1차이며, `all/eu/fr/ge/it/uk` 키와 기존 라우팅 동작은 그대로 유지한다.
-- 타깃 검증은 `17 passed`(`tests/test_collection_service.py`, `tests/api/test_upload_api.py`, `tests/test_index_service.py`)와 `22 passed`(`tests/test_query_service.py`, `tests/api/test_query_api.py`)까지 확인했다.
+- 타깃 검증은 `41 passed`(`tests/test_collection_service.py`, `tests/test_index_service.py`, `tests/api/test_upload_api.py`, `tests/test_query_service.py`, `tests/api/test_query_api.py`)까지 확인했다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

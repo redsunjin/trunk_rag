@@ -8,7 +8,7 @@ from typing import Iterable
 
 from langchain_core.documents import Document
 
-from common import COUNTRY_BY_STEM
+from core.collection_manifest import build_seed_document_metadata
 
 HEADER_RE = re.compile(r"^(#{2,4})\s+(.+?)\s*$")
 REQUIRED_METADATA_FIELDS = ("source", "country", "doc_type")
@@ -121,16 +121,11 @@ def _validate_files(target: Path) -> list[dict[str, object]]:
 
     reports = []
     for path in files:
-        stem = path.stem
         reports.append(
             validate_markdown_text(
                 source=path.name,
                 text=path.read_text(encoding="utf-8"),
-                metadata={
-                    "source": path.name,
-                    "country": COUNTRY_BY_STEM.get(stem, "unknown"),
-                    "doc_type": "summary" if stem == "eu_summry" else "country",
-                },
+                metadata=build_seed_document_metadata(path.name, doc_key=path.stem.lower()),
             )
         )
     return reports
