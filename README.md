@@ -23,6 +23,7 @@
 
 현재 문서는 과장된 성능 약속보다 "지금 무엇이 준비돼 있고 어떤 경로가 검증됐는지"를 우선 보여 주는 기준으로 유지합니다.
 `/intro`, `/app`, `/ops-baseline/latest`는 최신 운영 게이트 상태를 같은 기준으로 보여 주고, `/app` 답변에는 경량 citation/support label을 함께 노출합니다.
+현재 `/ops-baseline/latest`가 보여 주는 본체 기본 게이트는 `generic-baseline`입니다.
 
 ## Operating Model (현행화)
 
@@ -41,13 +42,11 @@
 - 현재: 분야별 컬렉션 + 단순 라우팅 적용
 - 현재: 승인된 업로드는 `chroma_db/managed_docs/`의 active markdown 원본 기준으로 유지
 - 현재: answer-level eval fixture + `/query` 품질 평가 하네스 추가
-- 현재: Vector RAG answer-level baseline 1차 실측 완료(`pass_rate=0.3333`, `p95=14277.843ms`)
+- 현재: `generic-baseline`/`sample-pack-baseline`/`graph-candidate`로 answer-level 평가 버킷을 분리했다
 - 현재: 업로드 관리자 Slice 2 완료(`pending` 기본 필터, update 강조, active 문서 미리보기, reject reason code/decision_note)
-- 아카이브: graph snapshot backend의 `graph-candidate` answer-level 비교는 `2/3 pass`, `avg_weighted_score=0.8444`
-- 현재 판단: GraphRAG 트랙은 잠정 중단 상태이며, 기존 문서/PoC는 참고용 아카이브로만 유지한다
+- 아카이브: GraphRAG 관련 질문셋/계약/PoC/판단 문서는 `docs/GRAPH_RAG_ARCHIVE_INDEX.md` 기준으로만 유지한다
 - 현재: `/reindex`와 `build_index.py --reset` 기본 경로는 `all/eu/fr/ge/it/uk`를 함께 재생성한다
-- 현재: `ops-baseline` 재측정 기준 `VECTORSTORE_EMPTY`/`LLM_TIMEOUT` blocker는 해소됐다
-- 현재: `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-19_OPS_ANSWER_COMPLETENESS.md` 기준 `ops-baseline`은 `3/3 pass`, `avg_weighted_score=0.9645`다
+- 현재: 본체 회귀 게이트는 `generic-baseline 3/3 pass` 기준으로 유지한다
 - 현재: `/query`는 runtime profile 기반 query budget(`single/multi`, `verified/experimental/not_recommended`)을 내부 정책으로 적용한다
 - 현재: `/health`는 `runtime_query_budget_*`, `embedding_fingerprint_*` 상태를 노출해 경량 경로와 인덱스 호환 상태를 먼저 보여 준다
 - 현재: reindex 시 컬렉션별 embedding fingerprint를 저장하고, `/query`는 mismatch를 invoke 전에 먼저 차단한다
@@ -76,9 +75,8 @@
 - `scripts/benchmark_multi_collection.py`: 단일/다중 컬렉션 검색 비교 벤치
 - `scripts/benchmark_token_chunking.py`: char/token 청킹 비교 벤치 스크립트
 - `scripts/benchmark_query_e2e.py`: `/query` E2E p95 벤치 스크립트
-- `scripts/benchmark_graphrag_sidecar.py`: GraphRAG sidecar retrieval PoC/실측 스크립트
 - `scripts/eval_query_quality.py`: answer-level `/query` 품질 평가 스크립트
-- `scripts/check_ops_baseline_gate.py`: all-routes 벡터 상태와 `ops-baseline` 회귀 게이트를 한 번에 점검하는 스크립트
+- `scripts/check_ops_baseline_gate.py`: all-routes 벡터 상태와 `generic-baseline` 회귀 게이트를 한 번에 점검하는 스크립트
 - `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩 스크립트
 - `scripts/roadmap_harness.py`: `TODO.md`/`NEXT_SESSION_PLAN.md`의 루프 상태와 active 항목을 점검하는 스크립트
 - `scripts/runtime_preflight.py`: P1 벤치 전 런타임 준비 상태 점검
@@ -103,15 +101,10 @@
 - `docs/HARNESS_EVOLUTION_PLAN.md`: 버전별 하네스 모드와 세션 메타데이터 계약
 - `docs/RELEASE_WEB_MVP_CHECKLIST.md`: 배포형 웹 MVP 릴리즈 체크리스트
 - `docs/QUERY_EVAL_QUESTION_SET.md`: generic/sample-pack/graph answer-level 질문셋
-- `docs/GRAPH_RAG_QUESTION_SET.md`: GraphRAG 판단용 관계형 질문셋
 - `evals/answer_level_eval_fixtures.jsonl`: answer-level 평가 fixture
-- `docs/GRAPH_RAG_SIDECAR_CONTRACT.md`: GraphRAG sidecar 계약과 최소 적재 파이프라인
-- `docs/reports/GRAPH_RAG_ACTUAL_POC_REPORT_2026-03-17.md`: GraphRAG retrieval PoC 1차 실측 결과
-- `docs/reports/GRAPH_RAG_VECTOR_GAP_REPORT_2026-03-17.md`: 현재 Vector RAG 실패 사례와 Graph 후보 범위
 - `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md`: Vector RAG 1차 answer-level baseline 실측 결과
 - `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-19_OPS_ANSWER_COMPLETENESS.md`: 최신 ops-baseline answer completeness 보정 결과
-- `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_GRAPH_SNAPSHOT.md`: graph snapshot backend answer-level 비교 결과
-- `docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md`: GraphRAG Go/No-Go 판단 문서
+- `docs/GRAPH_RAG_ARCHIVE_INDEX.md`: GraphRAG archive 문서 진입점
 - `docs/VECTORSTORE_POLICY.md`: 벡터스토어 운영/용량 정책
 - `docs/COLLECTION_ROUTING_POLICY.md`: 분야별 컬렉션/라우팅 정책
 - `docs/FUTURE_EXTERNAL_CONSTRAINTS.md`: 외부 제한사항 중 추후 적용 항목

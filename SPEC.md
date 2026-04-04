@@ -47,14 +47,9 @@
 - 전처리 규칙 문서(`docs/PREPROCESSING_RULES.md`)
 - 실험용 Electron 데스크톱 래퍼 PoC(`desktop/electron`)
 - 업로드/갱신 관리자 워크플로우 설계 문서(`docs/UPLOAD_ADMIN_WORKFLOW.md`)
-- GraphRAG 판단용 질문셋 문서(`docs/GRAPH_RAG_QUESTION_SET.md`)
-- Vector RAG 실패 사례 문서(`docs/reports/GRAPH_RAG_VECTOR_GAP_REPORT_2026-03-17.md`)
-- GraphRAG sidecar 계약 문서(`docs/GRAPH_RAG_SIDECAR_CONTRACT.md`)
-- GraphRAG retrieval PoC/실측 스크립트(`scripts/benchmark_graphrag_sidecar.py`)
+- query eval 질문셋 문서(`docs/QUERY_EVAL_QUESTION_SET.md`)
 - answer-level 평가 fixture + `/query` 품질 평가 스크립트(`evals/answer_level_eval_fixtures.jsonl`, `scripts/eval_query_quality.py`)
 - Vector RAG answer-level baseline 리포트(`docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md`)
-- Graph snapshot answer-level 비교 리포트(`docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_GRAPH_SNAPSHOT.md`)
-- GraphRAG Go/No-Go 판단 리포트(`docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md`)
 - GraphRAG 관련 문서/PoC 아카이브 유지
 
 ### 제외(현재 단계)
@@ -167,10 +162,7 @@
 - `docs/UPLOAD_ADMIN_WORKFLOW.md`: 업로드/갱신 관리자 운영 설계
 - `docs/RELEASE_WEB_MVP_CHECKLIST.md`: 배포형 웹 MVP 릴리즈 체크리스트
 - `docs/QUERY_EVAL_QUESTION_SET.md`: generic/sample-pack/graph 평가 질문셋
-- `docs/GRAPH_RAG_QUESTION_SET.md`: GraphRAG 판단용 질문셋
-- `docs/reports/GRAPH_RAG_VECTOR_GAP_REPORT_2026-03-17.md`: Vector RAG 실패 사례와 Graph 후보 범위
-- `docs/GRAPH_RAG_SIDECAR_CONTRACT.md`: GraphRAG sidecar 계약
-- `docs/reports/GRAPH_RAG_ACTUAL_POC_REPORT_2026-03-17.md`: GraphRAG retrieval PoC 1차 실측
+- `docs/GRAPH_RAG_ARCHIVE_INDEX.md`: GraphRAG archive 문서 진입점
 
 ## API 계약
 ### GET `/health`

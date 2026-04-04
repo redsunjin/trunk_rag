@@ -1,4 +1,7 @@
-# GraphRAG Question Set (2026-03-17)
+# GraphRAG Question Set (Archive, 2026-03-17)
+
+> 이 문서는 GraphRAG 잠정 중단 이후 참고용 아카이브로만 유지한다.
+> 현재 본체 기본 eval 질문셋은 `docs/QUERY_EVAL_QUESTION_SET.md`, archive 진입점은 `docs/GRAPH_RAG_ARCHIVE_INDEX.md`다.
 
 ## 목적
 - 관계형/다중 홉 질문 15~20개를 고정한다.
@@ -6,7 +9,7 @@
 
 ## 사용 원칙
 - `ops-baseline`
-  - 현재 Vector RAG + 자동 다중 라우팅으로도 다뤄야 하는 운영 질문
+  - 작성 당시 Vector RAG + 자동 다중 라우팅으로도 다뤄야 하는 운영 질문
 - `graph-candidate`
   - 여러 인물/기관/국가/사건의 관계 연결이 핵심이라 GraphRAG 후보로 보는 질문
 
@@ -49,3 +52,7 @@
 1. 위 질문셋을 기준으로 current Vector RAG의 실패/성공 사례를 문서화한다.
 2. 실패가 반복되는 질문만 GraphRAG sidecar PoC 후보로 남긴다.
 3. `ops-baseline`은 GraphRAG가 아니라 기존 `/query` 품질 기준으로 유지한다.
+
+## 현재 상태 메모
+- 본체 기본 게이트는 이후 `generic-baseline`과 `sample-pack-baseline`으로 분리됐다.
+- 이 문서의 `ops-baseline` 표기는 과거 판단 이력을 보존하기 위한 legacy 용어다.

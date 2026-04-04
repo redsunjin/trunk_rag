@@ -170,8 +170,10 @@ LOOP-007 범위 메모 (2026-04-04 초안):
 - `tests/test_query_service.py`는 기본 `generic` 경로에서 문장 보정을 더 이상 주입하지 않는지와 `sample_pack` profile에서만 기존 보정이 살아있는지를 함께 검증하도록 갱신했다.
 - 같은 날짜 `evals/answer_level_eval_fixtures.jsonl`은 `generic-baseline`, `sample-pack-baseline`, `graph-candidate` 버킷으로 재구성했고, `docs/QUERY_EVAL_QUESTION_SET.md`를 추가해 본체 기본 게이트 질문과 샘플팩/graph 질문을 분리했다.
 - `scripts/check_ops_baseline_gate.py`는 기본 gate bucket을 `generic-baseline`으로 전환했고, `/query`는 `query_profile` 요청 필드를 받아 sample-pack fixture만 `sample_pack` profile로 별도 평가할 수 있게 됐다.
+- 같은 날짜 `README.md`, `SPEC.md`, `docs/RELEASE_WEB_MVP_CHECKLIST.md`는 본체 기본 게이트를 `generic-baseline` 기준으로 다시 설명하도록 정리했고, GraphRAG 관련 문서는 `docs/GRAPH_RAG_ARCHIVE_INDEX.md`를 진입점으로 모아 아카이브 문맥을 분리했다.
+- `docs/GRAPH_RAG_QUESTION_SET.md`, `docs/GRAPH_RAG_SIDECAR_CONTRACT.md`는 archive 문서임을 헤더에서 바로 드러내도록 갱신했다.
 - 현재 단계는 동작 유지 목적의 구조 분리 1차이며, `all/eu/fr/ge/it/uk` 키와 기존 라우팅 동작은 그대로 유지한다.
-- 타깃 검증은 `56 passed`(`tests/test_collection_service.py`, `tests/test_index_service.py`, `tests/api/test_upload_api.py`, `tests/test_query_service.py`, `tests/api/test_query_api.py`, `tests/test_answer_level_eval_fixtures.py`, `tests/test_eval_query_quality.py`, `tests/test_check_ops_baseline_gate.py`)까지 확인했다.
+- 문서/상태 검증은 `7 passed`(`tests/test_roadmap_harness.py`)와 `./.venv/bin/python scripts/roadmap_harness.py validate` `ready`까지 확인했다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
