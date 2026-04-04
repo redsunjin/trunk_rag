@@ -36,6 +36,20 @@
   - `5. 운영 게이트`
   중 `1~2`는 코어 RAG 기능이고, `3~5`는 운영/관리 레이어다.
 
+### Boundary Clarification (2026-04-04)
+- 현재 제품 본체와 샘플 데이터셋의 경계가 충분히 분리되지 않았다는 점을 공식 이슈로 기록한다.
+- 유럽 과학사 데이터셋은 제품 본체가 아니라 `sample pack`으로 해석한다.
+- GraphRAG/데스크톱 이력은 제품 본체가 아니라 `archive` 또는 보류 트랙으로 본다.
+- 기준 문서: [VERSION_BOUNDARY_RESET_2026-04-04.md](/Users/Agent/ps-workspace/trunk_rag/docs/reports/VERSION_BOUNDARY_RESET_2026-04-04.md)
+
+## Product Layers
+
+| layer | meaning | examples | policy |
+| --- | --- | --- | --- |
+| `Core Product` | 도메인 독립 본체 | query/index/upload/admin/runtime gate | 버전 기준의 주체 |
+| `Sample Pack` | 샘플 데이터/샘플 평가 | 유럽 과학사 문서셋, 국가별 라우팅 예시 | 본체에서 분리 대상 |
+| `Archive` | 과거 실험/판단 이력 | GraphRAG PoC, 데스크톱 보류 판단 | 참고용 보존 |
+
 ## V1 Boundary
 
 `V1`은 “에이전트”가 아니라 “운영 가능한 RAG 제품”이다.
@@ -48,6 +62,8 @@
 - 경량 로컬 스택(FastAPI + Chroma + 선택형 LLM)
 
 ### Out
+- 특정 샘플 데이터셋에 종속된 컬렉션 구조
+- 특정 샘플 질문셋에 종속된 후처리/운영 게이트
 - planner/worker 멀티에이전트
 - 장기 상태를 가진 자율 작업 실행
 - 복수 외부 시스템을 MCP로 연결한 tool mesh
@@ -137,6 +153,7 @@
 ### `V1.0` Current
 - 배포 가능한 로컬 웹 RAG MVP
 - 인덱싱/질의/업로드 승인/운영 게이트
+- 샘플 데이터셋은 제품 본체가 아니라 검증용/예시용 팩으로 해석
 
 ### `V1.5` Agent-ready Runtime
 - 내부 기능 tool abstraction 시작

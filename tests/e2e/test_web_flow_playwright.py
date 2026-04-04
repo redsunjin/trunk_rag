@@ -68,15 +68,43 @@ def live_server_url():
 
 @pytest.mark.e2e
 def test_intro_app_flow(page: Page, live_server_url: str):
+    def ops_baseline_latest(route):
+        route.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps(
+                {
+                    "status": "ok",
+                    "ready": True,
+                    "generated_at": "2026-04-01T00:00:00Z",
+                    "summary": {
+                        "cases": 3,
+                        "passed": 3,
+                        "pass_rate": 1.0,
+                        "avg_latency_ms": 1000.0,
+                        "p95_latency_ms": 1500.0,
+                        "avg_weighted_score": 0.96,
+                    },
+                    "diagnostics": [],
+                    "missing_keys": [],
+                    "collections_ready": True,
+                    "runtime_ready": True,
+                }
+            ),
+        )
+
+    page.route("**/ops-baseline/latest", ops_baseline_latest)
     page.goto(f"{live_server_url}/intro", wait_until="domcontentloaded")
     expect(page.locator("#statusIndicator .status-text")).to_have_text(re.compile(r"Online|Ready"), timeout=15000)
     expect(page.locator("#statusMsg")).to_contain_text("llm=", timeout=15000)
     expect(page.locator("#runtimeProfileMsg")).to_contain_text("runtime=", timeout=15000)
     expect(page.locator("#releaseGuideMsg")).to_contain_text("기본 복구", timeout=15000)
+    expect(page.locator("#opsBaselineMsg")).to_contain_text("pass_rate=1")
 
     page.click("#userStartBtn")
     expect(page).to_have_url(re.compile(r".*/app$"), timeout=10000)
     expect(page.locator(".app-overview-card")).to_contain_text("현재 운영 기준")
+    expect(page.locator("#appOpsBaselineMsg")).to_contain_text("최근 ops-baseline")
     expect(page.locator("#runtimeSummary")).to_contain_text("기본 질의 설정", timeout=10000)
     expect(page.locator("#advancedSettings")).to_be_hidden()
     expect(page.locator("#uploadMetadataFields")).to_be_hidden()
@@ -158,6 +186,9 @@ def test_intro_app_flow(page: Page, live_server_url: str):
                         "collections": ["fr", "ge"],
                         "route_reason": "explicit_multi",
                         "budget_profile": "verified_local_multi",
+                        "support_level": "supported",
+                        "support_reason": "multiple_context_segments",
+                        "citations": ["fr_doc.md > 프랑스", "ge_doc.md > 독일"],
                         "stage_timings": {"resolve_route_ms": 1.2},
                         "context": {"docs_total": 2, "context_chars": 240},
                         "invoke": {"invoke_ms": 420.5, "status": "ok"},
@@ -174,6 +205,8 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     page.fill("#userInput", "정상 응답 테스트")
     page.click("#sendBtn")
     expect(page.locator(".chat-message.bot").last).to_contain_text("모킹된 질의 응답", timeout=10000)
+    expect(page.locator(".chat-message.bot").last).to_contain_text("근거 수준=supported")
+    expect(page.locator(".chat-message.bot").last).to_contain_text("fr_doc.md > 프랑스")
     page.locator(".chat-message.bot").last.locator("summary").click()
     expect(page.locator(".chat-message.bot").last).to_contain_text("request_id=req-e2e-1")
     expect(page.locator(".chat-message.bot").last).to_contain_text("fr_doc.md")
@@ -287,6 +320,7 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     expect(page.locator(".chat-message.bot").last).to_contain_text("validation failed")
     page.unroute("**/upload-requests", upload_request_rejected)
     page.unroute("**/health", health_success)
+    page.unroute("**/ops-baseline/latest", ops_baseline_latest)
 
 
 @pytest.mark.e2e

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import app_api
 from api import routes_system
 
@@ -33,6 +35,57 @@ def test_collections_returns_200(client):
     assert body["default_collection_key"] == "all"
     assert isinstance(body["collections"], list)
     assert any(item["key"] == "all" for item in body["collections"])
+
+
+def test_ops_baseline_latest_returns_missing_when_report_does_not_exist(client, monkeypatch, tmp_path):
+    missing_path = tmp_path / "ops_baseline_gate_latest.json"
+    monkeypatch.setattr(routes_system, "OPS_BASELINE_REPORT_PATH", missing_path)
+
+    response = client.get("/ops-baseline/latest")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "missing"
+    assert body["ready"] is False
+    assert "scripts/check_ops_baseline_gate.py" in body["hint"]
+
+
+def test_ops_baseline_latest_returns_report_summary(client, monkeypatch, tmp_path):
+    report_path = tmp_path / "ops_baseline_gate_latest.json"
+    report_path.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-04-01T00:00:00Z",
+                "ready": True,
+                "runtime": {"ready": True},
+                "collections": {"ready": True, "missing_keys": []},
+                "diagnostics": [],
+                "eval": {
+                    "summary": {
+                        "cases": 3,
+                        "passed": 3,
+                        "pass_rate": 1.0,
+                        "avg_latency_ms": 1000.0,
+                        "p95_latency_ms": 1500.0,
+                        "avg_weighted_score": 0.96,
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(routes_system, "OPS_BASELINE_REPORT_PATH", report_path)
+
+    response = client.get("/ops-baseline/latest")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "ok"
+    assert body["ready"] is True
+    assert body["generated_at"] == "2026-04-01T00:00:00Z"
+    assert body["summary"]["pass_rate"] == 1.0
+    assert body["collections_ready"] is True
+    assert body["runtime_ready"] is True
 
 
 def test_rag_docs_returns_200(client):

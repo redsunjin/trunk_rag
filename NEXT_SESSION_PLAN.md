@@ -20,6 +20,8 @@
 - `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md`
 - `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
 - `docs/WIP_SNAPSHOT_2026-02-28.md`
+- `docs/reports/GENERIC_RAG_REFOCUS_REVIEW_2026-04-04.md`
+- `docs/reports/VERSION_BOUNDARY_RESET_2026-04-04.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -92,6 +94,25 @@
 - 쉬운 RAG 1차 정리로 고급 설정 기본 숨김, 런처 readiness 대기, 업로드 최소 입력, 기본 문서/설정 동기화가 반영됐다.
 - 동시에 `/query` p95는 `single_all` 기준 약 `39.2s`로 추가 구조 도입 전에 운영 기본값 재정리가 필요하다.
 
+## 0.3 2026-04-04 범용 RAG 재정렬 업데이트
+
+결론:
+1. 현재 시스템은 "배포 가능한 웹 MVP"로는 정리됐지만, 제품 본체가 아직 유럽 과학사 샘플셋에 강하게 결합돼 있다.
+2. 결합 지점은 `all/eu/fr/ge/it/uk` 컬렉션 하드코딩, 국가명 키워드 라우팅, 유럽사 전용 answer eval fixture, 질문 유형별 후처리 규칙이다.
+3. `LOOP-001` 이후 다음 분기 작업은 성능 미세 개선보다 `범용 RAG 전환 정리`가 우선이다.
+4. 유럽사 데이터셋은 장기적으로 제품 본체가 아니라 `sample pack`으로 격하하는 방향이 맞다.
+5. 기술 후보로는 contextual retrieval, hybrid search, rerank가 남아 있지만, 이는 범용화 이후 순서로 검토한다.
+6. 기준 문서는 `docs/reports/GENERIC_RAG_REFOCUS_REVIEW_2026-04-04.md`다.
+
+## 0.4 2026-04-04 버전 경계 재설정
+
+결론:
+1. 현재까지의 버전 관리에는 `V1 본체`, `sample pack`, `archive`의 경계가 느슨했던 문제가 있었다.
+2. 유럽 과학사 데이터셋은 제품 본체가 아니라 `sample pack`으로 다시 해석한다.
+3. GraphRAG/데스크톱 이력은 제품 본체 로드맵이 아니라 `archive` 또는 보류 트랙으로 유지한다.
+4. 이후 문서/평가/구현에서 샘플 데이터셋 최적화는 본체 기능 진전으로 간주하지 않는다.
+5. 기준 문서는 `docs/reports/VERSION_BOUNDARY_RESET_2026-04-04.md`다.
+
 ## 1. 현재 즉시 우선순위
 
 ### A. 배포형 웹 MVP 게이트 (현재 active)
@@ -110,8 +131,8 @@
 
 실행 순서 (2026-04-01 업데이트):
 1. 문서/인트로 톤 정리 + `/query` 실행 상세(trace/source) 노출
-2. 최신 `ops-baseline` 상태를 읽기 전용 API/카드로 노출
-3. citation/support label을 경량 메타데이터로 추가
+2. 최신 `ops-baseline` 상태를 읽기 전용 API/카드로 노출 완료
+3. citation/support label을 경량 메타데이터로 추가 완료
 4. lexical boost 등 검색 보정은 `LOOP-001` 종료 후 후보로만 보관
 
 완료 기준:
@@ -121,6 +142,21 @@
 검증:
 - `./.venv/bin/python -m pytest -q`
 - `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+### A-Next. 범용 RAG 전환 정리 (LOOP-001 이후 pending)
+1. 컬렉션 하드코딩을 dataset manifest 기반 구조로 치환
+2. 질문 유형별 후처리와 유럽사 전용 answer eval fixture를 본체 기준에서 분리
+3. `ops-baseline`을 범용 질문셋과 샘플팩 질문셋으로 이원화
+4. README/SPEC/TODO/NEXT에서 본체 제품과 샘플 데이터셋 문서를 분리
+
+완료 기준:
+- 제품 본체 문서가 특정 유럽사 데이터셋을 전제로 하지 않는다.
+- `/query`와 인덱싱 정책이 `dataset-agnostic local RAG runtime` 방향으로 재정렬된다.
+- 유럽사 데이터셋은 `sample pack` 또는 별도 실험 문맥으로 격하된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_query_service.py tests/api/test_query_api.py`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
@@ -238,6 +274,9 @@
 - 동일 질문에서 `llama3.1:8b`는 `active_collection_probe_ms=4.140`, `context.elapsed_ms=146.360`, `invoke.invoke_ms=14076.086(ok)`, `groq + llama-3.1-8b-instant`는 `active_collection_probe_ms=3.456`, `context.elapsed_ms=28.126`, `llm_init_ms=177.596`, `invoke.invoke_ms=666.962(ok)`였다.
 - 다음 판단 기준은 retrieval이 아니라 local invoke 처리량이며, cold start는 첫 요청 지연을 키우지만 반복 timeout의 주원인은 아니었다.
 - `2026-03-23` 기준 해결책 1차로 로컬 기본 Ollama 프로파일과 릴리즈 회귀 게이트를 `llama3.1:8b + 기본 timeout 30초`로 승격하고, `qwen3:4b`는 기본값/게이트 기준에서 제외했다.
+- `2026-04-04` 추가 실험에서는 `qwen3.5:9b-nvfp4`, `qwen3.5:4b-nvfp4`가 Ollama API 경유 `ops-baseline 3/3 pass`를 유지했고, 특히 `qwen3.5:4b-nvfp4`는 `avg_latency_ms=5356.476`, `p95_latency_ms=8681.252`로 가장 현실적인 MLX 후보로 확인됐다.
+- 같은 날짜 `qwen` 계열 응답에서 `Thinking Process` 누출을 확인했고, `/query`와 `query_cli.py`는 assistant prefill 기반 `<final_answer>` 계약과 서버 후처리를 통해 최종 답변만 남기도록 보강했다.
+- 현재 판단은 `qwen3.5:4b-nvfp4`를 `experimental candidate`로 계속 보되, 기본 verified 운영 프로파일은 여전히 `llama3.1:8b + timeout 30s`로 유지하는 것이다.
 - 같은 날짜 `runtime_preflight`와 `/health`는 현재 provider/model/timeout 조합을 `verified / experimental / not_recommended`로 판정하고, 비권장 로컬 모델이면 권장 프로파일로 바로 유도하도록 보강했다.
 - 같은 날짜 `/intro`와 `/app`도 `runtime_profile_*` 경고를 직접 표시하도록 바꿔, 브라우저 기본 경로만으로도 현재 모델 적합성을 즉시 확인할 수 있게 했다.
 - 같은 날짜 `scripts/diagnose_ollama_runtime.py`를 추가해 `ollama ps`가 불안정한 환경에서도 직접 prompt 기준 `eval_tokens_per_second`와 wall time으로 로컬 모델 처리량을 진단할 수 있게 했다.

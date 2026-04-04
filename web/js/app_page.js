@@ -12,6 +12,7 @@ const apiKey = document.getElementById("apiKey");
 const runtimeSummary = document.getElementById("runtimeSummary");
 const runtimeProfileMsg = document.getElementById("runtimeProfileMsg");
 const appOverviewRuntime = document.getElementById("appOverviewRuntime");
+const appOpsBaselineMsg = document.getElementById("appOpsBaselineMsg");
 const advancedSettings = document.getElementById("advancedSettings");
 const advancedSettingsToggle = document.getElementById("advancedSettingsToggle");
 const collection = document.getElementById("collection");
@@ -162,12 +163,29 @@ function buildResponseDetails(meta) {
   return details;
 }
 
+function buildSupportSummary(meta) {
+  if (!meta || typeof meta !== "object") return null;
+  const support = document.createElement("div");
+  support.className = "response-support";
+  const level = meta.support_level || "insufficient_context";
+  const reason = meta.support_reason || "-";
+  const citations = Array.isArray(meta.citations) && meta.citations.length
+    ? meta.citations.join(" | ")
+    : "표시할 citation이 없습니다.";
+  support.textContent = `근거 수준=${level} | reason=${reason} | citations=${citations}`;
+  return support;
+}
+
 function renderBotResponse(messageNode, text, meta) {
   messageNode.replaceChildren();
   const body = document.createElement("div");
   body.className = "message-text";
   body.textContent = text;
   messageNode.appendChild(body);
+  const support = buildSupportSummary(meta);
+  if (support) {
+    messageNode.appendChild(support);
+  }
   const details = buildResponseDetails(meta);
   if (details) {
     messageNode.appendChild(details);
@@ -221,6 +239,37 @@ function formatAppOverview(data) {
   const runtime = data.runtime_profile_status || "unknown";
   const embedding = data.embedding_fingerprint_status || "-";
   return `운영 경로: ${headline} | runtime=${runtime} | embedding=${embedding}${steps ? ` | next: ${steps}` : ""}`;
+}
+
+function formatOpsBaseline(data) {
+  const status = data.status || "unknown";
+  const generatedAt = data.generated_at || "-";
+  const summary = data.summary || {};
+  const passRate = summary.pass_rate ?? 0;
+  const score = summary.avg_weighted_score ?? 0;
+  const p95 = summary.p95_latency_ms ?? 0;
+  const diagnostics = Array.isArray(data.diagnostics) && data.diagnostics.length
+    ? ` | diagnostics=${data.diagnostics.map((item) => item.code || "-").join(",")}`
+    : "";
+  const missingKeys = Array.isArray(data.missing_keys) && data.missing_keys.length
+    ? ` | missing=${data.missing_keys.join(",")}`
+    : "";
+  return `최근 ops-baseline: status=${status} ready=${Boolean(data.ready)} generated_at=${generatedAt} | pass_rate=${passRate} | score=${score} | p95_ms=${p95}${missingKeys}${diagnostics}`;
+}
+
+async function loadOpsBaselineStatus() {
+  if (!appOpsBaselineMsg) return;
+  try {
+    const res = await fetch("/ops-baseline/latest");
+    const data = await res.json();
+    if (!res.ok) {
+      appOpsBaselineMsg.textContent = "최근 ops-baseline 상태를 가져오지 못했습니다.";
+      return;
+    }
+    appOpsBaselineMsg.textContent = formatOpsBaseline(data);
+  } catch (error) {
+    appOpsBaselineMsg.textContent = `최근 ops-baseline 상태를 가져오지 못했습니다. | ${String(error)}`;
+  }
 }
 
 function defaultUploadCountry(collectionKey) {
@@ -457,6 +506,7 @@ async function healthCheck() {
     }
 
     applyRuntimeDefaults(data);
+    await loadOpsBaselineStatus();
 
     if ((data.vectors ?? 0) <= 0) {
       setStatus(
@@ -546,6 +596,7 @@ async function reindex() {
     await healthCheck();
     await loadDocs();
     await loadCollections();
+    await loadOpsBaselineStatus();
   } catch (err) {
     setStatus("error", "Error", String(err));
   }
@@ -675,6 +726,7 @@ sidebarOverlay.addEventListener("click", () => {
 
 setAdvancedSettingsOpen(false);
 healthCheck();
+loadOpsBaselineStatus();
 loadCollections();
 loadDocs();
 setUploadMetadataOpen(false);

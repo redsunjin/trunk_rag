@@ -17,31 +17,84 @@ from services import index_service, runtime_service
 
 logger = logging.getLogger("doc_rag.query")
 
-PROMPT = ChatPromptTemplate.from_template(
-    """당신은 유럽 과학사 질의응답 어시스턴트입니다.
+PROMPT = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """당신은 유럽 과학사 질의응답 어시스턴트입니다.
 반드시 [Context]에 있는 정보만 사용해 한국어로 답변하세요.
 근거가 부족하면 '제공된 문서에서 확인되지 않습니다.'라고 답변하세요.
 질문에 들어 있는 핵심 표현(예: 역할, 비교, 상징, 인재 양성)은 답변 문장에 직접 반영하세요.
 비교 질문이면 공통점과 차이점을 모두 적고, 각 대상을 최소 한 번씩 명시하세요.
 답변은 너무 짧게 끝내지 말고 핵심 답변을 2~4문장으로 작성하세요.
-
-[Context]
+내부 추론, Thinking Process, Analyze, Constraint, 단계별 사고, 번호 목록은 출력하지 마세요.
+최종 답변만 반환하세요.""",
+        ),
+        (
+            "human",
+            """[Context]
 {context}
 
 [Question]
 {question}
 
 [Answer]
-1) 핵심 답변:
-2) 근거:
-"""
+`<final_answer>` 태그 내부에 들어갈 최종 답변 내용만 작성하세요.""",
+        ),
+        ("assistant", "<final_answer>"),
+    ]
 )
 
 INSUFFICIENT_ANSWER_TEXT = "제공된 문서에서 확인되지 않습니다."
+FINAL_ANSWER_PATTERN = re.compile(r"<final_answer>\s*(.*?)\s*</final_answer>", re.IGNORECASE | re.DOTALL)
+REASONING_PATTERNS = [
+    re.compile(r"(?im)^\s*thinking process\s*:"),
+    re.compile(r"(?im)^\s*analyze the request\s*:"),
+    re.compile(r"(?im)^\s*\d+\.\s*\*+\s*analyze the request\s*:\*+"),
+    re.compile(r"(?im)^\s*\*+\s*constraint\s+\d+\s*:"),
+    re.compile(r"(?im)^\s*constraint\s+\d+\s*:"),
+]
+ANSWER_LABEL_PATTERNS = [
+    re.compile(r"(?im)^\s*1\)\s*핵심 답변\s*:\s*"),
+    re.compile(r"(?im)^\s*2\)\s*근거\s*:\s*"),
+]
+
+
+def extract_final_answer_block(answer: str) -> str:
+    match = FINAL_ANSWER_PATTERN.search(answer)
+    if match:
+        return match.group(1).strip()
+
+    if "</final_answer>" in answer.lower():
+        return re.sub(r"(?is)</final_answer>\s*$", "", answer).strip()
+    return answer
+
+
+def strip_reasoning_leakage(answer: str) -> str:
+    earliest_index: int | None = None
+    for pattern in REASONING_PATTERNS:
+        match = pattern.search(answer)
+        if not match:
+            continue
+        if earliest_index is None or match.start() < earliest_index:
+            earliest_index = match.start()
+    if earliest_index is None:
+        return answer
+    return answer[:earliest_index].rstrip()
+
+
+def strip_answer_labels(answer: str) -> str:
+    resolved = answer
+    for pattern in ANSWER_LABEL_PATTERNS:
+        resolved = pattern.sub("", resolved)
+    return resolved
 
 
 def normalize_answer_whitespace(answer: str) -> str:
-    paragraphs = [line.strip() for line in answer.splitlines() if line.strip()]
+    selected = extract_final_answer_block(answer)
+    selected = strip_reasoning_leakage(selected)
+    selected = strip_answer_labels(selected)
+    paragraphs = [line.strip() for line in selected.splitlines() if line.strip()]
     if len(paragraphs) > 1 and paragraphs[-1] == INSUFFICIENT_ANSWER_TEXT:
         paragraphs = paragraphs[:-1]
     return "\n\n".join(paragraphs).strip()
@@ -112,7 +165,7 @@ def build_answer_lead(question: str, answer: str) -> str | None:
 def postprocess_answer(question: str, answer: str) -> str:
     cleaned_answer = normalize_answer_whitespace(answer)
     if not cleaned_answer:
-        return answer.strip()
+        return INSUFFICIENT_ANSWER_TEXT
 
     lead = build_answer_lead(question, cleaned_answer)
     if not lead:

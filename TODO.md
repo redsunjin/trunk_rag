@@ -8,6 +8,7 @@
 - `NEXT_SESSION_PLAN.md`
 - `SPEC.md`
 - `VERSION_ROADMAP.md`
+- `docs/reports/VERSION_BOUNDARY_RESET_2026-04-04.md`
 - `docs/V1_5_AGENT_READY_PLAN.md`
 - `docs/PREPROCESSING_RULES.md`
 - `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md`
@@ -35,6 +36,7 @@
 | id | status | title | verify |
 | --- | --- | --- | --- |
 | LOOP-001 | active | 배포형 웹 MVP 게이트 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434` |
+| LOOP-007 | pending | 범용 RAG 전환 정리 | `./.venv/bin/python -m pytest -q tests/test_query_service.py tests/api/test_query_api.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -113,17 +115,30 @@
 - 같은 날짜 `VERSION_ROADMAP.md`를 추가해 현재 제품을 `V1 = RAG product`, 다음 단계를 `V2 = Agent-enabled RAG`, 장기 목표를 `V3 = Agent system`으로 고정했다.
 - `V2`의 공식 준비 범위는 `tool registry`, `middleware chain`, `skill registry`, `execution state`, `agent runtime`이며, 이는 `LOOP-001` 종료 이후 후속 트랙으로 본다.
 - `V1.5` 준비 브랜치는 `feature/v1.5-agent-ready-runtime`으로 분리했고, 첫 작업 순서와 브랜치 운영 규칙은 `docs/V1_5_AGENT_READY_PLAN.md`에 고정한다.
+- `2026-04-04` 실측에서는 `qwen3.5:9b-nvfp4`, `qwen3.5:4b-nvfp4`가 Ollama API 경유로 `ops-baseline 3/3 pass`를 유지했지만 runtime profile은 여전히 `experimental`로 본다.
+- 같은 날짜 `qwen` 계열이 응답 본문에 `Thinking Process`를 섞어 내는 사례를 확인했고, `/query`와 `query_cli.py`는 assistant prefill 기반 `<final_answer>` 계약과 reasoning 누출 제거 후처리를 추가해 본문만 반환하도록 보강했다.
+- 타깃 회귀(`tests/test_query_service.py`, `tests/api/test_query_api.py`)와 `qwen3.5:4b-nvfp4` 실질의 `/query` 호출 재검증에서는 reasoning 누출 없이 최종 답변만 남는 것을 확인했다.
+- 같은 날짜 범용화 관점 리뷰에서는 현재 구조가 `eu/fr/ge/it/uk` 컬렉션, 유럽사 질문셋, 질문 유형별 후처리에 과도하게 결합돼 있다는 점을 확인했다.
+- `docs/reports/GENERIC_RAG_REFOCUS_REVIEW_2026-04-04.md`를 기준으로, `LOOP-001` 이후 첫 분기 작업은 성능 추가 튜닝보다 `범용 RAG 전환 정리`를 우선한다.
+- 같은 날짜 추가 정리로 현재까지의 버전 서사와 실제 코드 구조 사이에 `제품 본체 / sample pack / archive` 경계가 흐려져 있었다는 점을 공식 이슈로 기록했다.
+- `docs/reports/VERSION_BOUNDARY_RESET_2026-04-04.md`를 기준으로, 이후 문서/구현/평가에서는 유럽 과학사 데이터셋을 제품 본체가 아니라 `sample pack`으로 취급한다.
 
 LOOP-001 개선 실행 순서 (2026-04-01):
 1. [x] 문서/인트로 톤 정리 + `/query` 실행 상세(trace/source) 노출
-2. [pending] 최신 `ops-baseline` 상태를 읽기 전용 API/카드로 노출
-3. [pending] citation/support label을 경량 메타데이터로 추가
+2. [x] 최신 `ops-baseline` 상태를 읽기 전용 API/카드로 노출
+3. [x] citation/support label을 경량 메타데이터로 추가
 4. [pending] lexical boost 같은 검색 보정은 `LOOP-001` 종료 이후 후보로만 보관
 
 실행 원칙:
 - 1, 2는 현재 `배포형 웹 MVP 게이트` 범위 안에서 바로 반영한다.
 - 3은 기본 응답 계약을 크게 늘리지 않는 선에서 후속 보강한다.
 - 4는 현재 active loop에서 구현하지 않고 로드맵 후보로만 유지한다.
+
+LOOP-007 범위 메모 (2026-04-04 초안):
+- 목표: 현재 유럽사 샘플셋 결합을 본체 제품에서 분리하고 `dataset-agnostic local RAG runtime` 방향으로 재정렬한다.
+- 포함: 컬렉션 하드코딩 해체 계획, 질의 후처리의 도메인 규칙 제거 계획, 범용 평가셋 초안, 문서 기준 재정렬
+- 제외: 대규모 새 검색 스택 도입, GraphRAG 재개, 데스크톱 재착수
+- 기준 문서: `docs/reports/GENERIC_RAG_REFOCUS_REVIEW_2026-04-04.md`
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

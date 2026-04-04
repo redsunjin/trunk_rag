@@ -36,6 +36,38 @@ def _serialize_stage_timings(
     return json.dumps(payload, ensure_ascii=False, sort_keys=True)
 
 
+def _build_citation_labels(sources: list[dict[str, object]]) -> list[str]:
+    labels: list[str] = []
+    seen: set[str] = set()
+    for item in sources:
+        source = str(item.get("source", "unknown")).strip() or "unknown"
+        h2 = str(item.get("h2", "")).strip()
+        label = f"{source} > {h2}" if h2 else source
+        if label in seen:
+            continue
+        seen.add(label)
+        labels.append(label)
+    return labels[:3]
+
+
+def _classify_support(
+    *,
+    context_trace: dict[str, object],
+    invoke_trace: dict[str, object],
+    citations: list[str],
+) -> tuple[str, str]:
+    docs_total = int(context_trace.get("docs_total", 0) or 0)
+    context_chars = int(context_trace.get("context_chars", 0) or 0)
+    invoke_status = str(invoke_trace.get("status", "") or "")
+    if not citations or docs_total <= 0:
+        return "insufficient_context", "retrieved_context_empty"
+    if invoke_status != "ok":
+        return "insufficient_context", "invoke_not_completed"
+    if docs_total >= 2 and context_chars >= 300:
+        return "supported", "multiple_context_segments"
+    return "limited", "single_or_short_context"
+
+
 @router.post("/query", response_model=QueryResponse)
 def query(req: QueryRequest, request: Request, response: Response) -> QueryResponse:
     from core.http import get_or_create_request_id
@@ -254,11 +286,25 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
         )
         response_meta = None
         if req.debug:
+            source_items = [
+                item
+                for item in context_trace.get("sources", [])
+                if isinstance(item, dict)
+            ]
+            citations = _build_citation_labels(source_items)
+            support_level, support_reason = _classify_support(
+                context_trace=context_trace,
+                invoke_trace=invoke_trace,
+                citations=citations,
+            )
             response_meta = QueryMeta(
                 request_id=request_id,
                 collections=active_collection_keys,
                 route_reason=route_reason,
                 budget_profile=str(query_budget["profile"]) if query_budget else None,
+                support_level=support_level,
+                support_reason=support_reason,
+                citations=citations,
                 stage_timings=stage_timings,
                 context={key: value for key, value in context_trace.items() if key != "sources"},
                 invoke=invoke_trace,
@@ -268,8 +314,7 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
                         h2=str(item.get("h2", "")),
                         collection_key=str(item.get("collection_key", "")),
                     )
-                    for item in context_trace.get("sources", [])
-                    if isinstance(item, dict)
+                    for item in source_items
                 ],
             )
         return QueryResponse(answer=answer, provider=provider, model=model, meta=response_meta)
