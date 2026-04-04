@@ -154,7 +154,7 @@
 - `desktop/electron/README.md`: 데스크톱 런처 사용 가이드
 - `services/graphrag_poc_service.py`: GraphRAG snapshot/benchmark 보조 서비스
 - `scripts/eval_query_quality.py`: answer-level `/query` 품질 평가 하네스
-- `scripts/check_ops_baseline_gate.py`: runtime preflight + all-routes 벡터 상태 + `ops-baseline` 회귀 게이트/diagnostics 점검
+- `scripts/check_ops_baseline_gate.py`: runtime preflight + all-routes 벡터 상태 + `generic-baseline` 회귀 게이트/diagnostics 점검
 - `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩
 - `scripts/roadmap_harness.py`: 실행 큐 상태와 현재 active 항목 점검
 - `scripts/diagnose_ollama_runtime.py`: Ollama 직접 호출 기준 prompt/eval 처리량 진단
@@ -166,6 +166,7 @@
 - `web/js/*.js`: 프론트 로직 모듈
 - `docs/UPLOAD_ADMIN_WORKFLOW.md`: 업로드/갱신 관리자 운영 설계
 - `docs/RELEASE_WEB_MVP_CHECKLIST.md`: 배포형 웹 MVP 릴리즈 체크리스트
+- `docs/QUERY_EVAL_QUESTION_SET.md`: generic/sample-pack/graph 평가 질문셋
 - `docs/GRAPH_RAG_QUESTION_SET.md`: GraphRAG 판단용 질문셋
 - `docs/reports/GRAPH_RAG_VECTOR_GAP_REPORT_2026-03-17.md`: Vector RAG 실패 사례와 Graph 후보 범위
 - `docs/GRAPH_RAG_SIDECAR_CONTRACT.md`: GraphRAG sidecar 계약
@@ -280,10 +281,12 @@
   "llm_provider": "ollama",
   "llm_model": "llama3.1:8b",
   "llm_api_key": null,
-  "llm_base_url": "http://localhost:11434"
+  "llm_base_url": "http://localhost:11434",
+  "query_profile": "generic"
 }
 ```
 - `collection`/`collections`를 생략하면 키워드 기반 자동 라우팅을 사용한다.
+- `query_profile`는 기본 `generic`이며, 샘플팩 호환 평가가 필요할 때만 `sample_pack`을 사용한다.
 - `debug=true`면 route/budget/stage timing/source/support 메타를 함께 반환한다.
 - 응답 헤더:
   - `X-Request-ID`
@@ -555,7 +558,7 @@ npm start
 ## 다음 진행 방향
 ### 1순위
 - MVP 기본 경로 품질 유지
-- 내용: `run_doc_rag.bat`를 배포형 웹 MVP 기준 단일 부트스트랩/실행 경로로 유지하고, `/reindex`와 `build_index.py --reset` 기본 경로가 all-routes를 함께 재생성하도록 유지하며, `ops-baseline`의 `3/3 pass` 상태를 회귀 게이트로 유지한다.
+- 내용: `run_doc_rag.bat`를 배포형 웹 MVP 기준 단일 부트스트랩/실행 경로로 유지하고, `/reindex`와 `build_index.py --reset` 기본 경로가 all-routes를 함께 재생성하도록 유지하며, `generic-baseline`의 `3/3 pass` 상태를 본체 회귀 게이트로 유지한다.
 
 ### 2순위
 - 보류 항목 유지

@@ -11,6 +11,7 @@ class QueryRequest(BaseModel):
     llm_model: str | None = None
     llm_api_key: str | None = None
     llm_base_url: str | None = None
+    query_profile: str | None = None
     collection: str | None = None
     collections: list[str] | None = None
     debug: bool = False

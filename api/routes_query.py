@@ -228,7 +228,10 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
             )
 
         chain_started_at = time.perf_counter()
-        chain = query_service.build_query_chain(_context_builder, llm)
+        if "query_profile" in inspect.signature(query_service.build_query_chain).parameters:
+            chain = query_service.build_query_chain(_context_builder, llm, query_profile=req.query_profile)
+        else:
+            chain = query_service.build_query_chain(_context_builder, llm)
         stage_timings["chain_build_ms"] = round((time.perf_counter() - chain_started_at) * 1000, 3)
         try:
             invoke_kwargs = {
@@ -238,6 +241,8 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
             }
             if "trace" in inspect.signature(query_service.invoke_query_chain).parameters:
                 invoke_kwargs["trace"] = invoke_trace
+            if "query_profile" in inspect.signature(query_service.invoke_query_chain).parameters:
+                invoke_kwargs["query_profile"] = req.query_profile
             answer = query_service.invoke_query_chain(**invoke_kwargs)
         except TimeoutError as exc:
             raise QueryAPIError(

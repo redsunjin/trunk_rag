@@ -39,7 +39,7 @@ def test_prepare_query_request_allows_three_collections_for_graph_snapshot_backe
 def test_evaluate_case_result_marks_pass_when_required_terms_and_route_match():
     case = {
         "id": "GQ-01",
-        "bucket": "ops-baseline",
+        "bucket": "sample-pack-baseline",
         "query": "에콜 폴리테크니크가 프랑스 과학 인재 양성에서 맡은 역할을 요약해줘.",
         "collection_keys": ["fr"],
         "evaluation": {
@@ -74,6 +74,27 @@ def test_evaluate_case_result_marks_pass_when_required_terms_and_route_match():
     assert result["required_ratio"] == 1.0
     assert result["must_include_any_ratio"] > 0.0
     assert result["forbidden_hits"] == []
+
+
+def test_build_query_payload_includes_optional_query_profile():
+    case = {
+        "id": "GQ-19",
+        "query": "sample",
+        "collection_keys": ["fr"],
+        "query_profile": "sample_pack",
+    }
+
+    payload, expected_route_keys, request_mode = eval_query_quality.build_query_payload(
+        case,
+        llm_provider="ollama",
+        llm_model="llama3.1:8b",
+        llm_base_url="http://localhost:11434",
+        llm_api_key=None,
+    )
+
+    assert payload["query_profile"] == "sample_pack"
+    assert expected_route_keys == ["fr"]
+    assert request_mode == "explicit_single"
 
 
 def test_evaluate_case_result_marks_fail_on_forbidden_hit_and_route_mismatch():

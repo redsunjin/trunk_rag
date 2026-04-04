@@ -102,6 +102,7 @@
 - `docs/HARNESS_MASTER_GUIDE.md`: 하네스 설계 원칙, 워크북 템플릿, 현재 구조 심사 기준
 - `docs/HARNESS_EVOLUTION_PLAN.md`: 버전별 하네스 모드와 세션 메타데이터 계약
 - `docs/RELEASE_WEB_MVP_CHECKLIST.md`: 배포형 웹 MVP 릴리즈 체크리스트
+- `docs/QUERY_EVAL_QUESTION_SET.md`: generic/sample-pack/graph answer-level 질문셋
 - `docs/GRAPH_RAG_QUESTION_SET.md`: GraphRAG 판단용 관계형 질문셋
 - `evals/answer_level_eval_fixtures.jsonl`: answer-level 평가 fixture
 - `docs/GRAPH_RAG_SIDECAR_CONTRACT.md`: GraphRAG sidecar 계약과 최소 적재 파이프라인
@@ -219,7 +220,8 @@ cd <repo>
 ```
 
 - 기본 fixture는 `evals/answer_level_eval_fixtures.jsonl`을 사용합니다.
-- 현재 fixture는 `ops-baseline`과 과거 판단 이력 보존용 `graph-candidate` 질문 일부를 포함합니다.
+- 현재 fixture는 본체 기본 게이트용 `generic-baseline`, 샘플팩 호환성 확인용 `sample-pack-baseline`, 과거 판단 이력 보존용 `graph-candidate`를 포함합니다.
+- `sample-pack-baseline` fixture는 요청별 `query_profile=sample_pack`을 함께 보내 샘플팩 전용 프롬프트/후처리 호환성을 별도로 측정합니다.
 - 평가 항목은 `must_include`, `must_include_any`, `must_not_include`, 최소 답변 길이, 실제 route header를 기반으로 점수화됩니다.
 - 현재 `/query`는 최대 2개 컬렉션까지만 직접 선택 가능하므로, 3개 이상 컬렉션이 필요한 graph 질문은 vector baseline 평가 시 `collection=all`로 fallback 합니다.
 - 이 스크립트는 GraphRAG 자체를 평가하는 것이 아니라, 현재 Vector RAG 기본 경로의 answer-level 기준선을 만드는 용도입니다.
@@ -240,8 +242,8 @@ cd <repo>
   --llm-base-url http://localhost:11434
 ```
 
-- 이 스크립트는 `all/eu/fr/ge/it/uk` 컬렉션의 벡터 존재 여부와 `ops-baseline` `3/3 pass`를 함께 확인합니다.
-- 실행 순서는 `runtime_preflight -> all-routes collections -> ops-baseline eval`이며, 실패 시 `APP_HEALTH_UNREACHABLE`, `COLLECTIONS_CHECK_FAILED`, `OPS_EVAL_FAILED` 진단 코드를 함께 출력합니다.
+- 이 스크립트는 `all/eu/fr/ge/it/uk` 컬렉션의 벡터 존재 여부와 본체 기본 게이트인 `generic-baseline` `3/3 pass`를 함께 확인합니다.
+- 실행 순서는 `runtime_preflight -> all-routes collections -> generic-baseline eval`이며, 실패 시 `APP_HEALTH_UNREACHABLE`, `COLLECTIONS_CHECK_FAILED`, `OPS_EVAL_FAILED` 진단 코드를 함께 출력합니다.
 - `runtime_preflight`는 이제 `/health`의 `runtime_profile_*`와 같은 기준으로 현재 모델을 `verified / experimental / not_recommended`로 판정합니다.
 - `/health`는 `runtime_query_budget_profile`, `runtime_query_budget_summary`, `embedding_fingerprint_status`도 함께 노출합니다.
 - `embedding_fingerprint_status=mismatch` 또는 `missing`이면 reindex 후 다시 게이트를 실행하는 것이 기본 복구 경로입니다.

@@ -170,8 +170,10 @@ closeout 메모:
 - 같은 변경으로 seed 문서 메타데이터에 `dataset`, `source_type`, `tags`를 넣어 본체 코드에서 `topic=europe_science_history`와 stem 기반 `country/doc_type` 파생을 제거했다.
 - 같은 날짜 `services/query_service.py`는 기본 query profile을 `generic`으로 전환했고, 유럽사 전용 시스템 프롬프트와 `역할/비교/상징` 후처리 규칙은 `DOC_RAG_QUERY_PROFILE=sample_pack`일 때만 적용되도록 분리했다.
 - `tests/test_query_service.py`는 기본 경로에서 sample-pack 전용 문장 보정이 더 이상 주입되지 않는지와, `sample_pack` profile에서만 기존 보정이 유지되는지를 함께 검증하도록 바뀌었다.
+- `2026-04-05`에는 `evals/answer_level_eval_fixtures.jsonl`을 `generic-baseline`, `sample-pack-baseline`, `graph-candidate` 버킷으로 재구성했고, `docs/QUERY_EVAL_QUESTION_SET.md`를 추가해 본체 기본 게이트 질문과 샘플팩/graph 질문을 분리했다.
+- 같은 변경으로 `scripts/check_ops_baseline_gate.py` 기본 대상은 `generic-baseline`이 됐고, `/query`는 `query_profile` 요청 필드를 받아 sample-pack fixture만 `sample_pack` profile로 별도 평가할 수 있게 됐다.
 - 현재 단계는 구조 분리 1차라서 `all/eu/fr/ge/it/uk` 키와 기존 업로드 기본값, 질의 라우팅 동작은 그대로 유지한다.
-- 다음 구현 단위는 `ops-baseline`을 범용 질문셋과 `sample-pack` 질문셋으로 이원화하고, answer-level fixture에서 본체 기본 게이트와 샘플팩 평가를 분리하는 것이다.
+- 다음 구현 단위는 `README/SPEC/TODO/NEXT`와 릴리즈/운영 가이드에서 본체 기본 게이트를 `generic-baseline` 기준으로 더 명확히 정리하고, sample-pack 설명과 GraphRAG 이력을 아카이브 성격 문서로 더 분리하는 것이다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

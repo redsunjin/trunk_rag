@@ -79,15 +79,26 @@ ANSWER_LABEL_PATTERNS = [
 ]
 
 
-def get_query_profile() -> str:
+def normalize_query_profile(query_profile: str | None) -> str:
+    value = (query_profile or "").strip().lower()
+    if value == QUERY_PROFILE_SAMPLE_PACK:
+        return QUERY_PROFILE_SAMPLE_PACK
+    if value == QUERY_PROFILE_GENERIC:
+        return QUERY_PROFILE_GENERIC
+    return QUERY_PROFILE_GENERIC
+
+
+def get_query_profile(query_profile: str | None = None) -> str:
+    if query_profile is not None:
+        return normalize_query_profile(query_profile)
     value = os.getenv(QUERY_PROFILE_ENV_KEY, QUERY_PROFILE_GENERIC).strip().lower()
     if value == QUERY_PROFILE_SAMPLE_PACK:
         return QUERY_PROFILE_SAMPLE_PACK
     return QUERY_PROFILE_GENERIC
 
 
-def get_prompt_template() -> ChatPromptTemplate:
-    if get_query_profile() == QUERY_PROFILE_SAMPLE_PACK:
+def get_prompt_template(query_profile: str | None = None) -> ChatPromptTemplate:
+    if get_query_profile(query_profile) == QUERY_PROFILE_SAMPLE_PACK:
         return SAMPLE_PACK_PROMPT
     return GENERIC_PROMPT
 
@@ -194,12 +205,12 @@ def build_sample_pack_answer_lead(question: str, answer: str) -> str | None:
     return None
 
 
-def postprocess_answer(question: str, answer: str) -> str:
+def postprocess_answer(question: str, answer: str, query_profile: str | None = None) -> str:
     cleaned_answer = normalize_answer_whitespace(answer)
     if not cleaned_answer:
         return INSUFFICIENT_ANSWER_TEXT
 
-    if get_query_profile() != QUERY_PROFILE_SAMPLE_PACK:
+    if get_query_profile(query_profile) != QUERY_PROFILE_SAMPLE_PACK:
         return cleaned_answer
 
     lead = build_sample_pack_answer_lead(question, cleaned_answer)
@@ -338,13 +349,13 @@ def build_collection_context(
     return context
 
 
-def build_query_chain(context_builder, llm):
+def build_query_chain(context_builder, llm, query_profile: str | None = None):
     context_runnable = context_builder
     if callable(context_builder):
         context_runnable = RunnableLambda(context_builder)
     return (
         {"context": context_runnable, "question": RunnablePassthrough()}
-        | get_prompt_template()
+        | get_prompt_template(query_profile)
         | llm
         | StrOutputParser()
     )
@@ -355,6 +366,7 @@ def invoke_query_chain(
     question: str,
     timeout_seconds: int = DEFAULT_QUERY_TIMEOUT_SECONDS,
     trace: dict[str, Any] | None = None,
+    query_profile: str | None = None,
 ) -> str:
     started_at = time.perf_counter()
     executor = ThreadPoolExecutor(max_workers=1)
@@ -365,7 +377,7 @@ def invoke_query_chain(
         if trace is not None:
             trace["invoke_ms"] = elapsed_ms
             trace["status"] = "ok"
-        return postprocess_answer(question, str(answer or ""))
+        return postprocess_answer(question, str(answer or ""), query_profile=query_profile)
     except FuturesTimeoutError as exc:
         future.cancel()
         elapsed_ms = round((time.perf_counter() - started_at) * 1000, 3)
