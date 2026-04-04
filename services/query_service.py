@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -17,22 +18,36 @@ from services import index_service, runtime_service
 
 logger = logging.getLogger("doc_rag.query")
 
-PROMPT = ChatPromptTemplate.from_messages(
-    [
-        (
-            "system",
-            """당신은 유럽 과학사 질의응답 어시스턴트입니다.
+QUERY_PROFILE_ENV_KEY = "DOC_RAG_QUERY_PROFILE"
+QUERY_PROFILE_GENERIC = "generic"
+QUERY_PROFILE_SAMPLE_PACK = "sample_pack"
+
+GENERIC_SYSTEM_PROMPT = """당신은 로컬 RAG 질의응답 어시스턴트입니다.
+반드시 [Context]에 있는 정보만 사용해 한국어로 답변하세요.
+질문 범위를 벗어난 추측은 하지 마세요.
+근거가 부족하면 '제공된 문서에서 확인되지 않습니다.'라고 답변하세요.
+비교 질문이면 공통점과 차이점을 함께 설명하세요.
+답변은 너무 짧게 끝내지 말고 핵심 답변을 2~4문장으로 작성하세요.
+내부 추론, Thinking Process, Analyze, Constraint, 단계별 사고, 번호 목록은 출력하지 마세요.
+최종 답변만 반환하세요."""
+
+SAMPLE_PACK_SYSTEM_PROMPT = """당신은 유럽 과학사 질의응답 어시스턴트입니다.
 반드시 [Context]에 있는 정보만 사용해 한국어로 답변하세요.
 근거가 부족하면 '제공된 문서에서 확인되지 않습니다.'라고 답변하세요.
 질문에 들어 있는 핵심 표현(예: 역할, 비교, 상징, 인재 양성)은 답변 문장에 직접 반영하세요.
 비교 질문이면 공통점과 차이점을 모두 적고, 각 대상을 최소 한 번씩 명시하세요.
 답변은 너무 짧게 끝내지 말고 핵심 답변을 2~4문장으로 작성하세요.
 내부 추론, Thinking Process, Analyze, Constraint, 단계별 사고, 번호 목록은 출력하지 마세요.
-최종 답변만 반환하세요.""",
-        ),
-        (
-            "human",
-            """[Context]
+최종 답변만 반환하세요."""
+
+
+def _build_prompt_template(system_prompt: str) -> ChatPromptTemplate:
+    return ChatPromptTemplate.from_messages(
+        [
+            ("system", system_prompt),
+            (
+                "human",
+                """[Context]
 {context}
 
 [Question]
@@ -40,10 +55,14 @@ PROMPT = ChatPromptTemplate.from_messages(
 
 [Answer]
 `<final_answer>` 태그 내부에 들어갈 최종 답변 내용만 작성하세요.""",
-        ),
-        ("assistant", "<final_answer>"),
-    ]
-)
+            ),
+            ("assistant", "<final_answer>"),
+        ]
+    )
+
+
+GENERIC_PROMPT = _build_prompt_template(GENERIC_SYSTEM_PROMPT)
+SAMPLE_PACK_PROMPT = _build_prompt_template(SAMPLE_PACK_SYSTEM_PROMPT)
 
 INSUFFICIENT_ANSWER_TEXT = "제공된 문서에서 확인되지 않습니다."
 FINAL_ANSWER_PATTERN = re.compile(r"<final_answer>\s*(.*?)\s*</final_answer>", re.IGNORECASE | re.DOTALL)
@@ -58,6 +77,19 @@ ANSWER_LABEL_PATTERNS = [
     re.compile(r"(?im)^\s*1\)\s*핵심 답변\s*:\s*"),
     re.compile(r"(?im)^\s*2\)\s*근거\s*:\s*"),
 ]
+
+
+def get_query_profile() -> str:
+    value = os.getenv(QUERY_PROFILE_ENV_KEY, QUERY_PROFILE_GENERIC).strip().lower()
+    if value == QUERY_PROFILE_SAMPLE_PACK:
+        return QUERY_PROFILE_SAMPLE_PACK
+    return QUERY_PROFILE_GENERIC
+
+
+def get_prompt_template() -> ChatPromptTemplate:
+    if get_query_profile() == QUERY_PROFILE_SAMPLE_PACK:
+        return SAMPLE_PACK_PROMPT
+    return GENERIC_PROMPT
 
 
 def extract_final_answer_block(answer: str) -> str:
@@ -130,7 +162,7 @@ def extract_comparison_subjects(question: str) -> tuple[str, str] | None:
     return left, right
 
 
-def build_answer_lead(question: str, answer: str) -> str | None:
+def build_sample_pack_answer_lead(question: str, answer: str) -> str | None:
     normalized_answer = answer.lower()
 
     if "비교" in question:
@@ -167,7 +199,10 @@ def postprocess_answer(question: str, answer: str) -> str:
     if not cleaned_answer:
         return INSUFFICIENT_ANSWER_TEXT
 
-    lead = build_answer_lead(question, cleaned_answer)
+    if get_query_profile() != QUERY_PROFILE_SAMPLE_PACK:
+        return cleaned_answer
+
+    lead = build_sample_pack_answer_lead(question, cleaned_answer)
     if not lead:
         return cleaned_answer
     if lead in cleaned_answer:
@@ -309,7 +344,7 @@ def build_query_chain(context_builder, llm):
         context_runnable = RunnableLambda(context_builder)
     return (
         {"context": context_runnable, "question": RunnablePassthrough()}
-        | PROMPT
+        | get_prompt_template()
         | llm
         | StrOutputParser()
     )

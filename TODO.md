@@ -166,8 +166,10 @@ LOOP-007 범위 메모 (2026-04-04 초안):
 - `services/collection_service.py`의 `default_country/default_doc_type`도 manifest 기반으로 전환해 국가/문서유형 기본값 하드코딩을 제거했다.
 - `2026-04-05`에는 seed 문서 정의를 `seed_documents` + `seed_doc_keys` 구조로 확장하고, `core/collection_manifest.py`를 추가해 `common.py`, `services/index_service.py`, `scripts/validate_rag_doc.py`가 샘플팩 파일명/metadata를 manifest 기준으로 읽도록 정리했다.
 - 같은 변경으로 seed 문서 메타데이터에 `dataset`, `source_type`, `tags`를 부여해 본체 코드에서 `topic=europe_science_history`와 stem 기반 `country/doc_type` 하드코딩을 제거했다.
+- 같은 날짜 `services/query_service.py`에는 `DOC_RAG_QUERY_PROFILE=generic|sample_pack` 분기를 추가해, 기본 프롬프트를 범용 `local RAG assistant`로 바꾸고 유럽사 전용 시스템 프롬프트와 `역할/비교/상징` 답변 보정은 `sample_pack` profile 뒤로 이동시켰다.
+- `tests/test_query_service.py`는 기본 `generic` 경로에서 문장 보정을 더 이상 주입하지 않는지와 `sample_pack` profile에서만 기존 보정이 살아있는지를 함께 검증하도록 갱신했다.
 - 현재 단계는 동작 유지 목적의 구조 분리 1차이며, `all/eu/fr/ge/it/uk` 키와 기존 라우팅 동작은 그대로 유지한다.
-- 타깃 검증은 `41 passed`(`tests/test_collection_service.py`, `tests/test_index_service.py`, `tests/api/test_upload_api.py`, `tests/test_query_service.py`, `tests/api/test_query_api.py`)까지 확인했다.
+- 타깃 검증은 `45 passed`(`tests/test_collection_service.py`, `tests/test_index_service.py`, `tests/api/test_upload_api.py`, `tests/test_query_service.py`, `tests/api/test_query_api.py`)까지 확인했다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

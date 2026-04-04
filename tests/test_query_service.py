@@ -19,12 +19,36 @@ def test_postprocess_answer_strips_trailing_insufficient_note_when_answer_exists
     )
 
     assert "제공된 문서에서 확인되지 않습니다." not in resolved
-    assert "역할" in resolved
-    assert "교육" in resolved
-    assert "훈련" in resolved
+    assert resolved == "에콜 폴리테크니크는 프랑스 과학 인재 양성의 핵심 기관입니다."
 
 
-def test_postprocess_answer_adds_symbolic_lead_for_short_symbol_answer():
+def test_postprocess_answer_keeps_generic_answer_without_sample_pack_expansion():
+    answer = "뉴턴의 국장은 영국 사회에서 과학이 왕권과 동등한 권위를 얻었음을 보여줬습니다."
+
+    resolved = query_service.postprocess_answer(
+        "뉴턴의 국장이 영국 사회에서 무엇을 상징했는지 설명해줘.",
+        answer,
+    )
+
+    assert resolved == answer
+
+
+def test_postprocess_answer_keeps_generic_comparison_answer_without_sample_pack_expansion():
+    answer = (
+        "프랑스의 에콜 폴리테크니크는 국가 주도의 실용 교육을 강화했습니다. "
+        "독일의 훔볼트 대학은 연구와 학문 자유를 중심으로 엘리트 교육을 조직했습니다."
+    )
+
+    resolved = query_service.postprocess_answer(
+        "프랑스의 에콜 폴리테크니크와 독일의 훔볼트 대학이 인재 양성에서 어떻게 다른지 비교해줘.",
+        answer,
+    )
+
+    assert resolved == answer
+
+
+def test_postprocess_answer_adds_sample_pack_symbolic_lead_when_profile_enabled(monkeypatch):
+    monkeypatch.setenv(query_service.QUERY_PROFILE_ENV_KEY, query_service.QUERY_PROFILE_SAMPLE_PACK)
     answer = "뉴턴의 국장은 영국 사회에서 과학이 왕권과 동등한 권위를 얻었음을 보여줬습니다."
 
     resolved = query_service.postprocess_answer(
@@ -39,7 +63,8 @@ def test_postprocess_answer_adds_symbolic_lead_for_short_symbol_answer():
     assert len(resolved) >= 120
 
 
-def test_postprocess_answer_adds_comparison_lead_when_keyword_missing():
+def test_postprocess_answer_adds_sample_pack_comparison_lead_when_profile_enabled(monkeypatch):
+    monkeypatch.setenv(query_service.QUERY_PROFILE_ENV_KEY, query_service.QUERY_PROFILE_SAMPLE_PACK)
     answer = (
         "프랑스의 에콜 폴리테크니크는 국가 주도의 실용 교육을 강화했습니다. "
         "독일의 훔볼트 대학은 연구와 학문 자유를 중심으로 엘리트 교육을 조직했습니다."
@@ -102,6 +127,27 @@ def test_postprocess_answer_returns_insufficient_when_only_reasoning_leaks():
     )
 
     assert resolved == query_service.INSUFFICIENT_ANSWER_TEXT
+
+
+def test_get_prompt_template_defaults_to_generic_profile(monkeypatch):
+    monkeypatch.delenv(query_service.QUERY_PROFILE_ENV_KEY, raising=False)
+
+    prompt = query_service.get_prompt_template()
+    messages = prompt.format_messages(context="문맥", question="질문")
+
+    assert query_service.get_query_profile() == query_service.QUERY_PROFILE_GENERIC
+    assert "로컬 RAG 질의응답 어시스턴트" in messages[0].content
+    assert "유럽 과학사" not in messages[0].content
+
+
+def test_get_prompt_template_supports_sample_pack_profile(monkeypatch):
+    monkeypatch.setenv(query_service.QUERY_PROFILE_ENV_KEY, query_service.QUERY_PROFILE_SAMPLE_PACK)
+
+    prompt = query_service.get_prompt_template()
+    messages = prompt.format_messages(context="문맥", question="질문")
+
+    assert query_service.get_query_profile() == query_service.QUERY_PROFILE_SAMPLE_PACK
+    assert "유럽 과학사 질의응답 어시스턴트" in messages[0].content
 
 
 def test_build_collection_context_populates_trace(monkeypatch):
