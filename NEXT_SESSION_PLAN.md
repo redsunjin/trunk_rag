@@ -238,6 +238,9 @@
 - 동일 질문에서 `llama3.1:8b`는 `active_collection_probe_ms=4.140`, `context.elapsed_ms=146.360`, `invoke.invoke_ms=14076.086(ok)`, `groq + llama-3.1-8b-instant`는 `active_collection_probe_ms=3.456`, `context.elapsed_ms=28.126`, `llm_init_ms=177.596`, `invoke.invoke_ms=666.962(ok)`였다.
 - 다음 판단 기준은 retrieval이 아니라 local invoke 처리량이며, cold start는 첫 요청 지연을 키우지만 반복 timeout의 주원인은 아니었다.
 - `2026-03-23` 기준 해결책 1차로 로컬 기본 Ollama 프로파일과 릴리즈 회귀 게이트를 `llama3.1:8b + 기본 timeout 30초`로 승격하고, `qwen3:4b`는 기본값/게이트 기준에서 제외했다.
+- `2026-04-04` 추가 실험에서는 `qwen3.5:9b-nvfp4`, `qwen3.5:4b-nvfp4`가 Ollama API 경유 `ops-baseline 3/3 pass`를 유지했고, 특히 `qwen3.5:4b-nvfp4`는 `avg_latency_ms=5356.476`, `p95_latency_ms=8681.252`로 가장 현실적인 MLX 후보로 확인됐다.
+- 같은 날짜 `qwen` 계열 응답에서 `Thinking Process` 누출을 확인했고, `/query`와 `query_cli.py`는 assistant prefill 기반 `<final_answer>` 계약과 서버 후처리를 통해 최종 답변만 남기도록 보강했다.
+- 현재 판단은 `qwen3.5:4b-nvfp4`를 `experimental candidate`로 계속 보되, 기본 verified 운영 프로파일은 여전히 `llama3.1:8b + timeout 30s`로 유지하는 것이다.
 - 같은 날짜 `runtime_preflight`와 `/health`는 현재 provider/model/timeout 조합을 `verified / experimental / not_recommended`로 판정하고, 비권장 로컬 모델이면 권장 프로파일로 바로 유도하도록 보강했다.
 - 같은 날짜 `/intro`와 `/app`도 `runtime_profile_*` 경고를 직접 표시하도록 바꿔, 브라우저 기본 경로만으로도 현재 모델 적합성을 즉시 확인할 수 있게 했다.
 - 같은 날짜 `scripts/diagnose_ollama_runtime.py`를 추가해 `ollama ps`가 불안정한 환경에서도 직접 prompt 기준 `eval_tokens_per_second`와 wall time으로 로컬 모델 처리량을 진단할 수 있게 했다.

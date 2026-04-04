@@ -59,21 +59,29 @@ def main() -> None:
         search_kwargs={"k": args.k, "fetch_k": 10, "lambda_mult": 0.3},
     )
 
-    prompt = ChatPromptTemplate.from_template(
-        """당신은 유럽 과학사 질의응답 어시스턴트입니다.
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                """당신은 유럽 과학사 질의응답 어시스턴트입니다.
 반드시 [Context]에 있는 정보만 사용해 한국어로 답변하세요.
 근거가 부족하면 '제공된 문서에서 확인되지 않습니다.'라고 답변하세요.
-
-[Context]
+내부 추론, Thinking Process, Analyze, Constraint, 단계별 사고, 번호 목록은 출력하지 마세요.
+최종 답변만 반환하세요.""",
+            ),
+            (
+                "human",
+                """[Context]
 {context}
 
 [Question]
 {question}
 
 [Answer]
-1) 핵심 답변:
-2) 근거:
-"""
+`<final_answer>` 태그 내부에 들어갈 최종 답변 내용만 작성하세요.""",
+            ),
+            ("assistant", "<final_answer>"),
+        ]
     )
 
     provider, model, api_key, base_url = resolve_llm_config(

@@ -56,6 +56,54 @@ def test_postprocess_answer_adds_comparison_lead_when_keyword_missing():
     assert "인재 양성" in resolved
 
 
+def test_postprocess_answer_extracts_final_answer_block_only():
+    answer = (
+        "<final_answer>에콜 폴리테크니크는 프랑스 과학 인재 양성을 국가 중심 교육으로 조직했습니다."
+        "</final_answer>\n\n"
+        "Thinking Process:\n1. Analyze the Request"
+    )
+
+    resolved = query_service.postprocess_answer(
+        "에콜 폴리테크니크가 프랑스 과학 인재 양성에서 맡은 역할을 요약해줘.",
+        answer,
+    )
+
+    assert "Thinking Process" not in resolved
+    assert "Analyze the Request" not in resolved
+    assert "<final_answer>" not in resolved
+    assert "에콜 폴리테크니크" in resolved
+
+
+def test_postprocess_answer_strips_reasoning_suffix_without_final_answer_block():
+    answer = (
+        "요약하면, 뉴턴의 국장은 영국 사회에서 과학자의 권위와 영향력이 커졌음을 상징했습니다.\n\n"
+        "Thinking Process:\n\n"
+        "1. **Analyze the Request:**\n"
+        "* Constraint 1: Use only context."
+    )
+
+    resolved = query_service.postprocess_answer(
+        "뉴턴의 국장이 영국 사회에서 무엇을 상징했는지 설명해줘.",
+        answer,
+    )
+
+    assert "Thinking Process" not in resolved
+    assert "Analyze the Request" not in resolved
+    assert "Constraint 1" not in resolved
+    assert "상징" in resolved
+
+
+def test_postprocess_answer_returns_insufficient_when_only_reasoning_leaks():
+    answer = "Thinking Process:\n1. **Analyze the Request:**\n* Constraint 1: Use only context."
+
+    resolved = query_service.postprocess_answer(
+        "에콜 폴리테크니크가 프랑스 과학 인재 양성에서 맡은 역할을 요약해줘.",
+        answer,
+    )
+
+    assert resolved == query_service.INSUFFICIENT_ANSWER_TEXT
+
+
 def test_build_collection_context_populates_trace(monkeypatch):
     class DummyRetriever:
         def invoke(self, question):
