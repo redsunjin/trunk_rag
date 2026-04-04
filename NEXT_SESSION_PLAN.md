@@ -302,7 +302,8 @@ closeout 메모:
 - `2026-03-31`에는 `docs/RELEASE_WEB_MVP_CHECKLIST.md`의 권장 게이트 명령을 verified 운영 프로파일(`ollama + llama3.1:8b`)로 정렬해 릴리즈 문서와 실제 기본 회귀 게이트 기준을 다시 맞췄다.
 - 같은 날짜 `VERSION_ROADMAP.md`를 추가해 현재 `trunk_rag`를 `V1 = RAG product`로 고정하고, 다음 제품을 `V2 = Agent-enabled RAG`, 장기 목표를 `V3 = Agent system`으로 정의했다.
 - `V2`의 공식 아키텍처 초안은 `internal tools first, MCP second` 원칙과 `tool registry + middleware + skill registry + execution state + single-agent runtime` 조합을 기준으로 한다.
-- 같은 날짜 `feature/v1.5-agent-ready-runtime` 브랜치를 분리하고, `V1.5`의 첫 작업 묶음(`tool registry -> middleware -> execution trace -> agent entry`)을 `docs/V1_5_AGENT_READY_PLAN.md`에 고정했다.
+- 같은 날짜 `V1.5` 준비 트랙을 분리하고, 첫 작업 묶음(`tool registry -> middleware -> execution trace -> agent entry`)을 `docs/V1_5_AGENT_READY_PLAN.md`에 고정했다.
+- `2026-04-04` 기준 `V1.5`는 장기 브랜치명이 아니라 준비 트랙으로 유지하며, 실제 구현은 최신 `main`에서 분기한 짧은 작업 브랜치로 진행한다.
 
 후속 대상 (P3):
 1. GraphRAG 관련 문서/PoC는 잠정 중단 상태의 아카이브로만 유지
