@@ -36,7 +36,8 @@
 | id | status | title | verify |
 | --- | --- | --- | --- |
 | LOOP-001 | done | 배포형 웹 MVP 게이트 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434` |
-| LOOP-007 | active | 범용 RAG 전환 정리 | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_index_service.py tests/api/test_upload_api.py tests/test_query_service.py tests/api/test_query_api.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-007 | done | 범용 RAG 전환 정리 | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_index_service.py tests/api/test_upload_api.py tests/test_query_service.py tests/api/test_query_api.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-008 | active | 경량 retrieval 품질 보정 | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_query_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_check_ops_baseline_gate.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -129,12 +130,13 @@ LOOP-001 개선 실행 순서 (2026-04-01):
 1. [x] 문서/인트로 톤 정리 + `/query` 실행 상세(trace/source) 노출
 2. [x] 최신 `ops-baseline` 상태를 읽기 전용 API/카드로 노출
 3. [x] citation/support label을 경량 메타데이터로 추가
-4. [pending] lexical boost 같은 검색 보정은 `LOOP-001` 종료 이후 후보로만 보관
+4. [x] lexical boost 같은 검색 보정은 `LOOP-001` 종료 이후 후보로 분리하고 후속 top-level loop로 승격 준비
 
 실행 원칙:
 - 1, 2는 현재 `배포형 웹 MVP 게이트` 범위 안에서 바로 반영한다.
 - 3은 기본 응답 계약을 크게 늘리지 않는 선에서 후속 보강한다.
 - 4는 현재 active loop에서 구현하지 않고 로드맵 후보로만 유지한다.
+- 이 아래 완료 이력에 남아 있는 `ops-baseline` 표기는 `generic-baseline`/`sample-pack-baseline` 분리 이전의 역사적 명칭으로 본다.
 
 LOOP-007 범위 메모 (2026-04-04 초안):
 - 목표: 현재 유럽사 샘플셋 결합을 본체 제품에서 분리하고 `dataset-agnostic local RAG runtime` 방향으로 재정렬한다.
@@ -142,7 +144,7 @@ LOOP-007 범위 메모 (2026-04-04 초안):
 - 제외: 대규모 새 검색 스택 도입, GraphRAG 재개, 데스크톱 재착수
 - 기준 문서: `docs/reports/GENERIC_RAG_REFOCUS_REVIEW_2026-04-04.md`
 
-## 현재 Active Loop (LOOP-007)
+## 완료 Loop (LOOP-007)
 
 목표:
 - 현재 제품 본체를 유럽 과학사 샘플셋 결합에서 분리해 `dataset-agnostic local RAG runtime` 방향으로 재정렬한다.
@@ -174,6 +176,30 @@ LOOP-007 범위 메모 (2026-04-04 초안):
 - `docs/GRAPH_RAG_QUESTION_SET.md`, `docs/GRAPH_RAG_SIDECAR_CONTRACT.md`는 archive 문서임을 헤더에서 바로 드러내도록 갱신했다.
 - 현재 단계는 동작 유지 목적의 구조 분리 1차이며, `all/eu/fr/ge/it/uk` 키와 기존 라우팅 동작은 그대로 유지한다.
 - 문서/상태 검증은 `7 passed`(`tests/test_roadmap_harness.py`)와 `./.venv/bin/python scripts/roadmap_harness.py validate` `ready`까지 확인했다.
+- `2026-04-05` closeout review에서는 본체 문서/샘플팩 문서 분리, manifest 기반 seed metadata 정리, `generic-baseline`/`sample-pack-baseline` 분리가 모두 완료 기준을 충족한다고 판단했고, 후속 범위는 `LOOP-008`로 승격했다.
+
+## 현재 Active Loop (LOOP-008)
+
+목표:
+- `generic-baseline` 기준 기본 `/query` 품질을 유지한 채, 무거운 스택 확장 없이 적용 가능한 경량 retrieval 보정 후보를 정리하고 필요한 최소 구현만 반영한다.
+
+범위:
+- 포함: lexical boost 같은 경량 검색 보정 후보 재평가, `generic-baseline` 기준 품질 영향 측정, 본체/샘플팩 경계 유지 여부 점검, 관련 문서/게이트 기준 정리
+- 제외: heavy rerank, multi-vector, GraphRAG 재개, sample-pack 전용 규칙 재도입, 대규모 검색 스택 교체
+
+완료 기준:
+- 본체 기본 경로에서 시도할 경량 retrieval 보정 후보가 채택 또는 기각 근거와 함께 정리된다.
+- `generic-baseline` 기본 게이트와 `sample-pack-baseline` 호환 경계가 다시 흐려지지 않는다.
+- 변경된 검색 동작 또는 기각 판단이 테스트/문서 기준에 반영된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_query_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_check_ops_baseline_gate.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-05):
+- `LOOP-007` closeout 이후 후속 후보였던 "lexical boost 같은 검색 보정"을 현재 active loop로 승격했다.
+- 이번 loop의 기본 원칙은 `generic-baseline` 중심이며, sample-pack 전용 최적화나 역사적 `ops-baseline` 규칙을 본체 경로에 되돌리지 않는 것이다.
+- 구현 전 1차 판단 기준은 "경량 보정이 실제 품질 문제를 해결하는가"와 "범용화한 본체 경계를 다시 흐리지 않는가"다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

@@ -29,8 +29,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-007`
-- current_active_title: `범용 RAG 전환 정리`
+- current_active_id: `LOOP-008`
+- current_active_title: `경량 retrieval 품질 보정`
 - current_version_track: `V1`
 - current_harness_mode: `v1_operating_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -40,6 +40,7 @@
 - closeout_rule: `active` 항목은 검증 결과와 문서 반영, 커밋까지 끝난 뒤에만 `done`으로 본다.
 - blocked_rule: blocker와 재개 조건 없이 `blocked` 상태로 이동하지 않는다.
 - promotion_rule: 현재 `active`가 `done`이 되면 첫 번째 `pending` 항목을 즉시 다음 `active`로 승격한다.
+- legacy_gate_note: 역사 메모의 `ops-baseline` 표기는 `generic-baseline`/`sample-pack-baseline` 분리 이전 명칭이며, 현재 본체 기본 gate는 `generic-baseline`이다.
 
 ## 0. 2026-03-13 우선순위 재정렬
 
@@ -66,6 +67,9 @@
 11. 2026-03-20 기준 Electron 경로는 정식 패키징이 아니라 선택형 앱 런처로 유지한다.
 
 ## 0.2 2026-03-17 GraphRAG 게이트 업데이트 (아카이브)
+
+주의:
+- 이 섹션의 `ops-baseline` 표기는 2026-04-05 bucket split 이전 역사 메모다.
 
 결론:
 1. `docs/GRAPH_RAG_QUESTION_SET.md`에 관계형/다중 홉 질문 18개를 고정했다.
@@ -125,13 +129,13 @@
 - 실패 시 복구 경로가 사용자 관점 문구로 정리돼야 함
 
 3. 릴리즈 운영 체크리스트 고정
-- `ops-baseline` 회귀 게이트
+- `generic-baseline` 회귀 게이트
 - all-routes 인덱싱 상태 확인
 - 운영 문서/핸드오버 문서 동기화
 
 실행 순서 (2026-04-01 업데이트):
 1. 문서/인트로 톤 정리 + `/query` 실행 상세(trace/source) 노출
-2. 최신 `ops-baseline` 상태를 읽기 전용 API/카드로 노출 완료
+2. 최신 본체 게이트 상태(`/ops-baseline/latest`, bucket=`generic-baseline`)를 읽기 전용 API/카드로 노출 완료
 3. citation/support label을 경량 메타데이터로 추가 완료
 4. lexical boost 등 검색 보정은 `LOOP-001` 종료 후 후보로만 보관
 
@@ -148,10 +152,10 @@ closeout 메모:
 - `2026-04-04` 기준 `./.venv/bin/python -m pytest -q -> 108 passed in 9.40s`
 - 같은 날짜 verified gate는 `ready=true`, `pass_rate=1.0`, `avg_weighted_score=0.9645`, `p95_latency_ms=12917.239`로 통과했다.
 
-### A-Next. 범용 RAG 전환 정리 (현재 active)
+### A-Prev. 범용 RAG 전환 정리 (완료: 2026-04-05)
 1. 컬렉션 하드코딩을 dataset manifest 기반 구조로 치환
 2. 질문 유형별 후처리와 유럽사 전용 answer eval fixture를 본체 기준에서 분리
-3. `ops-baseline`을 범용 질문셋과 샘플팩 질문셋으로 이원화
+3. 본체 기본 게이트를 `generic-baseline`으로 고정하고, 샘플팩 질문셋은 `sample-pack-baseline`으로 분리
 4. README/SPEC/TODO/NEXT에서 본체 제품과 샘플 데이터셋 문서를 분리
 
 완료 기준:
@@ -175,7 +179,26 @@ closeout 메모:
 - 같은 날짜 `README.md`, `SPEC.md`, `docs/RELEASE_WEB_MVP_CHECKLIST.md`는 본체 기본 게이트를 `generic-baseline` 기준으로 다시 설명하도록 정리했고, GraphRAG 관련 문서는 `docs/GRAPH_RAG_ARCHIVE_INDEX.md`를 진입점으로 모아 아카이브 문맥을 분리했다.
 - `docs/GRAPH_RAG_QUESTION_SET.md`, `docs/GRAPH_RAG_SIDECAR_CONTRACT.md`는 archive 문서임을 헤더에서 바로 드러내도록 갱신했다.
 - 현재 단계는 구조 분리 1차라서 `all/eu/fr/ge/it/uk` 키와 기존 업로드 기본값, 질의 라우팅 동작은 그대로 유지한다.
-- 다음 구현 단위는 `LOOP-007` 완료 기준을 다시 대조해 closeout 가능한지 검토하고, 필요하면 `TODO.md`/`NEXT_SESSION_PLAN.md`의 남은 legacy wording(`ops-baseline` 역사 메모 등)을 현재 기준에 맞게 더 명확히 주석 처리하는 것이다.
+- `2026-04-05` closeout review 기준으로 본체 문서/샘플팩 문서 분리, manifest 기반 seed metadata 정리, query/eval profile 분리가 모두 완료 기준을 충족했고, 후속 범위는 `LOOP-008`로 승격했다.
+
+### A-Next. 경량 retrieval 품질 보정 (현재 active)
+1. `generic-baseline` 기준으로 실제 품질 부족 케이스를 다시 좁혀 잡는다.
+2. lexical boost 같은 경량 검색 보정 후보를 범용 경로에서만 검토한다.
+3. sample-pack 전용 규칙 재도입 없이 채택/기각 근거를 문서와 테스트 기준으로 고정한다.
+
+완료 기준:
+- 본체 기본 경로에서 시도할 경량 retrieval 보정 후보가 채택 또는 기각 근거와 함께 정리된다.
+- `generic-baseline` 기본 게이트와 `sample-pack-baseline` 호환 경계가 다시 흐려지지 않는다.
+- 변경된 검색 동작 또는 기각 판단이 테스트/문서 기준에 반영된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_query_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_check_ops_baseline_gate.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-05):
+- `LOOP-007` closeout 이후 `LOOP-001`에서 후보로만 남겨 둔 lexical boost 계열 경량 검색 보정을 다음 active loop로 승격했다.
+- 이번 loop에서는 heavy rerank, multi-vector, GraphRAG 재개 없이 `generic-baseline` 중심 회귀 기준을 유지한다.
+- 역사 메모에 남아 있는 `ops-baseline` 표기는 유지하되, 현재 운영 기준은 `generic-baseline`으로 해석한다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
@@ -258,7 +281,7 @@ closeout 메모:
 - P3-Prep 게이트(`app_api.py <= 350`, inline script 외부화, 회귀 통과)는 충족됨.
 - 쉬운 RAG 운영 게이트와 성능/품질 게이트는 완료됐고, answer-level eval harness까지 준비됐다.
 - 업로드/갱신 관리자 워크플로우 2차는 완료됐고, GraphRAG 트랙은 "MVP 통합 No-Go" 판단 이후 잠정 중단 상태로 정리됐다.
-- Vector baseline 신뢰성 복구와 answer completeness 보정은 완료됐고, 이후에는 `ops-baseline`을 기본 경로 회귀 게이트로 유지한다.
+- Vector baseline 신뢰성 복구와 answer completeness 보정은 완료됐고, 이후에는 `generic-baseline`을 본체 기본 경로 회귀 게이트로 유지한다.
 
 ## 4. 현재 남은 작업 범위 (핵심)
 
@@ -321,7 +344,7 @@ closeout 메모:
 
 ### A. MVP 기본 경로 품질 유지
 1. 릴리즈 전 기본 설치/실행/복구 경로를 문서와 스크립트 기준으로 1개로 고정
-2. `ops-baseline`의 `3/3 pass` 상태를 릴리즈 회귀 게이트로 유지
+2. `generic-baseline`의 `3/3 pass` 상태를 릴리즈 회귀 게이트로 유지
 3. `scripts/check_ops_baseline_gate.py` 기준으로 `build_index.py --reset` / `/reindex`의 all-routes 동작과 eval 결과를 함께 확인
 
 ### B. 보류/유지 항목
@@ -371,7 +394,7 @@ closeout 메모:
 5. GraphRAG/AuraDB는 운영 모델(폐쇄망/로컬/경량)과 충돌 가능성이 커서 현재는 잠정 중단 상태를 유지한다.
 6. Electron PoC는 가능성을 확인했지만 설치형 제품으로 가려면 Python/모델 번들링 전략이 별도로 필요하며, 현재는 보류 상태다.
 7. 업로드 관리자 워크플로우는 active 버전/manifest까지는 구현됐지만, diff 뷰/이력 조회/rollback UI는 아직 없다.
-8. GraphRAG 실험 결과는 판단 이력으로는 남아 있지만, 현재 운영 의사결정 기준은 `ops-baseline` 회귀 게이트 유지다.
+8. GraphRAG 실험 결과는 판단 이력으로는 남아 있지만, 현재 운영 의사결정 기준은 `generic-baseline` 회귀 게이트 유지다.
 9. 현재 answer-level eval fixture는 대표 질문 6개만 포함하고, `uk` 컬렉션 비어 있음/다중 컬렉션 timeout 같은 운영 이슈가 그대로 드러난다.
 
 ## 9. 다음 커밋 목표 (권장)
