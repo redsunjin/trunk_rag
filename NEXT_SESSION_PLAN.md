@@ -20,6 +20,8 @@
 - `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md`
 - `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
 - `docs/WIP_SNAPSHOT_2026-02-28.md`
+- `docs/reports/GENERIC_RAG_REFOCUS_REVIEW_2026-04-04.md`
+- `docs/reports/VERSION_BOUNDARY_RESET_2026-04-04.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -92,6 +94,25 @@
 - 쉬운 RAG 1차 정리로 고급 설정 기본 숨김, 런처 readiness 대기, 업로드 최소 입력, 기본 문서/설정 동기화가 반영됐다.
 - 동시에 `/query` p95는 `single_all` 기준 약 `39.2s`로 추가 구조 도입 전에 운영 기본값 재정리가 필요하다.
 
+## 0.3 2026-04-04 범용 RAG 재정렬 업데이트
+
+결론:
+1. 현재 시스템은 "배포 가능한 웹 MVP"로는 정리됐지만, 제품 본체가 아직 유럽 과학사 샘플셋에 강하게 결합돼 있다.
+2. 결합 지점은 `all/eu/fr/ge/it/uk` 컬렉션 하드코딩, 국가명 키워드 라우팅, 유럽사 전용 answer eval fixture, 질문 유형별 후처리 규칙이다.
+3. `LOOP-001` 이후 다음 분기 작업은 성능 미세 개선보다 `범용 RAG 전환 정리`가 우선이다.
+4. 유럽사 데이터셋은 장기적으로 제품 본체가 아니라 `sample pack`으로 격하하는 방향이 맞다.
+5. 기술 후보로는 contextual retrieval, hybrid search, rerank가 남아 있지만, 이는 범용화 이후 순서로 검토한다.
+6. 기준 문서는 `docs/reports/GENERIC_RAG_REFOCUS_REVIEW_2026-04-04.md`다.
+
+## 0.4 2026-04-04 버전 경계 재설정
+
+결론:
+1. 현재까지의 버전 관리에는 `V1 본체`, `sample pack`, `archive`의 경계가 느슨했던 문제가 있었다.
+2. 유럽 과학사 데이터셋은 제품 본체가 아니라 `sample pack`으로 다시 해석한다.
+3. GraphRAG/데스크톱 이력은 제품 본체 로드맵이 아니라 `archive` 또는 보류 트랙으로 유지한다.
+4. 이후 문서/평가/구현에서 샘플 데이터셋 최적화는 본체 기능 진전으로 간주하지 않는다.
+5. 기준 문서는 `docs/reports/VERSION_BOUNDARY_RESET_2026-04-04.md`다.
+
 ## 1. 현재 즉시 우선순위
 
 ### A. 배포형 웹 MVP 게이트 (현재 active)
@@ -121,6 +142,21 @@
 검증:
 - `./.venv/bin/python -m pytest -q`
 - `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+### A-Next. 범용 RAG 전환 정리 (LOOP-001 이후 pending)
+1. 컬렉션 하드코딩을 dataset manifest 기반 구조로 치환
+2. 질문 유형별 후처리와 유럽사 전용 answer eval fixture를 본체 기준에서 분리
+3. `ops-baseline`을 범용 질문셋과 샘플팩 질문셋으로 이원화
+4. README/SPEC/TODO/NEXT에서 본체 제품과 샘플 데이터셋 문서를 분리
+
+완료 기준:
+- 제품 본체 문서가 특정 유럽사 데이터셋을 전제로 하지 않는다.
+- `/query`와 인덱싱 정책이 `dataset-agnostic local RAG runtime` 방향으로 재정렬된다.
+- 유럽사 데이터셋은 `sample pack` 또는 별도 실험 문맥으로 격하된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_query_service.py tests/api/test_query_api.py`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
