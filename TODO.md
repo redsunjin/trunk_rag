@@ -35,8 +35,8 @@
 
 | id | status | title | verify |
 | --- | --- | --- | --- |
-| LOOP-001 | active | 배포형 웹 MVP 게이트 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434` |
-| LOOP-007 | pending | 범용 RAG 전환 정리 | `./.venv/bin/python -m pytest -q tests/test_query_service.py tests/api/test_query_api.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-001 | done | 배포형 웹 MVP 게이트 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434` |
+| LOOP-007 | active | 범용 RAG 전환 정리 | `./.venv/bin/python -m pytest -q tests/test_query_service.py tests/api/test_query_api.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -50,7 +50,7 @@
 - 현재 작업은 아래 "현재 우선순위" 섹션을 기준으로 진행한다.
 - GraphRAG 관련 구현/평가는 2026-03-20 기준 잠정 중단하고, 기존 문서/PoC는 아카이브로만 유지한다.
 
-## 현재 Active Loop (LOOP-001)
+## 완료 Loop (LOOP-001)
 
 목표:
 - 현재의 "실제 구동 가능한 내부 운영형 MVP"를 "배포 가능한 웹 MVP" 기준으로 끌어올린다.
@@ -122,6 +122,7 @@
 - `docs/reports/GENERIC_RAG_REFOCUS_REVIEW_2026-04-04.md`를 기준으로, `LOOP-001` 이후 첫 분기 작업은 성능 추가 튜닝보다 `범용 RAG 전환 정리`를 우선한다.
 - 같은 날짜 추가 정리로 현재까지의 버전 서사와 실제 코드 구조 사이에 `제품 본체 / sample pack / archive` 경계가 흐려져 있었다는 점을 공식 이슈로 기록했다.
 - `docs/reports/VERSION_BOUNDARY_RESET_2026-04-04.md`를 기준으로, 이후 문서/구현/평가에서는 유럽 과학사 데이터셋을 제품 본체가 아니라 `sample pack`으로 취급한다.
+- `2026-04-04` closeout 기준 공식 검증은 `./.venv/bin/python -m pytest -q -> 108 passed`, `./.venv/bin/python scripts/check_ops_baseline_gate.py --base-url http://127.0.0.1:8010 --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434 --json -> ready=true, pass_rate=1.0, avg_weighted_score=0.9645, p95_latency_ms=12917.239`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`로 마감했다.
 
 LOOP-001 개선 실행 순서 (2026-04-01):
 1. [x] 문서/인트로 톤 정리 + `/query` 실행 상세(trace/source) 노출
@@ -139,6 +140,24 @@ LOOP-007 범위 메모 (2026-04-04 초안):
 - 포함: 컬렉션 하드코딩 해체 계획, 질의 후처리의 도메인 규칙 제거 계획, 범용 평가셋 초안, 문서 기준 재정렬
 - 제외: 대규모 새 검색 스택 도입, GraphRAG 재개, 데스크톱 재착수
 - 기준 문서: `docs/reports/GENERIC_RAG_REFOCUS_REVIEW_2026-04-04.md`
+
+## 현재 Active Loop (LOOP-007)
+
+목표:
+- 현재 제품 본체를 유럽 과학사 샘플셋 결합에서 분리해 `dataset-agnostic local RAG runtime` 방향으로 재정렬한다.
+
+범위:
+- 포함: 컬렉션 하드코딩 해체 계획, 샘플팩/본체 문서 분리, 질문 유형별 후처리 축소, 범용 평가셋 기준 정리
+- 제외: 대규모 검색 스택 교체, GraphRAG 재개, 데스크톱 재착수
+
+완료 기준:
+- 본체 문서와 샘플 데이터셋 문서가 분리된다.
+- 본체 기준의 컬렉션/라우팅/평가 정책이 특정 유럽사 데이터셋을 전제하지 않게 정리된다.
+- 샘플 데이터셋 최적화가 본체 기능 진전으로 해석되지 않도록 기준이 고정된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_query_service.py tests/api/test_query_api.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
