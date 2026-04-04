@@ -36,7 +36,7 @@
 | id | status | title | verify |
 | --- | --- | --- | --- |
 | LOOP-001 | done | 배포형 웹 MVP 게이트 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434` |
-| LOOP-007 | active | 범용 RAG 전환 정리 | `./.venv/bin/python -m pytest -q tests/test_query_service.py tests/api/test_query_api.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-007 | active | 범용 RAG 전환 정리 | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_index_service.py tests/api/test_upload_api.py tests/test_query_service.py tests/api/test_query_api.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -156,8 +156,15 @@ LOOP-007 범위 메모 (2026-04-04 초안):
 - 샘플 데이터셋 최적화가 본체 기능 진전으로 해석되지 않도록 기준이 고정된다.
 
 검증:
-- `./.venv/bin/python -m pytest -q tests/test_query_service.py tests/api/test_query_api.py`
+- `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_index_service.py tests/api/test_upload_api.py tests/test_query_service.py tests/api/test_query_api.py`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-04):
+- `config/collection_manifest.json`를 추가해 샘플팩 컬렉션 정의를 코드 상수에서 외부 manifest로 이동했다.
+- `core/settings.py`는 default collection key, collection name, keywords, 업로드 기본 메타데이터를 manifest 기준으로 로드하도록 변경했다.
+- `services/collection_service.py`의 `default_country/default_doc_type`도 manifest 기반으로 전환해 국가/문서유형 기본값 하드코딩을 제거했다.
+- 현재 단계는 동작 유지 목적의 구조 분리 1차이며, `all/eu/fr/ge/it/uk` 키와 기존 라우팅 동작은 그대로 유지한다.
+- 타깃 검증은 `17 passed`(`tests/test_collection_service.py`, `tests/api/test_upload_api.py`, `tests/test_index_service.py`)와 `22 passed`(`tests/test_query_service.py`, `tests/api/test_query_api.py`)까지 확인했다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

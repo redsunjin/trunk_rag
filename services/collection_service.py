@@ -6,20 +6,19 @@ from core.settings import (
     COLLECTION_CONFIGS,
     COLLECTION_HARD_CAP,
     COLLECTION_SOFT_CAP,
-    COUNTRY_BY_COLLECTION_KEY,
     DEFAULT_COLLECTION_KEY,
     MAX_QUERY_COLLECTIONS,
 )
 
 
 def default_country_for_collection(collection_key: str) -> str:
-    return COUNTRY_BY_COLLECTION_KEY.get(collection_key, "all")
+    config = get_collection_config(collection_key)
+    return str(config.get("default_country", "all")).strip() or "all"
 
 
 def default_doc_type_for_collection(collection_key: str) -> str:
-    if collection_key in {"all", "eu"}:
-        return "summary"
-    return "country"
+    config = get_collection_config(collection_key)
+    return str(config.get("default_doc_type", "summary")).strip() or "summary"
 
 
 def resolve_collection_key(collection: str | None) -> str | None:

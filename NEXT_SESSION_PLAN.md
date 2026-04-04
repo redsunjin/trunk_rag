@@ -160,8 +160,14 @@ closeout 메모:
 - 유럽사 데이터셋은 `sample pack` 또는 별도 실험 문맥으로 격하된다.
 
 검증:
-- `./.venv/bin/python -m pytest -q tests/test_query_service.py tests/api/test_query_api.py`
+- `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_index_service.py tests/api/test_upload_api.py tests/test_query_service.py tests/api/test_query_api.py`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-04):
+- 1차 구현으로 `config/collection_manifest.json`를 추가했고, `core/settings.py`가 컬렉션 이름/레이블/키워드/기본 메타데이터를 manifest에서 읽도록 바꿨다.
+- `services/collection_service.py`의 `default_country_for_collection`, `default_doc_type_for_collection`도 manifest 기반으로 전환해 `COUNTRY_BY_COLLECTION_KEY`와 조건문 하드코딩 의존을 줄였다.
+- 현재 단계는 구조 분리 1차라서 `all/eu/fr/ge/it/uk` 키와 기존 업로드 기본값, 질의 라우팅 동작은 그대로 유지한다.
+- 다음 구현 단위는 `common.py`/`services/index_service.py`에 남아 있는 sample-pack 파일명/metadata 하드코딩을 manifest 또는 dataset descriptor로 옮기는 것이다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
