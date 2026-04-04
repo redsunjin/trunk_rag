@@ -1,0 +1,89 @@
+{
+  "default_collection_key": "all",
+  "collections": {
+    "all": {
+      "name": "w2_007_header_rag",
+      "label": "전체 (기본)",
+      "file_names": [
+        "eu_summry.md",
+        "fr.md",
+        "ge.md",
+        "it.md",
+        "uk.md"
+      ],
+      "keywords": [],
+      "default_country": "all",
+      "default_doc_type": "summary"
+    },
+    "eu": {
+      "name": "rag_science_history_eu",
+      "label": "유럽 요약",
+      "file_names": [
+        "eu_summry.md"
+      ],
+      "keywords": [
+        "유럽",
+        "europe"
+      ],
+      "default_country": "all",
+      "default_doc_type": "summary"
+    },
+    "fr": {
+      "name": "rag_science_history_fr",
+      "label": "프랑스",
+      "file_names": [
+        "fr.md"
+      ],
+      "keywords": [
+        "프랑스",
+        "france",
+        "french"
+      ],
+      "default_country": "france",
+      "default_doc_type": "country"
+    },
+    "ge": {
+      "name": "rag_science_history_ge",
+      "label": "독일",
+      "file_names": [
+        "ge.md"
+      ],
+      "keywords": [
+        "독일",
+        "germany",
+        "german"
+      ],
+      "default_country": "germany",
+      "default_doc_type": "country"
+    },
+    "it": {
+      "name": "rag_science_history_it",
+      "label": "이탈리아",
+      "file_names": [
+        "it.md"
+      ],
+      "keywords": [
+        "이탈리아",
+        "italy",
+        "italian"
+      ],
+      "default_country": "italy",
+      "default_doc_type": "country"
+    },
+    "uk": {
+      "name": "rag_science_history_uk",
+      "label": "영국",
+      "file_names": [
+        "uk.md"
+      ],
+      "keywords": [
+        "영국",
+        "britain",
+        "united kingdom",
+        "england"
+      ],
+      "default_country": "uk",
+      "default_doc_type": "country"
+    }
+  }
+}

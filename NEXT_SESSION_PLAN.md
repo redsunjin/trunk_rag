@@ -29,8 +29,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-001`
-- current_active_title: `배포형 웹 MVP 게이트`
+- current_active_id: `LOOP-007`
+- current_active_title: `범용 RAG 전환 정리`
 - current_version_track: `V1`
 - current_harness_mode: `v1_operating_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -115,7 +115,7 @@
 
 ## 1. 현재 즉시 우선순위
 
-### A. 배포형 웹 MVP 게이트 (현재 active)
+### A. 배포형 웹 MVP 게이트 (완료: 2026-04-04)
 1. 단일 부트스트랩/설치 경로 고정
 - 웹 UI 기준 기본 설치/실행 경로를 1개로 고정
 - 운영자가 따라야 할 준비 항목(Python, requirements, 임베딩, LLM)을 문서/스크립트 기준으로 일치시킴
@@ -144,7 +144,11 @@
 - `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
-### A-Next. 범용 RAG 전환 정리 (LOOP-001 이후 pending)
+closeout 메모:
+- `2026-04-04` 기준 `./.venv/bin/python -m pytest -q -> 108 passed in 9.40s`
+- 같은 날짜 verified gate는 `ready=true`, `pass_rate=1.0`, `avg_weighted_score=0.9645`, `p95_latency_ms=12917.239`로 통과했다.
+
+### A-Next. 범용 RAG 전환 정리 (현재 active)
 1. 컬렉션 하드코딩을 dataset manifest 기반 구조로 치환
 2. 질문 유형별 후처리와 유럽사 전용 answer eval fixture를 본체 기준에서 분리
 3. `ops-baseline`을 범용 질문셋과 샘플팩 질문셋으로 이원화
@@ -156,8 +160,14 @@
 - 유럽사 데이터셋은 `sample pack` 또는 별도 실험 문맥으로 격하된다.
 
 검증:
-- `./.venv/bin/python -m pytest -q tests/test_query_service.py tests/api/test_query_api.py`
+- `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_index_service.py tests/api/test_upload_api.py tests/test_query_service.py tests/api/test_query_api.py`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-04):
+- 1차 구현으로 `config/collection_manifest.json`를 추가했고, `core/settings.py`가 컬렉션 이름/레이블/키워드/기본 메타데이터를 manifest에서 읽도록 바꿨다.
+- `services/collection_service.py`의 `default_country_for_collection`, `default_doc_type_for_collection`도 manifest 기반으로 전환해 `COUNTRY_BY_COLLECTION_KEY`와 조건문 하드코딩 의존을 줄였다.
+- 현재 단계는 구조 분리 1차라서 `all/eu/fr/ge/it/uk` 키와 기존 업로드 기본값, 질의 라우팅 동작은 그대로 유지한다.
+- 다음 구현 단위는 `common.py`/`services/index_service.py`에 남아 있는 sample-pack 파일명/metadata 하드코딩을 manifest 또는 dataset descriptor로 옮기는 것이다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
