@@ -108,7 +108,7 @@ def default_llm_model(provider: str) -> str:
     value = normalize_provider(provider)
     defaults = {
         "openai": "gpt-4o-mini",
-        "ollama": "llama3.1:8b",
+        "ollama": "gemma4:e4b",
         "lmstudio": "local-model",
         "groq": "groq-model",
     }

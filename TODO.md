@@ -69,7 +69,7 @@
 
 검증:
 - `./.venv/bin/python -m pytest -q`
-- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 진행 메모 (2026-03-20):
@@ -208,9 +208,10 @@ LOOP-007 범위 메모 (2026-04-04 초안):
 - 그 뒤 `gemma4:e4b` 단일 `GQ-20` 질의는 정상 답변으로 바뀌었고, warm 상태 `generic-baseline` gate는 `3/3 pass`, `avg_latency_ms=4328.464`, `p95_latency_ms=4831.276`, `avg_weighted_score=0.8933`까지 올라갔다.
 - 같은 날짜 fresh app 기준 warm-up 뒤 재실측에서도 `gemma4:e4b` gate는 `3/3 pass`, `avg_latency_ms=3890.691`, `p95_latency_ms=4283.135`, `avg_weighted_score=0.8933`로 다시 재현됐다.
 - 같은 세션 더 작은 후보 `qwen3.5:4b-nvfp4`는 `avg_latency_ms=2671.665`, `p95_latency_ms=3770.352`, `avg_weighted_score=0.9022`로 더 빨랐지만 `GQ-21` 짧은 답변 때문에 `2/3 pass`에 그쳤다.
-- 다만 전체 `check_ops_baseline_gate.py`의 `ready`는 runtime profile이 아직 `experimental`이라 계속 `false`다. 현재 판단은 "release-ready 기본값"이 아니라 "유의미한 local candidate" 쪽이다.
-- 현재 권장 판단은 `gemma4:e4b`를 품질 우선 local candidate로 유지하고, `qwen3.5:4b-nvfp4`는 latency 우선 experimental fallback으로만 두는 것이다.
-- 같은 세션 `llama3.1:8b` 재실측도 `1/3 pass`만 나왔으므로, 이번 단일 측정만으로 기존 verified 운영 프로파일 정책을 바꾸지는 않는다.
+- 같은 날짜 후속 정리로 로컬 verified 기본 운영 프로파일과 `.env.example`/기본 회귀 게이트를 `gemma4:e4b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`으로 승격했다.
+- 같은 날짜 fresh app 기준 full gate도 `ready=true`, `pass_rate=1.0`, `avg_latency_ms=7700.859`, `p95_latency_ms=13043.855`, `avg_weighted_score=0.9067`로 통과했다.
+- 현재 권장 판단은 `gemma4:e4b`를 verified local default로 유지하고, `qwen3.5:4b-nvfp4`는 latency 우선 experimental fallback으로만 두는 것이다.
+- 다음 구현 단위는 `LOOP-008` closeout review를 다시 수행해, 경량 retrieval 보정과 runtime default 정리까지 완료 기준을 충족했는지 판단하는 것이다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

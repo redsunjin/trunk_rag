@@ -34,7 +34,7 @@
 - current_version_track: `V1`
 - current_harness_mode: `v1_operating_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
-- default_regression_gate: `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`
+- default_regression_gate: `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
 - branch_execution_policy: `non-main branches do not override official active loop without explicit redirect or queue promotion`
 - branch_plan_doc: `docs/V1_5_AGENT_READY_PLAN.md`
 - closeout_rule: `active` 항목은 검증 결과와 문서 반영, 커밋까지 끝난 뒤에만 `done`으로 본다.
@@ -145,7 +145,7 @@
 
 검증:
 - `./.venv/bin/python -m pytest -q`
-- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 closeout 메모:
@@ -208,7 +208,10 @@ closeout 메모:
 - 그 뒤 `gemma4:e4b` 단일 `GQ-20` 질의는 정상 답변으로 바뀌었고, warm 상태 `generic-baseline` gate도 `3/3 pass`, `avg_latency_ms=4328.464`, `p95_latency_ms=4831.276`, `avg_weighted_score=0.8933`까지 회복됐다.
 - 같은 날짜 fresh app 기준 warm-up 뒤 재실측에서도 `gemma4:e4b`는 `3/3 pass`, `avg_latency_ms=3890.691`, `p95_latency_ms=4283.135`, `avg_weighted_score=0.8933`로 다시 재현됐다.
 - 같은 세션 더 작은 후보 `qwen3.5:4b-nvfp4`는 `avg_latency_ms=2671.665`, `p95_latency_ms=3770.352`, `avg_weighted_score=0.9022`로 더 빨랐지만 `GQ-21`에서 짧은 답변으로 `2/3 pass`에 머물렀다.
-- 다만 전체 `check_ops_baseline_gate.py`의 `ready`는 runtime profile이 아직 `experimental`이라 계속 `false`다. 다음 구현 단위는 verified 기본값을 바꾸지 않은 채 `gemma4:e4b`를 품질 우선 candidate, `qwen3.5:4b-nvfp4`를 latency 우선 fallback으로 어떻게 기록할지, 혹은 runtime profile 정책에 후보 분류를 둘지 판단하는 것이다.
+- 같은 날짜 후속 정리로 로컬 verified 기본 운영 프로파일과 `.env.example`/기본 회귀 게이트를 `gemma4:e4b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`으로 승격했다.
+- 같은 날짜 fresh app 기준 full gate도 `ready=true`, `pass_rate=1.0`, `avg_latency_ms=7700.859`, `p95_latency_ms=13043.855`, `avg_weighted_score=0.9067`로 통과했다.
+- `qwen3.5:4b-nvfp4`는 runtime policy에서 latency 우선 local fallback으로만 남기고, 기본 gate와 `/health` 권장 메시지는 `gemma4:e4b` 기준으로 정렬했다.
+- 다음 구현 단위는 `LOOP-008` closeout review를 다시 수행해, 경량 retrieval 보정과 runtime default 정리까지 완료 기준을 충족했는지 판단하는 것이다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

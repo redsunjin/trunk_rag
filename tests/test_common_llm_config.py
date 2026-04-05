@@ -9,6 +9,10 @@ def test_default_llm_model_supports_groq():
     assert default_llm_model("groq") == "groq-model"
 
 
+def test_default_llm_model_uses_gemma4_for_ollama():
+    assert default_llm_model("ollama") == "gemma4:e4b"
+
+
 def test_resolve_llm_config_reads_groq_env(monkeypatch):
     monkeypatch.setenv("GROQ_API_KEY", "groq-test-key")
     monkeypatch.setenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")

@@ -9,7 +9,7 @@ import urllib.request
 from typing import Any
 
 DEFAULT_BASE_URL = "http://localhost:11434"
-DEFAULT_MODEL = "llama3.1:8b"
+DEFAULT_MODEL = "gemma4:e4b"
 DEFAULT_PROMPT = "다음 문장을 그대로 한 번만 출력하세요: 확인"
 DEFAULT_REPEAT = 3
 DEFAULT_TIMEOUT_SECONDS = 120
@@ -176,7 +176,7 @@ def build_assessment(summary: dict[str, Any]) -> dict[str, str]:
     return {
         "status": "slow",
         "message": "직접 생성 처리량이 낮아 context-heavy RAG에서 timeout 가능성이 큽니다.",
-        "recommendation": "검증된 `llama3.1:8b + timeout 30초` 또는 클라우드 추론 경로를 우선 사용하세요.",
+        "recommendation": "검증된 `gemma4:e4b + timeout 30초` 또는 클라우드 추론 경로를 우선 사용하세요.",
     }
 
 

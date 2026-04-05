@@ -71,18 +71,19 @@
 | warm gate before prompt fix | `false` | `0.6667` | `3948.283` | `4640.512` | `0.6503` |
 | warm gate after prompt/postprocess fix | `false` | `1.0` | `4328.464` | `4831.276` | `0.8933` |
 | warm gate revalidation | `false` | `1.0` | `3890.691` | `4283.135` | `0.8933` |
+| fresh app verified default gate | `true` | `1.0` | `7700.859` | `13043.855` | `0.9067` |
 
 해석:
 - first gate는 앱 첫 질의라 embedding/model warm-up 비용이 섞였다.
 - prompt/postprocess 보강 전에는 warm 상태에서도 `GQ-20` reasoning leakage 때문에 `2/3 pass`에 머물렀다.
 - 보강 후에는 warm 상태 `generic-baseline`이 `3/3 pass`로 올라갔다.
-- 다만 `check_ops_baseline_gate.py`의 전체 `ready`는 answer eval뿐 아니라 runtime profile도 함께 보기 때문에, `gemma4:e4b`가 아직 `experimental`인 현재 정책상 계속 `false`로 남는다.
+- 이후 runtime policy를 `gemma4:e4b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30` verified 기본값으로 승격한 뒤에는, fresh app 기준 full gate도 `ready=true`로 통과했다.
 
 ### 같은 세션 비교값
 
 | model | ready | pass_rate | avg latency ms | p95 latency ms | avg weighted score |
 | --- | --- | ---: | ---: | ---: | ---: |
-| `gemma4:e4b` revalidated | `false` | `1.0` | `3890.691` | `4283.135` | `0.8933` |
+| `gemma4:e4b` verified default gate | `true` | `1.0` | `7700.859` | `13043.855` | `0.9067` |
 | `qwen3.5:4b-nvfp4` | `false` | `0.6667` | `2671.665` | `3770.352` | `0.9022` |
 | `llama3.1:8b` | `false` | `0.3333` | `4641.541` | `5278.185` | `0.6994` |
 
@@ -104,9 +105,8 @@
 - `GQ-21`만 pass했다.
 
 ## 결론
-- `gemma4:e4b`는 warm 상태 `/query` 지연과 answer-level gate를 다시 측정해도 `generic-baseline 3/3 pass`, `avg_latency_ms=3890.691`, `p95_latency_ms=4283.135`를 유지했다.
+- `gemma4:e4b`는 warm 상태 재측정에서 `generic-baseline 3/3 pass`, `avg_latency_ms=3890.691`, `p95_latency_ms=4283.135`를 유지했고, verified 기본값 승격 후 fresh app full gate도 `ready=true`, `avg_latency_ms=7700.859`, `p95_latency_ms=13043.855`로 통과했다.
 - reasoning leakage blocker는 prompt/postprocess 보강으로 해소됐다.
 - `qwen3.5:4b-nvfp4`는 더 작고 더 빨랐지만, 이번 세션에서는 `GQ-21` 길이 부족 때문에 `2/3 pass`였다.
-- 그럼에도 전체 gate `ready`는 `runtime_profile=experimental` 때문에 여전히 `false`다.
-- 즉, 현재 판단은 "`gemma4:e4b`는 품질 우선 local candidate", "`qwen3.5:4b-nvfp4`는 latency 우선 experimental fallback" 쪽이다.
-- 후속 작업은 verified 기본값을 바꾸기보다 runtime profile 정책에 후보 분류를 둘지, 그리고 `gemma4:e4b`/`qwen3.5:4b-nvfp4`를 각각 어떤 후보 등급으로 기록할지 판단하는 것이다.
+- 현재 판단은 "`gemma4:e4b`는 verified local default", "`qwen3.5:4b-nvfp4`는 latency 우선 experimental fallback" 쪽이다.
+- 후속 작업은 `LOOP-008` closeout review를 다시 수행해, retrieval 보정과 runtime default 정리까지 완료 기준을 충족했는지 판단하는 것이다.

@@ -126,7 +126,7 @@ def ops_baseline_latest() -> dict[str, object]:
         return _ops_baseline_payload(
             status="missing",
             message="최근 ops-baseline 게이트 보고서가 없습니다.",
-            hint="`./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`를 실행해 최신 보고서를 생성하세요.",
+            hint="`./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`를 실행해 최신 보고서를 생성하세요.",
         )
 
     try:

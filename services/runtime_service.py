@@ -35,8 +35,9 @@ logger = logging.getLogger("doc_rag.api")
 RUNTIME_PROFILE_VERIFIED = "verified"
 RUNTIME_PROFILE_EXPERIMENTAL = "experimental"
 RUNTIME_PROFILE_NOT_RECOMMENDED = "not_recommended"
-VERIFIED_LOCAL_OLLAMA_MODEL = "llama3.1:8b"
+VERIFIED_LOCAL_OLLAMA_MODEL = "gemma4:e4b"
 VERIFIED_LOCAL_OLLAMA_TIMEOUT_SECONDS = 30
+EXPERIMENTAL_LOCAL_OLLAMA_FALLBACK_MODEL = "qwen3.5:4b-nvfp4"
 VERIFIED_GROQ_MODEL = "llama-3.1-8b-instant"
 
 NOT_RECOMMENDED_RUNTIME_MODELS: dict[str, set[str]] = {
@@ -187,7 +188,7 @@ def build_runtime_profile(
                 "status": RUNTIME_PROFILE_VERIFIED,
                 "scope": "local",
                 "message": (
-                    "현재 Ollama 런타임 프로파일은 로컬 ops-baseline 실측에서 검증됐습니다."
+                    "현재 Ollama 런타임 프로파일은 gemma4 기본 로컬 운영 경로로 검증됐습니다."
                 ),
                 "recommendation": (
                     f"`DOC_RAG_QUERY_TIMEOUT_SECONDS={VERIFIED_LOCAL_OLLAMA_TIMEOUT_SECONDS}` 이상을 유지하세요."
@@ -197,11 +198,23 @@ def build_runtime_profile(
             "status": RUNTIME_PROFILE_EXPERIMENTAL,
             "scope": "local",
             "message": (
-                "모델은 검증된 로컬 후보지만 현재 timeout이 낮아 운영 게이트 재현 가능성이 떨어집니다."
+                "모델은 검증된 로컬 기본값이지만 현재 timeout이 낮아 운영 게이트 재현 가능성이 떨어집니다."
             ),
             "recommendation": (
                 f"`{VERIFIED_LOCAL_OLLAMA_MODEL}`를 유지하고 "
                 f"`DOC_RAG_QUERY_TIMEOUT_SECONDS={VERIFIED_LOCAL_OLLAMA_TIMEOUT_SECONDS}` 이상으로 올리세요."
+            ),
+        }
+
+    if normalized_provider == "ollama" and normalized_model == EXPERIMENTAL_LOCAL_OLLAMA_FALLBACK_MODEL:
+        return {
+            "status": RUNTIME_PROFILE_EXPERIMENTAL,
+            "scope": "local",
+            "message": "현재 런타임 프로파일은 낮은 지연을 노리는 local fallback 후보로만 확인됐습니다.",
+            "recommendation": (
+                f"기본 운영은 `{VERIFIED_LOCAL_OLLAMA_MODEL}` + "
+                f"`DOC_RAG_QUERY_TIMEOUT_SECONDS={VERIFIED_LOCAL_OLLAMA_TIMEOUT_SECONDS}`를 유지하고, "
+                f"`{EXPERIMENTAL_LOCAL_OLLAMA_FALLBACK_MODEL}`는 latency가 더 중요할 때만 fallback으로 사용하세요."
             ),
         }
 
@@ -403,7 +416,7 @@ def build_release_web_guidance(
     )
 
     if default_llm_provider == "ollama":
-        target_model = default_llm_model or "llama3.1:8b"
+        target_model = default_llm_model or VERIFIED_LOCAL_OLLAMA_MODEL
         base_url = (default_llm_base_url or "http://localhost:11434").strip() or "http://localhost:11434"
         steps.append(f"Ollama를 `{base_url}`에서 실행하고 기본 모델 `{target_model}`을 준비하세요.")
     elif default_llm_provider == "groq":

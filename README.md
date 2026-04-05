@@ -10,7 +10,7 @@
 - 문서: 전처리 완료된 `data/*.md` 입력
 - 청킹: `##`, `###`, `####` 헤더 기반 + 문자 분할(기본), 토큰 분할(옵션)
 - 벡터스토어: Chroma (로컬 폴더)
-- LLM: `openai` / `ollama` / `lmstudio` / `groq` 선택(기본 예시: `ollama` + `llama3.1:8b`)
+- LLM: `openai` / `ollama` / `lmstudio` / `groq` 선택(기본 예시: `ollama` + `gemma4:e4b`)
 - 인터페이스: FastAPI + 브라우저(`http://127.0.0.1:8000`)
 - 업로드 워크플로우: 사용자 요청(`pending`) -> 관리자 승인/반려
 
@@ -207,7 +207,7 @@ cd <repo>
 .venv\Scripts\python.exe scripts\eval_query_quality.py `
   --base-url http://127.0.0.1:8000 `
   --llm-provider ollama `
-  --llm-model llama3.1:8b `
+  --llm-model gemma4:e4b `
   --llm-base-url http://localhost:11434 `
   --output-json docs\reports\query_answer_eval_2026-03-17.json `
   --output-report docs\reports\QUERY_ANSWER_EVAL_REPORT_2026-03-17.md
@@ -232,7 +232,7 @@ cd <repo>
 ```powershell
 .venv\Scripts\python.exe scripts\check_ops_baseline_gate.py `
   --llm-provider ollama `
-  --llm-model llama3.1:8b `
+  --llm-model gemma4:e4b `
   --llm-base-url http://localhost:11434
 ```
 
@@ -300,7 +300,7 @@ curl http://127.0.0.1:8000/health
 
 curl -X POST http://127.0.0.1:8000/query `
   -H "Content-Type: application/json" `
-  -d "{\"query\":\"각 국가별 대표적인 과학적 성과\",\"collection\":\"all\",\"llm_provider\":\"ollama\",\"llm_model\":\"llama3.1:8b\",\"llm_base_url\":\"http://localhost:11434\"}"
+  -d "{\"query\":\"각 국가별 대표적인 과학적 성과\",\"collection\":\"all\",\"llm_provider\":\"ollama\",\"llm_model\":\"gemma4:e4b\",\"llm_base_url\":\"http://localhost:11434\"}"
 ```
 
 ### `/query` 에러 응답 규격
@@ -310,7 +310,7 @@ curl -X POST http://127.0.0.1:8000/query `
 {
   "answer": "...",
   "provider": "ollama",
-  "model": "llama3.1:8b"
+  "model": "gemma4:e4b"
 }
 ```
 
@@ -375,7 +375,7 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 
 `.env.example`를 복사해 `.env` 생성 후 사용.
 
-- 기본 예시는 `LLM_PROVIDER=ollama`, `LLM_MODEL=llama3.1:8b`
+- 기본 예시는 `LLM_PROVIDER=ollama`, `LLM_MODEL=gemma4:e4b`
 - 로컬 기본 경로에서는 `OLLAMA_BASE_URL=http://localhost:11434`
 - 오프라인 운영 시에는 `DOC_RAG_EMBEDDING_MODEL`로 지정한 경로 또는 `BAAI/bge-m3` 로컬 캐시가 필요
 - LM Studio 로컬 경로를 쓰려면 서버가 열려 있고 원하는 모델이 로드되어 있어야 함
@@ -398,9 +398,10 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 
 로컬 LLM 경로는 "연결 가능"보다 "ops-baseline 게이트를 시간 제한 안에 안정적으로 통과하는지"를 기준으로 판단합니다.
 
-- 현재 실측 기준 운영 권장 프로파일은 `groq + llama-3.1-8b-instant`입니다.
-- 로컬 Ollama 기준에서는 `llama3.1:8b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`이 최소 통과 프로파일이었습니다.
-- `qwen3.5:4b`, `qwen3.5:9b`, `LM Studio qwen3.5-4b-mlx-4bit`는 현재 로컬 Mac mini Pro 실측에서 `ops-baseline`을 안정 통과하지 못했습니다.
+- 외부 API 사용이 가능하면 `groq + llama-3.1-8b-instant`가 가장 낮은 지연을 보였습니다.
+- 현재 로컬 Ollama verified 기본 프로파일은 `gemma4:e4b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`입니다.
+- `qwen3.5:4b-nvfp4`는 이번 세션에서 더 빠르지만 `generic-baseline 2/3 pass`였으므로 latency 우선 fallback으로만 둡니다.
+- `qwen3.5:4b`, `qwen3.5:9b`, `LM Studio qwen3.5-4b-mlx-4bit`는 과거 로컬 Mac mini Pro 실측에서 `ops-baseline`을 안정 통과하지 못했습니다.
 - `/health`의 `runtime_profile_status/message/recommendation`과 `runtime_preflight` 결과를 보면 현재 프로파일이 기본 운영 경로로 적합한지 바로 판단할 수 있습니다.
 - `/intro`와 `/app` 화면도 같은 `runtime_profile_*` 값을 바로 보여 주므로, 브라우저만 열어도 현재 모델이 `verified / experimental / not_recommended`인지 확인할 수 있습니다.
 - `ollama ps`가 불안정하거나 offload 상태를 바로 보기 어려우면 `scripts/diagnose_ollama_runtime.py`로 직접 prompt 처리량을 재서 모델 처리량을 먼저 확인할 수 있습니다.
@@ -418,7 +419,7 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 ```powershell
 .venv\Scripts\python.exe scripts\diagnose_ollama_runtime.py `
   --base-url http://localhost:11434 `
-  --model llama3.1:8b `
+  --model gemma4:e4b `
   --repeat 3
 ```
 
@@ -502,7 +503,7 @@ npm run smoke
 .venv\Scripts\python.exe scripts\benchmark_query_e2e.py `
   --base-url http://127.0.0.1:8010 `
   --llm-provider ollama `
-  --llm-model llama3.1:8b `
+  --llm-model gemma4:e4b `
   --llm-base-url http://localhost:11434 `
   --rounds 2 `
   --warmup 1 `
