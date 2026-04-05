@@ -119,4 +119,6 @@
 - 현재 판단은 "`gemma4:e4b`는 verified local default", "`qwen3.5:4b-nvfp4`는 latency 우선 experimental fallback" 쪽이다.
 - 현재 coverage rerank 후보는 같은 `generic-baseline`에서 `GQ-21` score를 `0.88 -> 0.92`로 높였고, fresh gate 기준 `avg_latency_ms`와 `p95_latency_ms`도 모두 낮췄다.
 - `2026-04-05` closeout review 기준으로 현재 기본 경로는 `mmr+light_hybrid+lexical_boost+coverage_rerank` 조합으로 유지한다.
-- 다음 작업은 `LOOP-010` 기준으로 existing chunk metadata만으로 적용 가능한 contextual retrieval 후보를 검토하는 것이다.
+- 이어서 bundled runtime index를 직접 점검한 결과 `all/eu/fr/ge/it/uk` 컬렉션의 현재 chunk metadata에는 비어 있지 않은 `h2/h3/h4`가 하나도 없어, same-section contextual packing을 "existing metadata만으로" 실험하는 경로는 막혀 있는 것으로 확인됐다.
+- fallback으로 같은 `source`의 인접 chunk 1개를 붙이는 source-adjacent contextual pack을 시험했지만, full gate가 `ready=false`, `pass_rate=0.6667`, `avg_latency_ms=5585.961`, `p95_latency_ms=8009.759`, `avg_weighted_score=0.8911`로 내려가 `GQ-21`이 `weighted_score=0.7534`로 실패해 채택하지 않았다.
+- 따라서 다음 작업은 metadata retrofit/reindex를 `LOOP-010` 범위에 포함할지, 아니면 no-reindex 제약 아래에서는 contextual retrieval 후보를 no-go로 닫을지 정리하는 것이다.

@@ -272,7 +272,10 @@ LOOP-007 범위 메모 (2026-04-04 초안):
 진행 메모 (2026-04-05):
 - `docs/reports/GENERIC_RAG_REFOCUS_REVIEW_2026-04-04.md`의 Quality Upgrade 우선순위에서 hybrid search와 rerank 후보를 먼저 정리했고, 남은 다음 top-level 후보는 contextual retrieval이다.
 - 현재 기준 기본 경로는 `mmr+light_hybrid+lexical_boost+coverage_rerank`이며, `generic-baseline` full gate는 `ready=true`, `pass_rate=1.0`, `avg_latency_ms=4329.476`, `p95_latency_ms=4411.131`, `avg_weighted_score=0.92`다.
-- 첫 구현 단위는 기존 chunk metadata(`source`, `h2`, `h3`, `h4`)만으로 same-section 문맥을 더 묶어 보여 줄 수 있는지 확인하고, 인접 문맥 보강이 reindex 없이 가능한지부터 좁혀 보는 것이다.
+- bundled runtime index를 직접 점검한 결과 `all/eu/fr/ge/it/uk` 컬렉션의 현재 chunk metadata에는 비어 있지 않은 `h2/h3/h4`가 하나도 없었다(`all=37`, `eu=9`, `fr/ge/it/uk=각 7` docs).
+- 그래서 "existing section metadata만으로 same-section contextual packing" 경로는 현재 인덱스 상태에서는 바로 실험할 수 없는 blocker가 확인됐다.
+- fallback으로 같은 `source`의 인접 chunk 1개를 붙이는 source-adjacent contextual pack을 시험했지만, full gate가 `ready=false`, `pass_rate=0.6667`, `avg_latency_ms=5585.961`, `p95_latency_ms=8009.759`, `avg_weighted_score=0.8911`로 내려가 `GQ-21`이 `weighted_score=0.7534`로 실패해 기각했다.
+- 따라서 현재 기본 경로는 계속 `mmr+light_hybrid+lexical_boost+coverage_rerank`로 유지하고, 다음 판단은 metadata retrofit/reindex를 이번 루프 범위에 넣을지 결정하는 것이다.
 - 이 단계에서 새로운 인덱스 스키마나 heavy retrieval stack은 도입하지 않는다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)

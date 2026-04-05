@@ -245,9 +245,9 @@ closeout 메모:
 - 같은 날짜 closeout review에서는 light hybrid merge, scan cost trace, multi-collection coverage rerank가 모두 완료 기준을 충족한다고 판단했고, 현재 기본 경로는 `mmr+light_hybrid+lexical_boost+coverage_rerank` 조합으로 유지한다.
 
 ### A-Next3. contextual retrieval 후보 검토 (현재 active)
-1. existing `h2/h3/h4` metadata를 활용한 contextual packing 후보를 가장 작은 단위로 검토한다.
-2. same-section 문맥 보강이 reindex 없이 가능한지부터 확인한다.
-3. hybrid + coverage 기본 경로보다 나은 점이 있는지, 아니면 왜 기각하는지를 `generic-baseline` 기준으로 고정한다.
+1. bundled runtime index 점검 결과 `all/eu/fr/ge/it/uk` 컬렉션의 현재 chunk metadata에는 비어 있지 않은 `h2/h3/h4`가 없어, same-section contextual packing을 "existing metadata만으로" 바로 붙이는 경로는 막혀 있다.
+2. fallback으로 같은 `source`의 인접 chunk 1개를 추가하는 source-adjacent contextual pack을 시험했지만, `generic-baseline` full gate가 `ready=false`, `pass_rate=0.6667`, `avg_latency_ms=5585.961`, `p95_latency_ms=8009.759`, `avg_weighted_score=0.8911`로 내려가 `GQ-21`이 `weighted_score=0.7534`로 실패해 기각했다.
+3. 다음 단위는 metadata retrofit/reindex를 이번 루프 범위에 포함할지 결정하거나, no-reindex 제약 아래서는 contextual retrieval 후보를 no-go로 닫을지 정리하는 것이다.
 
 완료 기준:
 - contextual retrieval 후보의 채택/기각 근거가 `generic-baseline` gate와 함께 정리된다.
