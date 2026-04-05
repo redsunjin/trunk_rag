@@ -329,19 +329,54 @@ def merge_docs_with_light_hybrid_candidates(
     *,
     max_candidates: int = HYBRID_LEXICAL_CANDIDATE_LIMIT,
 ) -> tuple[list[Document], dict[str, object]]:
+    collection_doc_count = len(collection_docs)
+    candidate_limit = max(0, int(max_candidates))
     query_terms = extract_lexical_query_terms(question)
-    if not query_terms or not collection_docs or max_candidates < 1:
+    if not query_terms:
         return dense_docs, {
             "query_terms": query_terms,
             "applied": False,
             "candidate_count": 0,
+            "candidate_limit": candidate_limit,
+            "collection_doc_count": collection_doc_count,
+            "scan_doc_count": 0,
+            "matched_doc_count": 0,
+            "skipped": "no_query_terms",
         }
 
-    if len(collection_docs) > HYBRID_LEXICAL_SCAN_MAX_DOCS:
+    if not collection_docs:
         return dense_docs, {
             "query_terms": query_terms,
             "applied": False,
             "candidate_count": 0,
+            "candidate_limit": candidate_limit,
+            "collection_doc_count": collection_doc_count,
+            "scan_doc_count": 0,
+            "matched_doc_count": 0,
+            "skipped": "empty_collection",
+        }
+
+    if candidate_limit < 1:
+        return dense_docs, {
+            "query_terms": query_terms,
+            "applied": False,
+            "candidate_count": 0,
+            "candidate_limit": candidate_limit,
+            "collection_doc_count": collection_doc_count,
+            "scan_doc_count": 0,
+            "matched_doc_count": 0,
+            "skipped": "candidate_limit_zero",
+        }
+
+    if collection_doc_count > HYBRID_LEXICAL_SCAN_MAX_DOCS:
+        return dense_docs, {
+            "query_terms": query_terms,
+            "applied": False,
+            "candidate_count": 0,
+            "candidate_limit": candidate_limit,
+            "collection_doc_count": collection_doc_count,
+            "scan_doc_count": 0,
+            "matched_doc_count": 0,
             "skipped": "collection_too_large",
         }
 
@@ -368,6 +403,10 @@ def merge_docs_with_light_hybrid_candidates(
             "query_terms": query_terms,
             "applied": False,
             "candidate_count": 0,
+            "candidate_limit": candidate_limit,
+            "collection_doc_count": collection_doc_count,
+            "scan_doc_count": collection_doc_count,
+            "matched_doc_count": 0,
         }
 
     ordered_items = sorted(
@@ -378,17 +417,25 @@ def merge_docs_with_light_hybrid_candidates(
             int(item["index"]),
         ),
     )
-    selected_docs = [item["doc"] for item in ordered_items[:max_candidates]]
+    selected_docs = [item["doc"] for item in ordered_items[:candidate_limit]]
     if not selected_docs:
         return dense_docs, {
             "query_terms": query_terms,
             "applied": False,
             "candidate_count": 0,
+            "candidate_limit": candidate_limit,
+            "collection_doc_count": collection_doc_count,
+            "scan_doc_count": collection_doc_count,
+            "matched_doc_count": len(candidate_items),
         }
     return [*dense_docs, *selected_docs], {
         "query_terms": query_terms,
         "applied": True,
         "candidate_count": len(selected_docs),
+        "candidate_limit": candidate_limit,
+        "collection_doc_count": collection_doc_count,
+        "scan_doc_count": collection_doc_count,
+        "matched_doc_count": len(candidate_items),
     }
 
 
@@ -518,8 +565,11 @@ def build_collection_context(
     lexical_boost_applied = False
     hybrid_candidate_merge_applied = False
     hybrid_candidate_count = 0
+    hybrid_scan_doc_count = 0
+    hybrid_skipped_collections: list[dict[str, str]] = []
     per_collection_k = int(budget.get("per_collection_k", SEARCH_K)) if budget else SEARCH_K
     per_collection_fetch_k = int(budget.get("per_collection_fetch_k", SEARCH_FETCH_K)) if budget else SEARCH_FETCH_K
+    hybrid_candidate_limit = min(HYBRID_LEXICAL_CANDIDATE_LIMIT, per_collection_k)
     max_total_docs = int(budget.get("max_total_docs", max(SEARCH_K * len(collection_keys), SEARCH_K))) if budget else max(
         SEARCH_K * len(collection_keys),
         SEARCH_K,
@@ -547,8 +597,12 @@ def build_collection_context(
             items,
             collection_docs,
             question,
-            max_candidates=min(HYBRID_LEXICAL_CANDIDATE_LIMIT, per_collection_k),
+            max_candidates=hybrid_candidate_limit,
         )
+        hybrid_scan_doc_count += int(hybrid_info.get("scan_doc_count", 0))
+        hybrid_skip_reason = str(hybrid_info.get("skipped", "")).strip()
+        if hybrid_skip_reason:
+            hybrid_skipped_collections.append({"key": key, "reason": hybrid_skip_reason})
         if bool(hybrid_info.get("applied")):
             hybrid_candidate_merge_applied = True
             hybrid_candidate_count += int(hybrid_info.get("candidate_count", 0))
@@ -570,6 +624,12 @@ def build_collection_context(
                 "key": key,
                 "retrieved_docs": len(items),
                 "unique_docs": len(docs) - unique_before,
+                "collection_doc_count": int(hybrid_info.get("collection_doc_count", len(collection_docs))),
+                "hybrid_scan_doc_count": int(hybrid_info.get("scan_doc_count", 0)),
+                "hybrid_matched_doc_count": int(hybrid_info.get("matched_doc_count", 0)),
+                "hybrid_candidate_count": int(hybrid_info.get("candidate_count", 0)),
+                "hybrid_candidate_limit": int(hybrid_info.get("candidate_limit", hybrid_candidate_limit)),
+                "hybrid_skipped": hybrid_skip_reason or None,
                 "elapsed_ms": round((time.perf_counter() - collection_started_at) * 1000, 3),
             }
         )
@@ -600,6 +660,10 @@ def build_collection_context(
                 "lexical_boost_applied": lexical_boost_applied,
                 "hybrid_candidate_merge_applied": hybrid_candidate_merge_applied,
                 "hybrid_candidate_count": hybrid_candidate_count,
+                "hybrid_candidate_limit": hybrid_candidate_limit,
+                "hybrid_scan_limit": HYBRID_LEXICAL_SCAN_MAX_DOCS,
+                "hybrid_scan_doc_count": hybrid_scan_doc_count,
+                "hybrid_skipped_collections": hybrid_skipped_collections,
                 "per_collection_k": per_collection_k,
                 "per_collection_fetch_k": per_collection_fetch_k,
                 "elapsed_ms": elapsed_ms,

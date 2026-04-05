@@ -240,7 +240,10 @@ LOOP-007 범위 메모 (2026-04-04 초안):
 - `debug` trace에는 `hybrid_candidate_merge_applied`, `hybrid_candidate_count`, `retrieval_strategy=mmr+light_hybrid+lexical_boost`가 추가됐다.
 - 관련 회귀는 `44 passed`(`tests/test_query_service.py tests/test_collection_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_check_ops_baseline_gate.py`)로 통과했다.
 - fresh app 기준 full gate는 `ready=true`, `pass_rate=1.0`, `avg_latency_ms=6685.677`, `p95_latency_ms=11030.653`, `avg_weighted_score=0.9067`로 유지됐고, 이전 verified default gate보다 지연이 내려갔다.
-- 다음 구현 단위는 collection 규모가 커질 때 hybrid lexical scan 비용을 더 명확히 관찰할 trace/fixture를 추가하고, 이 후보를 유지한 채 다음 `rerank` 후보와 비교할 최소 기준을 정리하는 것이다.
+- 같은 날짜 후속 보강으로 `hybrid_scan_doc_count`, `hybrid_skipped_collections`, per-collection `hybrid_skipped`/`hybrid_candidate_limit`/`hybrid_matched_doc_count`를 trace에 추가해 큰 컬렉션 skip과 실제 scan 비용을 더 명확히 관찰할 수 있게 했다.
+- 큰 컬렉션 skip 회귀는 `tests/test_query_service.py`에 `collection_too_large` fixture로 고정했다.
+- trace 보강 뒤 재실측에서도 full gate는 `ready=true`, `pass_rate=1.0`, `avg_latency_ms=7220.103`, `p95_latency_ms=12405.726`, `avg_weighted_score=0.9067`로 유지됐다.
+- 다음 `rerank` 후보 비교 기준은 현재 hybrid baseline을 기준으로 `generic-baseline pass_rate=1.0`과 `avg_weighted_score>=0.9067`를 유지하고, `p95_latency_ms`가 현재 관측 밴드(`11030.653`~`12405.726`)를 의미 있게 넘어가는데 추가 품질 이득이 없으면 기각하는 것이다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

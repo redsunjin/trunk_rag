@@ -283,7 +283,7 @@
 - `collection`/`collections`를 생략하면 키워드 기반 자동 라우팅을 사용한다.
 - `query_profile`는 기본 `generic`이며, 샘플팩 호환 평가가 필요할 때만 `sample_pack`을 사용한다.
 - `debug=true`면 route/budget/stage timing/source/support/retrieval trace 메타를 함께 반환한다.
-- retrieval trace에는 `retrieval_strategy`, `lexical_query_terms`, `hybrid_candidate_merge_applied`, `hybrid_candidate_count`가 포함된다.
+- retrieval trace에는 `retrieval_strategy`, `lexical_query_terms`, `hybrid_candidate_merge_applied`, `hybrid_candidate_count`, `hybrid_scan_doc_count`, `hybrid_skipped_collections`가 포함된다.
 - 응답 헤더:
   - `X-Request-ID`
   - `X-RAG-Collection`

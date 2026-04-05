@@ -219,6 +219,38 @@ def test_merge_docs_with_light_hybrid_candidates_adds_matching_doc_from_collecti
     assert merged[1].metadata["source"] == "fr.md"
     assert info["applied"] is True
     assert info["candidate_count"] == 1
+    assert info["candidate_limit"] == query_service.HYBRID_LEXICAL_CANDIDATE_LIMIT
+    assert info["collection_doc_count"] == 2
+    assert info["scan_doc_count"] == 2
+    assert info["matched_doc_count"] == 1
+
+
+def test_merge_docs_with_light_hybrid_candidates_skips_large_collection(monkeypatch):
+    monkeypatch.setattr(query_service, "HYBRID_LEXICAL_SCAN_MAX_DOCS", 1)
+    dense_docs = [
+        Document(page_content="일반 소개 문단", metadata={"source": "all.md", "h2": "개요"}),
+    ]
+    collection_docs = [
+        Document(page_content="일반 소개 문단", metadata={"source": "all.md", "h2": "개요"}),
+        Document(
+            page_content="에콜 폴리테크니크는 프랑스 과학 인재 양성 기관이다.",
+            metadata={"source": "fr.md", "h2": "기관"},
+        ),
+    ]
+
+    merged, info = query_service.merge_docs_with_light_hybrid_candidates(
+        dense_docs,
+        collection_docs,
+        "에콜 폴리테크니크 과학 인재",
+    )
+
+    assert merged == dense_docs
+    assert info["applied"] is False
+    assert info["candidate_count"] == 0
+    assert info["collection_doc_count"] == 2
+    assert info["scan_doc_count"] == 0
+    assert info["matched_doc_count"] == 0
+    assert info["skipped"] == "collection_too_large"
 
 
 def test_build_collection_context_populates_trace(monkeypatch):
@@ -251,6 +283,10 @@ def test_build_collection_context_populates_trace(monkeypatch):
     assert trace["lexical_boost_applied"] is False
     assert trace["hybrid_candidate_merge_applied"] is False
     assert trace["hybrid_candidate_count"] == 0
+    assert trace["hybrid_candidate_limit"] == min(query_service.HYBRID_LEXICAL_CANDIDATE_LIMIT, trace["per_collection_k"])
+    assert trace["hybrid_scan_limit"] == query_service.HYBRID_LEXICAL_SCAN_MAX_DOCS
+    assert trace["hybrid_scan_doc_count"] == 0
+    assert trace["hybrid_skipped_collections"] == [{"key": "fr", "reason": "empty_collection"}]
     assert trace["lexical_query_terms"] == ["테스트", "질문"]
     assert trace["elapsed_ms"] >= 0
     assert trace["collection_stats"] == [
@@ -258,6 +294,12 @@ def test_build_collection_context_populates_trace(monkeypatch):
             "key": "fr",
             "retrieved_docs": 3,
             "unique_docs": 2,
+            "collection_doc_count": 0,
+            "hybrid_scan_doc_count": 0,
+            "hybrid_matched_doc_count": 0,
+            "hybrid_candidate_count": 0,
+            "hybrid_candidate_limit": min(query_service.HYBRID_LEXICAL_CANDIDATE_LIMIT, trace["per_collection_k"]),
+            "hybrid_skipped": "empty_collection",
             "elapsed_ms": trace["collection_stats"][0]["elapsed_ms"],
         }
     ]
@@ -290,6 +332,8 @@ def test_build_collection_context_applies_light_lexical_boost(monkeypatch):
     assert trace["retrieval_strategy"] == query_service.RETRIEVAL_STRATEGY_MMR_WITH_LEXICAL
     assert trace["lexical_boost_applied"] is True
     assert trace["hybrid_candidate_merge_applied"] is False
+    assert trace["hybrid_scan_doc_count"] == 0
+    assert trace["hybrid_skipped_collections"] == [{"key": "fr", "reason": "empty_collection"}]
     assert "에콜" in trace["lexical_query_terms"]
 
 
@@ -326,7 +370,48 @@ def test_build_collection_context_applies_light_hybrid_candidate_merge(monkeypat
     assert trace["retrieval_strategy"] == query_service.RETRIEVAL_STRATEGY_MMR_WITH_HYBRID_AND_LEXICAL
     assert trace["hybrid_candidate_merge_applied"] is True
     assert trace["hybrid_candidate_count"] == 1
+    assert trace["hybrid_scan_doc_count"] == 2
+    assert trace["hybrid_skipped_collections"] == []
     assert trace["lexical_boost_applied"] is True
+
+
+def test_build_collection_context_records_hybrid_scan_skip(monkeypatch):
+    class DummyRetriever:
+        def invoke(self, question):
+            assert question == "테스트 질문"
+            return [
+                Document(page_content="A", metadata={"source": "fr.md", "h2": "역할"}),
+            ]
+
+    class DummyDB:
+        def as_retriever(self, **kwargs):
+            return DummyRetriever()
+
+    monkeypatch.setattr(query_service, "HYBRID_LEXICAL_SCAN_MAX_DOCS", 1)
+    monkeypatch.setattr(query_service.index_service, "get_db", lambda key: DummyDB())
+    monkeypatch.setattr(
+        query_service.index_service,
+        "get_collection_documents_from_store",
+        lambda key: [
+            Document(page_content="A", metadata={"source": "fr.md", "h2": "역할"}),
+            Document(page_content="B", metadata={"source": "fr.md", "h2": "교육"}),
+        ],
+    )
+    monkeypatch.setattr(query_service.runtime_service, "get_max_context_chars", lambda: 100)
+
+    trace: dict[str, object] = {}
+    context = query_service.build_collection_context("테스트 질문", ["fr"], trace=trace)
+
+    assert context
+    assert trace["retrieval_strategy"] == query_service.RETRIEVAL_STRATEGY_MMR
+    assert trace["hybrid_candidate_merge_applied"] is False
+    assert trace["hybrid_candidate_count"] == 0
+    assert trace["hybrid_scan_doc_count"] == 0
+    assert trace["hybrid_skipped_collections"] == [{"key": "fr", "reason": "collection_too_large"}]
+    assert trace["collection_stats"][0]["collection_doc_count"] == 2
+    assert trace["collection_stats"][0]["hybrid_scan_doc_count"] == 0
+    assert trace["collection_stats"][0]["hybrid_candidate_count"] == 0
+    assert trace["collection_stats"][0]["hybrid_skipped"] == "collection_too_large"
 
 
 def test_invoke_query_chain_populates_trace():
