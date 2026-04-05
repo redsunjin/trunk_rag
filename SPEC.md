@@ -91,6 +91,7 @@
 - Chroma 인덱싱/조회 + MMR 기반 retrieval
 - collection pool에서 lexical match가 강한 문서를 소량 합류시키는 light hybrid candidate merge
 - 경량 lexical boost로 context 문서 순서 재조정
+- multi-collection 질문에서 상위 context가 한 컬렉션에 쏠리지 않게 하는 light coverage rerank
 - graph snapshot 기반 entity/relation 추출 PoC(아카이브)
 
 ### 품질/검증
@@ -283,7 +284,7 @@
 - `collection`/`collections`를 생략하면 키워드 기반 자동 라우팅을 사용한다.
 - `query_profile`는 기본 `generic`이며, 샘플팩 호환 평가가 필요할 때만 `sample_pack`을 사용한다.
 - `debug=true`면 route/budget/stage timing/source/support/retrieval trace 메타를 함께 반환한다.
-- retrieval trace에는 `retrieval_strategy`, `lexical_query_terms`, `hybrid_candidate_merge_applied`, `hybrid_candidate_count`, `hybrid_scan_doc_count`, `hybrid_skipped_collections`가 포함된다.
+- retrieval trace에는 `retrieval_strategy`, `lexical_query_terms`, `hybrid_candidate_merge_applied`, `hybrid_candidate_count`, `hybrid_scan_doc_count`, `hybrid_skipped_collections`, `coverage_rerank_applied`, `coverage_rerank_collection_count`, `coverage_rerank_covered_term_count`가 포함된다.
 - 응답 헤더:
   - `X-Request-ID`
   - `X-RAG-Collection`

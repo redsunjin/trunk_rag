@@ -238,7 +238,11 @@ closeout 메모:
 - 같은 날짜 후속 보강으로 `hybrid_scan_doc_count`, `hybrid_skipped_collections`, per-collection `hybrid_skipped`/`hybrid_candidate_limit`/`hybrid_matched_doc_count`를 trace에 추가해 큰 컬렉션 skip과 실제 scan 비용을 더 명확히 관찰할 수 있게 했다.
 - 큰 컬렉션 skip 회귀는 `tests/test_query_service.py`에 `collection_too_large` fixture로 고정했다.
 - trace 보강 뒤 재실측에서도 full gate는 `ready=true`, `pass_rate=1.0`, `avg_latency_ms=7220.103`, `p95_latency_ms=12405.726`, `avg_weighted_score=0.9067`로 유지됐다.
-- 다음 `rerank` 후보 비교 기준은 현재 hybrid baseline을 기준으로 `generic-baseline pass_rate=1.0`과 `avg_weighted_score>=0.9067`를 유지하고, `p95_latency_ms`가 현재 관측 밴드(`11030.653`~`12405.726`)를 의미 있게 넘어가는데 추가 품질 이득이 없으면 기각하는 것이다.
+- 같은 날짜 후속 구현으로 aggregated docs에 multi-collection coverage rerank를 추가해 비교 질문에서 상위 context가 `fr` 한쪽으로만 쏠리지 않게 조정했다.
+- debug 응답 기준 `GQ-21` 타입 질의는 `retrieval_strategy=mmr+light_hybrid+lexical_boost+coverage_rerank`, top sources `fr -> ge -> fr ...`, `coverage_rerank_collection_count=2`로 바뀌었다.
+- rerank candidate 비교 gate는 `ready=true`, `pass_rate=1.0`, `avg_latency_ms=4329.476`, `p95_latency_ms=4411.131`, `avg_weighted_score=0.92`로 이전 hybrid baseline보다 score와 latency가 모두 좋아졌다.
+- `GQ-21` answer-level score도 `0.88 -> 0.92`로 올라 multi-collection context packing 문제가 실제로 줄어든 것으로 본다.
+- 다음 구현 단위는 `LOOP-009` closeout review를 수행해 hybrid + coverage rerank 조합을 현재 기본 경로로 유지할지 확정하고, 필요하면 다음 top-level loop를 `contextual retrieval` 후보 검토로 승격하는 것이다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

@@ -140,8 +140,12 @@ LEXICAL_STOPWORDS = {
 }
 RETRIEVAL_STRATEGY_MMR = "mmr"
 RETRIEVAL_STRATEGY_MMR_WITH_LEXICAL = "mmr+light_lexical_boost"
+RETRIEVAL_STRATEGY_MMR_WITH_COVERAGE = "mmr+coverage_rerank"
+RETRIEVAL_STRATEGY_MMR_WITH_LEXICAL_AND_COVERAGE = "mmr+light_lexical_boost+coverage_rerank"
 RETRIEVAL_STRATEGY_MMR_WITH_HYBRID = "mmr+light_hybrid"
 RETRIEVAL_STRATEGY_MMR_WITH_HYBRID_AND_LEXICAL = "mmr+light_hybrid+lexical_boost"
+RETRIEVAL_STRATEGY_MMR_WITH_HYBRID_AND_COVERAGE = "mmr+light_hybrid+coverage_rerank"
+RETRIEVAL_STRATEGY_MMR_WITH_HYBRID_AND_LEXICAL_AND_COVERAGE = "mmr+light_hybrid+lexical_boost+coverage_rerank"
 HYBRID_LEXICAL_SCAN_MAX_DOCS = 4000
 HYBRID_LEXICAL_CANDIDATE_LIMIT = 2
 
@@ -320,6 +324,114 @@ def build_doc_fingerprint(doc: Document) -> str:
     source = str(doc.metadata.get("source", ""))
     h2 = str(doc.metadata.get("h2", ""))
     return f"{source}|{h2}|{doc.page_content}"
+
+
+def rerank_docs_with_light_multi_collection_coverage(
+    docs: list[Document],
+    question: str,
+) -> tuple[list[Document], dict[str, object]]:
+    query_terms = extract_lexical_query_terms(question)
+    collection_keys = [
+        str(doc.metadata.get("collection_key", "")).strip()
+        for doc in docs
+        if str(doc.metadata.get("collection_key", "")).strip()
+    ]
+    distinct_collections = list(dict.fromkeys(collection_keys))
+    if len(docs) < 2 or not query_terms:
+        return docs, {
+            "query_terms": query_terms,
+            "applied": False,
+            "collection_count": len(distinct_collections),
+            "covered_term_count": 0,
+            "skipped": "no_query_terms" if not query_terms else "not_enough_docs",
+        }
+
+    if len(distinct_collections) < 2:
+        return docs, {
+            "query_terms": query_terms,
+            "applied": False,
+            "collection_count": len(distinct_collections),
+            "covered_term_count": 0,
+            "skipped": "single_collection",
+        }
+
+    ranked_items: list[dict[str, object]] = []
+    has_non_zero_score = False
+    for index, doc in enumerate(docs):
+        score, matched_terms = _score_doc_lexical_match(doc, query_terms)
+        if score > 0:
+            has_non_zero_score = True
+        ranked_items.append(
+            {
+                "doc": doc,
+                "score": score,
+                "matched_terms": matched_terms,
+                "collection_key": str(doc.metadata.get("collection_key", "")).strip(),
+                "source": str(doc.metadata.get("source", "")).strip(),
+                "index": index,
+            }
+        )
+
+    if not has_non_zero_score:
+        return docs, {
+            "query_terms": query_terms,
+            "applied": False,
+            "collection_count": len(distinct_collections),
+            "covered_term_count": 0,
+            "skipped": "no_scored_docs",
+        }
+
+    remaining = list(ranked_items)
+    selected_items: list[dict[str, object]] = []
+    covered_terms: set[str] = set()
+    seen_collections: set[str] = set()
+    seen_sources: set[str] = set()
+
+    first_item = remaining.pop(0)
+    selected_items.append(first_item)
+    covered_terms.update(first_item["matched_terms"])
+    if first_item["collection_key"]:
+        seen_collections.add(str(first_item["collection_key"]))
+    if first_item["source"]:
+        seen_sources.add(str(first_item["source"]))
+
+    while remaining:
+        best_index = 0
+        best_key: tuple[float, int, int, int, int] | None = None
+        for index, item in enumerate(remaining):
+            matched_terms = set(item["matched_terms"])
+            new_terms = matched_terms - covered_terms
+            collection_key = str(item["collection_key"])
+            source = str(item["source"])
+            collection_bonus = 1 if collection_key and collection_key not in seen_collections else 0
+            source_bonus = 1 if source and source not in seen_sources else 0
+            dynamic_score = float(item["score"]) + len(new_terms) * 1.0 + collection_bonus * 0.75 + source_bonus * 0.1
+            current_key = (
+                dynamic_score,
+                len(new_terms),
+                collection_bonus,
+                source_bonus,
+                -int(item["index"]),
+            )
+            if best_key is None or current_key > best_key:
+                best_key = current_key
+                best_index = index
+        chosen = remaining.pop(best_index)
+        selected_items.append(chosen)
+        covered_terms.update(chosen["matched_terms"])
+        if chosen["collection_key"]:
+            seen_collections.add(str(chosen["collection_key"]))
+        if chosen["source"]:
+            seen_sources.add(str(chosen["source"]))
+
+    reordered_docs = [item["doc"] for item in selected_items]
+    applied = any(int(item["index"]) != current_index for current_index, item in enumerate(selected_items))
+    return reordered_docs, {
+        "query_terms": query_terms,
+        "applied": applied,
+        "collection_count": len(distinct_collections),
+        "covered_term_count": len(covered_terms),
+    }
 
 
 def merge_docs_with_light_hybrid_candidates(
@@ -563,10 +675,14 @@ def build_collection_context(
     collection_stats: list[dict[str, Any]] = []
     lexical_query_terms = extract_lexical_query_terms(question)
     lexical_boost_applied = False
+    coverage_rerank_applied = False
     hybrid_candidate_merge_applied = False
     hybrid_candidate_count = 0
     hybrid_scan_doc_count = 0
     hybrid_skipped_collections: list[dict[str, str]] = []
+    coverage_rerank_skipped = ""
+    coverage_rerank_collection_count = 0
+    coverage_rerank_covered_term_count = 0
     per_collection_k = int(budget.get("per_collection_k", SEARCH_K)) if budget else SEARCH_K
     per_collection_fetch_k = int(budget.get("per_collection_fetch_k", SEARCH_FETCH_K)) if budget else SEARCH_FETCH_K
     hybrid_candidate_limit = min(HYBRID_LEXICAL_CANDIDATE_LIMIT, per_collection_k)
@@ -634,13 +750,28 @@ def build_collection_context(
             }
         )
 
+    reranked_docs, coverage_info = rerank_docs_with_light_multi_collection_coverage(docs, question)
+    docs = reranked_docs
+    coverage_rerank_applied = bool(coverage_info.get("applied"))
+    coverage_rerank_skipped = str(coverage_info.get("skipped", "")).strip()
+    coverage_rerank_collection_count = int(coverage_info.get("collection_count", 0))
+    coverage_rerank_covered_term_count = int(coverage_info.get("covered_term_count", 0))
+
     selected_docs = docs[:max_total_docs]
     context = format_docs_with_limit(selected_docs, max_chars=max_context_chars)
     elapsed_ms = round((time.perf_counter() - started_at) * 1000, 3)
 
     if trace is not None:
         retrieval_strategy = RETRIEVAL_STRATEGY_MMR
-        if hybrid_candidate_merge_applied and lexical_boost_applied:
+        if hybrid_candidate_merge_applied and lexical_boost_applied and coverage_rerank_applied:
+            retrieval_strategy = RETRIEVAL_STRATEGY_MMR_WITH_HYBRID_AND_LEXICAL_AND_COVERAGE
+        elif hybrid_candidate_merge_applied and coverage_rerank_applied:
+            retrieval_strategy = RETRIEVAL_STRATEGY_MMR_WITH_HYBRID_AND_COVERAGE
+        elif lexical_boost_applied and coverage_rerank_applied:
+            retrieval_strategy = RETRIEVAL_STRATEGY_MMR_WITH_LEXICAL_AND_COVERAGE
+        elif coverage_rerank_applied:
+            retrieval_strategy = RETRIEVAL_STRATEGY_MMR_WITH_COVERAGE
+        elif hybrid_candidate_merge_applied and lexical_boost_applied:
             retrieval_strategy = RETRIEVAL_STRATEGY_MMR_WITH_HYBRID_AND_LEXICAL
         elif hybrid_candidate_merge_applied:
             retrieval_strategy = RETRIEVAL_STRATEGY_MMR_WITH_HYBRID
@@ -658,6 +789,10 @@ def build_collection_context(
                 "retrieval_strategy": retrieval_strategy,
                 "lexical_query_terms": lexical_query_terms,
                 "lexical_boost_applied": lexical_boost_applied,
+                "coverage_rerank_applied": coverage_rerank_applied,
+                "coverage_rerank_skipped": coverage_rerank_skipped or None,
+                "coverage_rerank_collection_count": coverage_rerank_collection_count,
+                "coverage_rerank_covered_term_count": coverage_rerank_covered_term_count,
                 "hybrid_candidate_merge_applied": hybrid_candidate_merge_applied,
                 "hybrid_candidate_count": hybrid_candidate_count,
                 "hybrid_candidate_limit": hybrid_candidate_limit,

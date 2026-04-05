@@ -197,6 +197,34 @@ def test_rerank_docs_with_light_lexical_boost_prioritizes_matching_doc():
     assert "에콜" in info["query_terms"]
 
 
+def test_rerank_docs_with_light_multi_collection_coverage_promotes_second_collection():
+    docs = [
+        Document(
+            page_content="에콜 폴리테크니크는 프랑스 국가 중심 인재 양성 기관이다.",
+            metadata={"source": "fr.md", "h2": "기관", "collection_key": "fr"},
+        ),
+        Document(
+            page_content="프랑스는 에콜 폴리테크니크를 통해 실용 기술 교육을 강화했다.",
+            metadata={"source": "fr.md", "h2": "교육", "collection_key": "fr"},
+        ),
+        Document(
+            page_content="훔볼트 대학은 연구와 학문 자유를 중심으로 인재를 길렀다.",
+            metadata={"source": "ge.md", "h2": "대학", "collection_key": "ge"},
+        ),
+    ]
+
+    reranked, info = query_service.rerank_docs_with_light_multi_collection_coverage(
+        docs,
+        "에콜 폴리테크니크와 훔볼트 대학의 인재 육성 방식 차이",
+    )
+
+    assert reranked[0].metadata["collection_key"] == "fr"
+    assert reranked[1].metadata["collection_key"] == "ge"
+    assert info["applied"] is True
+    assert info["collection_count"] == 2
+    assert info["covered_term_count"] >= 4
+
+
 def test_merge_docs_with_light_hybrid_candidates_adds_matching_doc_from_collection_pool():
     dense_docs = [
         Document(page_content="일반 소개 문단", metadata={"source": "all.md", "h2": "개요"}),
@@ -281,6 +309,10 @@ def test_build_collection_context_populates_trace(monkeypatch):
     assert trace["context_chars"] == len(context)
     assert trace["retrieval_strategy"] == query_service.RETRIEVAL_STRATEGY_MMR
     assert trace["lexical_boost_applied"] is False
+    assert trace["coverage_rerank_applied"] is False
+    assert trace["coverage_rerank_skipped"] == "single_collection"
+    assert trace["coverage_rerank_collection_count"] == 1
+    assert trace["coverage_rerank_covered_term_count"] == 0
     assert trace["hybrid_candidate_merge_applied"] is False
     assert trace["hybrid_candidate_count"] == 0
     assert trace["hybrid_candidate_limit"] == min(query_service.HYBRID_LEXICAL_CANDIDATE_LIMIT, trace["per_collection_k"])
@@ -331,6 +363,8 @@ def test_build_collection_context_applies_light_lexical_boost(monkeypatch):
     assert context.startswith("[1] source=fr.md")
     assert trace["retrieval_strategy"] == query_service.RETRIEVAL_STRATEGY_MMR_WITH_LEXICAL
     assert trace["lexical_boost_applied"] is True
+    assert trace["coverage_rerank_applied"] is False
+    assert trace["coverage_rerank_skipped"] == "single_collection"
     assert trace["hybrid_candidate_merge_applied"] is False
     assert trace["hybrid_scan_doc_count"] == 0
     assert trace["hybrid_skipped_collections"] == [{"key": "fr", "reason": "empty_collection"}]
@@ -370,6 +404,8 @@ def test_build_collection_context_applies_light_hybrid_candidate_merge(monkeypat
     assert trace["retrieval_strategy"] == query_service.RETRIEVAL_STRATEGY_MMR_WITH_HYBRID_AND_LEXICAL
     assert trace["hybrid_candidate_merge_applied"] is True
     assert trace["hybrid_candidate_count"] == 1
+    assert trace["coverage_rerank_applied"] is False
+    assert trace["coverage_rerank_skipped"] == "single_collection"
     assert trace["hybrid_scan_doc_count"] == 2
     assert trace["hybrid_skipped_collections"] == []
     assert trace["lexical_boost_applied"] is True
@@ -412,6 +448,59 @@ def test_build_collection_context_records_hybrid_scan_skip(monkeypatch):
     assert trace["collection_stats"][0]["hybrid_scan_doc_count"] == 0
     assert trace["collection_stats"][0]["hybrid_candidate_count"] == 0
     assert trace["collection_stats"][0]["hybrid_skipped"] == "collection_too_large"
+
+
+def test_build_collection_context_applies_light_multi_collection_coverage_rerank(monkeypatch):
+    class DummyRetriever:
+        def __init__(self, key):
+            self.key = key
+
+        def invoke(self, question):
+            assert question == "에콜 폴리테크니크와 훔볼트 대학의 인재 육성 방식 차이"
+            if self.key == "fr":
+                return [
+                    Document(
+                        page_content="에콜 폴리테크니크는 프랑스 국가 중심 인재 양성 기관이다.",
+                        metadata={"source": "fr.md", "h2": "기관"},
+                    ),
+                    Document(
+                        page_content="프랑스는 에콜 폴리테크니크를 통해 실용 기술 교육을 강화했다.",
+                        metadata={"source": "fr.md", "h2": "교육"},
+                    ),
+                ]
+            return [
+                Document(
+                    page_content="훔볼트 대학은 연구와 학문 자유를 중심으로 인재를 길렀다.",
+                    metadata={"source": "ge.md", "h2": "대학"},
+                ),
+            ]
+
+    class DummyDB:
+        def __init__(self, key):
+            self.key = key
+
+        def as_retriever(self, **kwargs):
+            return DummyRetriever(self.key)
+
+    monkeypatch.setattr(query_service.index_service, "get_db", lambda key: DummyDB(key))
+    monkeypatch.setattr(query_service.index_service, "get_collection_documents_from_store", lambda key: [])
+    monkeypatch.setattr(query_service.runtime_service, "get_max_context_chars", lambda: 400)
+
+    trace: dict[str, object] = {}
+    context = query_service.build_collection_context(
+        "에콜 폴리테크니크와 훔볼트 대학의 인재 육성 방식 차이",
+        ["fr", "ge"],
+        trace=trace,
+    )
+
+    rendered_docs = context.split("\n\n")
+    assert rendered_docs[0].startswith("[1] source=fr.md")
+    assert rendered_docs[1].startswith("[2] source=ge.md")
+    assert trace["retrieval_strategy"] == query_service.RETRIEVAL_STRATEGY_MMR_WITH_COVERAGE
+    assert trace["coverage_rerank_applied"] is True
+    assert trace["coverage_rerank_skipped"] is None
+    assert trace["coverage_rerank_collection_count"] == 2
+    assert trace["coverage_rerank_covered_term_count"] >= 4
 
 
 def test_invoke_query_chain_populates_trace():

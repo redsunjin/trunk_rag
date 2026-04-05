@@ -73,6 +73,7 @@
 | warm gate revalidation | `false` | `1.0` | `3890.691` | `4283.135` | `0.8933` |
 | fresh app verified default gate | `true` | `1.0` | `7700.859` | `13043.855` | `0.9067` |
 | fresh app verified gate after light hybrid merge | `true` | `1.0` | `6685.677` | `11030.653` | `0.9067` |
+| fresh app verified gate after coverage rerank | `true` | `1.0` | `4329.476` | `4411.131` | `0.9200` |
 
 해석:
 - first gate는 앱 첫 질의라 embedding/model warm-up 비용이 섞였다.
@@ -80,6 +81,7 @@
 - 보강 후에는 warm 상태 `generic-baseline`이 `3/3 pass`로 올라갔다.
 - 이후 runtime policy를 `gemma4:e4b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30` verified 기본값으로 승격한 뒤에는, fresh app 기준 full gate도 `ready=true`로 통과했다.
 - 같은 verified runtime에서 경량 hybrid candidate merge를 추가한 뒤에도 score는 유지됐고, fresh app 기준 full gate latency는 더 낮아졌다.
+- 이어서 multi-collection coverage rerank를 추가한 뒤에는 `GQ-21` 상위 context가 `fr -> ge -> fr ...`로 재정렬됐고, full gate의 latency/score가 모두 더 좋아졌다.
 
 ### 같은 세션 비교값
 
@@ -111,7 +113,9 @@
 - 이후 경량 hybrid candidate merge를 더한 fresh app full gate도 `ready=true`, `avg_latency_ms=6685.677`, `p95_latency_ms=11030.653`, `avg_weighted_score=0.9067`로 유지돼 1차 채택 후보로 볼 수 있다.
 - 이후 cost trace 보강으로 `hybrid_scan_doc_count`, `hybrid_skipped_collections`가 추가돼 큰 컬렉션에서 `collection_too_large` skip이 실제로 보이는지 직접 추적할 수 있게 됐다.
 - trace 보강 뒤 재실측에서도 full gate는 `ready=true`, `avg_latency_ms=7220.103`, `p95_latency_ms=12405.726`, `avg_weighted_score=0.9067`로 유지됐다.
+- 이어서 coverage rerank 비교에서는 `ready=true`, `avg_latency_ms=4329.476`, `p95_latency_ms=4411.131`, `avg_weighted_score=0.9200`로 추가 개선이 확인됐다.
 - reasoning leakage blocker는 prompt/postprocess 보강으로 해소됐다.
 - `qwen3.5:4b-nvfp4`는 더 작고 더 빨랐지만, 이번 세션에서는 `GQ-21` 길이 부족 때문에 `2/3 pass`였다.
 - 현재 판단은 "`gemma4:e4b`는 verified local default", "`qwen3.5:4b-nvfp4`는 latency 우선 experimental fallback" 쪽이다.
-- 다음 `rerank` 후보 비교선은 현재 hybrid revalidation의 `pass_rate=1.0`, `avg_weighted_score=0.9067`, `p95_latency_ms` 관측 밴드 `11030.653`~`12405.726`이다. 이 범위를 넘기며 지연만 나빠지고 품질 이득이 없으면 채택하지 않는다.
+- 현재 coverage rerank 후보는 같은 `generic-baseline`에서 `GQ-21` score를 `0.88 -> 0.92`로 높였고, fresh gate 기준 `avg_latency_ms`와 `p95_latency_ms`도 모두 낮췄다.
+- 다음 작업은 `LOOP-009` closeout review를 수행해 hybrid + coverage rerank 조합을 기본 경로로 확정할지 정리하고, 필요하면 다음 후보를 `contextual retrieval`로 넘기는 것이다.
