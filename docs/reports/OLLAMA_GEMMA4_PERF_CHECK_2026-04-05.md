@@ -55,24 +55,33 @@
 
 ## `/query` gate 결과
 
-### warm 상태 기준 비교
+### gemma4 단계별 결과
+
+| phase | ready | pass_rate | avg latency ms | p95 latency ms | avg weighted score |
+| --- | --- | ---: | ---: | ---: | ---: |
+| cold-start first gate | `false` | `0.6667` | `6777.255` | `11398.822` | `0.6503` |
+| warm gate before prompt fix | `false` | `0.6667` | `3948.283` | `4640.512` | `0.6503` |
+| warm gate after prompt/postprocess fix | `false` | `1.0` | `4328.464` | `4831.276` | `0.8933` |
+
+해석:
+- first gate는 앱 첫 질의라 embedding/model warm-up 비용이 섞였다.
+- prompt/postprocess 보강 전에는 warm 상태에서도 `GQ-20` reasoning leakage 때문에 `2/3 pass`에 머물렀다.
+- 보강 후에는 warm 상태 `generic-baseline`이 `3/3 pass`로 올라갔다.
+- 다만 `check_ops_baseline_gate.py`의 전체 `ready`는 answer eval뿐 아니라 runtime profile도 함께 보기 때문에, `gemma4:e4b`가 아직 `experimental`인 현재 정책상 계속 `false`로 남는다.
+
+### 같은 세션 비교값
 
 | model | ready | pass_rate | avg latency ms | p95 latency ms | avg weighted score |
 | --- | --- | ---: | ---: | ---: | ---: |
-| `gemma4:e4b` | `false` | `0.6667` | `3948.283` | `4640.512` | `0.6503` |
+| `gemma4:e4b` after fix | `false` | `1.0` | `4328.464` | `4831.276` | `0.8933` |
 | `llama3.1:8b` | `false` | `0.3333` | `4641.541` | `5278.185` | `0.6994` |
-
-### gemma4 cold-start 참고값
-- 첫 `gemma4:e4b` gate는 앱 첫 질의라 embedding/model warm-up 비용이 섞였다.
-- 이 첫 측정은 `pass_rate=0.6667`, `avg_latency_ms=6777.255`, `p95_latency_ms=11398.822`, `avg_weighted_score=0.6503`였다.
-- 같은 세션 warm 재실행 결과가 위 표의 수치다.
 
 ## 실패 패턴
 
 ### `gemma4:e4b`
-- `GQ-20` 실패
-- 응답이 `"Here's a thinking process to construct the answer:"`로 끝나 reasoning leakage가 그대로 노출됐다.
-- 나머지 `GQ-19`, `GQ-21`은 pass했다.
+- 초기 실패 원인은 `GQ-20`에서 나온 `"Here's a thinking process to construct the answer:"` reasoning leakage였다.
+- `services/query_service.py`의 prompt 금지 문구와 reasoning pattern을 보강한 뒤에는 같은 질문이 정상 답변으로 바뀌었다.
+- 보강 후 warm 상태 `generic-baseline`은 `3/3 pass`였다.
 
 ### `llama3.1:8b`
 - `GQ-19`, `GQ-20` 실패
@@ -80,8 +89,8 @@
 - `GQ-21`만 pass했다.
 
 ## 결론
-- `gemma4:e4b`는 warm 상태 `/query` 지연만 보면 이번 세션에서 `llama3.1:8b`보다 빠르게 나왔다.
-- 하지만 `generic-baseline`은 `2/3 pass`에 그쳐 release gate 기준으로는 아직 `ready`가 아니다.
-- 핵심 blocker는 `GQ-20`에서 드러난 reasoning leakage다.
-- 같은 세션에서 `llama3.1:8b`도 `1/3 pass`만 나왔기 때문에, 이번 단일 실측만으로 기존 verified 운영 프로파일 정책을 바꾸지는 않는다.
-- 후속 작업은 `gemma4:e4b`를 candidate로 두고, `GQ-20` 계열 질문에서 reasoning leakage를 더 강하게 제거하거나 prompt contract를 보강해 재측정하는 것이다.
+- `gemma4:e4b`는 warm 상태 `/query` 지연과 answer-level gate만 보면 이번 세션에서 `generic-baseline 3/3 pass`까지 올라왔다.
+- reasoning leakage blocker는 prompt/postprocess 보강으로 해소됐다.
+- 그럼에도 전체 gate `ready`는 `runtime_profile=experimental` 때문에 여전히 `false`다.
+- 즉, 현재 판단은 "`gemma4:e4b`는 release-ready는 아니지만, 실측상 유의미한 local candidate"다.
+- 후속 작업은 verified 기본값을 바꾸기보다 `gemma4:e4b`를 experimental candidate로 공식 메모에 올릴지, 혹은 runtime profile 정책에 별도 후보 분류를 둘지 판단하는 것이다.

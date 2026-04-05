@@ -129,6 +129,17 @@ def test_postprocess_answer_returns_insufficient_when_only_reasoning_leaks():
     assert resolved == query_service.INSUFFICIENT_ANSWER_TEXT
 
 
+def test_postprocess_answer_returns_insufficient_for_english_reasoning_intro():
+    answer = "Here's a thinking process to construct the answer:"
+
+    resolved = query_service.postprocess_answer(
+        "문서 기준으로 뉴턴의 국장이 당시 영국에서 과학의 위상을 어떻게 보여줬는지 설명해줘.",
+        answer,
+    )
+
+    assert resolved == query_service.INSUFFICIENT_ANSWER_TEXT
+
+
 def test_get_prompt_template_defaults_to_generic_profile(monkeypatch):
     monkeypatch.delenv(query_service.QUERY_PROFILE_ENV_KEY, raising=False)
 
@@ -138,6 +149,8 @@ def test_get_prompt_template_defaults_to_generic_profile(monkeypatch):
     assert query_service.get_query_profile() == query_service.QUERY_PROFILE_GENERIC
     assert "로컬 RAG 질의응답 어시스턴트" in messages[0].content
     assert "유럽 과학사" not in messages[0].content
+    assert "Here's a thinking process" in messages[0].content
+    assert "태그 앞뒤에 설명" in messages[1].content
 
 
 def test_get_prompt_template_supports_sample_pack_profile(monkeypatch):

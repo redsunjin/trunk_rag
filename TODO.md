@@ -204,8 +204,9 @@ LOOP-007 범위 메모 (2026-04-04 초안):
 - 질문에서 추출한 lexical term은 한국어 조사/질문 wrapper를 일부 정리한 뒤 사용하고, `debug` trace에는 `retrieval_strategy`, `lexical_query_terms`, `lexical_boost_applied`를 남기도록 했다.
 - 관련 회귀는 `tests/test_query_service.py`, `tests/api/test_query_api.py` 기준으로 먼저 통과시켰다.
 - 같은 날짜 추가 실측으로 `docs/reports/OLLAMA_GEMMA4_PERF_CHECK_2026-04-05.md`를 남겼다.
-- `gemma4:e4b`는 직접 Ollama 처리량에서는 `avg_eval_tokens_per_second=40.088`로 경계선 수준이었고, warm 상태 `generic-baseline` gate는 `2/3 pass`, `avg_latency_ms=3948.283`, `p95_latency_ms=4640.512`였다.
-- 다만 `GQ-20`에서 `"Here's a thinking process..."` reasoning leakage가 그대로 나와 아직 release-ready 후보로 보기는 어렵다.
+- 같은 날짜 후속 보강으로 `services/query_service.py` generic/sample-pack prompt에 영어 사고과정 서두 금지 문구를 추가하고, `Here's a thinking process...`/`Let me think...` 계열을 reasoning leakage 패턴으로 더 강하게 제거했다.
+- 그 뒤 `gemma4:e4b` 단일 `GQ-20` 질의는 정상 답변으로 바뀌었고, warm 상태 `generic-baseline` gate는 `3/3 pass`, `avg_latency_ms=4328.464`, `p95_latency_ms=4831.276`, `avg_weighted_score=0.8933`까지 올라갔다.
+- 다만 전체 `check_ops_baseline_gate.py`의 `ready`는 runtime profile이 아직 `experimental`이라 계속 `false`다. 현재 판단은 "release-ready 기본값"이 아니라 "유의미한 local candidate" 쪽이다.
 - 같은 세션 `llama3.1:8b` 재실측도 `1/3 pass`만 나왔으므로, 이번 단일 측정만으로 기존 verified 운영 프로파일 정책을 바꾸지는 않는다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
