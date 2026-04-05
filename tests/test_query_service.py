@@ -197,6 +197,30 @@ def test_rerank_docs_with_light_lexical_boost_prioritizes_matching_doc():
     assert "에콜" in info["query_terms"]
 
 
+def test_merge_docs_with_light_hybrid_candidates_adds_matching_doc_from_collection_pool():
+    dense_docs = [
+        Document(page_content="일반 소개 문단", metadata={"source": "all.md", "h2": "개요"}),
+    ]
+    collection_docs = [
+        Document(page_content="일반 소개 문단", metadata={"source": "all.md", "h2": "개요"}),
+        Document(
+            page_content="에콜 폴리테크니크는 프랑스 과학 인재 양성 기관이다.",
+            metadata={"source": "fr.md", "h2": "기관"},
+        ),
+    ]
+
+    merged, info = query_service.merge_docs_with_light_hybrid_candidates(
+        dense_docs,
+        collection_docs,
+        "에콜 폴리테크니크 과학 인재",
+    )
+
+    assert len(merged) == 2
+    assert merged[1].metadata["source"] == "fr.md"
+    assert info["applied"] is True
+    assert info["candidate_count"] == 1
+
+
 def test_build_collection_context_populates_trace(monkeypatch):
     class DummyRetriever:
         def invoke(self, question):
@@ -212,6 +236,7 @@ def test_build_collection_context_populates_trace(monkeypatch):
             return DummyRetriever()
 
     monkeypatch.setattr(query_service.index_service, "get_db", lambda key: DummyDB())
+    monkeypatch.setattr(query_service.index_service, "get_collection_documents_from_store", lambda key: [])
     monkeypatch.setattr(query_service.runtime_service, "get_max_context_chars", lambda: 100)
 
     trace: dict[str, object] = {}
@@ -224,6 +249,8 @@ def test_build_collection_context_populates_trace(monkeypatch):
     assert trace["context_chars"] == len(context)
     assert trace["retrieval_strategy"] == query_service.RETRIEVAL_STRATEGY_MMR
     assert trace["lexical_boost_applied"] is False
+    assert trace["hybrid_candidate_merge_applied"] is False
+    assert trace["hybrid_candidate_count"] == 0
     assert trace["lexical_query_terms"] == ["테스트", "질문"]
     assert trace["elapsed_ms"] >= 0
     assert trace["collection_stats"] == [
@@ -253,6 +280,7 @@ def test_build_collection_context_applies_light_lexical_boost(monkeypatch):
             return DummyRetriever()
 
     monkeypatch.setattr(query_service.index_service, "get_db", lambda key: DummyDB())
+    monkeypatch.setattr(query_service.index_service, "get_collection_documents_from_store", lambda key: [])
     monkeypatch.setattr(query_service.runtime_service, "get_max_context_chars", lambda: 200)
 
     trace: dict[str, object] = {}
@@ -261,7 +289,44 @@ def test_build_collection_context_applies_light_lexical_boost(monkeypatch):
     assert context.startswith("[1] source=fr.md")
     assert trace["retrieval_strategy"] == query_service.RETRIEVAL_STRATEGY_MMR_WITH_LEXICAL
     assert trace["lexical_boost_applied"] is True
+    assert trace["hybrid_candidate_merge_applied"] is False
     assert "에콜" in trace["lexical_query_terms"]
+
+
+def test_build_collection_context_applies_light_hybrid_candidate_merge(monkeypatch):
+    class DummyRetriever:
+        def invoke(self, question):
+            assert question == "에콜 폴리테크니크 과학 인재"
+            return [
+                Document(page_content="일반 개요", metadata={"source": "all.md", "h2": "개요"}),
+            ]
+
+    class DummyDB:
+        def as_retriever(self, **kwargs):
+            return DummyRetriever()
+
+    monkeypatch.setattr(query_service.index_service, "get_db", lambda key: DummyDB())
+    monkeypatch.setattr(
+        query_service.index_service,
+        "get_collection_documents_from_store",
+        lambda key: [
+            Document(page_content="일반 개요", metadata={"source": "all.md", "h2": "개요"}),
+            Document(
+                page_content="에콜 폴리테크니크는 프랑스 과학 인재 양성 기관이다.",
+                metadata={"source": "fr.md", "h2": "기관"},
+            ),
+        ],
+    )
+    monkeypatch.setattr(query_service.runtime_service, "get_max_context_chars", lambda: 200)
+
+    trace: dict[str, object] = {}
+    context = query_service.build_collection_context("에콜 폴리테크니크 과학 인재", ["fr"], trace=trace)
+
+    assert context.startswith("[1] source=fr.md")
+    assert trace["retrieval_strategy"] == query_service.RETRIEVAL_STRATEGY_MMR_WITH_HYBRID_AND_LEXICAL
+    assert trace["hybrid_candidate_merge_applied"] is True
+    assert trace["hybrid_candidate_count"] == 1
+    assert trace["lexical_boost_applied"] is True
 
 
 def test_invoke_query_chain_populates_trace():

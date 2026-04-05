@@ -29,8 +29,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-008`
-- current_active_title: `경량 retrieval 품질 보정`
+- current_active_id: `LOOP-009`
+- current_active_title: `경량 hybrid retrieval 후보 검증`
 - current_version_track: `V1`
 - current_harness_mode: `v1_operating_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -181,7 +181,7 @@ closeout 메모:
 - 현재 단계는 구조 분리 1차라서 `all/eu/fr/ge/it/uk` 키와 기존 업로드 기본값, 질의 라우팅 동작은 그대로 유지한다.
 - `2026-04-05` closeout review 기준으로 본체 문서/샘플팩 문서 분리, manifest 기반 seed metadata 정리, query/eval profile 분리가 모두 완료 기준을 충족했고, 후속 범위는 `LOOP-008`로 승격했다.
 
-### A-Next. 경량 retrieval 품질 보정 (현재 active)
+### A-Next. 경량 retrieval 품질 보정 (완료: 2026-04-05)
 1. `generic-baseline` 기준으로 실제 품질 부족 케이스를 다시 좁혀 잡는다.
 2. lexical boost 같은 경량 검색 보정 후보를 범용 경로에서만 검토한다.
 3. sample-pack 전용 규칙 재도입 없이 채택/기각 근거를 문서와 테스트 기준으로 고정한다.
@@ -211,7 +211,31 @@ closeout 메모:
 - 같은 날짜 후속 정리로 로컬 verified 기본 운영 프로파일과 `.env.example`/기본 회귀 게이트를 `gemma4:e4b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`으로 승격했다.
 - 같은 날짜 fresh app 기준 full gate도 `ready=true`, `pass_rate=1.0`, `avg_latency_ms=7700.859`, `p95_latency_ms=13043.855`, `avg_weighted_score=0.9067`로 통과했다.
 - `qwen3.5:4b-nvfp4`는 runtime policy에서 latency 우선 local fallback으로만 남기고, 기본 gate와 `/health` 권장 메시지는 `gemma4:e4b` 기준으로 정렬했다.
-- 다음 구현 단위는 `LOOP-008` closeout review를 다시 수행해, 경량 retrieval 보정과 runtime default 정리까지 완료 기준을 충족했는지 판단하는 것이다.
+- 같은 날짜 closeout review에서는 경량 lexical boost 채택, reasoning leakage 보강, `gemma4:e4b` verified default 승격이 모두 완료 기준을 충족한다고 판단해 `LOOP-008`을 `done`으로 닫았다.
+
+### A-Next2. 경량 hybrid retrieval 후보 검증 (현재 active)
+1. dense MMR 결과에 소량 lexical candidate를 합류시키는 hybrid search 후보를 검증한다.
+2. collection scan 상한과 trace를 통해 비용/효과를 고정한다.
+3. rerank 후보와 비교하기 전 채택/기각 근거를 `generic-baseline` 기준으로 문서화한다.
+
+완료 기준:
+- 경량 hybrid candidate merge의 채택/기각 근거가 `generic-baseline` gate와 함께 정리된다.
+- 새로운 retrieval trace와 안전장치가 테스트/문서에 반영된다.
+- 큰 컬렉션에서 무제한 lexical full scan을 하지 않는 제한이 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_query_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_check_ops_baseline_gate.py`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-05):
+- `docs/reports/GENERIC_RAG_REFOCUS_REVIEW_2026-04-04.md`의 Quality Upgrade 우선순위에서 hybrid search 후보를 다음 top-level loop로 승격했다.
+- `services/index_service.py`는 collection 문서를 `(collection_key, embedding_model)` 기준으로 캐시해 lightweight lexical scan이 store 전체를 매번 다시 읽지 않게 했다.
+- `services/query_service.py`는 dense MMR 결과에 대해 collection pool에서 lexical match가 강한 문서를 최대 2개까지 합류시킨 뒤, 기존 light lexical boost를 다시 적용하도록 바뀌었다.
+- `debug` trace에는 `hybrid_candidate_merge_applied`, `hybrid_candidate_count`, `retrieval_strategy=mmr+light_hybrid+lexical_boost`가 추가됐다.
+- 관련 회귀는 `44 passed`(`tests/test_query_service.py tests/test_collection_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_check_ops_baseline_gate.py`)로 통과했다.
+- fresh app 기준 full gate는 `ready=true`, `pass_rate=1.0`, `avg_latency_ms=6685.677`, `p95_latency_ms=11030.653`, `avg_weighted_score=0.9067`로 유지됐고, 이전 verified default gate보다 지연이 내려갔다.
+- 다음 구현 단위는 collection 규모가 커질 때 hybrid lexical scan 비용을 더 명확히 관찰할 trace/fixture를 추가하고, 이 후보를 유지한 채 다음 `rerank` 후보와 비교할 최소 기준을 정리하는 것이다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

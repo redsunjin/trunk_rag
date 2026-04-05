@@ -27,6 +27,7 @@ EMBEDDING_FINGERPRINTS_FILE = "embedding_fingerprints.json"
 VECTOR_COUNT_CACHE_TTL_SECONDS = 5.0
 _EMBEDDINGS_CACHE: dict[str, object] = {}
 _DB_CACHE: dict[tuple[str, str], Chroma] = {}
+_COLLECTION_DOCS_CACHE: dict[tuple[str, str], list[Document]] = {}
 _VECTOR_COUNT_CACHE: dict[str, tuple[float, int | None]] = {}
 _CACHE_LOCK = threading.RLock()
 
@@ -117,10 +118,54 @@ def get_vector_count_snapshot(
     return vectors
 
 
+def _clone_documents(docs: list[Document]) -> list[Document]:
+    return [
+        Document(page_content=str(doc.page_content), metadata=dict(doc.metadata))
+        for doc in docs
+    ]
+
+
+def get_collection_documents_from_store(collection_key: str = DEFAULT_COLLECTION_KEY) -> list[Document]:
+    embedding_model = runtime_service.get_embedding_model()
+    cache_key = _db_cache_key(collection_key, embedding_model)
+    with _CACHE_LOCK:
+        cached = _COLLECTION_DOCS_CACHE.get(cache_key)
+    if cached is not None:
+        return _clone_documents(cached)
+
+    try:
+        db = get_db(collection_key)
+        payload = db._collection.get(include=["documents", "metadatas"])
+    except Exception:
+        return []
+
+    if not isinstance(payload, dict):
+        return []
+
+    documents = payload.get("documents", [])
+    metadatas = payload.get("metadatas", [])
+    if not isinstance(documents, list):
+        return []
+    if not isinstance(metadatas, list):
+        metadatas = []
+
+    loaded_docs: list[Document] = []
+    for index, text in enumerate(documents):
+        if not isinstance(text, str) or not text.strip():
+            continue
+        metadata = metadatas[index] if index < len(metadatas) and isinstance(metadatas[index], dict) else {}
+        loaded_docs.append(Document(page_content=text, metadata=dict(metadata)))
+
+    with _CACHE_LOCK:
+        _COLLECTION_DOCS_CACHE[cache_key] = _clone_documents(loaded_docs)
+    return loaded_docs
+
+
 def invalidate_runtime_state(collection_keys: list[str] | None = None) -> None:
     with _CACHE_LOCK:
         if collection_keys is None:
             _DB_CACHE.clear()
+            _COLLECTION_DOCS_CACHE.clear()
             _VECTOR_COUNT_CACHE.clear()
             return
 
@@ -132,6 +177,9 @@ def invalidate_runtime_state(collection_keys: list[str] | None = None) -> None:
         db_keys = [key for key in _DB_CACHE if key[0] in key_set]
         for key in db_keys:
             _DB_CACHE.pop(key, None)
+        doc_keys = [key for key in _COLLECTION_DOCS_CACHE if key[0] in key_set]
+        for key in doc_keys:
+            _COLLECTION_DOCS_CACHE.pop(key, None)
         for collection_name in collection_names:
             _VECTOR_COUNT_CACHE.pop(collection_name, None)
 

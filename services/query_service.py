@@ -140,6 +140,10 @@ LEXICAL_STOPWORDS = {
 }
 RETRIEVAL_STRATEGY_MMR = "mmr"
 RETRIEVAL_STRATEGY_MMR_WITH_LEXICAL = "mmr+light_lexical_boost"
+RETRIEVAL_STRATEGY_MMR_WITH_HYBRID = "mmr+light_hybrid"
+RETRIEVAL_STRATEGY_MMR_WITH_HYBRID_AND_LEXICAL = "mmr+light_hybrid+lexical_boost"
+HYBRID_LEXICAL_SCAN_MAX_DOCS = 4000
+HYBRID_LEXICAL_CANDIDATE_LIMIT = 2
 
 
 def normalize_query_profile(query_profile: str | None) -> str:
@@ -312,6 +316,82 @@ def rerank_docs_with_light_lexical_boost(
     }
 
 
+def build_doc_fingerprint(doc: Document) -> str:
+    source = str(doc.metadata.get("source", ""))
+    h2 = str(doc.metadata.get("h2", ""))
+    return f"{source}|{h2}|{doc.page_content}"
+
+
+def merge_docs_with_light_hybrid_candidates(
+    dense_docs: list[Document],
+    collection_docs: list[Document],
+    question: str,
+    *,
+    max_candidates: int = HYBRID_LEXICAL_CANDIDATE_LIMIT,
+) -> tuple[list[Document], dict[str, object]]:
+    query_terms = extract_lexical_query_terms(question)
+    if not query_terms or not collection_docs or max_candidates < 1:
+        return dense_docs, {
+            "query_terms": query_terms,
+            "applied": False,
+            "candidate_count": 0,
+        }
+
+    if len(collection_docs) > HYBRID_LEXICAL_SCAN_MAX_DOCS:
+        return dense_docs, {
+            "query_terms": query_terms,
+            "applied": False,
+            "candidate_count": 0,
+            "skipped": "collection_too_large",
+        }
+
+    existing_fingerprints = {build_doc_fingerprint(doc) for doc in dense_docs}
+    candidate_items: list[dict[str, object]] = []
+    for index, doc in enumerate(collection_docs):
+        fingerprint = build_doc_fingerprint(doc)
+        if fingerprint in existing_fingerprints:
+            continue
+        score, matched_terms = _score_doc_lexical_match(doc, query_terms)
+        if score <= 0:
+            continue
+        candidate_items.append(
+            {
+                "doc": doc,
+                "score": score,
+                "matched_terms": matched_terms,
+                "index": index,
+            }
+        )
+
+    if not candidate_items:
+        return dense_docs, {
+            "query_terms": query_terms,
+            "applied": False,
+            "candidate_count": 0,
+        }
+
+    ordered_items = sorted(
+        candidate_items,
+        key=lambda item: (
+            -float(item["score"]),
+            -len(item["matched_terms"]),
+            int(item["index"]),
+        ),
+    )
+    selected_docs = [item["doc"] for item in ordered_items[:max_candidates]]
+    if not selected_docs:
+        return dense_docs, {
+            "query_terms": query_terms,
+            "applied": False,
+            "candidate_count": 0,
+        }
+    return [*dense_docs, *selected_docs], {
+        "query_terms": query_terms,
+        "applied": True,
+        "candidate_count": len(selected_docs),
+    }
+
+
 def topic_particle(value: str) -> str:
     if not value:
         return "는"
@@ -436,6 +516,8 @@ def build_collection_context(
     collection_stats: list[dict[str, Any]] = []
     lexical_query_terms = extract_lexical_query_terms(question)
     lexical_boost_applied = False
+    hybrid_candidate_merge_applied = False
+    hybrid_candidate_count = 0
     per_collection_k = int(budget.get("per_collection_k", SEARCH_K)) if budget else SEARCH_K
     per_collection_fetch_k = int(budget.get("per_collection_fetch_k", SEARCH_FETCH_K)) if budget else SEARCH_FETCH_K
     max_total_docs = int(budget.get("max_total_docs", max(SEARCH_K * len(collection_keys), SEARCH_K))) if budget else max(
@@ -460,7 +542,17 @@ def build_collection_context(
             },
         )
         items = retriever.invoke(question)
-        reranked_items, lexical_info = rerank_docs_with_light_lexical_boost(items, question)
+        collection_docs = index_service.get_collection_documents_from_store(key)
+        hybrid_items, hybrid_info = merge_docs_with_light_hybrid_candidates(
+            items,
+            collection_docs,
+            question,
+            max_candidates=min(HYBRID_LEXICAL_CANDIDATE_LIMIT, per_collection_k),
+        )
+        if bool(hybrid_info.get("applied")):
+            hybrid_candidate_merge_applied = True
+            hybrid_candidate_count += int(hybrid_info.get("candidate_count", 0))
+        reranked_items, lexical_info = rerank_docs_with_light_lexical_boost(hybrid_items, question)
         if bool(lexical_info.get("applied")):
             lexical_boost_applied = True
         unique_before = len(docs)
@@ -487,6 +579,13 @@ def build_collection_context(
     elapsed_ms = round((time.perf_counter() - started_at) * 1000, 3)
 
     if trace is not None:
+        retrieval_strategy = RETRIEVAL_STRATEGY_MMR
+        if hybrid_candidate_merge_applied and lexical_boost_applied:
+            retrieval_strategy = RETRIEVAL_STRATEGY_MMR_WITH_HYBRID_AND_LEXICAL
+        elif hybrid_candidate_merge_applied:
+            retrieval_strategy = RETRIEVAL_STRATEGY_MMR_WITH_HYBRID
+        elif lexical_boost_applied:
+            retrieval_strategy = RETRIEVAL_STRATEGY_MMR_WITH_LEXICAL
         trace.update(
             {
                 "collections": list(collection_keys),
@@ -496,11 +595,11 @@ def build_collection_context(
                 "max_context_chars": max_context_chars,
                 "context_chars": len(context),
                 "budget_profile": None if budget is None else budget.get("profile"),
-                "retrieval_strategy": (
-                    RETRIEVAL_STRATEGY_MMR_WITH_LEXICAL if lexical_boost_applied else RETRIEVAL_STRATEGY_MMR
-                ),
+                "retrieval_strategy": retrieval_strategy,
                 "lexical_query_terms": lexical_query_terms,
                 "lexical_boost_applied": lexical_boost_applied,
+                "hybrid_candidate_merge_applied": hybrid_candidate_merge_applied,
+                "hybrid_candidate_count": hybrid_candidate_count,
                 "per_collection_k": per_collection_k,
                 "per_collection_fetch_k": per_collection_fetch_k,
                 "elapsed_ms": elapsed_ms,
