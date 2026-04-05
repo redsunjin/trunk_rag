@@ -202,6 +202,9 @@ closeout 메모:
 - 같은 날짜 `services/query_service.py`에는 MMR retrieval 뒤에 문서 순서를 다시 정렬하는 경량 lexical boost를 추가했다.
 - 질문에서 추출한 lexical term은 한국어 조사/질문 wrapper를 일부 정리한 뒤 사용하고, `debug` trace에는 `retrieval_strategy`, `lexical_query_terms`, `lexical_boost_applied`를 남기도록 했다.
 - 1차 회귀는 `tests/test_query_service.py`, `tests/api/test_query_api.py`로 통과 확인했고, 다음 구현 단위는 이 보정이 `generic-baseline` fixture에 실제로 어떤 채택/기각 근거를 남기는지 평가 경로까지 연결하는 것이다.
+- 같은 날짜 `docs/reports/OLLAMA_GEMMA4_PERF_CHECK_2026-04-05.md`에 `gemma4:e4b` Ollama 실측을 기록했다.
+- 직접 Ollama 진단에서는 `gemma4:e4b`가 `avg_eval_tokens_per_second=40.088`, `assessment=borderline`, warm 상태 `generic-baseline` gate는 `2/3 pass`, `avg_latency_ms=3948.283`, `p95_latency_ms=4640.512`였다.
+- 다만 `GQ-20`에서 `"Here's a thinking process..."` reasoning leakage가 그대로 남아 release gate는 `ready=false`였고, 후속 후보 작업은 이 계열 누출을 prompt/postprocess 측면에서 더 줄인 뒤 재측정하는 것이다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
