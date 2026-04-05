@@ -29,8 +29,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-009`
-- current_active_title: `경량 hybrid retrieval 후보 검증`
+- current_active_id: `LOOP-010`
+- current_active_title: `contextual retrieval 후보 검토`
 - current_version_track: `V1`
 - current_harness_mode: `v1_operating_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -213,7 +213,7 @@ closeout 메모:
 - `qwen3.5:4b-nvfp4`는 runtime policy에서 latency 우선 local fallback으로만 남기고, 기본 gate와 `/health` 권장 메시지는 `gemma4:e4b` 기준으로 정렬했다.
 - 같은 날짜 closeout review에서는 경량 lexical boost 채택, reasoning leakage 보강, `gemma4:e4b` verified default 승격이 모두 완료 기준을 충족한다고 판단해 `LOOP-008`을 `done`으로 닫았다.
 
-### A-Next2. 경량 hybrid retrieval 후보 검증 (현재 active)
+### A-Next2. 경량 hybrid retrieval 후보 검증 (완료: 2026-04-05)
 1. dense MMR 결과에 소량 lexical candidate를 합류시키는 hybrid search 후보를 검증한다.
 2. collection scan 상한과 trace를 통해 비용/효과를 고정한다.
 3. rerank 후보와 비교하기 전 채택/기각 근거를 `generic-baseline` 기준으로 문서화한다.
@@ -242,7 +242,28 @@ closeout 메모:
 - debug 응답 기준 `GQ-21` 타입 질의는 `retrieval_strategy=mmr+light_hybrid+lexical_boost+coverage_rerank`, top sources `fr -> ge -> fr ...`, `coverage_rerank_collection_count=2`로 바뀌었다.
 - rerank candidate 비교 gate는 `ready=true`, `pass_rate=1.0`, `avg_latency_ms=4329.476`, `p95_latency_ms=4411.131`, `avg_weighted_score=0.92`로 이전 hybrid baseline보다 score와 latency가 모두 좋아졌다.
 - `GQ-21` answer-level score도 `0.88 -> 0.92`로 올라 multi-collection context packing 문제가 실제로 줄어든 것으로 본다.
-- 다음 구현 단위는 `LOOP-009` closeout review를 수행해 hybrid + coverage rerank 조합을 현재 기본 경로로 유지할지 확정하고, 필요하면 다음 top-level loop를 `contextual retrieval` 후보 검토로 승격하는 것이다.
+- 같은 날짜 closeout review에서는 light hybrid merge, scan cost trace, multi-collection coverage rerank가 모두 완료 기준을 충족한다고 판단했고, 현재 기본 경로는 `mmr+light_hybrid+lexical_boost+coverage_rerank` 조합으로 유지한다.
+
+### A-Next3. contextual retrieval 후보 검토 (현재 active)
+1. existing `h2/h3/h4` metadata를 활용한 contextual packing 후보를 가장 작은 단위로 검토한다.
+2. same-section 문맥 보강이 reindex 없이 가능한지부터 확인한다.
+3. hybrid + coverage 기본 경로보다 나은 점이 있는지, 아니면 왜 기각하는지를 `generic-baseline` 기준으로 고정한다.
+
+완료 기준:
+- contextual retrieval 후보의 채택/기각 근거가 `generic-baseline` gate와 함께 정리된다.
+- 현재 hybrid + coverage 경로보다 나은 점이 있는지, 혹은 왜 기각하는지가 테스트/문서 기준으로 고정된다.
+- 기존 기본 경로의 verified local gate를 흐리지 않는 선에서만 실험한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_query_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_check_ops_baseline_gate.py`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-05):
+- `docs/reports/GENERIC_RAG_REFOCUS_REVIEW_2026-04-04.md`의 Quality Upgrade 우선순위에서 hybrid search와 rerank 후보를 먼저 정리했고, 남은 다음 top-level 후보는 contextual retrieval이다.
+- 현재 기준 기본 경로는 `mmr+light_hybrid+lexical_boost+coverage_rerank`이며, `generic-baseline` full gate는 `ready=true`, `pass_rate=1.0`, `avg_latency_ms=4329.476`, `p95_latency_ms=4411.131`, `avg_weighted_score=0.92`다.
+- 첫 구현 단위는 기존 chunk metadata(`source`, `h2`, `h3`, `h4`)만으로 same-section 문맥을 더 묶어 보여 줄 수 있는지 확인하고, 인접 문맥 보강이 reindex 없이 가능한지부터 좁혀 보는 것이다.
+- 이 단계에서 새로운 인덱스 스키마나 heavy retrieval stack은 도입하지 않는다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

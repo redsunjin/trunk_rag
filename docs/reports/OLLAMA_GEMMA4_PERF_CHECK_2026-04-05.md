@@ -118,4 +118,5 @@
 - `qwen3.5:4b-nvfp4`는 더 작고 더 빨랐지만, 이번 세션에서는 `GQ-21` 길이 부족 때문에 `2/3 pass`였다.
 - 현재 판단은 "`gemma4:e4b`는 verified local default", "`qwen3.5:4b-nvfp4`는 latency 우선 experimental fallback" 쪽이다.
 - 현재 coverage rerank 후보는 같은 `generic-baseline`에서 `GQ-21` score를 `0.88 -> 0.92`로 높였고, fresh gate 기준 `avg_latency_ms`와 `p95_latency_ms`도 모두 낮췄다.
-- 다음 작업은 `LOOP-009` closeout review를 수행해 hybrid + coverage rerank 조합을 기본 경로로 확정할지 정리하고, 필요하면 다음 후보를 `contextual retrieval`로 넘기는 것이다.
+- `2026-04-05` closeout review 기준으로 현재 기본 경로는 `mmr+light_hybrid+lexical_boost+coverage_rerank` 조합으로 유지한다.
+- 다음 작업은 `LOOP-010` 기준으로 existing chunk metadata만으로 적용 가능한 contextual retrieval 후보를 검토하는 것이다.

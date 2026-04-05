@@ -38,7 +38,8 @@
 | LOOP-001 | done | 배포형 웹 MVP 게이트 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434` |
 | LOOP-007 | done | 범용 RAG 전환 정리 | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_index_service.py tests/api/test_upload_api.py tests/test_query_service.py tests/api/test_query_api.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-008 | done | 경량 retrieval 품질 보정 | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_query_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_check_ops_baseline_gate.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-009 | active | 경량 hybrid retrieval 후보 검증 | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_query_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_check_ops_baseline_gate.py` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-009 | done | 경량 hybrid retrieval 후보 검증 | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_query_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_check_ops_baseline_gate.py` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-010 | active | contextual retrieval 후보 검토 | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_query_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_check_ops_baseline_gate.py` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -214,7 +215,7 @@ LOOP-007 범위 메모 (2026-04-04 초안):
 - 현재 권장 판단은 `gemma4:e4b`를 verified local default로 유지하고, `qwen3.5:4b-nvfp4`는 latency 우선 experimental fallback으로만 두는 것이다.
 - 같은 날짜 closeout review에서는 경량 lexical boost 채택, reasoning leakage 보강, `gemma4:e4b` verified default 승격이 모두 완료 기준을 충족한다고 판단해 `LOOP-008`을 `done`으로 닫았다.
 
-## 현재 Active Loop (LOOP-009)
+## 완료 Loop (LOOP-009)
 
 목표:
 - `generic-baseline` 품질을 유지한 채 dense MMR 결과에 소량 lexical candidate를 합류시키는 경량 hybrid retrieval 후보의 채택 가치를 검증한다.
@@ -247,7 +248,32 @@ LOOP-007 범위 메모 (2026-04-04 초안):
 - debug 응답 기준 `GQ-21` 타입 질의는 `retrieval_strategy=mmr+light_hybrid+lexical_boost+coverage_rerank`, top sources `fr -> ge -> fr ...`, `coverage_rerank_collection_count=2`로 바뀌었다.
 - rerank candidate 비교 gate는 `ready=true`, `pass_rate=1.0`, `avg_latency_ms=4329.476`, `p95_latency_ms=4411.131`, `avg_weighted_score=0.92`로 이전 hybrid baseline보다 score와 latency가 모두 좋아졌다.
 - `GQ-21` answer-level score도 `0.88 -> 0.92`로 올라 multi-collection context packing 문제가 실제로 줄어든 것으로 본다.
-- 다음 구현 단위는 `LOOP-009` closeout review를 수행해 hybrid + coverage rerank 조합을 현재 기본 경로로 유지할지 확정하고, 필요하면 다음 top-level loop를 `contextual retrieval` 후보 검토로 승격하는 것이다.
+- 같은 날짜 closeout review에서는 light hybrid merge, scan cost trace, multi-collection coverage rerank가 모두 완료 기준을 충족한다고 판단했고, 현재 기본 경로는 `mmr+light_hybrid+lexical_boost+coverage_rerank` 조합으로 유지한다.
+
+## 현재 Active Loop (LOOP-010)
+
+목표:
+- 현재 hybrid + coverage rerank 경로 위에서, reindex 강제나 무거운 새 스택 없이 적용 가능한 contextual retrieval 후보가 실제 채택 가치가 있는지 검토한다.
+
+범위:
+- 포함: existing `h2/h3/h4` metadata를 활용한 contextual packing 후보, same-section 문맥 보강 가능성 점검, gate 영향 측정, 채택/기각 근거 문서화
+- 제외: cross-encoder, multi-vector, GraphRAG 재개, 대규모 인덱스 스키마 교체, 강제 전체 reindex
+
+완료 기준:
+- contextual retrieval 후보의 채택/기각 근거가 `generic-baseline` gate와 함께 정리된다.
+- 현재 hybrid + coverage 경로보다 나은 점이 있는지, 혹은 왜 기각하는지가 테스트/문서 기준으로 고정된다.
+- 기존 기본 경로의 verified local gate를 흐리지 않는 선에서만 실험한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_query_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_check_ops_baseline_gate.py`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-05):
+- `docs/reports/GENERIC_RAG_REFOCUS_REVIEW_2026-04-04.md`의 Quality Upgrade 우선순위에서 hybrid search와 rerank 후보를 먼저 정리했고, 남은 다음 top-level 후보는 contextual retrieval이다.
+- 현재 기준 기본 경로는 `mmr+light_hybrid+lexical_boost+coverage_rerank`이며, `generic-baseline` full gate는 `ready=true`, `pass_rate=1.0`, `avg_latency_ms=4329.476`, `p95_latency_ms=4411.131`, `avg_weighted_score=0.92`다.
+- 첫 구현 단위는 기존 chunk metadata(`source`, `h2`, `h3`, `h4`)만으로 same-section 문맥을 더 묶어 보여 줄 수 있는지 확인하고, 인접 문맥 보강이 reindex 없이 가능한지부터 좁혀 보는 것이다.
+- 이 단계에서 새로운 인덱스 스키마나 heavy retrieval stack은 도입하지 않는다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
