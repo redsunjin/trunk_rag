@@ -77,6 +77,61 @@ ANSWER_LABEL_PATTERNS = [
     re.compile(r"(?im)^\s*1\)\s*핵심 답변\s*:\s*"),
     re.compile(r"(?im)^\s*2\)\s*근거\s*:\s*"),
 ]
+LEXICAL_TOKEN_PATTERN = re.compile(r"[0-9A-Za-z가-힣]+")
+KOREAN_PARTICLE_SUFFIXES = (
+    "으로부터",
+    "에게서는",
+    "이라고",
+    "라면",
+    "으로는",
+    "에서는",
+    "에게서",
+    "했다면",
+    "했는지",
+    "있는지",
+    "는지",
+    "인지",
+    "으로",
+    "에서",
+    "에게",
+    "부터",
+    "까지",
+    "처럼",
+    "보다",
+    "이다",
+    "와",
+    "과",
+    "의",
+    "은",
+    "는",
+    "이",
+    "가",
+    "을",
+    "를",
+    "에",
+    "로",
+    "도",
+    "만",
+)
+LEXICAL_STOPWORDS = {
+    "문서",
+    "기준",
+    "설명",
+    "설명해줘",
+    "요약",
+    "요약해줘",
+    "정리",
+    "정리해줘",
+    "무엇",
+    "어떻게",
+    "어떤",
+    "당시",
+    "관련",
+    "해주세요",
+    "해줘",
+}
+RETRIEVAL_STRATEGY_MMR = "mmr"
+RETRIEVAL_STRATEGY_MMR_WITH_LEXICAL = "mmr+light_lexical_boost"
 
 
 def normalize_query_profile(query_profile: str | None) -> str:
@@ -141,6 +196,112 @@ def normalize_answer_whitespace(answer: str) -> str:
     if len(paragraphs) > 1 and paragraphs[-1] == INSUFFICIENT_ANSWER_TEXT:
         paragraphs = paragraphs[:-1]
     return "\n\n".join(paragraphs).strip()
+
+
+def normalize_lexical_token(token: str) -> str:
+    normalized = token.strip().lower()
+    if not normalized:
+        return ""
+
+    for suffix in KOREAN_PARTICLE_SUFFIXES:
+        if not normalized.endswith(suffix):
+            continue
+        if len(normalized) - len(suffix) < 2:
+            continue
+        normalized = normalized[: -len(suffix)]
+        break
+    return normalized.strip()
+
+
+def extract_lexical_query_terms(question: str) -> list[str]:
+    terms: list[str] = []
+    for raw_token in LEXICAL_TOKEN_PATTERN.findall(question.lower()):
+        token = normalize_lexical_token(raw_token)
+        if not token:
+            continue
+        if token in LEXICAL_STOPWORDS:
+            continue
+        if len(token) < 2 and not token.isdigit():
+            continue
+        terms.append(token)
+    return list(dict.fromkeys(terms))
+
+
+def _score_doc_lexical_match(doc: Document, query_terms: list[str]) -> tuple[float, list[str]]:
+    if not query_terms:
+        return 0.0, []
+
+    metadata_text = " ".join(
+        [
+            str(doc.metadata.get("source", "")),
+            str(doc.metadata.get("h1", "")),
+            str(doc.metadata.get("h2", "")),
+            str(doc.metadata.get("h3", "")),
+        ]
+    ).lower()
+    page_text = str(doc.page_content or "").lower()
+
+    metadata_hits: set[str] = set()
+    content_hits: set[str] = set()
+    for term in query_terms:
+        if term in metadata_text:
+            metadata_hits.add(term)
+        if term in page_text:
+            content_hits.add(term)
+
+    total_hits = metadata_hits | content_hits
+    if not total_hits:
+        return 0.0, []
+
+    score = float(len(metadata_hits) * 2 + len(content_hits))
+    return score, sorted(total_hits)
+
+
+def rerank_docs_with_light_lexical_boost(
+    docs: list[Document],
+    question: str,
+) -> tuple[list[Document], dict[str, object]]:
+    query_terms = extract_lexical_query_terms(question)
+    if len(docs) < 2 or not query_terms:
+        return docs, {
+            "strategy": RETRIEVAL_STRATEGY_MMR,
+            "query_terms": query_terms,
+            "applied": False,
+        }
+
+    ranked_items: list[dict[str, object]] = []
+    has_non_zero_score = False
+    for index, doc in enumerate(docs):
+        score, matched_terms = _score_doc_lexical_match(doc, query_terms)
+        if score > 0:
+            has_non_zero_score = True
+        ranked_items.append(
+            {
+                "doc": doc,
+                "score": score,
+                "matched_terms": matched_terms,
+                "index": index,
+            }
+        )
+
+    if not has_non_zero_score:
+        return docs, {
+            "strategy": RETRIEVAL_STRATEGY_MMR,
+            "query_terms": query_terms,
+            "applied": False,
+        }
+
+    ordered_items = sorted(
+        ranked_items,
+        key=lambda item: (-float(item["score"]), int(item["index"])),
+    )
+    reordered_docs = [item["doc"] for item in ordered_items]
+    applied = any(int(item["index"]) != current_index for current_index, item in enumerate(ordered_items))
+    return reordered_docs, {
+        "strategy": RETRIEVAL_STRATEGY_MMR_WITH_LEXICAL if applied else RETRIEVAL_STRATEGY_MMR,
+        "query_terms": query_terms,
+        "applied": applied,
+    }
 
 
 def topic_particle(value: str) -> str:
@@ -265,6 +426,8 @@ def build_collection_context(
     docs: list[Document] = []
     fingerprints: set[str] = set()
     collection_stats: list[dict[str, Any]] = []
+    lexical_query_terms = extract_lexical_query_terms(question)
+    lexical_boost_applied = False
     per_collection_k = int(budget.get("per_collection_k", SEARCH_K)) if budget else SEARCH_K
     per_collection_fetch_k = int(budget.get("per_collection_fetch_k", SEARCH_FETCH_K)) if budget else SEARCH_FETCH_K
     max_total_docs = int(budget.get("max_total_docs", max(SEARCH_K * len(collection_keys), SEARCH_K))) if budget else max(
@@ -289,8 +452,11 @@ def build_collection_context(
             },
         )
         items = retriever.invoke(question)
+        reranked_items, lexical_info = rerank_docs_with_light_lexical_boost(items, question)
+        if bool(lexical_info.get("applied")):
+            lexical_boost_applied = True
         unique_before = len(docs)
-        for item in items:
+        for item in reranked_items:
             item.metadata.setdefault("collection_key", key)
             source = str(item.metadata.get("source", ""))
             h2 = str(item.metadata.get("h2", ""))
@@ -322,6 +488,11 @@ def build_collection_context(
                 "max_context_chars": max_context_chars,
                 "context_chars": len(context),
                 "budget_profile": None if budget is None else budget.get("profile"),
+                "retrieval_strategy": (
+                    RETRIEVAL_STRATEGY_MMR_WITH_LEXICAL if lexical_boost_applied else RETRIEVAL_STRATEGY_MMR
+                ),
+                "lexical_query_terms": lexical_query_terms,
+                "lexical_boost_applied": lexical_boost_applied,
                 "per_collection_k": per_collection_k,
                 "per_collection_fetch_k": per_collection_fetch_k,
                 "elapsed_ms": elapsed_ms,

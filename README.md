@@ -48,6 +48,7 @@
 - 현재: `/reindex`와 `build_index.py --reset` 기본 경로는 `all/eu/fr/ge/it/uk`를 함께 재생성한다
 - 현재: 본체 회귀 게이트는 `generic-baseline 3/3 pass` 기준으로 유지한다
 - 현재: `/query`는 runtime profile 기반 query budget(`single/multi`, `verified/experimental/not_recommended`)을 내부 정책으로 적용한다
+- 현재: `/query` context build는 MMR retrieval 뒤에 경량 lexical boost를 적용해 문서 순서를 한 번 더 보정한다
 - 현재: `/health`는 `runtime_query_budget_*`, `embedding_fingerprint_*` 상태를 노출해 경량 경로와 인덱스 호환 상태를 먼저 보여 준다
 - 현재: reindex 시 컬렉션별 embedding fingerprint를 저장하고, `/query`는 mismatch를 invoke 전에 먼저 차단한다
 - 다음 우선순위(P2/P3): 배포형 웹 MVP 기준 설치/실행/복구 경로를 고정하고, 기본 `/query` 회귀 게이트를 릴리즈 체크리스트로 유지

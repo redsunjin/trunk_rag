@@ -199,6 +199,9 @@ closeout 메모:
 - `LOOP-007` closeout 이후 `LOOP-001`에서 후보로만 남겨 둔 lexical boost 계열 경량 검색 보정을 다음 active loop로 승격했다.
 - 이번 loop에서는 heavy rerank, multi-vector, GraphRAG 재개 없이 `generic-baseline` 중심 회귀 기준을 유지한다.
 - 역사 메모에 남아 있는 `ops-baseline` 표기는 유지하되, 현재 운영 기준은 `generic-baseline`으로 해석한다.
+- 같은 날짜 `services/query_service.py`에는 MMR retrieval 뒤에 문서 순서를 다시 정렬하는 경량 lexical boost를 추가했다.
+- 질문에서 추출한 lexical term은 한국어 조사/질문 wrapper를 일부 정리한 뒤 사용하고, `debug` trace에는 `retrieval_strategy`, `lexical_query_terms`, `lexical_boost_applied`를 남기도록 했다.
+- 1차 회귀는 `tests/test_query_service.py`, `tests/api/test_query_api.py`로 통과 확인했고, 다음 구현 단위는 이 보정이 `generic-baseline` fixture에 실제로 어떤 채택/기각 근거를 남기는지 평가 경로까지 연결하는 것이다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

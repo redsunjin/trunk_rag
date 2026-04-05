@@ -200,6 +200,9 @@ LOOP-007 범위 메모 (2026-04-04 초안):
 - `LOOP-007` closeout 이후 후속 후보였던 "lexical boost 같은 검색 보정"을 현재 active loop로 승격했다.
 - 이번 loop의 기본 원칙은 `generic-baseline` 중심이며, sample-pack 전용 최적화나 역사적 `ops-baseline` 규칙을 본체 경로에 되돌리지 않는 것이다.
 - 구현 전 1차 판단 기준은 "경량 보정이 실제 품질 문제를 해결하는가"와 "범용화한 본체 경계를 다시 흐리지 않는가"다.
+- 같은 날짜 `services/query_service.py`에는 MMR retrieval 뒤에 문서 순서를 다시 정렬하는 경량 lexical boost를 추가했다.
+- 질문에서 추출한 lexical term은 한국어 조사/질문 wrapper를 일부 정리한 뒤 사용하고, `debug` trace에는 `retrieval_strategy`, `lexical_query_terms`, `lexical_boost_applied`를 남기도록 했다.
+- 관련 회귀는 `tests/test_query_service.py`, `tests/api/test_query_api.py` 기준으로 먼저 통과시켰다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

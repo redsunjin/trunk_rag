@@ -150,6 +150,40 @@ def test_get_prompt_template_supports_sample_pack_profile(monkeypatch):
     assert "유럽 과학사 질의응답 어시스턴트" in messages[0].content
 
 
+def test_extract_lexical_query_terms_filters_wrapper_terms_and_particles():
+    terms = query_service.extract_lexical_query_terms(
+        "문서 기준으로 에콜 폴리테크니크가 어떤 방식으로 과학 인재를 길렀는지 요약해줘."
+    )
+
+    assert "문서" not in terms
+    assert "기준" not in terms
+    assert "요약해줘" not in terms
+    assert "에콜" in terms
+    assert "폴리테크니크" in terms
+    assert "방식" in terms
+    assert "인재" in terms
+
+
+def test_rerank_docs_with_light_lexical_boost_prioritizes_matching_doc():
+    docs = [
+        Document(page_content="일반 소개 문단", metadata={"source": "all.md", "h2": "개요"}),
+        Document(
+            page_content="에콜 폴리테크니크는 프랑스에서 과학 인재를 길러낸 핵심 기관이다.",
+            metadata={"source": "fr.md", "h2": "에콜 폴리테크니크"},
+        ),
+    ]
+
+    reranked, info = query_service.rerank_docs_with_light_lexical_boost(
+        docs,
+        "문서 기준으로 에콜 폴리테크니크가 어떤 방식으로 과학 인재를 길렀는지 요약해줘.",
+    )
+
+    assert reranked[0].metadata["source"] == "fr.md"
+    assert info["applied"] is True
+    assert info["strategy"] == query_service.RETRIEVAL_STRATEGY_MMR_WITH_LEXICAL
+    assert "에콜" in info["query_terms"]
+
+
 def test_build_collection_context_populates_trace(monkeypatch):
     class DummyRetriever:
         def invoke(self, question):
@@ -175,6 +209,9 @@ def test_build_collection_context_populates_trace(monkeypatch):
     assert trace["docs_total"] == 2
     assert trace["max_docs"] >= 1
     assert trace["context_chars"] == len(context)
+    assert trace["retrieval_strategy"] == query_service.RETRIEVAL_STRATEGY_MMR
+    assert trace["lexical_boost_applied"] is False
+    assert trace["lexical_query_terms"] == ["테스트", "질문"]
     assert trace["elapsed_ms"] >= 0
     assert trace["collection_stats"] == [
         {
@@ -184,6 +221,34 @@ def test_build_collection_context_populates_trace(monkeypatch):
             "elapsed_ms": trace["collection_stats"][0]["elapsed_ms"],
         }
     ]
+
+
+def test_build_collection_context_applies_light_lexical_boost(monkeypatch):
+    class DummyRetriever:
+        def invoke(self, question):
+            assert question == "에콜 폴리테크니크 과학 인재"
+            return [
+                Document(page_content="일반 개요", metadata={"source": "all.md", "h2": "개요"}),
+                Document(
+                    page_content="에콜 폴리테크니크는 프랑스 과학 인재 양성 기관이다.",
+                    metadata={"source": "fr.md", "h2": "기관"},
+                ),
+            ]
+
+    class DummyDB:
+        def as_retriever(self, **kwargs):
+            return DummyRetriever()
+
+    monkeypatch.setattr(query_service.index_service, "get_db", lambda key: DummyDB())
+    monkeypatch.setattr(query_service.runtime_service, "get_max_context_chars", lambda: 200)
+
+    trace: dict[str, object] = {}
+    context = query_service.build_collection_context("에콜 폴리테크니크 과학 인재", ["fr"], trace=trace)
+
+    assert context.startswith("[1] source=fr.md")
+    assert trace["retrieval_strategy"] == query_service.RETRIEVAL_STRATEGY_MMR_WITH_LEXICAL
+    assert trace["lexical_boost_applied"] is True
+    assert "에콜" in trace["lexical_query_terms"]
 
 
 def test_invoke_query_chain_populates_trace():

@@ -40,6 +40,7 @@
 - `/health` 기반 runtime query budget profile/summary 노출
 - 최신 `ops-baseline` 상태 조회(`/ops-baseline/latest`) + intro/app 카드 노출
 - `/query` debug 메타의 citation/support label 노출
+- `/query` context build의 경량 lexical rerank 적용
 - 컬렉션별 embedding fingerprint 저장 및 `/health`/preflight 선검사
 - 기본 모드 UI에서 고급 LLM 설정 기본 숨김
 - 빈 인덱스/LLM 연결 오류에 대한 가이드 메시지
@@ -87,7 +88,8 @@
 - Markdown 문서 로딩
 - 헤더 기준 분할 + 모드별 분할(`char`/`token`)
 - 임베딩 생성(`BAAI/bge-m3`)
-- Chroma 인덱싱/조회
+- Chroma 인덱싱/조회 + MMR 기반 retrieval
+- 경량 lexical boost로 context 문서 순서 재조정
 - graph snapshot 기반 entity/relation 추출 PoC(아카이브)
 
 ### 품질/검증
