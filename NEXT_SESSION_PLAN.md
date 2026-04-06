@@ -29,8 +29,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-010`
-- current_active_title: `contextual retrieval 후보 검토`
+- current_active_id: `LOOP-011`
+- current_active_title: `sample-pack 기본 번들 분리`
 - current_version_track: `V1`
 - current_harness_mode: `v1_operating_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -244,10 +244,10 @@ closeout 메모:
 - `GQ-21` answer-level score도 `0.88 -> 0.92`로 올라 multi-collection context packing 문제가 실제로 줄어든 것으로 본다.
 - 같은 날짜 closeout review에서는 light hybrid merge, scan cost trace, multi-collection coverage rerank가 모두 완료 기준을 충족한다고 판단했고, 현재 기본 경로는 `mmr+light_hybrid+lexical_boost+coverage_rerank` 조합으로 유지한다.
 
-### A-Next3. contextual retrieval 후보 검토 (현재 active)
+### A-Next3. contextual retrieval 후보 검토 (완료: 2026-04-07)
 1. bundled runtime index 점검 결과 `all/eu/fr/ge/it/uk` 컬렉션의 현재 chunk metadata에는 비어 있지 않은 `h2/h3/h4`가 없어, same-section contextual packing을 "existing metadata만으로" 바로 붙이는 경로는 막혀 있다.
 2. fallback으로 같은 `source`의 인접 chunk 1개를 추가하는 source-adjacent contextual pack을 시험했지만, `generic-baseline` full gate가 `ready=false`, `pass_rate=0.6667`, `avg_latency_ms=5585.961`, `p95_latency_ms=8009.759`, `avg_weighted_score=0.8911`로 내려가 `GQ-21`이 `weighted_score=0.7534`로 실패해 기각했다.
-3. 다음 단위는 metadata retrofit/reindex를 이번 루프 범위에 포함할지 결정하거나, no-reindex 제약 아래서는 contextual retrieval 후보를 no-go로 닫을지 정리하는 것이다.
+3. `2026-04-07` closeout review에서는 no-reindex 제약 아래 채택 가능한 contextual retrieval 후보가 없다고 판단해 이 루프를 no-go로 닫고, 기본 경로는 계속 `mmr+light_hybrid+lexical_boost+coverage_rerank`로 유지하기로 했다.
 
 완료 기준:
 - contextual retrieval 후보의 채택/기각 근거가 `generic-baseline` gate와 함께 정리된다.
@@ -259,11 +259,32 @@ closeout 메모:
 - `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
-진행 메모 (2026-04-05):
+closeout 메모 (2026-04-07):
 - `docs/reports/GENERIC_RAG_REFOCUS_REVIEW_2026-04-04.md`의 Quality Upgrade 우선순위에서 hybrid search와 rerank 후보를 먼저 정리했고, 남은 다음 top-level 후보는 contextual retrieval이다.
 - 현재 기준 기본 경로는 `mmr+light_hybrid+lexical_boost+coverage_rerank`이며, `generic-baseline` full gate는 `ready=true`, `pass_rate=1.0`, `avg_latency_ms=4329.476`, `p95_latency_ms=4411.131`, `avg_weighted_score=0.92`다.
-- 첫 구현 단위는 기존 chunk metadata(`source`, `h2`, `h3`, `h4`)만으로 same-section 문맥을 더 묶어 보여 줄 수 있는지 확인하고, 인접 문맥 보강이 reindex 없이 가능한지부터 좁혀 보는 것이다.
-- 이 단계에서 새로운 인덱스 스키마나 heavy retrieval stack은 도입하지 않는다.
+- bundled runtime index를 직접 점검한 결과 `all/eu/fr/ge/it/uk` 컬렉션의 현재 chunk metadata에는 비어 있지 않은 `h2/h3/h4`가 하나도 없었다(`all=37`, `eu=9`, `fr/ge/it/uk=각 7` docs).
+- source-adjacent fallback은 full gate를 `ready=false`, `pass_rate=0.6667`, `avg_weighted_score=0.8911`로 악화시켜 `GQ-21`을 실패시켰고, 채택하지 않았다.
+- no-reindex 제약 아래서는 더 진행할 가치가 있는 contextual candidate가 없다고 판단해 `LOOP-010`은 no-go로 종료한다.
+
+### A-Next4. sample-pack 기본 번들 분리 (현재 active)
+1. 본체 기본 runtime/reindex 경로에서 `all/eu/fr/ge/it/uk` sample-pack 번들이 제품 기본값처럼 드러나는 지점을 정리한다.
+2. manifest, `/reindex`, `/health`, 운영 문서 기준으로 core runtime 기본 경로와 sample-pack 호환 번들 경계를 다시 맞춘다.
+3. sample-pack은 선택형 호환 번들로 남기되, generic runtime 설명과 충돌하지 않게 테스트/문서 기준을 고정한다.
+
+완료 기준:
+- 본체 기본 경로가 sample-pack 컬렉션 묶음을 제품 기본값처럼 전제하지 않도록 정리된다.
+- sample-pack은 여전히 검증 가능한 호환 번들로 남되, 선택형 경로라는 점이 테스트/문서에 반영된다.
+- generic runtime 설명과 sample-pack 운영 설명의 경계가 `TODO/NEXT/README/SPEC` 중 필요한 문서에 맞춰진다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_index_service.py tests/test_runtime_preflight.py tests/api/test_system_api.py tests/test_query_service.py tests/api/test_query_api.py tests/test_check_ops_baseline_gate.py`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-07):
+- `LOOP-010` closeout으로 retrieval quality 후보군의 다음 실험은 일단 멈추고, 현재 기본 경로 `mmr+light_hybrid+lexical_boost+coverage_rerank`를 유지한다.
+- 현재 남아 있는 가장 큰 범용화 결합은 본체 기본 runtime/reindex 경로가 여전히 `all/eu/fr/ge/it/uk` sample-pack 번들을 자연스러운 기본처럼 드러낸다는 점이다.
+- 첫 구현 단위는 manifest, `/reindex`, `/health`, 운영 문서에서 "본체 기본값"과 "sample-pack 호환 번들"이 섞여 있는 지점을 찾고, 필요한 최소 코드/문서 변경 범위를 좁히는 것이다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
