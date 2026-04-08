@@ -9,6 +9,8 @@ def test_collection_manifest_defaults_are_loaded():
     assert settings.DEFAULT_COLLECTION_KEY == "all"
     assert settings.COLLECTION_NAME == "w2_007_header_rag"
     assert settings.COLLECTION_CONFIGS["fr"]["name"] == "rag_science_history_fr"
+    assert settings.DEFAULT_RUNTIME_COLLECTION_KEYS == ["all"]
+    assert settings.COMPATIBILITY_BUNDLE_CONFIG["key"] == "sample_pack"
 
 
 def test_collection_defaults_come_from_manifest():
@@ -27,3 +29,8 @@ def test_seed_document_metadata_comes_from_manifest():
     assert metadata["country"] == "france"
     assert metadata["doc_type"] == "country"
     assert metadata["tags"] == ["sample-pack", "country:france"]
+
+
+def test_compatibility_bundle_keys_come_from_manifest():
+    assert collection_service.list_default_runtime_collection_keys() == ["all"]
+    assert collection_service.list_compatibility_collection_keys() == ["eu", "fr", "ge", "it", "uk"]

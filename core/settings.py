@@ -3,7 +3,13 @@ from __future__ import annotations
 import threading
 
 from common import default_data_dir, default_persist_dir
-from core.collection_manifest import COLLECTION_CONFIGS, COLLECTION_MANIFEST_PATH, DEFAULT_COLLECTION_KEY
+from core.collection_manifest import (
+    COLLECTION_CONFIGS,
+    COLLECTION_MANIFEST_PATH,
+    COMPATIBILITY_BUNDLE_CONFIG,
+    DEFAULT_COLLECTION_KEY,
+    DEFAULT_RUNTIME_COLLECTION_KEYS,
+)
 
 PERSIST_DIR = str(default_persist_dir())
 DATA_DIR = str(default_data_dir())

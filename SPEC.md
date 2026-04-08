@@ -153,7 +153,7 @@
 - `desktop/electron/README.md`: 데스크톱 런처 사용 가이드
 - `services/graphrag_poc_service.py`: GraphRAG snapshot/benchmark 보조 서비스
 - `scripts/eval_query_quality.py`: answer-level `/query` 품질 평가 하네스
-- `scripts/check_ops_baseline_gate.py`: runtime preflight + all-routes 벡터 상태 + `generic-baseline` 회귀 게이트/diagnostics 점검
+- `scripts/check_ops_baseline_gate.py`: runtime preflight + core 기본 컬렉션 상태 + `generic-baseline` 회귀 게이트/diagnostics 점검
 - `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩
 - `scripts/roadmap_harness.py`: 실행 큐 상태와 현재 active 항목 점검
 - `scripts/diagnose_ollama_runtime.py`: Ollama 직접 호출 기준 prompt/eval 처리량 진단
@@ -177,6 +177,11 @@
   "status": "ok",
   "collection_key": "all",
   "collection": "w2_007_header_rag",
+  "default_runtime_collection_keys": ["all"],
+  "compatibility_bundle_key": "sample_pack",
+  "compatibility_bundle_label": "sample-pack 호환 번들",
+  "compatibility_bundle_collection_keys": ["eu", "fr", "ge", "it", "uk"],
+  "compatibility_bundle_optional": true,
   "persist_dir": "C:/.../chroma_db",
   "vectors": 37,
   "auto_approve": false,
@@ -190,11 +195,14 @@
   "default_llm_base_url": "http://localhost:11434",
   "runtime_query_budget_profile": "verified_local_single",
   "runtime_query_budget_summary": "profile=verified_local_single | k=3 | fetch_k=10 | max_docs=3 | context=1500 | generation=standard | max_output_tokens=192",
-  "embedding_fingerprint_status": "ready"
+  "embedding_fingerprint_status": "ready",
+  "compatibility_bundle_embedding_fingerprint_status": "empty"
 }
 ```
 - 메인 UI 기본 모드는 `default_llm_*` 값을 자동 사용한다.
 - `vectors=0`이면 사용자가 질의하기 전에 `Reindex`를 먼저 실행하도록 안내한다.
+- `default_runtime_collection_keys`와 `compatibility_bundle_*`는 core 기본 경로와 sample-pack compatibility 범위를 함께 보여 준다.
+- `embedding_fingerprint_status`는 core 기본 컬렉션 기준이고, `compatibility_bundle_embedding_fingerprint_*`는 sample-pack compatibility bundle 상태를 따로 보여 준다.
 - `runtime_query_budget_*`는 현재 기본 런타임이 어떤 경량 query budget으로 동작하는지 보여 준다.
 - `embedding_fingerprint_status`가 `mismatch` 또는 `missing`이면 query 전에 reindex를 다시 실행하는 것이 기본 복구 경로다.
 
@@ -251,9 +259,12 @@
 ```json
 {
   "reset": true,
-  "collection": "all"
+  "collection": "all",
+  "include_compatibility_bundle": false
 }
 ```
+- `collection=all` + `include_compatibility_bundle=false`면 core 기본 컬렉션 `all`만 재생성한다.
+- sample-pack route 컬렉션까지 함께 맞추려면 `include_compatibility_bundle=true`를 사용한다.
 - 응답 예:
 ```json
 {
@@ -263,7 +274,8 @@
   "vectors": 37,
   "persist_dir": "C:/.../chroma_db",
   "collection": "w2_007_header_rag",
-  "collection_key": "all"
+  "collection_key": "all",
+  "reindex_scope": "default_runtime_only"
 }
 ```
 
@@ -482,6 +494,11 @@ copy .env.example .env
 cd <repo>
 .venv\Scripts\python.exe build_index.py --reset
 ```
+- sample-pack compatibility route까지 함께 재생성하려면:
+```powershell
+cd <repo>
+.venv\Scripts\python.exe build_index.py --reset --include-compatibility-bundle
+```
 - 서버 실행(권장):
 ```powershell
 cd <repo>
@@ -555,7 +572,7 @@ npm start
 ## 다음 진행 방향
 ### 1순위
 - MVP 기본 경로 품질 유지
-- 내용: `run_doc_rag.bat`를 배포형 웹 MVP 기준 단일 부트스트랩/실행 경로로 유지하고, `/reindex`와 `build_index.py --reset` 기본 경로가 all-routes를 함께 재생성하도록 유지하며, `generic-baseline`의 `3/3 pass` 상태를 본체 회귀 게이트로 유지한다.
+- 내용: `run_doc_rag.bat`를 배포형 웹 MVP 기준 단일 부트스트랩/실행 경로로 유지하고, `/reindex`와 `build_index.py --reset` 기본 경로는 core 컬렉션 `all` 중심으로 유지하며, sample-pack route는 compatibility opt-in으로 분리하고, `generic-baseline`의 `3/3 pass` 상태를 본체 회귀 게이트로 유지한다.
 
 ### 2순위
 - 보류 항목 유지

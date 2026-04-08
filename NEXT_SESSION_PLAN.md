@@ -29,8 +29,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-011`
-- current_active_title: `sample-pack 기본 번들 분리`
+- current_active_id: `LOOP-012`
+- current_active_title: `sample-pack 라우팅/프로파일 경계 정리`
 - current_version_track: `V1`
 - current_harness_mode: `v1_operating_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -266,7 +266,7 @@ closeout 메모 (2026-04-07):
 - source-adjacent fallback은 full gate를 `ready=false`, `pass_rate=0.6667`, `avg_weighted_score=0.8911`로 악화시켜 `GQ-21`을 실패시켰고, 채택하지 않았다.
 - no-reindex 제약 아래서는 더 진행할 가치가 있는 contextual candidate가 없다고 판단해 `LOOP-010`은 no-go로 종료한다.
 
-### A-Next4. sample-pack 기본 번들 분리 (현재 active)
+### A-Next4. sample-pack 기본 번들 분리 (완료: 2026-04-08)
 1. 본체 기본 runtime/reindex 경로에서 `all/eu/fr/ge/it/uk` sample-pack 번들이 제품 기본값처럼 드러나는 지점을 정리한다.
 2. manifest, `/reindex`, `/health`, 운영 문서 기준으로 core runtime 기본 경로와 sample-pack 호환 번들 경계를 다시 맞춘다.
 3. sample-pack은 선택형 호환 번들로 남기되, generic runtime 설명과 충돌하지 않게 테스트/문서 기준을 고정한다.
@@ -285,6 +285,32 @@ closeout 메모 (2026-04-07):
 - `LOOP-010` closeout으로 retrieval quality 후보군의 다음 실험은 일단 멈추고, 현재 기본 경로 `mmr+light_hybrid+lexical_boost+coverage_rerank`를 유지한다.
 - 현재 남아 있는 가장 큰 범용화 결합은 본체 기본 runtime/reindex 경로가 여전히 `all/eu/fr/ge/it/uk` sample-pack 번들을 자연스러운 기본처럼 드러낸다는 점이다.
 - 첫 구현 단위는 manifest, `/reindex`, `/health`, 운영 문서에서 "본체 기본값"과 "sample-pack 호환 번들"이 섞여 있는 지점을 찾고, 필요한 최소 코드/문서 변경 범위를 좁히는 것이다.
+
+closeout 메모 (2026-04-08):
+- manifest에 core 기본 runtime 컬렉션(`all`)과 sample-pack compatibility bundle(`eu/fr/ge/it/uk`) 메타데이터를 추가했다.
+- `/health`는 core 기본 경로와 sample-pack compatibility 범위를 따로 노출하고, core `embedding_fingerprint_status`와 compatibility bundle fingerprint 상태를 분리했다.
+- `/reindex`와 `build_index.py --reset` 기본 경로는 core 컬렉션 `all`만 재생성하고, sample-pack route는 `include_compatibility_bundle`/`--include-compatibility-bundle` opt-in으로만 함께 갱신한다.
+- `generic-baseline` fixture는 core `all` 컬렉션 기준으로 재정렬했고, sample-pack compare 질문은 `sample-pack-baseline`에 유지했다.
+- 검증은 `79 passed`(fixture/schema + target pytest), live `scripts/check_ops_baseline_gate.py` `ready`, `scripts/roadmap_harness.py validate` `ready`까지 확인했다.
+
+### A-Next5. sample-pack 라우팅/프로파일 경계 정리 (현재 active)
+1. 본체 기본 `/query` 경로에서 sample-pack 국가 키워드 라우팅과 `sample_pack` query profile 전제가 남아 있는 지점을 정리한다.
+2. core default query path와 sample-pack compatibility query path의 경계를 테스트/문서 기준까지 다시 맞춘다.
+3. sample-pack route/profile은 opt-in 호환 경로로 남기되, generic 기본 설명과 충돌하지 않게 유지한다.
+
+완료 기준:
+- core 기본 `/query` 경로가 sample-pack route/profile을 제품 기본값처럼 전제하지 않도록 정리된다.
+- sample-pack route/profile은 여전히 호환 가능한 opt-in 경로로 남고, 테스트/문서에 그 경계가 반영된다.
+- `generic-baseline`과 `sample-pack-baseline`의 역할 차이가 query path 설명과 검증 기준에 맞춰진다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_answer_level_eval_fixtures.py tests/test_eval_query_quality.py tests/test_collection_service.py tests/test_index_service.py tests/test_runtime_preflight.py tests/api/test_system_api.py tests/test_query_service.py tests/api/test_query_api.py tests/test_check_ops_baseline_gate.py`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-08):
+- `LOOP-011` closeout으로 core 기본 reindex/gate는 `all` 중심으로 분리됐지만, 기본 질의 경로에는 여전히 sample-pack 국가 키워드 라우팅과 query profile 경계가 남아 있다.
+- 다음 구현 단위는 core default `/query`가 sample-pack compatibility route/profile을 암묵 기본처럼 보이지 않게 만드는 최소 코드/문서 변경을 찾는 것이다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

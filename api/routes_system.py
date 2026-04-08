@@ -60,6 +60,9 @@ def _ops_baseline_payload(
 @router.get("/health")
 def health() -> dict[str, object]:
     default_collection = collection_service.get_collection_name(DEFAULT_COLLECTION_KEY)
+    default_runtime_collection_keys = collection_service.list_default_runtime_collection_keys()
+    compatibility_bundle = collection_service.get_compatibility_bundle_config()
+    compatibility_bundle_keys = list(compatibility_bundle.get("collection_keys", []))
     pending_count = len(upload_service.list_upload_requests(status=REQUEST_STATUS_PENDING))
     chunking = runtime_service.get_chunking_config()
     default_llm = runtime_service.get_default_llm_config()
@@ -72,7 +75,8 @@ def health() -> dict[str, object]:
         collection_count=1,
         route_reason="default",
     )
-    embedding_status = index_service.get_embedding_fingerprint_status()
+    embedding_status = index_service.get_embedding_fingerprint_status(default_runtime_collection_keys)
+    compatibility_embedding_status = index_service.get_embedding_fingerprint_status(compatibility_bundle_keys)
     release_web = runtime_service.build_release_web_guidance(
         vectors=vectors,
         default_llm_provider=str(default_llm["provider"] or "ollama"),
@@ -85,6 +89,11 @@ def health() -> dict[str, object]:
         "status": "ok",
         "collection_key": DEFAULT_COLLECTION_KEY,
         "collection": default_collection,
+        "default_runtime_collection_keys": default_runtime_collection_keys,
+        "compatibility_bundle_key": compatibility_bundle["key"],
+        "compatibility_bundle_label": compatibility_bundle["label"],
+        "compatibility_bundle_collection_keys": compatibility_bundle["collection_keys"],
+        "compatibility_bundle_optional": compatibility_bundle["optional"],
         "persist_dir": PERSIST_DIR,
         "vectors": vectors,
         "auto_approve": runtime_service.is_auto_approve_enabled(),
@@ -105,6 +114,9 @@ def health() -> dict[str, object]:
         "embedding_fingerprint_status": embedding_status["status"],
         "embedding_fingerprint_message": embedding_status["message"],
         "embedding_fingerprint_details": embedding_status["items"],
+        "compatibility_bundle_embedding_fingerprint_status": compatibility_embedding_status["status"],
+        "compatibility_bundle_embedding_fingerprint_message": compatibility_embedding_status["message"],
+        "compatibility_bundle_embedding_fingerprint_details": compatibility_embedding_status["items"],
         "release_web_status": release_web["status"],
         "release_web_headline": release_web["headline"],
         "release_web_steps": release_web["steps"],
@@ -209,7 +221,11 @@ def reindex_endpoint(req: ReindexRequest) -> dict[str, object]:
             status_code=400,
             detail=f"Unsupported collection. Use one of: {supported}",
         ) from exc
-    return index_service.reindex(reset=req.reset, collection_key=collection_key)
+    return index_service.reindex(
+        reset=req.reset,
+        collection_key=collection_key,
+        include_compatibility_bundle=req.include_compatibility_bundle,
+    )
 
 
 @router.post("/admin/auth")

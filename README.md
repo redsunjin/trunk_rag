@@ -45,7 +45,7 @@
 - 현재: `generic-baseline`/`sample-pack-baseline`/`graph-candidate`로 answer-level 평가 버킷을 분리했다
 - 현재: 업로드 관리자 Slice 2 완료(`pending` 기본 필터, update 강조, active 문서 미리보기, reject reason code/decision_note)
 - 아카이브: GraphRAG 관련 질문셋/계약/PoC/판단 문서는 `docs/GRAPH_RAG_ARCHIVE_INDEX.md` 기준으로만 유지한다
-- 현재: `/reindex`와 `build_index.py --reset` 기본 경로는 `all/eu/fr/ge/it/uk`를 함께 재생성한다
+- 현재: `/reindex`와 `build_index.py --reset` 기본 경로는 core 기본 컬렉션 `all`만 재생성하고, sample-pack route 컬렉션은 compatibility bundle opt-in으로 분리했다
 - 현재: 본체 회귀 게이트는 `generic-baseline 3/3 pass` 기준으로 유지한다
 - 현재: `/query`는 runtime profile 기반 query budget(`single/multi`, `verified/experimental/not_recommended`)을 내부 정책으로 적용한다
 - 현재: `/query` context build는 MMR retrieval 뒤에 collection pool에서 lexical match가 강한 문서를 최대 2개까지 보강하고, 이어서 경량 lexical boost와 multi-collection coverage rerank로 문서 순서를 한 번 더 보정한다
@@ -78,7 +78,7 @@
 - `scripts/benchmark_token_chunking.py`: char/token 청킹 비교 벤치 스크립트
 - `scripts/benchmark_query_e2e.py`: `/query` E2E p95 벤치 스크립트
 - `scripts/eval_query_quality.py`: answer-level `/query` 품질 평가 스크립트
-- `scripts/check_ops_baseline_gate.py`: all-routes 벡터 상태와 `generic-baseline` 회귀 게이트를 한 번에 점검하는 스크립트
+- `scripts/check_ops_baseline_gate.py`: core 기본 컬렉션 상태와 `generic-baseline` 회귀 게이트를 한 번에 점검하는 스크립트
 - `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩 스크립트
 - `scripts/roadmap_harness.py`: `TODO.md`/`NEXT_SESSION_PLAN.md`의 루프 상태와 active 항목을 점검하는 스크립트
 - `scripts/runtime_preflight.py`: P1 벤치 전 런타임 준비 상태 점검
@@ -138,7 +138,8 @@ cd <repo>
 cd <repo>
 .venv\Scripts\python.exe build_index.py --reset
 ```
-   - 기본 `Reindex`와 `build_index.py --reset`은 이제 `all/eu/fr/ge/it/uk` 전체 라우트 컬렉션을 함께 갱신합니다.
+   - 기본 `Reindex`와 `build_index.py --reset`은 core 기본 컬렉션 `all`만 갱신합니다.
+   - sample-pack route 컬렉션까지 같이 맞추려면 `build_index.py --reset --include-compatibility-bundle` 또는 `POST /reindex`의 `include_compatibility_bundle=true`를 사용합니다.
 4. 선택형 데스크톱 런처를 쓰려면:
 ```powershell
 cd <repo>\desktop\electron
@@ -216,6 +217,7 @@ cd <repo>
 
 - 기본 fixture는 `evals/answer_level_eval_fixtures.jsonl`을 사용합니다.
 - 현재 fixture는 본체 기본 게이트용 `generic-baseline`, 샘플팩 호환성 확인용 `sample-pack-baseline`, 과거 판단 이력 보존용 `graph-candidate`를 포함합니다.
+- `generic-baseline` fixture는 기본 `all` 컬렉션 하나만으로 통과하는 core runtime 기준을 사용합니다.
 - `sample-pack-baseline` fixture는 요청별 `query_profile=sample_pack`을 함께 보내 샘플팩 전용 프롬프트/후처리 호환성을 별도로 측정합니다.
 - 평가 항목은 `must_include`, `must_include_any`, `must_not_include`, 최소 답변 길이, 실제 route header를 기반으로 점수화됩니다.
 - 현재 `/query`는 최대 2개 컬렉션까지만 직접 선택 가능하므로, 3개 이상 컬렉션이 필요한 graph 질문은 vector baseline 평가 시 `collection=all`로 fallback 합니다.
@@ -237,10 +239,10 @@ cd <repo>
   --llm-base-url http://localhost:11434
 ```
 
-- 이 스크립트는 `all/eu/fr/ge/it/uk` 컬렉션의 벡터 존재 여부와 본체 기본 게이트인 `generic-baseline` `3/3 pass`를 함께 확인합니다.
-- 실행 순서는 `runtime_preflight -> all-routes collections -> generic-baseline eval`이며, 실패 시 `APP_HEALTH_UNREACHABLE`, `COLLECTIONS_CHECK_FAILED`, `OPS_EVAL_FAILED` 진단 코드를 함께 출력합니다.
+- 이 스크립트는 core 기본 컬렉션 `all`의 벡터 존재 여부와 본체 기본 게이트인 `generic-baseline` `3/3 pass`를 함께 확인합니다.
+- 실행 순서는 `runtime_preflight -> core collection readiness -> generic-baseline eval`이며, 실패 시 `APP_HEALTH_UNREACHABLE`, `COLLECTIONS_CHECK_FAILED`, `OPS_EVAL_FAILED` 진단 코드를 함께 출력합니다.
 - `runtime_preflight`는 이제 `/health`의 `runtime_profile_*`와 같은 기준으로 현재 모델을 `verified / experimental / not_recommended`로 판정합니다.
-- `/health`는 `runtime_query_budget_profile`, `runtime_query_budget_summary`, `embedding_fingerprint_status`도 함께 노출합니다.
+- `/health`는 `runtime_query_budget_profile`, `runtime_query_budget_summary`, core `embedding_fingerprint_status`, compatibility bundle fingerprint 상태도 함께 노출합니다.
 - `embedding_fingerprint_status=mismatch` 또는 `missing`이면 reindex 후 다시 게이트를 실행하는 것이 기본 복구 경로입니다.
 - `2026-03-21` 현재 로컬 검증에서는 앱 미기동 상태에서 `APP_HEALTH_UNREACHABLE`로 즉시 막히는 것을 확인했습니다.
 - 과거 `2026-03-21` 실측에서는 `env HF_HUB_OFFLINE=1 ./.venv/bin/python build_index.py --reset` 뒤 `ollama + llama3.1:8b` 게이트가 `3/3 pass`, `avg_weighted_score=0.9645`, `p95_latency_ms=13501.527`로 통과했습니다.
@@ -280,6 +282,7 @@ cd <repo>
 - `POST /upload-requests/{id}/reject`는 `reason_code`, `decision_note`를 함께 받을 수 있다.
 - `DOC_RAG_AUTO_APPROVE`는 `create` 요청에만 적용되고 `update` 요청은 항상 관리자 승인 경로를 사용한다.
 - GraphRAG는 기본 경로가 아니며, 관련 PoC/실측은 아카이브 상태로만 유지한다.
+- `POST /reindex`는 기본적으로 core 컬렉션 `all`만 재생성하며, sample-pack compatibility route까지 함께 갱신하려면 `include_compatibility_bundle=true`를 명시한다.
 
 `POST /reindex` 응답의 `validation`에는 기계 판독용 필드와 함께
 `summary_text`(예: `total=5, usable=5, rejected=0, warnings=0, usable_ratio=100.00%`)가 포함됩니다.
@@ -287,6 +290,7 @@ cd <repo>
 `GET /health` 응답에는 현재 적용 중인 `chunking_mode`(`char` 또는 `token`)와
 `embedding_model`, `query_timeout_seconds`, `max_context_chars`, `default_llm_provider`,
 `default_llm_model`, `default_llm_base_url`가 포함됩니다.
+또한 `default_runtime_collection_keys`, `compatibility_bundle_*` 필드로 core 기본 경로와 sample-pack compatibility 범위를 함께 보여 줍니다.
 브라우저 기본 모드는 이 값을 받아 권장 LLM 설정을 자동 적용하고,
 `고급 설정 펼치기`를 누른 경우에만 provider/model/base URL/API key를 직접 수정합니다.
 현재 기본 `max_context_chars`는 미설정 시 `1500`입니다.

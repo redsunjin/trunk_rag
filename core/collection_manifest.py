@@ -13,6 +13,13 @@ COLLECTION_MANIFEST_PATH = project_root() / "config" / "collection_manifest.json
 
 _FALLBACK_COLLECTION_MANIFEST: dict[str, Any] = {
     "default_collection_key": "all",
+    "default_runtime_collection_keys": ["all"],
+    "compatibility_bundle": {
+        "key": "sample_pack",
+        "label": "sample-pack 호환 번들",
+        "collection_keys": ["eu", "fr", "ge", "it", "uk"],
+        "optional": True,
+    },
     "seed_documents": {
         "eu_summry": {
             "file_name": "eu_summry.md",
@@ -253,7 +260,75 @@ def _normalize_collections(
     return normalized
 
 
-def _normalize_collection_manifest(payload: dict[str, Any]) -> tuple[str, dict[str, dict[str, object]], dict[str, dict[str, object]]]:
+def _normalize_manifest_collection_keys(
+    raw_keys: object,
+    *,
+    collection_keys: set[str],
+    field_name: str,
+    fallback: list[str],
+) -> list[str]:
+    normalized = _normalize_string_list(raw_keys)
+    if not normalized:
+        normalized = list(fallback)
+
+    items: list[str] = []
+    for value in normalized:
+        key = value.strip().lower()
+        if key not in collection_keys:
+            raise ValueError(f"{field_name} references unknown collection key `{value}`")
+        if key not in items:
+            items.append(key)
+
+    if not items:
+        raise ValueError(f"{field_name} requires at least one collection key")
+    return items
+
+
+def _normalize_bool(value: object, default: bool) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return default
+    return str(value).strip().lower() in {"1", "true", "yes", "on", "y"}
+
+
+def _normalize_compatibility_bundle(
+    raw_bundle: object,
+    *,
+    collection_keys: set[str],
+    fallback: dict[str, object],
+) -> dict[str, object]:
+    if not isinstance(raw_bundle, dict):
+        raw_bundle = {}
+
+    bundle_key = str(raw_bundle.get("key") or fallback.get("key") or "sample_pack").strip().lower() or "sample_pack"
+    label = str(raw_bundle.get("label") or fallback.get("label") or "sample-pack 호환 번들").strip()
+    if not label:
+        raise ValueError("compatibility_bundle requires label")
+
+    bundle_collection_keys = _normalize_manifest_collection_keys(
+        raw_bundle.get("collection_keys"),
+        collection_keys=collection_keys,
+        field_name="compatibility_bundle.collection_keys",
+        fallback=list(fallback.get("collection_keys", [])),
+    )
+    return {
+        "key": bundle_key,
+        "label": label,
+        "collection_keys": bundle_collection_keys,
+        "optional": _normalize_bool(raw_bundle.get("optional"), bool(fallback.get("optional", True))),
+    }
+
+
+def _normalize_collection_manifest(
+    payload: dict[str, Any],
+) -> tuple[
+    str,
+    dict[str, dict[str, object]],
+    dict[str, dict[str, object]],
+    list[str],
+    dict[str, object],
+]:
     fallback = _FALLBACK_COLLECTION_MANIFEST
     default_collection_key = str(payload.get("default_collection_key") or fallback["default_collection_key"]).strip().lower() or "all"
     raw_seed_documents = payload.get("seed_documents", fallback["seed_documents"])
@@ -264,10 +339,30 @@ def _normalize_collection_manifest(payload: dict[str, Any]) -> tuple[str, dict[s
         default_collection_key=default_collection_key,
         seed_documents=seed_documents,
     )
-    return default_collection_key, seed_documents, collections
+    collection_keys = set(collections.keys())
+    default_runtime_collection_keys = _normalize_manifest_collection_keys(
+        payload.get("default_runtime_collection_keys"),
+        collection_keys=collection_keys,
+        field_name="default_runtime_collection_keys",
+        fallback=list(fallback.get("default_runtime_collection_keys", [default_collection_key])),
+    )
+    compatibility_bundle = _normalize_compatibility_bundle(
+        payload.get("compatibility_bundle"),
+        collection_keys=collection_keys,
+        fallback=dict(fallback.get("compatibility_bundle", {})),
+    )
+    return default_collection_key, seed_documents, collections, default_runtime_collection_keys, compatibility_bundle
 
 
-def _load_collection_manifest(path: Path) -> tuple[str, dict[str, dict[str, object]], dict[str, dict[str, object]]]:
+def _load_collection_manifest(
+    path: Path,
+) -> tuple[
+    str,
+    dict[str, dict[str, object]],
+    dict[str, dict[str, object]],
+    list[str],
+    dict[str, object],
+]:
     if not path.exists():
         return _normalize_collection_manifest(_FALLBACK_COLLECTION_MANIFEST)
     payload = json.loads(path.read_text(encoding="utf-8"))
@@ -286,7 +381,13 @@ def _copy_metadata(metadata: dict[str, object]) -> dict[str, object]:
     return copied
 
 
-DEFAULT_COLLECTION_KEY, SEED_DOCUMENTS, COLLECTION_CONFIGS = _load_collection_manifest(COLLECTION_MANIFEST_PATH)
+(
+    DEFAULT_COLLECTION_KEY,
+    SEED_DOCUMENTS,
+    COLLECTION_CONFIGS,
+    DEFAULT_RUNTIME_COLLECTION_KEYS,
+    COMPATIBILITY_BUNDLE_CONFIG,
+) = _load_collection_manifest(COLLECTION_MANIFEST_PATH)
 DEFAULT_FILE_NAMES = list(COLLECTION_CONFIGS[DEFAULT_COLLECTION_KEY]["file_names"])
 COUNTRY_BY_STEM = {
     Path(str(item["file_name"])).stem.lower(): str(item.get("metadata", {}).get("country", "unknown"))

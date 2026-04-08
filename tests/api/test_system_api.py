@@ -12,6 +12,9 @@ def test_health_returns_200(client):
     body = response.json()
     assert body["status"] == "ok"
     assert body["collection_key"] == "all"
+    assert body["default_runtime_collection_keys"] == ["all"]
+    assert body["compatibility_bundle_key"] == "sample_pack"
+    assert body["compatibility_bundle_optional"] is True
     assert "collection" in body
     assert "persist_dir" in body
     assert body["chunking_mode"] in {"char", "token"}
@@ -26,6 +29,7 @@ def test_health_returns_200(client):
     assert isinstance(body["runtime_query_budget_profile"], str)
     assert isinstance(body["runtime_query_budget_summary"], str)
     assert body["embedding_fingerprint_status"] in {"ready", "missing", "mismatch", "empty"}
+    assert body["compatibility_bundle_embedding_fingerprint_status"] in {"ready", "missing", "mismatch", "empty"}
 
 
 def test_collections_returns_200(client):
@@ -135,7 +139,7 @@ def test_reindex_returns_200_with_monkeypatch(client, monkeypatch):
     monkeypatch.setattr(
         routes_system.index_service,
         "reindex",
-        lambda reset=True, collection_key="all": {
+        lambda reset=True, collection_key="all", include_compatibility_bundle=False: {
             "docs": 5,
             "chunks": 37,
             "vectors": 37,

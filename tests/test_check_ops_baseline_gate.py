@@ -91,6 +91,6 @@ def test_build_gate_report_returns_blocked_when_eval_precondition_fails(monkeypa
 
     assert report["ready"] is False
     assert report["diagnostics"][0]["code"] == "OPS_EVAL_FAILED"
-    assert report["collections"]["missing_keys"] == ["uk"]
+    assert report["collections"]["missing_keys"] == []
     assert report["eval"]["summary"]["cases"] == 0
     assert report["eval"]["selected_buckets"] == ["generic-baseline"]

@@ -6,7 +6,9 @@ from core.settings import (
     COLLECTION_CONFIGS,
     COLLECTION_HARD_CAP,
     COLLECTION_SOFT_CAP,
+    COMPATIBILITY_BUNDLE_CONFIG,
     DEFAULT_COLLECTION_KEY,
+    DEFAULT_RUNTIME_COLLECTION_KEYS,
     MAX_QUERY_COLLECTIONS,
 )
 
@@ -129,6 +131,23 @@ def resolve_collection_keys_for_query(
 
 def list_collection_keys() -> list[str]:
     return list(COLLECTION_CONFIGS.keys())
+
+
+def list_default_runtime_collection_keys() -> list[str]:
+    return list(DEFAULT_RUNTIME_COLLECTION_KEYS)
+
+
+def get_compatibility_bundle_config() -> dict[str, object]:
+    return {
+        "key": str(COMPATIBILITY_BUNDLE_CONFIG.get("key", "sample_pack")),
+        "label": str(COMPATIBILITY_BUNDLE_CONFIG.get("label", "sample-pack 호환 번들")),
+        "collection_keys": list(COMPATIBILITY_BUNDLE_CONFIG.get("collection_keys", [])),
+        "optional": bool(COMPATIBILITY_BUNDLE_CONFIG.get("optional", True)),
+    }
+
+
+def list_compatibility_collection_keys() -> list[str]:
+    return list(get_compatibility_bundle_config().get("collection_keys", []))
 
 
 def get_collection_name(collection_key: str) -> str:

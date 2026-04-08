@@ -563,13 +563,30 @@ def index_documents_for_collection(
     }
 
 
-def reindex(reset: bool = True, collection_key: str = DEFAULT_COLLECTION_KEY) -> dict[str, object]:
-    return reindex_with_related(reset=reset, collection_key=collection_key)
+def reindex(
+    reset: bool = True,
+    collection_key: str = DEFAULT_COLLECTION_KEY,
+    *,
+    include_compatibility_bundle: bool = False,
+) -> dict[str, object]:
+    return reindex_with_related(
+        reset=reset,
+        collection_key=collection_key,
+        include_compatibility_bundle=include_compatibility_bundle,
+    )
 
 
-def expand_reindex_collection_keys(collection_key: str = DEFAULT_COLLECTION_KEY) -> list[str]:
+def expand_reindex_collection_keys(
+    collection_key: str = DEFAULT_COLLECTION_KEY,
+    *,
+    include_compatibility_bundle: bool = False,
+) -> list[str]:
     if collection_key == DEFAULT_COLLECTION_KEY:
-        return collection_service.list_collection_keys()
+        target_keys = collection_service.list_default_runtime_collection_keys()
+        if include_compatibility_bundle:
+            compatibility_keys = collection_service.list_compatibility_collection_keys()
+            target_keys = collection_service.dedupe_collection_keys(target_keys + compatibility_keys)
+        return target_keys
     return collection_service.dedupe_collection_keys([collection_key, DEFAULT_COLLECTION_KEY])
 
 
@@ -616,8 +633,16 @@ def reindex_single_collection(reset: bool = True, collection_key: str = DEFAULT_
     }
 
 
-def reindex_with_related(reset: bool = True, collection_key: str = DEFAULT_COLLECTION_KEY) -> dict[str, object]:
-    target_keys = expand_reindex_collection_keys(collection_key)
+def reindex_with_related(
+    reset: bool = True,
+    collection_key: str = DEFAULT_COLLECTION_KEY,
+    *,
+    include_compatibility_bundle: bool = False,
+) -> dict[str, object]:
+    target_keys = expand_reindex_collection_keys(
+        collection_key,
+        include_compatibility_bundle=include_compatibility_bundle,
+    )
     invalidate_runtime_state(target_keys)
     results: dict[str, dict[str, object]] = {}
     for key in target_keys:
@@ -626,7 +651,17 @@ def reindex_with_related(reset: bool = True, collection_key: str = DEFAULT_COLLE
     primary = dict(results[collection_key])
     primary["collections"] = results
     primary["related_collection_keys"] = target_keys
-    primary["reindex_scope"] = "all_routes" if collection_key == DEFAULT_COLLECTION_KEY else "selected_plus_default"
+    if collection_key == DEFAULT_COLLECTION_KEY:
+        primary["reindex_scope"] = (
+            "default_plus_compatibility_bundle" if include_compatibility_bundle else "default_runtime_only"
+        )
+        compatibility_bundle = collection_service.get_compatibility_bundle_config()
+        primary["compatibility_bundle"] = {
+            **compatibility_bundle,
+            "included": include_compatibility_bundle,
+        }
+    else:
+        primary["reindex_scope"] = "selected_plus_default"
     return primary
 
 

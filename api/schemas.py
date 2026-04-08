@@ -47,6 +47,7 @@ class QueryResponse(BaseModel):
 class ReindexRequest(BaseModel):
     reset: bool = True
     collection: str | None = None
+    include_compatibility_bundle: bool = False
 
 
 class AdminAuthRequest(BaseModel):

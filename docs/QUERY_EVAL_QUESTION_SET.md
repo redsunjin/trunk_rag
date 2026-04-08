@@ -24,14 +24,15 @@
 | GQ-09 | graph-candidate | `uk,ge,fr` | scientist -> event -> intellectual diffusion | 뉴턴의 국장, 볼테르의 충격, 프랑스/독일 계몽주의 확산이 어떤 연쇄로 이어졌는지 설명해줘. |
 | GQ-12 | graph-candidate | `ge` | lab -> people -> society -> industry | 마그누스 실험실에서 시작된 네트워크가 헬름홀츠, 지멘스, 독일 물리학회, 산업화로 어떻게 이어졌는지 설명해줘. |
 | GQ-15 | graph-candidate | `fr,ge,uk,it` | country -> institution -> scientist network | 에콜 폴리테크니크, 훔볼트 대학, 왕립학회, 파도바 대학을 한 관계망으로 놓고 각자의 역할을 설명해줘. |
-| GQ-19 | generic-baseline | `fr` | institution -> function summary | 문서 기준으로 에콜 폴리테크니크가 어떤 방식으로 과학 인재를 길렀는지 요약해줘. |
-| GQ-20 | generic-baseline | `uk` | event -> social meaning | 문서 기준으로 뉴턴의 국장이 당시 영국에서 과학의 위상을 어떻게 보여줬는지 설명해줘. |
-| GQ-21 | generic-baseline | `fr,ge` | institution -> training comparison | 문서 기준으로 에콜 폴리테크니크와 훔볼트 대학의 인재 육성 방식 차이를 정리해줘. |
+| GQ-19 | generic-baseline | `all` | institution -> function summary | 문서 기준으로 에콜 폴리테크니크가 어떤 방식으로 과학 인재를 길렀는지 요약해줘. |
+| GQ-20 | generic-baseline | `all` | event -> social meaning | 문서 기준으로 뉴턴의 국장이 당시 영국에서 과학의 위상을 어떻게 보여줬는지 설명해줘. |
+| GQ-21 | generic-baseline | `all` | country -> institution -> reconstruction | 문서 기준으로 독일이 교육과 과학을 국가 재건의 동력으로 삼은 방식을 정리해줘. |
 
 ## 분리 기준
 
 ### 본체 기본 게이트(`generic-baseline`)
 - 기본 `generic` query profile 그대로 통과해야 한다.
+- 기본 `all` 컬렉션 하나만으로도 통과해야 한다.
 - 특정 샘플팩 문구 보정 없이도 답변 품질을 유지해야 한다.
 - 운영 게이트와 `/ops-baseline/latest`는 이 버킷만 사용한다.
 

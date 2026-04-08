@@ -11,7 +11,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from common import load_project_env
-from core.settings import COLLECTION_CONFIGS
+from core.settings import DEFAULT_RUNTIME_COLLECTION_KEYS
 from scripts import eval_query_quality
 from scripts import runtime_preflight
 from services import runtime_service
@@ -19,6 +19,7 @@ from services import runtime_service
 DEFAULT_OUTPUT_JSON = Path("docs/reports/ops_baseline_gate_latest.json")
 DEFAULT_OUTPUT_REPORT = Path("docs/reports/OPS_BASELINE_GATE_LATEST.md")
 DEFAULT_GATE_BUCKETS = {"generic-baseline"}
+DEFAULT_GATE_COLLECTION_KEYS = list(DEFAULT_RUNTIME_COLLECTION_KEYS)
 
 
 def summarize_collection_vectors(
@@ -26,7 +27,7 @@ def summarize_collection_vectors(
     *,
     required_keys: list[str] | None = None,
 ) -> dict[str, object]:
-    required = required_keys or list(COLLECTION_CONFIGS.keys())
+    required = required_keys or list(DEFAULT_GATE_COLLECTION_KEYS)
     vector_counts = {
         str(item.get("key", "")).strip(): int(item.get("vectors", 0) or 0)
         for item in collections_payload.get("collections", [])
@@ -247,7 +248,7 @@ def build_markdown_report(report: dict[str, object]) -> str:
     lines.extend(
         [
             "",
-            "## All-Routes Collections",
+            "## Core Runtime Collections",
         ]
     )
     for item in collection_summary["items"]:
@@ -289,7 +290,7 @@ def write_outputs(report: dict[str, object], *, output_json: Path, output_report
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Check the generic-baseline regression gate and all-routes vector readiness."
+        description="Check the generic-baseline regression gate and core runtime vector readiness."
     )
     parser.add_argument("--base-url", type=str, default="http://127.0.0.1:8000")
     parser.add_argument("--timeout-seconds", type=int, default=45)
