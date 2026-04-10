@@ -128,6 +128,8 @@
 - public `/agent/*` API는 지금 열지 않는다.
 - `execution_trace` persistence는 redaction/storage/retention 정책이 생길 때까지 보류한다.
 - agent runtime 기본 allowlist는 read-only tool로 유지한다.
+- trace redaction 정책 초안은 `docs/reports/V1_5_TRACE_REDACTION_POLICY_2026-04-10.md`에 기록했다.
+- raw input, retrieved context, document content, local path, admin code, credential은 저장/노출 기본 대상에서 제외한다.
 
 ## Suggested Order
 1. `WP1` tool registry skeleton

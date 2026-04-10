@@ -97,6 +97,7 @@
 - `scripts/smoke_agent_runtime.py`: V1.5 internal agent runtime read-only 성공/write 차단 smoke 점검
 - `docs/reports/V1_5_AGENT_READY_RUNTIME_REVIEW_2026-04-10.md`: V1.5 WP1-WP4 통합 검토와 병합 준비 판단
 - `docs/reports/V1_5_FOLLOWUP_POLICY_2026-04-10.md`: V1.5 public API/trace persistence/allowlist 후속 정책 판단
+- `docs/reports/V1_5_TRACE_REDACTION_POLICY_2026-04-10.md`: V1.5 execution trace 저장/노출 전 redaction 정책 초안
 - `scripts/diagnose_ollama_runtime.py`: Ollama 직접 호출 기준 `eval_tokens_per_second`/wall time 진단 스크립트
 - `chroma_db/embedding_fingerprints.json`: 컬렉션별 임베딩 fingerprint 메타데이터
 - `run_doc_rag.bat`: 배포형 웹 MVP 기준 단일 부트스트랩/실행 엔트리포인트

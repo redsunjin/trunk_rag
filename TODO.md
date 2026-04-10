@@ -55,7 +55,8 @@
 | LOOP-022 | done | V1.5 브랜치 병합/사후 검증 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-023 | done | V1.5 후속 정책/공개 API 여부 정리 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-024 | done | V1.5 agent runtime smoke test 추가 | `./.venv/bin/python -m pytest -q tests/test_smoke_agent_runtime.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py` + `./.venv/bin/python scripts/smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-025 | active | V1.5 trace redaction policy draft | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-025 | done | V1.5 trace redaction policy draft | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-026 | active | V1.5 trace redaction function 구현 | `./.venv/bin/python -m pytest -q tests/test_tool_trace_service.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -730,7 +731,7 @@ closeout 메모 (2026-04-10):
 - 검증은 `14 passed`(smoke + agent runtime + middleware + trace), `scripts/smoke_agent_runtime.py` exit code `0`, `roadmap_harness.py validate` `ready`까지 확인했다.
 - closeout review에서는 public API 없이 내부 runtime smoke 경로가 충분히 확인 가능하다고 판단했고 다음 active loop는 `LOOP-025`로 승격했다.
 
-## 현재 Active Loop (LOOP-025)
+## 완료 Loop (LOOP-025)
 
 목표:
 - 향후 `execution_trace`를 저장하거나 외부로 노출하기 전에 필요한 redaction 정책 초안을 정리한다.
@@ -750,6 +751,36 @@ closeout 메모 (2026-04-10):
 
 진행 메모 (2026-04-10):
 - `LOOP-024` closeout commit 후 trace persistence 전제 조건인 redaction 정책을 먼저 정리한다.
+
+closeout 메모 (2026-04-10):
+- `docs/reports/V1_5_TRACE_REDACTION_POLICY_2026-04-10.md`를 추가해 `execution_trace` 저장/노출 전 redaction 정책 초안을 고정했다.
+- trace 필드를 `safe`, `conditional`, `redact`, `drop`으로 분류했다.
+- 기본 저장 후보는 request id, tool name, side effect, runtime elapsed, route seed, outcome code, middleware blocked_by 같은 diagnostic seed로 제한했다.
+- raw input, retrieved context, document content, local path, admin code, credential, full stack trace는 저장/노출 기본 대상에서 제외했다.
+- `docs/reports/V1_5_FOLLOWUP_POLICY_2026-04-10.md`, README/SPEC, `docs/V1_5_AGENT_READY_PLAN.md`에 redaction 정책 리포트를 연결했다.
+- 검증은 전체 `160 passed`, `roadmap_harness.py validate` `ready`, `git diff --check` 통과까지 확인했다.
+- closeout review에서는 trace persistence 구현 전 정책 기준이 충분히 정리됐다고 판단했고 다음 active loop는 `LOOP-026`으로 승격했다.
+
+## 현재 Active Loop (LOOP-026)
+
+목표:
+- `docs/reports/V1_5_TRACE_REDACTION_POLICY_2026-04-10.md` 기준으로 `execution_trace`를 audience별로 정규화하는 순수 redaction 함수를 구현한다.
+
+범위:
+- 포함: `redact_execution_trace()` 순수 함수, `internal/public/persisted` audience별 테스트, 민감 필드 제거/축약 규칙
+- 제외: trace persistence 저장소, public `/agent/*` endpoint, MCP 통합, planner/worker 확장
+
+완료 기준:
+- public profile은 raw input/payload/context/content/path/admin code를 노출하지 않는다.
+- persisted profile은 diagnostic seed만 남긴다.
+- internal profile도 credential/admin code/full content는 항상 제거한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_tool_trace_service.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-025` closeout commit 후 `services/tool_trace_service.py`에 redaction 순수 함수를 추가한다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

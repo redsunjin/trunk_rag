@@ -85,6 +85,15 @@ write_tool_blocked=true
 write_error_code=TOOL_NOT_ALLOWED
 ```
 
+## Trace Redaction Follow-up
+
+Trace 저장/노출 전 redaction 기준은 `docs/reports/V1_5_TRACE_REDACTION_POLICY_2026-04-10.md`에 분리했다.
+
+결정:
+- raw input, retrieved context, document content, local path, admin code, credential은 저장/노출 기본 대상에서 제외한다.
+- 기본 저장 후보는 request id, tool name, side effect, runtime elapsed, route seed, outcome code, middleware blocked_by 같은 diagnostic seed로 제한한다.
+- 다음 구현 후보는 `redact_execution_trace()` 순수 함수와 `internal/public/persisted` audience별 단위 테스트다.
+
 ## Deferred
 
 - `/agent/query` public endpoint

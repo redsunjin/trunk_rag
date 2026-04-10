@@ -586,7 +586,7 @@ npm start
 
 ### 2순위
 - V1.5 agent-ready runtime 준비
-- 내용: 사용자 기본 `/query`를 대체하지 않고 `services/tool_registry_service.py` 기준 internal tool registry skeleton, `services/tool_middleware_service.py` 기준 middleware chain skeleton, `services/tool_trace_service.py` 기준 execution trace 계약, `services/agent_runtime_service.py` 기준 internal agent runtime entry draft를 유지한다. 2026-04-10 통합 검토는 `docs/reports/V1_5_AGENT_READY_RUNTIME_REVIEW_2026-04-10.md`에 기록했고 `main` 병합 후 재검증까지 완료했다. 후속 public API/trace persistence/allowlist 정책은 `docs/reports/V1_5_FOLLOWUP_POLICY_2026-04-10.md`를 따른다.
+- 내용: 사용자 기본 `/query`를 대체하지 않고 `services/tool_registry_service.py` 기준 internal tool registry skeleton, `services/tool_middleware_service.py` 기준 middleware chain skeleton, `services/tool_trace_service.py` 기준 execution trace 계약, `services/agent_runtime_service.py` 기준 internal agent runtime entry draft를 유지한다. 2026-04-10 통합 검토는 `docs/reports/V1_5_AGENT_READY_RUNTIME_REVIEW_2026-04-10.md`에 기록했고 `main` 병합 후 재검증까지 완료했다. 후속 public API/trace persistence/allowlist 정책은 `docs/reports/V1_5_FOLLOWUP_POLICY_2026-04-10.md`를 따르며, trace 저장/노출 전 redaction 기준은 `docs/reports/V1_5_TRACE_REDACTION_POLICY_2026-04-10.md`를 따른다.
 
 ### 3순위
 - 보류 항목 유지
