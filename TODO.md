@@ -46,7 +46,8 @@
 | LOOP-013 | done | sample-pack 문서/예시 경계 잔여 정리 | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/api/test_system_api.py tests/test_answer_level_eval_fixtures.py tests/test_documentation_boundaries.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-014 | done | core seed 데이터/부트스트랩 경계 검토 | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_index_service.py tests/api/test_system_api.py tests/test_documentation_boundaries.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-015 | done | V1 경계 정리 릴리즈 스윕 | `./.venv/bin/python -m pytest -q tests/test_documentation_boundaries.py tests/test_collection_service.py tests/api/test_system_api.py tests/test_check_ops_baseline_gate.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-016 | active | V1 릴리즈 후보 실측 게이트/태그 준비 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-016 | done | V1 릴리즈 후보 실측 게이트/태그 준비 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-017 | active | V1.5 internal tool registry skeleton 착수 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -438,7 +439,7 @@ closeout 메모 (2026-04-10):
 - 검증은 `4 passed`(documentation boundaries), `21 passed`(LOOP-015 suite), `roadmap_harness.py validate` `ready`까지 확인했다.
 - closeout review에서는 V1 본체/sample-pack/archive 경계와 릴리즈 검증 명령이 현재 active 기준과 충돌하지 않는다고 판단했고 다음 active loop는 `LOOP-016`으로 승격했다.
 
-## 현재 Active Loop (LOOP-016)
+## 완료 Loop (LOOP-016)
 
 목표:
 - V1 릴리즈 후보로 닫기 전에 실제 로컬 런타임 기준의 전체 회귀와 live gate를 한 번 더 측정하고, 태그/릴리즈 준비 여부를 판단한다.
@@ -468,6 +469,35 @@ closeout 메모 (2026-04-10):
 - 실측 리포트는 `docs/reports/V1_RELEASE_CANDIDATE_GATE_2026-04-10.md`에 기록했다.
 - 기존 tag `v1.0.0`은 `6eb5329`에 있고 현재 HEAD는 그보다 `37` commits 앞서 있으므로, `v1.0.0`을 이동하지 않는다.
 - 현재 브랜치가 `feature/loop-007-manifest-decouple`이므로 실제 릴리즈 tag는 main/release target 병합 후 생성하거나, 현재 브랜치를 태그하기로 명시 결정한 뒤 생성한다. V1 안정화 릴리즈로 유지할 경우 다음 후보 tag는 `v1.0.1`이다.
+
+closeout 메모 (2026-04-10):
+- `feature/loop-007-manifest-decouple`을 `main`에 충돌 없이 병합했다. 병합 커밋은 `ee4abef`이다.
+- 병합된 `main` 기준 전체 회귀는 `141 passed in 6.01s`로 통과했다.
+- 병합된 `main` 기준 live gate는 `ready`, `generic-baseline 3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=12565.988`로 통과했다.
+- `docs/reports/V1_RELEASE_CANDIDATE_GATE_2026-04-10.md`에 post-merge validation 결과를 추가했다.
+- `v1.0.1` 태그 대상으로 적합하다고 판단했고, 다음 active loop는 `LOOP-017`로 승격했다.
+
+## 현재 Active Loop (LOOP-017)
+
+목표:
+- `docs/V1_5_AGENT_READY_PLAN.md`의 WP1에 따라 기존 RAG 기능을 깨지 않는 internal tool registry skeleton을 시작한다.
+
+범위:
+- 포함: tool definition schema 초안, thin adapter 경계 설계, 1차 tool 후보(`search_docs`, `read_doc`, `list_collections`, `health_check`, `reindex`, upload approval 계열) 등록 구조
+- 제외: `/query` 대체, agent 자동 planning, MCP 통합, GraphRAG 재개, 데스크톱 패키징
+
+완료 기준:
+- tool registry skeleton이 기존 service 호출 위에 얇게 추가된다.
+- 기존 `/query`, `/health`, collection/upload/admin 경로의 API 계약이 유지된다.
+- V1 전체 회귀와 live `generic-baseline` 게이트가 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- V1 릴리즈 후보 검증은 완료됐고, V1.5 작업은 최신 `main`에서 새 짧은 작업 브랜치를 만든 뒤 진행하는 것을 기본으로 한다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

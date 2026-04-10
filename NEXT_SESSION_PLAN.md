@@ -30,14 +30,14 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-016`
-- current_active_title: `V1 릴리즈 후보 실측 게이트/태그 준비`
-- current_version_track: `V1`
-- current_harness_mode: `v1_operating_loop`
+- current_active_id: `LOOP-017`
+- current_active_title: `V1.5 internal tool registry skeleton 착수`
+- current_version_track: `V1.5`
+- current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
 - default_regression_gate: `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
-- branch_execution_policy: `non-main branches do not override official active loop without explicit redirect or queue promotion`
-- branch_plan_doc: `docs/V1_5_AGENT_READY_PLAN.md`
+- branch_execution_policy: `main is the V1 release baseline; create a short V1.5 work branch before implementation`
+- branch_plan_doc: `-`
 - closeout_rule: `active` 항목은 검증 결과와 문서 반영, 커밋까지 끝난 뒤에만 `done`으로 본다.
 - blocked_rule: blocker와 재개 조건 없이 `blocked` 상태로 이동하지 않는다.
 - promotion_rule: 현재 `active`가 `done`이 되면 첫 번째 `pending` 항목을 즉시 다음 `active`로 승격한다.
@@ -394,7 +394,7 @@ closeout 메모 (2026-04-10):
 - 문서 경계 회귀 테스트를 보강해 과거 `ops-baseline/all-routes/llama3.1` 기준이 현재 V1 릴리즈 문서로 재유입되지 않게 했다.
 - 검증은 `4 passed`, `21 passed`, `roadmap_harness.py validate` `ready`까지 확인했다.
 
-### A-Next9. V1 릴리즈 후보 실측 게이트/태그 준비 (현재 active)
+### A-Next9. V1 릴리즈 후보 실측 게이트/태그 준비 (완료: 2026-04-10)
 1. V1 릴리즈 후보로 닫기 전에 실제 로컬 런타임 기준의 전체 회귀와 live gate를 한 번 더 측정한다.
 2. verified 로컬 프로파일(`ollama + gemma4:e4b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`)이 현재 환경에서 `generic-baseline`을 통과하는지 확인한다.
 3. 태그/릴리즈 준비가 가능한지, 또는 blocker로 남겨야 하는지 판단한다.
@@ -420,6 +420,31 @@ closeout 메모 (2026-04-10):
 - 실측 리포트는 `docs/reports/V1_RELEASE_CANDIDATE_GATE_2026-04-10.md`에 기록했다.
 - 기존 tag `v1.0.0`은 `6eb5329`에 있고 현재 HEAD는 그보다 `37` commits 앞서 있으므로, `v1.0.0`을 이동하지 않는다.
 - 현재 브랜치가 `feature/loop-007-manifest-decouple`이므로 실제 릴리즈 tag는 main/release target 병합 후 생성하거나, 현재 브랜치를 태그하기로 명시 결정한 뒤 생성한다. V1 안정화 릴리즈로 유지할 경우 다음 후보 tag는 `v1.0.1`이다.
+
+closeout 메모 (2026-04-10):
+- `feature/loop-007-manifest-decouple`을 `main`에 충돌 없이 병합했다. 병합 커밋은 `ee4abef`이다.
+- 병합된 `main` 기준 전체 회귀는 `141 passed in 6.01s`로 통과했다.
+- 병합된 `main` 기준 live gate는 `ready`, `generic-baseline 3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=12565.988`로 통과했다.
+- `docs/reports/V1_RELEASE_CANDIDATE_GATE_2026-04-10.md`에 post-merge validation 결과를 추가했다.
+- `v1.0.1` 태그 대상으로 적합하다고 판단했고, 다음 active loop는 `LOOP-017`로 승격했다.
+
+### A-Next10. V1.5 internal tool registry skeleton 착수 (현재 active)
+1. `docs/V1_5_AGENT_READY_PLAN.md`의 WP1에 따라 기존 RAG 기능을 깨지 않는 internal tool registry skeleton을 시작한다.
+2. 먼저 최신 `main`에서 짧은 V1.5 작업 브랜치를 만든다.
+3. tool definition schema와 service thin adapter 경계를 최소 단위로 추가한다.
+
+완료 기준:
+- tool registry skeleton이 기존 service 호출 위에 얇게 추가된다.
+- 기존 `/query`, `/health`, collection/upload/admin 경로의 API 계약이 유지된다.
+- V1 전체 회귀와 live `generic-baseline` 게이트가 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- V1 릴리즈 후보 검증은 완료됐고, V1.5 작업은 최신 `main`에서 새 짧은 작업 브랜치를 만든 뒤 진행하는 것을 기본으로 한다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

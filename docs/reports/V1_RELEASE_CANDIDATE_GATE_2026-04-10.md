@@ -61,6 +61,29 @@ p95_latency_ms=14058.994
 
 Recommended next tag name, if this remains a V1 stabilization release, is `v1.0.1`.
 
+## Post-merge Main Validation
+
+- merge commit: `ee4abef merge: feature loop 007 manifest decouple`
+- target branch: `main`
+
+```text
+./.venv/bin/python -m pytest -q
+141 passed in 6.01s
+```
+
+```text
+./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434
+[ops-baseline-gate] ready
+eval_buckets=generic-baseline
+cases=3
+passed=3
+pass_rate=1.0
+avg_weighted_score=0.9467
+p95_latency_ms=12565.988
+```
+
+Post-merge `main` is suitable for the `v1.0.1` tag.
+
 ## Conclusion
 
-V1 release-candidate validation passes for the current code. The remaining release action is not code validation; it is the branch/tag decision and release-note finalization.
+V1 release-candidate validation passes on post-merge `main`. Use `v1.0.1` for this V1 stabilization tag.
