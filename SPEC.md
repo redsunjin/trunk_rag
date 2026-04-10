@@ -586,7 +586,7 @@ npm start
 
 ### 2순위
 - V1.5 agent-ready runtime 준비
-- 내용: 사용자 기본 `/query`를 대체하지 않고 `services/tool_registry_service.py` 기준 internal tool registry skeleton, `services/tool_middleware_service.py` 기준 middleware chain skeleton, `services/tool_trace_service.py` 기준 execution trace 계약을 유지하며, 다음 단계에서 agent runtime entry draft를 붙인다.
+- 내용: 사용자 기본 `/query`를 대체하지 않고 `services/tool_registry_service.py` 기준 internal tool registry skeleton, `services/tool_middleware_service.py` 기준 middleware chain skeleton, `services/tool_trace_service.py` 기준 execution trace 계약, `services/agent_runtime_service.py` 기준 internal agent runtime entry draft를 유지하며, 다음 단계에서 V1.5 통합 검토와 병합 준비를 진행한다.
 
 ### 3순위
 - 보류 항목 유지

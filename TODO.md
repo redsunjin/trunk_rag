@@ -50,7 +50,8 @@
 | LOOP-017 | done | V1.5 internal tool registry skeleton 착수 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-018 | done | V1.5 middleware chain skeleton 착수 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-019 | done | V1.5 execution trace contract 착수 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-020 | active | V1.5 agent runtime entry draft 착수 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-020 | done | V1.5 agent runtime entry draft 착수 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-021 | active | V1.5 agent-ready runtime 통합 검토/병합 준비 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -575,7 +576,7 @@ closeout 메모 (2026-04-10):
 - 검증은 `13 passed`(trace + middleware + tool registry), 전체 `154 passed`, live gate `ready`(`generic-baseline 3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=12578.583`), `roadmap_harness.py validate` `ready`까지 확인했다.
 - closeout review에서는 기존 V1 API 계약을 건드리지 않고 WP3 trace contract가 완료됐다고 판단했고 다음 active loop는 `LOOP-020`으로 승격했다.
 
-## 현재 Active Loop (LOOP-020)
+## 완료 Loop (LOOP-020)
 
 목표:
 - `docs/V1_5_AGENT_READY_PLAN.md`의 WP4에 따라 기존 `/query`를 대체하지 않는 내부 agent runtime entry draft를 시작한다.
@@ -596,6 +597,37 @@ closeout 메모 (2026-04-10):
 
 진행 메모 (2026-04-10):
 - `LOOP-019` branch/commit 정리가 끝난 뒤, `services/tool_middleware_service.py`와 `services/tool_trace_service.py`를 조합해 내부 agent runtime entry draft를 만든다.
+
+closeout 메모 (2026-04-10):
+- `services/agent_runtime_service.py`에 `AgentRuntimeRequest`와 `run_agent_entry()` 기반 internal single-tool runtime entry draft를 추가했다.
+- 기본 entry는 단일 `input`을 `search_docs` payload로 바꾸고 middleware/trace 실행기를 통과시킨다.
+- 기본 allowlist는 read-only tool(`search_docs`, `read_doc`, `list_collections`, `health_check`, `list_upload_requests`)로 제한했다.
+- 명시 tool/payload는 지원하되, write tool은 기본 allowlist와 mutation guard를 통과하지 못한다.
+- 결과 shape는 `entry`, `tool_call`, `execution_trace`, `error`를 포함하며 사용자 기본 `/query` 경로는 변경하지 않았다.
+- 검증은 `12 passed`(agent runtime + trace/middleware), 전체 `158 passed`, live gate `ready`(`generic-baseline 3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=9962.081`), `roadmap_harness.py validate` `ready`까지 확인했다.
+- closeout review에서는 V1.5 WP4 draft가 기존 V1 API 계약을 건드리지 않는 내부 service entry로 완료됐다고 판단했고 다음 active loop는 `LOOP-021`로 승격했다.
+
+## 현재 Active Loop (LOOP-021)
+
+목표:
+- V1.5 agent-ready runtime 준비 트랙의 WP1-WP4 결과를 통합 검토하고, 브랜치 병합 또는 후속 분리 작업 기준을 정리한다.
+
+범위:
+- 포함: V1.5 신규 service 경계 검토, 문서/테스트/검증 결과 정리, 병합 전 리스크와 후속 작업 후보 확정
+- 제외: 사용자 기본 `/query` 대체, 외부 MCP 통합, planner/worker 확장, GraphRAG 재개
+
+완료 기준:
+- V1.5 WP1-WP4 결과와 검증 이력이 한 곳에 요약된다.
+- 병합 전 필수 리스크와 후속 작업 후보가 문서에 남는다.
+- 기존 V1 API 계약과 `generic-baseline` live gate가 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-020` branch/commit 정리가 끝난 뒤, V1.5 internal runtime 준비 트랙 전체를 병합 준비 관점으로 검토한다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

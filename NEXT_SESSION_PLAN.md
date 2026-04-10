@@ -30,8 +30,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-020`
-- current_active_title: `V1.5 agent runtime entry draft 착수`
+- current_active_id: `LOOP-021`
+- current_active_title: `V1.5 agent-ready runtime 통합 검토/병합 준비`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -507,7 +507,7 @@ closeout 메모 (2026-04-10):
 - middleware 차단은 `middleware.blocked_by`와 `outcome.error.code`에 함께 기록된다.
 - 검증은 `13 passed`(trace + middleware + tool registry), 전체 `154 passed`, live gate `ready`(`generic-baseline 3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=12578.583`), `roadmap_harness.py validate` `ready`까지 확인했다.
 
-### A-Next13. V1.5 agent runtime entry draft 착수 (현재 active)
+### A-Next13. V1.5 agent runtime entry draft 착수 (완료: 2026-04-10)
 1. `docs/V1_5_AGENT_READY_PLAN.md`의 WP4에 따라 기존 `/query`를 대체하지 않는 내부 agent runtime entry draft를 시작한다.
 2. 단일 입력을 받아 allowlist/middleware/trace가 붙은 tool call 흐름을 테스트할 수 있는 service entry를 만든다.
 3. 사용자 기본 `/query` 계약은 변경하지 않는다.
@@ -524,6 +524,32 @@ closeout 메모 (2026-04-10):
 
 진행 메모 (2026-04-10):
 - `LOOP-019` branch/commit 정리가 끝난 뒤, `services/tool_middleware_service.py`와 `services/tool_trace_service.py`를 조합해 내부 agent runtime entry draft를 만든다.
+
+closeout 메모 (2026-04-10):
+- `services/agent_runtime_service.py`에 `AgentRuntimeRequest`와 `run_agent_entry()` 기반 internal single-tool runtime entry draft를 추가했다.
+- 기본 entry는 단일 `input`을 `search_docs` payload로 바꾸고 middleware/trace 실행기를 통과시킨다.
+- 기본 allowlist는 read-only tool(`search_docs`, `read_doc`, `list_collections`, `health_check`, `list_upload_requests`)로 제한했다.
+- 명시 tool/payload는 지원하되, write tool은 기본 allowlist와 mutation guard를 통과하지 못한다.
+- 결과 shape는 `entry`, `tool_call`, `execution_trace`, `error`를 포함하며 사용자 기본 `/query` 경로는 변경하지 않았다.
+- 검증은 `12 passed`(agent runtime + trace/middleware), 전체 `158 passed`, live gate `ready`(`generic-baseline 3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=9962.081`), `roadmap_harness.py validate` `ready`까지 확인했다.
+
+### A-Next14. V1.5 agent-ready runtime 통합 검토/병합 준비 (현재 active)
+1. WP1-WP4 결과를 병합 준비 관점으로 검토한다.
+2. 신규 service 경계, 테스트, 문서, 검증 이력을 한 번에 요약한다.
+3. 병합 전 필수 리스크와 후속 작업 후보를 분리한다.
+
+완료 기준:
+- V1.5 WP1-WP4 결과와 검증 이력이 한 곳에 요약된다.
+- 병합 전 필수 리스크와 후속 작업 후보가 문서에 남는다.
+- 기존 V1 API 계약과 `generic-baseline` live gate가 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-020` branch/commit 정리가 끝난 뒤, V1.5 internal runtime 준비 트랙 전체를 병합 준비 관점으로 검토한다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

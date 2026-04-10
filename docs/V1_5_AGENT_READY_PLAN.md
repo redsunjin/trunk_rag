@@ -111,6 +111,13 @@
 - 단일 입력을 받아 tool call 흐름을 테스트할 수 있다.
 - 실제 사용자 기본 경로는 계속 `/query`다.
 
+진행 상태 (2026-04-10):
+- `services/agent_runtime_service.py`에 `AgentRuntimeRequest`와 `run_agent_entry()`를 추가했다.
+- 기본 entry는 단일 `input`을 `search_docs` payload로 바꾸고 `tool_middleware_service.invoke_tool_with_middlewares()`를 호출한다.
+- 기본 allowlist는 read-only tool(`search_docs`, `read_doc`, `list_collections`, `health_check`, `list_upload_requests`)로 제한한다.
+- 명시 tool/payload는 전달하되, write tool은 기본 allowlist와 mutation guard를 통과하지 못한다.
+- 결과는 `entry`, `tool_call`, `execution_trace`, `error`를 포함하고, 사용자 기본 `/query` 경로는 변경하지 않는다.
+
 ## Suggested Order
 1. `WP1` tool registry skeleton
 2. `WP2` middleware chain skeleton
