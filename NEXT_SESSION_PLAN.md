@@ -29,8 +29,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-015`
-- current_active_title: `V1 경계 정리 릴리즈 스윕`
+- current_active_id: `LOOP-016`
+- current_active_title: `V1 릴리즈 후보 실측 게이트/태그 준비`
 - current_version_track: `V1`
 - current_harness_mode: `v1_operating_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -368,7 +368,7 @@ closeout 메모 (2026-04-10):
 - README/SPEC는 기본 `Reindex`에서 core `all`에 적재되는 seed corpus의 demo/bootstrap 역할을 설명한다.
 - 검증은 `18 passed`, `28 passed`, manifest JSON parse, `roadmap_harness.py validate` `ready`까지 확인했다.
 
-### A-Next8. V1 경계 정리 릴리즈 스윕 (현재 active)
+### A-Next8. V1 경계 정리 릴리즈 스윕 (완료: 2026-04-10)
 1. `LOOP-011`부터 이어진 V1 본체/sample-pack/archive 경계 정리를 릴리즈 관점에서 훑는다.
 2. README/SPEC/TODO/NEXT와 릴리즈 체크리스트의 core/sample-pack 용어가 같은 의미로 쓰이는지 확인한다.
 3. 하네스/게이트 명령이 현재 상태와 충돌하지 않게 정리한다.
@@ -385,6 +385,32 @@ closeout 메모 (2026-04-10):
 진행 메모 (2026-04-10):
 - `LOOP-014` closeout으로 sample-pack seed corpus의 bootstrap/demo 역할은 명시됐다.
 - 다음 구현 단위는 추가 기능보다 릴리즈 문서와 검증 명령의 용어/상태 불일치를 줄이는 final sweep이다.
+
+closeout 메모 (2026-04-10):
+- `VERSION_ROADMAP.md`의 V1 exit criteria를 현재 기준인 core 컬렉션 `all`, `generic-baseline` `3/3 pass`, `ollama + gemma4:e4b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`으로 정렬했다.
+- sample-pack route와 `sample-pack-baseline`은 별도 호환성 검증으로 분리된다는 점을 로드맵에 명시했다.
+- 릴리즈 체크리스트에 `/health`의 `seed_corpus_role=demo_bootstrap`와 `seed_corpus_label=sample-pack demo/bootstrap corpus` 확인 항목을 추가했다.
+- 문서 경계 회귀 테스트를 보강해 과거 `ops-baseline/all-routes/llama3.1` 기준이 현재 V1 릴리즈 문서로 재유입되지 않게 했다.
+- 검증은 `4 passed`, `21 passed`, `roadmap_harness.py validate` `ready`까지 확인했다.
+
+### A-Next9. V1 릴리즈 후보 실측 게이트/태그 준비 (현재 active)
+1. V1 릴리즈 후보로 닫기 전에 실제 로컬 런타임 기준의 전체 회귀와 live gate를 한 번 더 측정한다.
+2. verified 로컬 프로파일(`ollama + gemma4:e4b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`)이 현재 환경에서 `generic-baseline`을 통과하는지 확인한다.
+3. 태그/릴리즈 준비가 가능한지, 또는 blocker로 남겨야 하는지 판단한다.
+
+완료 기준:
+- 전체 정적/단위 회귀가 통과한다.
+- live `generic-baseline` 게이트가 `3/3 pass`이거나, 실패 시 blocker와 재개 조건이 명확히 기록된다.
+- 릴리즈 후보로 태그할 수 있는지 여부가 문서와 커밋 상태 기준으로 판단된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-015` closeout으로 문서/게이트 용어 스윕은 완료됐다.
+- 다음 구현 단위는 문서 수정이 아니라 실제 릴리즈 후보 검증이며, live LLM/runtime이 준비되지 않으면 `blocked`로 전환하고 재개 조건을 남긴다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

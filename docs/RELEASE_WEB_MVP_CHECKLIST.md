@@ -39,6 +39,8 @@
 ### 4. 인덱싱/질의 게이트
 
 - [ ] `build_index.py --reset` 또는 `/reindex`로 core 컬렉션 `all` 인덱싱 확인
+- [ ] `/health`의 `seed_corpus_role=demo_bootstrap`와 `seed_corpus_label=sample-pack demo/bootstrap corpus` 확인
+- [ ] core `all`에 적재된 번들 seed corpus가 제품 본체 도메인 데이터가 아닌 첫 실행 확인용 데이터로 설명되는지 확인
 - [ ] sample-pack 호환성까지 같이 볼 때만 `--include-compatibility-bundle` 또는 `include_compatibility_bundle=true`로 route 컬렉션 상태 확인
 - [ ] `generic-baseline` `3/3 pass` 확인
 - [ ] 게이트가 `blocked`면 `Runtime Preflight`와 `Diagnostics`에서 `APP_HEALTH_UNREACHABLE` / `COLLECTIONS_CHECK_FAILED` / `OPS_EVAL_FAILED` 원인 확인

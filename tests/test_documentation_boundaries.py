@@ -52,3 +52,20 @@ def test_docs_describe_bundled_seed_corpus_as_demo_bootstrap_data():
     assert "첫 실행 확인용 sample-pack demo/bootstrap corpus" in spec
     assert "seed_corpus_*" in spec
     assert "제품 본체 도메인 데이터가 아님" in spec
+
+
+def test_v1_release_docs_use_current_core_gate_terms():
+    roadmap = _read_doc("VERSION_ROADMAP.md")
+    checklist = _read_doc("docs/RELEASE_WEB_MVP_CHECKLIST.md")
+
+    assert "core 컬렉션 `all`과 `generic-baseline` `3/3 pass`" in roadmap
+    assert "`sample-pack-baseline`은 별도 호환성 검증" in roadmap
+    assert "`ollama + gemma4:e4b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`" in roadmap
+    assert "sample-pack demo/bootstrap corpus" in roadmap
+
+    assert "`ops-baseline`과 all-routes 게이트가 운영 기준" not in roadmap
+    assert "ollama + llama3.1:8b + timeout 30s" not in roadmap
+
+    assert "`generic-baseline` `3/3 pass`" in checklist
+    assert "`seed_corpus_role=demo_bootstrap`" in checklist
+    assert "제품 본체 도메인 데이터가 아닌 첫 실행 확인용 데이터" in checklist

@@ -44,7 +44,8 @@
 | LOOP-012 | done | sample-pack 라우팅/프로파일 경계 정리 | `./.venv/bin/python -m pytest -q tests/test_answer_level_eval_fixtures.py tests/test_eval_query_quality.py tests/test_collection_service.py tests/test_index_service.py tests/test_runtime_preflight.py tests/api/test_system_api.py tests/test_query_service.py tests/api/test_query_api.py tests/test_check_ops_baseline_gate.py` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-013 | done | sample-pack 문서/예시 경계 잔여 정리 | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/api/test_system_api.py tests/test_answer_level_eval_fixtures.py tests/test_documentation_boundaries.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-014 | done | core seed 데이터/부트스트랩 경계 검토 | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_index_service.py tests/api/test_system_api.py tests/test_documentation_boundaries.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-015 | active | V1 경계 정리 릴리즈 스윕 | `./.venv/bin/python -m pytest -q tests/test_documentation_boundaries.py tests/test_collection_service.py tests/api/test_system_api.py tests/test_check_ops_baseline_gate.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-015 | done | V1 경계 정리 릴리즈 스윕 | `./.venv/bin/python -m pytest -q tests/test_documentation_boundaries.py tests/test_collection_service.py tests/api/test_system_api.py tests/test_check_ops_baseline_gate.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-016 | active | V1 릴리즈 후보 실측 게이트/태그 준비 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -406,7 +407,7 @@ closeout 메모 (2026-04-10):
 - 검증은 `18 passed`(seed corpus target), `28 passed`(LOOP-014 suite), manifest JSON parse, `roadmap_harness.py validate` `ready`까지 확인했다.
 - closeout review에서는 bootstrap/demo/compatibility 경계가 manifest, health, 문서, 테스트에 반영됐다고 판단했고 다음 active loop는 `LOOP-015`로 승격했다.
 
-## 현재 Active Loop (LOOP-015)
+## 완료 Loop (LOOP-015)
 
 목표:
 - `LOOP-011`부터 이어진 V1 본체/sample-pack/archive 경계 정리를 릴리즈 관점에서 한 번 더 훑고, 남은 문서/검증 명령 불일치를 줄인다.
@@ -427,6 +428,37 @@ closeout 메모 (2026-04-10):
 진행 메모 (2026-04-10):
 - `LOOP-014` closeout으로 sample-pack seed corpus의 bootstrap/demo 역할은 명시됐다.
 - 다음 구현 단위는 추가 기능보다 릴리즈 문서와 검증 명령의 용어/상태 불일치를 줄이는 final sweep이다.
+
+closeout 메모 (2026-04-10):
+- `VERSION_ROADMAP.md`의 V1 exit criteria를 현재 기준인 core 컬렉션 `all`, `generic-baseline` `3/3 pass`, `ollama + gemma4:e4b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`으로 정렬했다.
+- sample-pack route와 `sample-pack-baseline`은 별도 호환성 검증으로 분리된다는 점을 로드맵에 명시했다.
+- 릴리즈 체크리스트에 `/health`의 `seed_corpus_role=demo_bootstrap`와 `seed_corpus_label=sample-pack demo/bootstrap corpus` 확인 항목을 추가했다.
+- `tests/test_documentation_boundaries.py`에 V1 릴리즈 문서가 과거 `ops-baseline/all-routes/llama3.1` 기준으로 되돌아가지 않도록 회귀 검증을 추가했다.
+- 검증은 `4 passed`(documentation boundaries), `21 passed`(LOOP-015 suite), `roadmap_harness.py validate` `ready`까지 확인했다.
+- closeout review에서는 V1 본체/sample-pack/archive 경계와 릴리즈 검증 명령이 현재 active 기준과 충돌하지 않는다고 판단했고 다음 active loop는 `LOOP-016`으로 승격했다.
+
+## 현재 Active Loop (LOOP-016)
+
+목표:
+- V1 릴리즈 후보로 닫기 전에 실제 로컬 런타임 기준의 전체 회귀와 live gate를 한 번 더 측정하고, 태그/릴리즈 준비 여부를 판단한다.
+
+범위:
+- 포함: 전체 pytest 회귀, verified 로컬 프로파일(`ollama + gemma4:e4b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`) live gate, 릴리즈 체크리스트 실측 결과 정리, 태그 준비 조건 확인
+- 제외: 새 기능 개발, retrieval 실험, sample-pack 데이터 삭제, 데스크톱 패키징, GraphRAG 재개
+
+완료 기준:
+- 전체 정적/단위 회귀가 통과한다.
+- live `generic-baseline` 게이트가 `3/3 pass`이거나, 실패 시 blocker와 재개 조건이 명확히 기록된다.
+- 릴리즈 후보로 태그할 수 있는지 여부가 문서와 커밋 상태 기준으로 판단된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-015` closeout으로 문서/게이트 용어 스윕은 완료됐다.
+- 다음 구현 단위는 문서 수정이 아니라 실제 릴리즈 후보 검증이며, live LLM/runtime이 준비되지 않으면 `blocked`로 전환하고 재개 조건을 남긴다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
