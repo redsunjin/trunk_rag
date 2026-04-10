@@ -61,6 +61,13 @@
 - 기존 service 호출을 감싸는 thin adapter가 생긴다.
 - 기존 `/query` 기본 경로를 깨지 않는다.
 
+진행 상태 (2026-04-10):
+- `services/tool_registry_service.py`에 `ToolDefinition`, `ToolContext`, `RegisteredTool`, `invoke_tool()` skeleton을 추가했다.
+- 1차 등록 tool은 `search_docs`, `read_doc`, `list_collections`, `health_check`, `reindex`, `list_upload_requests`, `approve_upload_request`, `reject_upload_request`다.
+- `search_docs`는 LLM 호출 없이 기존 collection routing과 context builder를 감싸고, `read_doc`는 seed/managed active markdown을 읽는다.
+- `reindex`와 upload approval 계열처럼 쓰기 부작용이 있는 tool은 `ToolContext.allow_mutation=True`가 없으면 실행하지 않는다.
+- upload 승인/반려 로직은 API route 전용 helper에서 service 함수로 이동해 endpoint와 tool adapter가 같은 경로를 사용한다.
+
 ### WP2. Middleware Chain Skeleton
 - tool/runtime 실행 전후에 공통 정책을 넣을 수 있는 체인을 추가한다.
 - 1차 미들웨어:
@@ -74,6 +81,13 @@
 - 미들웨어를 순차 적용할 수 있는 최소 실행기 구조가 생긴다.
 - 기존 runtime profile/budget 정보가 미들웨어 입력으로 연결된다.
 
+진행 상태 (2026-04-10):
+- `services/tool_middleware_service.py`에 `invoke_tool_with_middlewares()`와 `DEFAULT_TOOL_MIDDLEWARES`를 추가했다.
+- 기본 체인은 `request_id`, `timeout_budget`, `tool_allowlist`, `unsafe_action_guard`, `audit_log` 순서로 실행된다.
+- `ToolContext.timeout_seconds`를 추가해 runtime budget 입력을 tool adapter 호출 context까지 전달한다.
+- 쓰기 tool은 middleware의 unsafe action guard에서 먼저 차단되며, 기존 `ToolContext.allow_mutation` guard도 registry adapter에 그대로 남겨 이중 안전장치를 유지한다.
+- 실행 결과에는 `middleware.request_id`, `timeout_seconds`, `allowed_tools`, `trace`, `audit_log`가 포함된다.
+
 ### WP3. Execution Trace Contract
 - 한 요청에서 어떤 단계와 tool이 실행됐는지 구조적으로 남긴다.
 - 현재 `request_id`, runtime profile, route reason, budget profile을 trace seed로 사용한다.
@@ -82,6 +96,13 @@
 - trace schema가 고정된다.
 - tool 실행 결과와 실패 원인이 trace에 남는다.
 
+진행 상태 (2026-04-10):
+- `services/tool_trace_service.py`에 `TRACE_SCHEMA_VERSION = "v1.5.tool_execution_trace.v1"`와 `build_execution_trace()`를 추가했다.
+- `services/tool_middleware_service.py`의 결과에 기존 `middleware` metadata와 별도로 `execution_trace`를 추가했다.
+- trace는 `request_id`, `actor`, `runtime`, `policy`, `tool`, `routing`, `middleware`, `outcome`, `audit`를 최상위 필드로 고정한다.
+- `search_docs` 결과의 `query_profile`, `collections`, `route_reason`, `budget_profile`은 `routing` seed로 들어간다.
+- middleware 차단은 `middleware.blocked_by`와 `outcome.error.code`에 함께 남는다.
+
 ### WP4. Agent Runtime Entry Draft
 - 기존 `/query`를 대체하지 않고 별도 실험 엔트리로 시작한다.
 - 예: `/agent/query` 또는 내부 service entry
@@ -89,6 +110,18 @@
 완료 기준:
 - 단일 입력을 받아 tool call 흐름을 테스트할 수 있다.
 - 실제 사용자 기본 경로는 계속 `/query`다.
+
+진행 상태 (2026-04-10):
+- `services/agent_runtime_service.py`에 `AgentRuntimeRequest`와 `run_agent_entry()`를 추가했다.
+- 기본 entry는 단일 `input`을 `search_docs` payload로 바꾸고 `tool_middleware_service.invoke_tool_with_middlewares()`를 호출한다.
+- 기본 allowlist는 read-only tool(`search_docs`, `read_doc`, `list_collections`, `health_check`, `list_upload_requests`)로 제한한다.
+- 명시 tool/payload는 전달하되, write tool은 기본 allowlist와 mutation guard를 통과하지 못한다.
+- 결과는 `entry`, `tool_call`, `execution_trace`, `error`를 포함하고, 사용자 기본 `/query` 경로는 변경하지 않는다.
+
+## Integration Review
+- 2026-04-10 통합 검토는 `docs/reports/V1_5_AGENT_READY_RUNTIME_REVIEW_2026-04-10.md`에 기록했다.
+- 결론은 조건부 merge-ready다. 조건은 최신 `main` 기준 충돌 확인, full regression, live `generic-baseline` gate 재실행이다.
+- WP1-WP4는 모두 내부 service 경계로 추가됐고, 사용자 기본 `/query` 계약은 변경하지 않았다.
 
 ## Suggested Order
 1. `WP1` tool registry skeleton

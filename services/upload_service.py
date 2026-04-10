@@ -7,7 +7,16 @@ from uuid import uuid4
 
 from fastapi import HTTPException
 
-from core.settings import DATA_DIR, DEFAULT_COLLECTION_KEY, PERSIST_DIR, REQUEST_STATUS_PENDING, UPLOAD_REQUEST_LOCK, UPLOAD_REQUEST_STORE_FILE
+from core.settings import (
+    DATA_DIR,
+    DEFAULT_COLLECTION_KEY,
+    PERSIST_DIR,
+    REQUEST_STATUS_APPROVED,
+    REQUEST_STATUS_PENDING,
+    REQUEST_STATUS_REJECTED,
+    UPLOAD_REQUEST_LOCK,
+    UPLOAD_REQUEST_STORE_FILE,
+)
 from services import runtime_service
 from services import collection_service
 
@@ -371,3 +380,117 @@ def resolve_requested_collection_key(collection: str | None) -> str:
     except ValueError as exc:
         supported = ", ".join(collection_service.list_collection_keys())
         raise HTTPException(status_code=400, detail=f"Unsupported collection. Use one of: {supported}") from exc
+
+
+def approve_request_item_unlocked(
+    *,
+    request_item: dict[str, object],
+    collection_key: str,
+) -> dict[str, object]:
+    from services import index_service
+
+    now = runtime_service.utc_now_iso()
+    managed_doc = save_managed_doc_version_unlocked(
+        request_item=request_item,
+        collection_key=collection_key,
+        now=now,
+    )
+
+    ingest_results: dict[str, object] = {}
+    affected_keys = affected_collection_keys(collection_key)
+    index_service.invalidate_runtime_state(affected_keys)
+    for key in affected_keys:
+        ingest_results[key] = index_service.reindex(reset=True, collection_key=key)
+
+    request_item["status"] = REQUEST_STATUS_APPROVED
+    request_item["collection_key"] = collection_key
+    request_item["collection"] = collection_service.get_collection_name(collection_key)
+    request_item["approved_at"] = now
+    request_item["updated_at"] = now
+    request_item["rejected_at"] = None
+    request_item["rejected_reason_code"] = None
+    request_item["rejected_reason"] = None
+    request_item["decision_note"] = None
+    request_item["rejected_reason_note"] = None
+    request_item["managed_doc"] = managed_doc
+    request_item["ingest"] = {
+        "mode": "reindex",
+        "collections": ingest_results,
+    }
+    return request_item
+
+
+def approve_upload_request(
+    *,
+    request_id: str,
+    code: str,
+    collection: str | None = None,
+) -> dict[str, object]:
+    runtime_service.verify_admin_code(code)
+
+    with UPLOAD_REQUEST_LOCK:
+        items, item, index = find_upload_request(request_id)
+        ensure_pending_status(item)
+
+        usable = bool(item.get("usable", False))
+        if not usable:
+            raise HTTPException(
+                status_code=400,
+                detail="Validation failed request cannot be approved. Check request.validation.reasons.",
+            )
+
+        try:
+            collection_key = collection_service.resolve_collection_key(
+                collection or str(item.get("collection_key", ""))
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Unsupported collection.") from exc
+
+        if collection_key is None:
+            collection_key = DEFAULT_COLLECTION_KEY
+
+        approve_request_item_unlocked(
+            request_item=item,
+            collection_key=collection_key,
+        )
+        items[index] = item
+        _save_upload_requests_unlocked(items)
+
+    return build_upload_request_view_unlocked(item)
+
+
+def reject_upload_request(
+    *,
+    request_id: str,
+    code: str,
+    reason: str,
+    reason_code: str | None = None,
+    decision_note: str | None = None,
+) -> dict[str, object]:
+    from services import index_service
+
+    runtime_service.verify_admin_code(code)
+
+    with UPLOAD_REQUEST_LOCK:
+        items, item, index = find_upload_request(request_id)
+        ensure_pending_status(item)
+
+        now = runtime_service.utc_now_iso()
+        resolved_reason_code = normalize_reject_reason_code(reason_code)
+        reason_note = (decision_note or reason).strip()
+        item["status"] = REQUEST_STATUS_REJECTED
+        item["rejected_reason_code"] = resolved_reason_code
+        item["rejected_reason"] = reason.strip()
+        item["decision_note"] = reason_note
+        item["rejected_reason_note"] = reason_note
+        item["rejected_at"] = now
+        item["updated_at"] = now
+        item["approved_at"] = None
+        item["ingest"] = None
+        index_service.invalidate_runtime_state(
+            affected_collection_keys(str(item.get("collection_key", DEFAULT_COLLECTION_KEY)))
+        )
+        items[index] = item
+        _save_upload_requests_unlocked(items)
+
+    return build_upload_request_view_unlocked(item)

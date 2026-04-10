@@ -585,10 +585,14 @@ npm start
 - 내용: `run_doc_rag.bat`를 배포형 웹 MVP 기준 단일 부트스트랩/실행 경로로 유지하고, `/reindex`와 `build_index.py --reset` 기본 경로는 core 컬렉션 `all` 중심으로 유지하며, sample-pack route는 compatibility opt-in으로 분리하고, `generic-baseline`의 `3/3 pass` 상태를 본체 회귀 게이트로 유지한다.
 
 ### 2순위
+- V1.5 agent-ready runtime 준비
+- 내용: 사용자 기본 `/query`를 대체하지 않고 `services/tool_registry_service.py` 기준 internal tool registry skeleton, `services/tool_middleware_service.py` 기준 middleware chain skeleton, `services/tool_trace_service.py` 기준 execution trace 계약, `services/agent_runtime_service.py` 기준 internal agent runtime entry draft를 유지한다. 2026-04-10 통합 검토는 `docs/reports/V1_5_AGENT_READY_RUNTIME_REVIEW_2026-04-10.md`에 기록했고, 최신 `main` 기준 재검증을 조건으로 병합 준비 단계에 들어간다.
+
+### 3순위
 - 보류 항목 유지
 - 내용: GraphRAG 트랙은 잠정 중단 상태로 아카이브만 유지하고, 업로드 관리자 Slice 2는 현재 구현 상태를 유지한다.
 
-### 3순위
+### 4순위
 - 데스크톱 패키징 실제 착수 재검토
 - 내용: embedded Python/설치 전략이 먼저 고정된 경우에만 패키징 재개
 
