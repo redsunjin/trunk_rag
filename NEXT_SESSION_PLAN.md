@@ -22,6 +22,7 @@
 - `docs/WIP_SNAPSHOT_2026-02-28.md`
 - `docs/reports/GENERIC_RAG_REFOCUS_REVIEW_2026-04-04.md`
 - `docs/reports/VERSION_BOUNDARY_RESET_2026-04-04.md`
+- `docs/reports/V1_RELEASE_CANDIDATE_GATE_2026-04-10.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -411,6 +412,14 @@ closeout 메모 (2026-04-10):
 진행 메모 (2026-04-10):
 - `LOOP-015` closeout으로 문서/게이트 용어 스윕은 완료됐다.
 - 다음 구현 단위는 문서 수정이 아니라 실제 릴리즈 후보 검증이며, live LLM/runtime이 준비되지 않으면 `blocked`로 전환하고 재개 조건을 남긴다.
+
+실측 메모 (2026-04-10):
+- 전체 회귀는 `./.venv/bin/python -m pytest -q` -> `141 passed in 8.00s`로 통과했다.
+- 첫 live gate는 앱/Ollama API 미응답으로 `blocked`였으나, FastAPI 앱 기동 후 `/health`가 `release_web_status=ready`, `vectors=37`, `seed_corpus_role=demo_bootstrap`, `embedding_fingerprint_status=ready`를 반환했다.
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` 재실행은 `ready`, `generic-baseline 3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=14058.994`로 통과했다.
+- 실측 리포트는 `docs/reports/V1_RELEASE_CANDIDATE_GATE_2026-04-10.md`에 기록했다.
+- 기존 tag `v1.0.0`은 `6eb5329`에 있고 현재 HEAD는 그보다 `37` commits 앞서 있으므로, `v1.0.0`을 이동하지 않는다.
+- 현재 브랜치가 `feature/loop-007-manifest-decouple`이므로 실제 릴리즈 tag는 main/release target 병합 후 생성하거나, 현재 브랜치를 태그하기로 명시 결정한 뒤 생성한다. V1 안정화 릴리즈로 유지할 경우 다음 후보 tag는 `v1.0.1`이다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
