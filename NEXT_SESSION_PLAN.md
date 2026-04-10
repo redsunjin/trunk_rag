@@ -29,8 +29,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-013`
-- current_active_title: `sample-pack 문서/예시 경계 잔여 정리`
+- current_active_id: `LOOP-014`
+- current_active_title: `core seed 데이터/부트스트랩 경계 검토`
 - current_version_track: `V1`
 - current_harness_mode: `v1_operating_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -320,7 +320,7 @@ closeout 메모 (2026-04-10):
 - 웹 UI의 컬렉션 힌트는 `all` 단일 선택을 `core 기본 경로`, sample-pack 컬렉션 명시 선택을 `sample-pack 호환 경로(명시 선택)`으로 구분한다.
 - 검증은 `52 passed`(query/profile target), `82 passed`(broader unit suite), Playwright E2E `2 passed`, live `check_ops_baseline_gate.py` `ready`(`3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=9354.412`), `roadmap_harness.py validate` `ready`까지 확인했다.
 
-### A-Next6. sample-pack 문서/예시 경계 잔여 정리 (현재 active)
+### A-Next6. sample-pack 문서/예시 경계 잔여 정리 (완료: 2026-04-10)
 1. 본체 문서/예시에서 sample-pack 전용 업로드/전처리 예시가 제품 기본값처럼 읽히는 지점을 줄인다.
 2. README/SPEC와 preprocessing 문서에서 core 기본 예시와 sample-pack compatibility 예시를 구분한다.
 3. `default_country`, `default_doc_type` 컬렉션 메타데이터 노출이 운영 문서와 테스트 기준에 반영되도록 마무리한다.
@@ -331,12 +331,36 @@ closeout 메모 (2026-04-10):
 - 새로 노출한 컬렉션 기본 메타데이터가 운영 문서와 테스트 기준에 반영된다.
 
 검증:
-- `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/api/test_system_api.py tests/test_answer_level_eval_fixtures.py`
+- `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/api/test_system_api.py tests/test_answer_level_eval_fixtures.py tests/test_documentation_boundaries.py`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 진행 메모 (2026-04-10):
 - `LOOP-012` closeout으로 runtime/query/UI 기본 경계는 정리됐지만, README/SPEC와 preprocessing 문서에는 여전히 `fr`, `country=france`, `doc_type=country` 같은 sample-pack 예시가 core 흐름 근처에 남아 있다.
 - 다음 구현 단위는 예시를 삭제하지 않고, core 기본 예시와 sample-pack compatibility 예시를 문서상 분리하는 것이다.
+
+closeout 메모 (2026-04-10):
+- README/SPEC의 업로드 요청 예시는 core 기본 경로와 sample-pack compatibility 예시를 분리했다.
+- 전처리 규칙/프롬프트 템플릿은 `country/doc_type`을 manifest 기준 메타데이터로 설명하고, sample-pack 국가 예시는 compatibility 예시로만 남겼다.
+- `tests/test_documentation_boundaries.py`를 추가해 core/sample-pack 문서 예시 경계를 검증한다.
+- 검증은 `18 passed`와 `roadmap_harness.py validate` `ready`까지 확인했다.
+
+### A-Next7. core seed 데이터/부트스트랩 경계 검토 (현재 active)
+1. 현재 core 기본 컬렉션 `all`이 sample-pack seed 문서로 구성된 상태를 제품/샘플 경계 관점에서 재검토한다.
+2. 첫 실행 bootstrap/demo 데이터와 sample-pack compatibility 데이터의 관계를 문서/manifest 기준으로 명확히 한다.
+3. 성급한 데이터 삭제나 migration 없이, 운영자가 현재 seed corpus의 역할을 오해하지 않게 만든다.
+
+완료 기준:
+- core 기본 실행 경로가 sample-pack seed 데이터를 제품 본체 데이터로 오해하게 만들지 않는다.
+- sample-pack seed 데이터는 demo/compatibility bootstrap 역할로 명확히 설명된다.
+- manifest/index/health 문서와 테스트가 이 경계 설명과 충돌하지 않는다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_index_service.py tests/api/test_system_api.py tests/test_documentation_boundaries.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-013` closeout으로 문서 예시 경계는 정리됐지만, 실제 첫 실행 seed corpus는 여전히 sample-pack 문서가 core `all` 컬렉션에도 들어가는 구조다.
+- 다음 구현 단위는 동작을 성급히 바꾸기보다 bootstrap/demo/compatibility 경계를 문서와 manifest 관점에서 먼저 고정하는 것이다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

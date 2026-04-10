@@ -334,12 +334,20 @@ curl -X POST http://127.0.0.1:8000/query `
 
 - 타임아웃은 기본 `30초`이며 `DOC_RAG_QUERY_TIMEOUT_SECONDS`로 조정할 수 있습니다.
 
-업로드 요청 생성 예시:
+업로드 요청 생성 예시(core 기본 경로):
 
 ```powershell
 curl -X POST http://127.0.0.1:8000/upload-requests `
   -H "Content-Type: application/json" `
-  -d "{\"source_name\":\"new_doc.md\",\"collection\":\"fr\",\"request_type\":\"create\",\"doc_key\":\"new_doc\",\"change_summary\":\"초안 등록\",\"country\":\"france\",\"doc_type\":\"country\",\"content\":\"## 제목\\n본문\"}"
+  -d "{\"source_name\":\"new_doc.md\",\"collection\":\"all\",\"request_type\":\"create\",\"doc_key\":\"new_doc\",\"change_summary\":\"초안 등록\",\"country\":\"all\",\"doc_type\":\"summary\",\"content\":\"## 제목\\n본문\"}"
+```
+
+sample-pack compatibility 컬렉션에 직접 올리는 예시는 별도 호환 경로로만 사용합니다.
+
+```powershell
+curl -X POST http://127.0.0.1:8000/upload-requests `
+  -H "Content-Type: application/json" `
+  -d "{\"source_name\":\"sample_fr.md\",\"collection\":\"fr\",\"request_type\":\"create\",\"doc_key\":\"sample_fr\",\"change_summary\":\"샘플팩 프랑스 문서 초안\",\"country\":\"france\",\"doc_type\":\"country\",\"content\":\"## 제목\\n본문\"}"
 ```
 
 - 실패 코드 매핑:
@@ -445,7 +453,7 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 - 기본 질의 모드에서는 `/health`의 런타임 기본 LLM 설정을 자동 사용합니다.
 - `고급 설정 펼치기`를 눌러야 provider/model/base URL/API key를 직접 수정할 수 있습니다.
 - `vectors=0`이면 질문 전 `Reindex`를 먼저 실행하라는 안내가 표시됩니다.
-- 업로드 요청에서 `Source Name`은 비워둘 수 있고, `country`/`doc_type`은 컬렉션 기준 기본값을 따를 수 있습니다.
+- 업로드 요청에서 `Source Name`은 비워둘 수 있고, `country`/`doc_type`은 `/collections`가 내려주는 manifest 기반 컬렉션 기본값을 따를 수 있습니다.
 
 ## Testing
 

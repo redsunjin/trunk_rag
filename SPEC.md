@@ -335,7 +335,7 @@
     {
       "id": "uuid",
       "status": "pending",
-      "collection_key": "fr",
+      "collection_key": "all",
       "source_name": "new_doc.md",
       "doc_key": "new_doc",
       "request_type": "create",
@@ -348,19 +348,20 @@
 
 ### POST `/upload-requests`
 - 목적: 일반 사용자 업로드 요청 생성
-- 요청:
+- 요청(core 기본 경로):
 ```json
 {
   "source_name": "new_doc.md",
-  "collection": "fr",
+  "collection": "all",
   "request_type": "create",
   "doc_key": "new_doc",
   "change_summary": "초안 등록",
-  "country": "france",
-  "doc_type": "country",
+  "country": "all",
+  "doc_type": "summary",
   "content": "## 제목\n본문"
 }
 ```
+- sample-pack compatibility 컬렉션에 직접 올리는 경우에만 `collection=fr`, `country=france`, `doc_type=country` 같은 샘플팩 메타데이터 예시를 사용한다.
 - 응답 예:
 ```json
 {
@@ -450,7 +451,7 @@
       "updated_at": 1766079999,
       "origin": "managed",
       "doc_key": "new_doc",
-      "collection_key": "fr"
+      "collection_key": "all"
     }
   ]
 }
@@ -564,7 +565,7 @@ npm start
   - 분야별 컬렉션 + 최대 2개 자동 다중 라우팅
 
 ## 벡터스토어 정책
-- 기본 컬렉션(`all`) + 분야별 컬렉션(`eu/fr/ge/it/uk`)을 운영
+- 기본 컬렉션(`all`)을 core runtime으로 운영하고, `eu/fr/ge/it/uk`는 sample-pack compatibility 컬렉션으로 유지
 - 컬렉션당 cap은 `30,000 ~ 50,000 vectors`
 - 벡터 수 증가 시 성능/품질 저하를 방지하기 위해 용량 정책 적용
 - 상세는 `docs/VECTORSTORE_POLICY.md` 참조

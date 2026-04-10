@@ -55,18 +55,46 @@
 ## 5) 메타데이터 최소 항목
 
 최소 필드:
-- `source`: 원본 파일명 (`fr.md` 등)
-- `country`: 국가 구분 값 (`france`, `germany`, `italy`, `uk`, `all`)
-- `doc_type`: 문서 유형 (`summary` 또는 `country`)
+- `source`: 원본 파일명
+- `country`: 컬렉션 manifest가 요구하는 범위 값. core 기본 경로는 `all`을 사용한다.
+- `doc_type`: 컬렉션 manifest가 요구하는 문서 유형. core 기본 경로는 `summary`를 사용한다.
 
 현재 프로젝트 기본 파생 규칙:
 - `source` = 파일명
-- `country` = 파일 stem 매핑(`common.py`의 `COUNTRY_BY_STEM`)
-- `doc_type` = `eu_summry.md`는 `summary`, 그 외 `country`
+- `country`/`doc_type` = `config/collection_manifest.json`의 seed 문서 메타데이터 또는 컬렉션 기본값
+- sample-pack compatibility 문서에서는 `france`, `germany`, `italy`, `uk`, `country` 같은 샘플팩 메타데이터를 사용할 수 있다.
 
 ## 6) 샘플 입력/출력
 
-샘플 입력(원본):
+core 기본 샘플 입력(원본):
+
+```md
+# 제품 사용 가이드
+
+## 설치와 실행
+로컬 환경에서 서버를 실행하고 브라우저로 접속하는 절차를 설명한다.
+```
+
+core 기본 샘플 출력(정제 메타 포함 예시):
+
+```json
+{
+  "source": "product_guide.md",
+  "country": "all",
+  "doc_type": "summary",
+  "sections": [
+    {
+      "h2": "설치와 실행",
+      "h3": "",
+      "h4": "",
+      "content": "로컬 환경에서 서버를 실행하고 브라우저로 접속하는 절차를 설명한다."
+    }
+  ],
+  "warnings": []
+}
+```
+
+sample-pack compatibility 샘플 입력(원본):
 
 ```md
 # 프랑스 과학사
@@ -81,7 +109,7 @@
 대규모 펌프 시스템과 공학적 표준화의 초기 사례다.
 ```
 
-샘플 출력(정제 메타 포함 예시):
+sample-pack compatibility 샘플 출력(정제 메타 포함 예시):
 
 ```json
 {
