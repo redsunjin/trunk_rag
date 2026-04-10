@@ -57,7 +57,7 @@
 - 현재: reindex 시 컬렉션별 embedding fingerprint를 저장하고, `/query`는 mismatch를 invoke 전에 먼저 차단한다
 - 현재: `services/tool_registry_service.py`는 `search_docs`, `read_doc`, `list_collections`, `health_check`, `reindex`, upload approval 계열을 internal tool 후보로 등록한다
 - 현재: `services/tool_middleware_service.py`는 request id, timeout budget, tool allowlist, audit log, unsafe action guard를 순차 적용하는 internal middleware 실행기 skeleton을 제공한다
-- 현재: `services/tool_trace_service.py`는 tool/middleware 실행 결과를 `v1.5.tool_execution_trace.v1` schema로 고정한다
+- 현재: `services/tool_trace_service.py`는 tool/middleware 실행 결과를 `v1.5.tool_execution_trace.v1` schema로 고정하고 `internal/public/persisted` audience별 redaction 함수를 제공한다
 - 현재: `services/agent_runtime_service.py`는 단일 입력을 안전한 allowlist/middleware/trace가 붙은 내부 single-tool runtime 흐름으로 실행한다
 - 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 agent-ready runtime 통합 검토와 병합 준비를 진행
 

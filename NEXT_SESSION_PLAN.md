@@ -30,8 +30,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-026`
-- current_active_title: `V1.5 trace redaction function 구현`
+- current_active_id: `LOOP-027`
+- current_active_title: `V1.5 actor allowlist policy source draft`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -657,7 +657,7 @@ closeout 메모 (2026-04-10):
 - `docs/reports/V1_5_FOLLOWUP_POLICY_2026-04-10.md`, README/SPEC, `docs/V1_5_AGENT_READY_PLAN.md`에 redaction 정책 리포트를 연결했다.
 - 검증은 전체 `160 passed`, `roadmap_harness.py validate` `ready`, `git diff --check` 통과까지 확인했다.
 
-### A-Next19. V1.5 trace redaction function 구현 (현재 active)
+### A-Next19. V1.5 trace redaction function 구현 (완료: 2026-04-10)
 1. `docs/reports/V1_5_TRACE_REDACTION_POLICY_2026-04-10.md` 기준으로 `execution_trace`를 audience별로 정규화하는 순수 redaction 함수를 구현한다.
 2. `internal`, `public`, `persisted` audience별 테스트를 추가한다.
 3. 저장소나 public `/agent/*` endpoint는 만들지 않는다.
@@ -673,6 +673,32 @@ closeout 메모 (2026-04-10):
 
 진행 메모 (2026-04-10):
 - `LOOP-025` closeout commit 후 `services/tool_trace_service.py`에 redaction 순수 함수를 추가한다.
+
+closeout 메모 (2026-04-10):
+- `services/tool_trace_service.py`에 `TRACE_REDACTION_SCHEMA_VERSION = "v1.5.tool_execution_trace.redacted.v1"`와 `redact_execution_trace()`를 추가했다.
+- `public` audience는 request id, runtime, policy, tool name/side effect, routing seed, blocked_by, outcome error code/status만 남긴다.
+- `persisted` audience는 diagnostic seed와 compact audit/middleware step만 남기고 raw detail/message를 제거한다.
+- `internal` audience도 raw payload, content, admin code, credential은 남기지 않고 error message는 `[redacted]`로 대체한다.
+- `tests/test_tool_trace_service.py`에 public/persisted/internal/invalid audience redaction 계약 테스트를 추가했다.
+- README, `docs/V1_5_AGENT_READY_PLAN.md`, `docs/reports/V1_5_TRACE_REDACTION_POLICY_2026-04-10.md`, `docs/reports/V1_5_FOLLOWUP_POLICY_2026-04-10.md`에 구현 상태를 반영했다.
+- 검증은 `6 passed`(tool trace), 전체 `164 passed`, `roadmap_harness.py validate` `ready`, `git diff --check` 통과까지 확인했다.
+
+### A-Next20. V1.5 actor allowlist policy source draft (현재 active)
+1. agent runtime의 actor별 tool allowlist와 mutation policy를 코드화하기 전, policy source 초안을 정리한다.
+2. actor category, read/write tool allowlist, mutation 허용 조건, dry-run/preview 필요성, 테스트 후보를 분리한다.
+3. 실제 policy engine 구현은 다음 명시 loop로 넘긴다.
+
+완료 기준:
+- actor별 allowlist/mutation policy 초안이 문서화된다.
+- 기본 read-only 정책과 write tool 승격 조건이 분리된다.
+- 기존 V1 API 계약과 로드맵 하네스가 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-026` closeout commit 후 actor별 allowlist/mutation policy source 초안을 정리한다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

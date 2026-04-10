@@ -56,7 +56,8 @@
 | LOOP-023 | done | V1.5 후속 정책/공개 API 여부 정리 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-024 | done | V1.5 agent runtime smoke test 추가 | `./.venv/bin/python -m pytest -q tests/test_smoke_agent_runtime.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py` + `./.venv/bin/python scripts/smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-025 | done | V1.5 trace redaction policy draft | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-026 | active | V1.5 trace redaction function 구현 | `./.venv/bin/python -m pytest -q tests/test_tool_trace_service.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-026 | done | V1.5 trace redaction function 구현 | `./.venv/bin/python -m pytest -q tests/test_tool_trace_service.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-027 | active | V1.5 actor allowlist policy source draft | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -761,7 +762,7 @@ closeout 메모 (2026-04-10):
 - 검증은 전체 `160 passed`, `roadmap_harness.py validate` `ready`, `git diff --check` 통과까지 확인했다.
 - closeout review에서는 trace persistence 구현 전 정책 기준이 충분히 정리됐다고 판단했고 다음 active loop는 `LOOP-026`으로 승격했다.
 
-## 현재 Active Loop (LOOP-026)
+## 완료 Loop (LOOP-026)
 
 목표:
 - `docs/reports/V1_5_TRACE_REDACTION_POLICY_2026-04-10.md` 기준으로 `execution_trace`를 audience별로 정규화하는 순수 redaction 함수를 구현한다.
@@ -781,6 +782,37 @@ closeout 메모 (2026-04-10):
 
 진행 메모 (2026-04-10):
 - `LOOP-025` closeout commit 후 `services/tool_trace_service.py`에 redaction 순수 함수를 추가한다.
+
+closeout 메모 (2026-04-10):
+- `services/tool_trace_service.py`에 `TRACE_REDACTION_SCHEMA_VERSION = "v1.5.tool_execution_trace.redacted.v1"`와 `redact_execution_trace()`를 추가했다.
+- `public` audience는 request id, runtime, policy, tool name/side effect, routing seed, blocked_by, outcome error code/status만 남긴다.
+- `persisted` audience는 diagnostic seed와 compact audit/middleware step만 남기고 raw detail/message를 제거한다.
+- `internal` audience도 raw payload, content, admin code, credential은 남기지 않고 error message는 `[redacted]`로 대체한다.
+- `tests/test_tool_trace_service.py`에 public/persisted/internal/invalid audience redaction 계약 테스트를 추가했다.
+- README, `docs/V1_5_AGENT_READY_PLAN.md`, `docs/reports/V1_5_TRACE_REDACTION_POLICY_2026-04-10.md`, `docs/reports/V1_5_FOLLOWUP_POLICY_2026-04-10.md`에 구현 상태를 반영했다.
+- 검증은 `6 passed`(tool trace), 전체 `164 passed`, `roadmap_harness.py validate` `ready`, `git diff --check` 통과까지 확인했다.
+- closeout review에서는 trace 저장/노출 전 최소 redaction 순수 함수가 준비됐다고 판단했고 다음 active loop는 `LOOP-027`로 승격했다.
+
+## 현재 Active Loop (LOOP-027)
+
+목표:
+- agent runtime의 actor별 tool allowlist와 mutation policy를 코드화하기 전, policy source 초안을 정리한다.
+
+범위:
+- 포함: actor category, read/write tool allowlist, mutation 허용 조건, dry-run/preview 필요성, 테스트 후보 정리
+- 제외: 실제 policy engine 구현, public `/agent/*` endpoint, MCP 통합, planner/worker 확장
+
+완료 기준:
+- actor별 allowlist/mutation policy 초안이 문서화된다.
+- 기본 read-only 정책과 write tool 승격 조건이 분리된다.
+- 기존 V1 API 계약과 로드맵 하네스가 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-026` closeout commit 후 actor별 allowlist/mutation policy source 초안을 정리한다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

@@ -131,7 +131,7 @@ Public `/agent/*` API를 열 경우 기본 응답에는 아래만 포함한다:
 
 ## Implementation Guidance
 
-다음 구현 loop에서 추가할 최소 함수 후보:
+구현된 최소 함수:
 
 - `redact_execution_trace(trace: dict[str, object], *, audience: str) -> dict[str, object]`
 - audience 후보: `internal`, `public`, `persisted`
@@ -139,9 +139,16 @@ Public `/agent/*` API를 열 경우 기본 응답에는 아래만 포함한다:
 - `persisted`는 raw text와 path를 제거하고 diagnostic seed만 남긴다.
 - `internal`도 credential/admin code/full content는 항상 제거한다.
 
+진행 상태 (2026-04-10):
+- `services/tool_trace_service.py`에 `TRACE_REDACTION_SCHEMA_VERSION = "v1.5.tool_execution_trace.redacted.v1"`와 `redact_execution_trace()`를 추가했다.
+- `public` audience는 `request_id`, runtime, policy, tool name/side effect, routing seed, `blocked_by`, outcome error code/status만 남긴다.
+- `persisted` audience는 middleware step name/status/elapsed, audit event/code/tool, result diagnostic seed를 남기되 raw detail/message를 제거한다.
+- `internal` audience도 raw payload, content, admin code, credential은 남기지 않고 error message는 `[redacted]`로 대체한다.
+- `tests/test_tool_trace_service.py`에 audience별 redaction 계약 테스트를 추가했다.
+
 ## Decision
 
 - 지금은 trace persistence를 구현하지 않는다.
 - public API는 열지 않는다.
-- 저장/외부 노출 전에는 이 문서 기준의 redaction function이 먼저 필요하다.
-- 다음 구현 후보는 `redact_execution_trace()`의 순수 함수와 단위 테스트다.
+- 저장/외부 노출 전에는 이 문서 기준의 redaction function을 통과해야 한다.
+- 다음 구현 후보는 actor별 allowlist/mutation policy source다.
