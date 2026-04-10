@@ -30,8 +30,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-024`
-- current_active_title: `V1.5 agent runtime smoke test 추가`
+- current_active_id: `LOOP-025`
+- current_active_title: `V1.5 trace redaction policy draft`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -608,7 +608,7 @@ closeout 메모 (2026-04-10):
 - README/SPEC와 `docs/V1_5_AGENT_READY_PLAN.md`에 후속 정책 리포트를 연결했다.
 - 검증은 전체 `158 passed`, `roadmap_harness.py validate` `ready`, `git diff --check` 통과까지 확인했다.
 
-### A-Next17. V1.5 agent runtime smoke test 추가 (현재 active)
+### A-Next17. V1.5 agent runtime smoke test 추가 (완료: 2026-04-10)
 1. public API를 열지 않는 상태에서 내부 `agent_runtime_service` 흐름을 운영자가 빠르게 점검할 수 있는 smoke test를 추가한다.
 2. read-only tool 성공 경로와 write tool 차단 경로를 함께 확인한다.
 3. 실제 public `/agent/*` endpoint는 만들지 않는다.
@@ -624,6 +624,30 @@ closeout 메모 (2026-04-10):
 
 진행 메모 (2026-04-10):
 - `LOOP-023` closeout commit 후 내부 smoke 경로를 추가한다.
+
+closeout 메모 (2026-04-10):
+- `scripts/smoke_agent_runtime.py`를 추가해 내부 `agent_runtime_service` read-only 성공 경로와 write tool 차단 경로를 단일 명령으로 점검하게 했다.
+- smoke 성공 경로는 `health_check` tool이며, write 차단 경로는 기본 allowlist 밖의 `reindex` tool이다.
+- smoke 결과는 `read_only_health_check=true`, `write_tool_blocked=true`, `write_error_code=TOOL_NOT_ALLOWED`로 확인했다.
+- `tests/test_smoke_agent_runtime.py`를 추가해 smoke script가 성공/실패 조건을 올바르게 판정하는지 검증했다.
+- 검증은 `14 passed`(smoke + agent runtime + middleware + trace), `scripts/smoke_agent_runtime.py` exit code `0`, `roadmap_harness.py validate` `ready`까지 확인했다.
+
+### A-Next18. V1.5 trace redaction policy draft (현재 active)
+1. 향후 `execution_trace`를 저장하거나 외부로 노출하기 전에 필요한 redaction 정책 초안을 정리한다.
+2. trace 내 민감 가능 필드, 저장 가능 필드, 마스킹/삭제 대상 필드를 분리한다.
+3. 실제 trace persistence 구현은 다음 명시 loop로 넘긴다.
+
+완료 기준:
+- trace redaction 정책 초안이 문서화된다.
+- 저장 가능 필드와 마스킹/삭제 대상 필드가 분리된다.
+- 기존 V1 API 계약과 로드맵 하네스가 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-024` closeout commit 후 trace persistence 전제 조건인 redaction 정책을 먼저 정리한다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

@@ -70,8 +70,20 @@ write tool을 agent runtime에 열기 전 필요한 조건:
 
 1. Public API는 만들지 않는다.
 2. V1 기본 `/query` 경로는 유지한다.
-3. agent runtime은 내부 service + unit test 기준으로만 유지한다.
-4. 다음 구현 후보는 `agent-specific smoke test`, `trace redaction policy`, `actor allowlist policy source` 중 하나로 제한한다.
+3. agent runtime은 내부 service + unit test + smoke script 기준으로만 유지한다.
+4. 다음 구현 후보는 `trace redaction policy`, `actor allowlist policy source` 중 하나로 제한한다.
+
+## Smoke Check
+
+`scripts/smoke_agent_runtime.py`로 내부 runtime entry의 최소 경로를 점검한다.
+
+```text
+./.venv/bin/python scripts/smoke_agent_runtime.py
+ok=true
+read_only_health_check=true
+write_tool_blocked=true
+write_error_code=TOOL_NOT_ALLOWED
+```
 
 ## Deferred
 
