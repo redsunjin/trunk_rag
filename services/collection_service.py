@@ -98,6 +98,8 @@ def resolve_collection_keys_for_query(
     query: str,
     requested_collection: str | None,
     requested_collections: list[str] | None,
+    *,
+    allow_keyword_routing: bool = False,
 ) -> tuple[list[str], str, bool]:
     explicit_values = [value.strip() for value in (requested_collections or []) if value.strip()]
     if explicit_values:
@@ -119,14 +121,17 @@ def resolve_collection_keys_for_query(
     if explicit_key:
         return [explicit_key], "explicit", False
 
+    if not allow_keyword_routing:
+        return [DEFAULT_COLLECTION_KEY], "default", False
+
     matched_keys = guess_collection_keys_from_query(query)
     if not matched_keys:
         return [DEFAULT_COLLECTION_KEY], "default", False
     if len(matched_keys) == 1:
-        return matched_keys, "keyword", True
+        return matched_keys, "compatibility_keyword", True
     if len(matched_keys) <= MAX_QUERY_COLLECTIONS:
-        return matched_keys, "keyword_multi", True
-    return [DEFAULT_COLLECTION_KEY], "keyword_overflow", False
+        return matched_keys, "compatibility_keyword_multi", True
+    return [DEFAULT_COLLECTION_KEY], "compatibility_keyword_overflow", False
 
 
 def list_collection_keys() -> list[str]:
@@ -181,6 +186,8 @@ def list_collection_statuses(get_vector_count_fast: Callable[[str], int | None])
                 "name": collection_name,
                 "label": config["label"],
                 "file_names": list(config["file_names"]),
+                "default_country": default_country_for_collection(key),
+                "default_doc_type": default_doc_type_for_collection(key),
                 "vectors": vectors,
                 **cap_status,
             }

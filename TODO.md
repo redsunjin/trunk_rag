@@ -41,7 +41,8 @@
 | LOOP-009 | done | 경량 hybrid retrieval 후보 검증 | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_query_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_check_ops_baseline_gate.py` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-010 | done | contextual retrieval 후보 검토 | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_query_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_check_ops_baseline_gate.py` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-011 | done | sample-pack 기본 번들 분리 | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_index_service.py tests/test_runtime_preflight.py tests/api/test_system_api.py tests/test_query_service.py tests/api/test_query_api.py tests/test_check_ops_baseline_gate.py` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-012 | active | sample-pack 라우팅/프로파일 경계 정리 | `./.venv/bin/python -m pytest -q tests/test_answer_level_eval_fixtures.py tests/test_eval_query_quality.py tests/test_collection_service.py tests/test_index_service.py tests/test_runtime_preflight.py tests/api/test_system_api.py tests/test_query_service.py tests/api/test_query_api.py tests/test_check_ops_baseline_gate.py` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-012 | done | sample-pack 라우팅/프로파일 경계 정리 | `./.venv/bin/python -m pytest -q tests/test_answer_level_eval_fixtures.py tests/test_eval_query_quality.py tests/test_collection_service.py tests/test_index_service.py tests/test_runtime_preflight.py tests/api/test_system_api.py tests/test_query_service.py tests/api/test_query_api.py tests/test_check_ops_baseline_gate.py` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-013 | active | sample-pack 문서/예시 경계 잔여 정리 | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/api/test_system_api.py tests/test_answer_level_eval_fixtures.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -312,7 +313,7 @@ closeout 메모 (2026-04-08):
 - 검증은 `79 passed`(fixture/schema + target pytest), live `scripts/check_ops_baseline_gate.py` `ready`, `scripts/roadmap_harness.py validate` `ready`까지 확인했다.
 - closeout review에서는 core 기본 reindex/gate 분리, `/health` 경계 노출, sample-pack compatibility opt-in화가 완료 기준을 충족한다고 판단했고 다음 active loop는 `LOOP-012`로 승격했다.
 
-## 현재 Active Loop (LOOP-012)
+## 완료 Loop (LOOP-012)
 
 목표:
 - 본체 기본 `/query` 경로에서 sample-pack 국가 키워드 라우팅과 `sample_pack` 프로파일 전제가 남아 있는 지점을 줄이고, core default query path와 sample-pack compatibility query path를 더 분명히 나눈다.
@@ -334,6 +335,37 @@ closeout 메모 (2026-04-08):
 진행 메모 (2026-04-08):
 - `LOOP-011` closeout으로 core 기본 reindex/gate는 `all` 중심으로 분리됐지만, 기본 질의 경로에는 여전히 sample-pack 국가 키워드 라우팅과 query profile 경계가 남아 있다.
 - 다음 구현 단위는 core default `/query`가 sample-pack compatibility route/profile을 암묵 기본처럼 보이지 않게 만드는 최소 코드/문서 변경을 찾는 것이다.
+
+closeout 메모 (2026-04-10):
+- 기본 `/query`는 `collection`/`collections` 생략 시 `generic` profile + core 컬렉션 `all`만 사용하도록 고정했다.
+- sample-pack 국가 키워드 라우팅은 `query_profile=sample_pack`일 때만 compatibility 경로로 열고, route reason도 `compatibility_keyword*`로 분리했다.
+- `/query` 응답 헤더와 debug meta에 `X-RAG-Query-Profile`/`query_profile`을 추가해 실제 적용 profile을 확인할 수 있게 했다.
+- `/collections`는 manifest 기반 `default_country`, `default_doc_type`을 노출하고, 웹 업로드 기본값은 프런트 하드코딩 대신 이 API 값을 사용하도록 바꿨다.
+- 웹 UI는 `all` 단일 선택을 `core 기본 경로`, sample-pack 컬렉션 명시 선택을 `sample-pack 호환 경로(명시 선택)`으로 구분해 보여 준다.
+- 검증은 `52 passed`(query/profile target), `82 passed`(LOOP-012 broader unit suite), Playwright E2E `2 passed`, live `check_ops_baseline_gate.py` `ready`(`3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=9354.412`), `roadmap_harness.py validate` `ready`까지 확인했다.
+- closeout review에서는 core 기본 query path와 sample-pack compatibility query path 분리, API/UI upload metadata 기본값의 manifest 단일화가 완료 기준을 충족한다고 판단했고 다음 active loop는 `LOOP-013`으로 승격했다.
+
+## 현재 Active Loop (LOOP-013)
+
+목표:
+- 본체 문서/예시에서 sample-pack 전용 업로드/전처리 예시가 제품 기본값처럼 읽히는 지점을 줄이고, core default 설명과 sample-pack 예시 설명의 경계를 마무리한다.
+
+범위:
+- 포함: README/SPEC의 업로드/전처리 예시 경계 점검, sample-pack 예시 라벨링, `/collections` manifest metadata 설명 보강, 관련 최소 테스트/문서 갱신
+- 제외: runtime 기능 확장, sample-pack 데이터 삭제, GraphRAG 재개, 데스크톱 패키징
+
+완료 기준:
+- core 기본 문서가 특정 국가/샘플팩 컬렉션을 제품 기본값처럼 암시하지 않는다.
+- sample-pack 업로드/전처리 예시는 호환 예시 또는 샘플팩 예시로 명확히 표시된다.
+- 새로 노출한 컬렉션 기본 메타데이터가 운영 문서와 테스트 기준에 반영된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/api/test_system_api.py tests/test_answer_level_eval_fixtures.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-012` closeout으로 runtime/query/UI 기본 경계는 정리됐지만, README/SPEC와 preprocessing 문서에는 여전히 `fr`, `country=france`, `doc_type=country` 같은 sample-pack 예시가 core 흐름 근처에 남아 있다.
+- 다음 구현 단위는 예시를 삭제하지 않고, core 기본 예시와 sample-pack compatibility 예시를 문서상 분리하는 것이다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

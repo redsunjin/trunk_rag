@@ -34,3 +34,29 @@ def test_seed_document_metadata_comes_from_manifest():
 def test_compatibility_bundle_keys_come_from_manifest():
     assert collection_service.list_default_runtime_collection_keys() == ["all"]
     assert collection_service.list_compatibility_collection_keys() == ["eu", "fr", "ge", "it", "uk"]
+
+
+def test_resolve_collection_keys_for_query_defaults_to_all_without_keyword_routing():
+    keys, route_reason, allow_default_fallback = collection_service.resolve_collection_keys_for_query(
+        "프랑스와 독일의 과학 제도화를 비교해줘.",
+        None,
+        None,
+        allow_keyword_routing=False,
+    )
+
+    assert keys == ["all"]
+    assert route_reason == "default"
+    assert allow_default_fallback is False
+
+
+def test_resolve_collection_keys_for_query_allows_sample_pack_keyword_multi_when_enabled():
+    keys, route_reason, allow_default_fallback = collection_service.resolve_collection_keys_for_query(
+        "프랑스와 독일의 과학 제도화를 비교해줘.",
+        None,
+        None,
+        allow_keyword_routing=True,
+    )
+
+    assert keys == ["fr", "ge"]
+    assert route_reason == "compatibility_keyword_multi"
+    assert allow_default_fallback is True

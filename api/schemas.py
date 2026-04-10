@@ -25,6 +25,7 @@ class QuerySource(BaseModel):
 
 class QueryMeta(BaseModel):
     request_id: str
+    query_profile: str = "generic"
     collections: list[str] = Field(default_factory=list)
     route_reason: str = "-"
     budget_profile: str | None = None

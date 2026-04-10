@@ -207,7 +207,7 @@
 - `embedding_fingerprint_status`가 `mismatch` 또는 `missing`이면 query 전에 reindex를 다시 실행하는 것이 기본 복구 경로다.
 
 ### GET `/collections`
-- 목적: 컬렉션별 벡터 수/cap 사용률 조회
+- 목적: 컬렉션별 벡터 수/cap 사용률과 업로드 기본 메타데이터 조회
 - 응답 예:
 ```json
 {
@@ -217,6 +217,8 @@
       "key": "all",
       "name": "w2_007_header_rag",
       "label": "전체 (기본)",
+      "default_country": "all",
+      "default_doc_type": "summary",
       "vectors": 37,
       "soft_cap": 30000,
       "hard_cap": 50000,
@@ -228,6 +230,7 @@
   ]
 }
 ```
+- `default_country`, `default_doc_type`는 업로드 요청 UI와 서버 기본 메타데이터가 같은 manifest 기준을 쓰도록 노출한다.
 
 ### GET `/ops-baseline/latest`
 - 목적: 최근 `ops-baseline` 게이트 결과를 읽기 전용으로 조회
@@ -293,8 +296,8 @@
   "query_profile": "generic"
 }
 ```
-- `collection`/`collections`를 생략하면 키워드 기반 자동 라우팅을 사용한다.
-- `query_profile`는 기본 `generic`이며, 샘플팩 호환 평가가 필요할 때만 `sample_pack`을 사용한다.
+- `collection`/`collections`를 생략하면 기본 core 컬렉션 `all`을 사용한다.
+- `query_profile`는 기본 `generic`이며, 샘플팩 호환 평가가 필요할 때만 `sample_pack`을 사용한다. `sample_pack`일 때만 sample-pack 키워드 기반 compatibility 라우팅과 전용 프롬프트/후처리가 활성화된다.
 - `debug=true`면 route/budget/stage timing/source/support/retrieval trace 메타를 함께 반환한다.
 - retrieval trace에는 `retrieval_strategy`, `lexical_query_terms`, `hybrid_candidate_merge_applied`, `hybrid_candidate_count`, `hybrid_scan_doc_count`, `hybrid_skipped_collections`, `coverage_rerank_applied`, `coverage_rerank_collection_count`, `coverage_rerank_covered_term_count`가 포함된다.
 - 응답 헤더:
@@ -303,7 +306,8 @@
   - `X-RAG-Collections`
   - `X-RAG-Budget-Profile`
   - `X-RAG-Route-Reason`
-- 자동 라우팅은 최대 2개 컬렉션까지 확장한다.
+- `X-RAG-Query-Profile`
+- sample-pack compatibility 자동 라우팅은 최대 2개 컬렉션까지 확장한다.
 - 키워드가 없거나 과도하게 많이 매칭되면 기본 컬렉션 `all`로 fallback 한다.
 - 응답 헤더 `X-RAG-Collection`, `X-RAG-Collections`에 실제 사용 컬렉션이 담긴다.
 

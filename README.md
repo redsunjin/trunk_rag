@@ -266,9 +266,9 @@ cd <repo>
 ## API
 
 - `GET /health`: 서버/벡터 상태 확인
-- `GET /collections`: 컬렉션별 벡터 수/cap 사용률 조회
+- `GET /collections`: 컬렉션별 벡터 수/cap 사용률과 업로드 기본 메타데이터 조회
 - `POST /reindex`: 문서 재인덱싱
-- `POST /query`: 질의(기본 단일 컬렉션, 필요 시 최대 2개 컬렉션 선택)
+- `POST /query`: 질의(기본 core 컬렉션 `all`, 필요 시 최대 2개 컬렉션 선택)
 - `GET /rag-docs`: RAG 대상 문서 목록
 - `GET /rag-docs/{doc_name}`: 문서 원문(md) 조회
 - `POST /admin/auth`: 관리자 인증 코드 확인
@@ -295,8 +295,10 @@ cd <repo>
 `고급 설정 펼치기`를 누른 경우에만 provider/model/base URL/API key를 직접 수정합니다.
 현재 기본 `max_context_chars`는 미설정 시 `1500`입니다.
 `POST /reindex` 응답에는 실제 인덱싱에 사용된 `chunking` 설정이 포함됩니다.
-`POST /query`에서 `collection`/`collections`를 명시하지 않으면 키워드 기반 자동 라우팅이 동작하고,
+`POST /query`에서 `collection`/`collections`를 명시하지 않으면 기본적으로 core 컬렉션 `all`을 조회합니다.
+sample-pack 키워드 기반 자동 라우팅은 `query_profile=sample_pack`일 때만 호환 경로로 동작하고,
 복수 국가 키워드가 동시에 감지되면 최대 2개 컬렉션까지 함께 조회합니다.
+명시적 `collection`/`collections` 선택은 `query_profile`과 무관하게 그대로 지원됩니다.
 
 예시:
 

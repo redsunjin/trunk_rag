@@ -29,8 +29,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-012`
-- current_active_title: `sample-pack 라우팅/프로파일 경계 정리`
+- current_active_id: `LOOP-013`
+- current_active_title: `sample-pack 문서/예시 경계 잔여 정리`
 - current_version_track: `V1`
 - current_harness_mode: `v1_operating_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -293,7 +293,7 @@ closeout 메모 (2026-04-08):
 - `generic-baseline` fixture는 core `all` 컬렉션 기준으로 재정렬했고, sample-pack compare 질문은 `sample-pack-baseline`에 유지했다.
 - 검증은 `79 passed`(fixture/schema + target pytest), live `scripts/check_ops_baseline_gate.py` `ready`, `scripts/roadmap_harness.py validate` `ready`까지 확인했다.
 
-### A-Next5. sample-pack 라우팅/프로파일 경계 정리 (현재 active)
+### A-Next5. sample-pack 라우팅/프로파일 경계 정리 (완료: 2026-04-10)
 1. 본체 기본 `/query` 경로에서 sample-pack 국가 키워드 라우팅과 `sample_pack` query profile 전제가 남아 있는 지점을 정리한다.
 2. core default query path와 sample-pack compatibility query path의 경계를 테스트/문서 기준까지 다시 맞춘다.
 3. sample-pack route/profile은 opt-in 호환 경로로 남기되, generic 기본 설명과 충돌하지 않게 유지한다.
@@ -311,6 +311,32 @@ closeout 메모 (2026-04-08):
 진행 메모 (2026-04-08):
 - `LOOP-011` closeout으로 core 기본 reindex/gate는 `all` 중심으로 분리됐지만, 기본 질의 경로에는 여전히 sample-pack 국가 키워드 라우팅과 query profile 경계가 남아 있다.
 - 다음 구현 단위는 core default `/query`가 sample-pack compatibility route/profile을 암묵 기본처럼 보이지 않게 만드는 최소 코드/문서 변경을 찾는 것이다.
+
+closeout 메모 (2026-04-10):
+- 기본 `/query`는 `collection`/`collections` 생략 시 `generic` profile + core 컬렉션 `all`만 사용한다.
+- sample-pack 국가 키워드 라우팅은 `query_profile=sample_pack`일 때만 compatibility 경로로 동작하고, route reason은 `compatibility_keyword*`로 분리했다.
+- `/query` 응답 헤더와 debug meta는 실제 적용 profile을 `X-RAG-Query-Profile`/`query_profile`로 노출한다.
+- `/collections`는 manifest 기반 `default_country`, `default_doc_type`을 내려 주고, 웹 업로드 기본값은 프런트 하드코딩 대신 이 값을 사용한다.
+- 웹 UI의 컬렉션 힌트는 `all` 단일 선택을 `core 기본 경로`, sample-pack 컬렉션 명시 선택을 `sample-pack 호환 경로(명시 선택)`으로 구분한다.
+- 검증은 `52 passed`(query/profile target), `82 passed`(broader unit suite), Playwright E2E `2 passed`, live `check_ops_baseline_gate.py` `ready`(`3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=9354.412`), `roadmap_harness.py validate` `ready`까지 확인했다.
+
+### A-Next6. sample-pack 문서/예시 경계 잔여 정리 (현재 active)
+1. 본체 문서/예시에서 sample-pack 전용 업로드/전처리 예시가 제품 기본값처럼 읽히는 지점을 줄인다.
+2. README/SPEC와 preprocessing 문서에서 core 기본 예시와 sample-pack compatibility 예시를 구분한다.
+3. `default_country`, `default_doc_type` 컬렉션 메타데이터 노출이 운영 문서와 테스트 기준에 반영되도록 마무리한다.
+
+완료 기준:
+- core 기본 문서가 특정 국가/샘플팩 컬렉션을 제품 기본값처럼 암시하지 않는다.
+- sample-pack 업로드/전처리 예시는 호환 예시 또는 샘플팩 예시로 명확히 표시된다.
+- 새로 노출한 컬렉션 기본 메타데이터가 운영 문서와 테스트 기준에 반영된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/api/test_system_api.py tests/test_answer_level_eval_fixtures.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-012` closeout으로 runtime/query/UI 기본 경계는 정리됐지만, README/SPEC와 preprocessing 문서에는 여전히 `fr`, `country=france`, `doc_type=country` 같은 sample-pack 예시가 core 흐름 근처에 남아 있다.
+- 다음 구현 단위는 예시를 삭제하지 않고, core 기본 예시와 sample-pack compatibility 예시를 문서상 분리하는 것이다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

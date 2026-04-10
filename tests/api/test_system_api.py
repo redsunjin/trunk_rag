@@ -38,7 +38,12 @@ def test_collections_returns_200(client):
     body = response.json()
     assert body["default_collection_key"] == "all"
     assert isinstance(body["collections"], list)
-    assert any(item["key"] == "all" for item in body["collections"])
+    all_item = next(item for item in body["collections"] if item["key"] == "all")
+    fr_item = next(item for item in body["collections"] if item["key"] == "fr")
+    assert all_item["default_country"] == "all"
+    assert all_item["default_doc_type"] == "summary"
+    assert fr_item["default_country"] == "france"
+    assert fr_item["default_doc_type"] == "country"
 
 
 def test_ops_baseline_latest_returns_missing_when_report_does_not_exist(client, monkeypatch, tmp_path):
