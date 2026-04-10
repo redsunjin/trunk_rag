@@ -98,7 +98,7 @@ git diff --check: pass
 
 ## Merge Readiness
 
-결론: 조건부 merge-ready.
+결론: merge-ready 조건을 충족했고 `main` 병합 후 검증까지 통과했다.
 
 근거:
 - 신규 기능은 내부 service와 unit test 중심으로 추가됐고 public V1 API를 대체하지 않는다.
@@ -110,6 +110,43 @@ git diff --check: pass
 - merge 직전에 최신 `main`을 가져와 충돌 여부를 확인한다.
 - merge 대상 기준에서 full regression과 live gate를 다시 실행한다.
 - 현재 브랜치의 이름은 `loop-017` 중심이지만 내용은 `LOOP-017`부터 `LOOP-020`까지 포함하므로, merge description에는 실제 포함 범위를 명시한다.
+
+## Post-merge Main Validation
+
+- merge commit: `a429fe1 merge: v1.5 agent-ready runtime prep`
+- target branch: `main`
+- source branch: `feature/loop-017-tool-registry-skeleton`
+
+```text
+git pull --ff-only
+Already up to date.
+
+git merge --no-ff feature/loop-017-tool-registry-skeleton -m "merge: v1.5 agent-ready runtime prep"
+Merge made by the 'ort' strategy.
+```
+
+```text
+./.venv/bin/python -m pytest -q
+158 passed in 5.48s
+```
+
+```text
+./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434
+[ops-baseline-gate] ready
+eval_buckets=generic-baseline
+cases=3
+passed=3
+pass_rate=1.0
+avg_weighted_score=0.9467
+p95_latency_ms=9638.144
+```
+
+```text
+./.venv/bin/python scripts/roadmap_harness.py validate
+[roadmap-harness] ready
+active_id=LOOP-022
+branch=main
+```
 
 ## Risks
 
@@ -128,4 +165,4 @@ git diff --check: pass
 
 ## Conclusion
 
-V1.5 WP1-WP4는 기존 V1 제품 경계를 깨지 않는 내부 구조 준비로 완료됐다. 현재 브랜치는 `agent-ready runtime`의 최소 기반을 포함하며, 최신 `main` 기준 재검증을 조건으로 병합 준비 단계에 들어갈 수 있다.
+V1.5 WP1-WP4는 기존 V1 제품 경계를 깨지 않는 내부 구조 준비로 완료됐다. `main`은 `agent-ready runtime`의 최소 기반을 포함하며, post-merge full regression과 live `generic-baseline` gate 기준으로 정상 상태다.

@@ -30,8 +30,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-022`
-- current_active_title: `V1.5 브랜치 병합/사후 검증`
+- current_active_id: `LOOP-023`
+- current_active_title: `V1.5 후속 정책/공개 API 여부 정리`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -559,7 +559,7 @@ closeout 메모 (2026-04-10):
 - README/SPEC와 `docs/V1_5_AGENT_READY_PLAN.md`에 통합 검토 리포트와 병합 준비 판단을 연결했다.
 - 검증은 전체 `158 passed`, live gate `ready`(`generic-baseline 3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=12089.431`), `roadmap_harness.py validate` `ready`, `git diff --check` 통과까지 확인했다.
 
-### A-Next15. V1.5 브랜치 병합/사후 검증 (현재 active)
+### A-Next15. V1.5 브랜치 병합/사후 검증 (완료: 2026-04-10)
 1. `feature/loop-017-tool-registry-skeleton`의 V1.5 WP1-WP4 결과를 최신 `main`에 병합한다.
 2. 병합 후 full regression과 live `generic-baseline` gate를 재실행한다.
 3. 병합 결과와 다음 작업 기준을 문서에 남긴다.
@@ -576,6 +576,29 @@ closeout 메모 (2026-04-10):
 
 진행 메모 (2026-04-10):
 - `LOOP-021` closeout commit 후 최신 `main`으로 전환해 병합과 post-merge 검증을 진행한다.
+
+closeout 메모 (2026-04-10):
+- `main`에서 `git pull --ff-only`를 실행했고 원격과 이미 최신 상태임을 확인했다.
+- `feature/loop-017-tool-registry-skeleton`을 `main`에 충돌 없이 병합했다. 병합 커밋은 `a429fe1`이다.
+- post-merge 검증은 `git diff --check HEAD~1..HEAD` 통과, `roadmap_harness.py validate` `ready`, 전체 `158 passed`, live gate `ready`(`generic-baseline 3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=9638.144`)로 통과했다.
+- `docs/reports/V1_5_AGENT_READY_RUNTIME_REVIEW_2026-04-10.md`에 post-merge main validation 결과를 추가했다.
+
+### A-Next16. V1.5 후속 정책/공개 API 여부 정리 (현재 active)
+1. V1.5 내부 runtime 기반을 어디까지 public API나 운영 정책으로 승격할지 결정하기 위한 후속 기준을 정리한다.
+2. `/agent/*` 공개 여부, trace persistence, actor별 allowlist/mutation policy, branch cleanup/publish 체크를 분리한다.
+3. 실제 public API 구현은 다음 명시 loop로 넘긴다.
+
+완료 기준:
+- V1.5 후속 정책 결정 항목이 문서에 정리된다.
+- 당장 구현할 항목과 보류할 항목이 분리된다.
+- 기존 V1 API 계약과 로드맵 하네스가 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-022` closeout commit 후 public API 승격 여부와 policy 후속 작업을 정리한다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
