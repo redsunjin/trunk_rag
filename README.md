@@ -5,7 +5,7 @@
 
 폐쇄망/로컬 환경에서 사용하는 경량 RAG 서버이며, 현재 목표는 "배포 가능한 웹 MVP" 기준으로 웹 UI 기본 경로를 닫는 것입니다.
 
-현재 버전 기준은 `V1 = RAG product`다. 다음 단계는 `V2 = Agent-enabled RAG`, 장기 목표는 `V3 = Agent system`이며, 버전 경계와 후속 아키텍처 기준은 `VERSION_ROADMAP.md`를 따른다.
+현재 버전 기준은 `V1 = RAG product`다. `v1.0.1` 이후에는 `V1.5 = agent-ready runtime` 준비 트랙에서 내부 tool registry skeleton을 시작하며, `V2 = Agent-enabled RAG`와 `V3 = Agent system`의 경계는 `VERSION_ROADMAP.md`를 따른다.
 
 - 문서: 전처리 완료된 `data/*.md` 입력
 - 기본 번들 문서: 첫 실행 검증용 sample-pack demo/bootstrap corpus이며, 제품 본체 도메인 데이터가 아닙니다.
@@ -30,8 +30,9 @@
 
 `trunk_rag`는 "가벼운 RAG 런타임" 역할에 집중합니다.
 
-- 현재 제품 경계: `V1`
-- 현재 범위 밖: `tool registry`, `skill registry`, `middleware chain`, `agent runtime`, `MCP` 기반 외부 tool orchestration
+- 현재 제품 경계: `V1` 안정화 + `V1.5` 내부 구조 준비
+- 현재 범위 안: 기존 RAG 기능을 깨지 않는 internal tool registry skeleton
+- 현재 범위 밖: `skill registry`, 전체 `middleware chain`, 사용자용 `agent runtime`, `MCP` 기반 외부 tool orchestration
 
 1. 외부 전처리 단계(별도 프로세스, 클라우드 LLM 포함 가능)
 - 원본 소스를 정제해 RAG 정책에 맞는 Markdown으로 변환
@@ -54,19 +55,22 @@
 - 현재: `debug` trace는 `retrieval_strategy`, `lexical_query_terms`, `hybrid_candidate_merge_applied`, `hybrid_candidate_count`, `hybrid_scan_doc_count`, `hybrid_skipped_collections`, `coverage_rerank_applied`, `coverage_rerank_collection_count`를 남겨 경량 보정 적용 여부와 scan 비용을 확인할 수 있다
 - 현재: `/health`는 `runtime_query_budget_*`, `embedding_fingerprint_*` 상태를 노출해 경량 경로와 인덱스 호환 상태를 먼저 보여 준다
 - 현재: reindex 시 컬렉션별 embedding fingerprint를 저장하고, `/query`는 mismatch를 invoke 전에 먼저 차단한다
-- 다음 우선순위(P2/P3): 배포형 웹 MVP 기준 설치/실행/복구 경로를 고정하고, 기본 `/query` 회귀 게이트를 릴리즈 체크리스트로 유지
+- 현재: `services/tool_registry_service.py`는 `search_docs`, `read_doc`, `list_collections`, `health_check`, `reindex`, upload approval 계열을 internal tool 후보로 등록한다
+- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 `middleware chain` skeleton과 execution trace 계약으로 확장
 
 비목표(현재 단계):
 - 원본 수집/크롤링
 - 대규모 자동 재작성 파이프라인
 - 무거운 rerank/multi-vector 파이프라인 기본 탑재
 - GraphRAG 통합/sidecar 운영
+- 사용자용 agent runtime 또는 MCP 외부 tool orchestration
 
 ## Files
 
 - `app_api.py`: FastAPI 앱 엔트리포인트/조립 계층
 - `api/routes_*.py`: API/UI 라우트 모듈
 - `services/*.py`: 질의/인덱싱/업로드 서비스 모듈
+- `services/tool_registry_service.py`: V1.5 internal tool registry skeleton
 - `core/*.py`: 설정/에러/HTTP 유틸
 - `build_index.py`: 초기 인덱스 생성 스크립트
 - `common.py`: 공통 유틸리티

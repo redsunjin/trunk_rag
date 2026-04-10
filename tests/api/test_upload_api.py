@@ -4,6 +4,7 @@ from pathlib import Path
 
 from core.settings import UPLOAD_REQUEST_LOCK
 from api import routes_upload
+from services import index_service
 
 
 def test_admin_auth_success_and_failure(client, monkeypatch):
@@ -168,7 +169,7 @@ def test_upload_request_approve_persists_managed_doc_and_reject(client, monkeypa
     monkeypatch.setenv("DOC_RAG_AUTO_APPROVE", "0")
     monkeypatch.setenv("DOC_RAG_ADMIN_CODE", "admin999")
     monkeypatch.setattr(
-        routes_upload.index_service,
+        index_service,
         "reindex",
         lambda reset=True, collection_key="all": {
             "docs": 1,

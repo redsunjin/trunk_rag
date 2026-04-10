@@ -30,8 +30,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-017`
-- current_active_title: `V1.5 internal tool registry skeleton 착수`
+- current_active_id: `LOOP-018`
+- current_active_title: `V1.5 middleware chain skeleton 착수`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -428,7 +428,7 @@ closeout 메모 (2026-04-10):
 - `docs/reports/V1_RELEASE_CANDIDATE_GATE_2026-04-10.md`에 post-merge validation 결과를 추가했다.
 - `v1.0.1` 태그 대상으로 적합하다고 판단했고, 다음 active loop는 `LOOP-017`로 승격했다.
 
-### A-Next10. V1.5 internal tool registry skeleton 착수 (현재 active)
+### A-Next10. V1.5 internal tool registry skeleton 착수 (완료: 2026-04-10)
 1. `docs/V1_5_AGENT_READY_PLAN.md`의 WP1에 따라 기존 RAG 기능을 깨지 않는 internal tool registry skeleton을 시작한다.
 2. 먼저 최신 `main`에서 짧은 V1.5 작업 브랜치를 만든다.
 3. tool definition schema와 service thin adapter 경계를 최소 단위로 추가한다.
@@ -445,6 +445,33 @@ closeout 메모 (2026-04-10):
 
 진행 메모 (2026-04-10):
 - V1 릴리즈 후보 검증은 완료됐고, V1.5 작업은 최신 `main`에서 새 짧은 작업 브랜치를 만든 뒤 진행하는 것을 기본으로 한다.
+
+closeout 메모 (2026-04-10):
+- `feature/loop-017-tool-registry-skeleton` 브랜치를 만들고 WP1 구현을 진행했다.
+- `services/tool_registry_service.py`에 `ToolDefinition`, `ToolContext`, `RegisteredTool`, `invoke_tool()` 기반 internal registry skeleton을 추가했다.
+- 1차 tool 후보인 `search_docs`, `read_doc`, `list_collections`, `health_check`, `reindex`, `list_upload_requests`, `approve_upload_request`, `reject_upload_request`를 등록했다.
+- upload 승인/반려 로직은 API route helper에서 `upload_service` 함수로 이동해 endpoint와 tool adapter가 같은 service 경로를 쓰게 했다.
+- 쓰기 부작용 tool은 `ToolContext.allow_mutation=True`가 없으면 `MUTATION_NOT_ALLOWED`로 차단한다.
+- README/SPEC와 `docs/V1_5_AGENT_READY_PLAN.md`에 V1.5 internal tool registry skeleton 상태를 반영했다.
+- 검증은 `13 passed`, `73 passed`, 전체 `146 passed`, live gate `ready`(`generic-baseline 3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=10807.335`), `roadmap_harness.py validate` `ready`까지 확인했다.
+
+### A-Next11. V1.5 middleware chain skeleton 착수 (현재 active)
+1. `docs/V1_5_AGENT_READY_PLAN.md`의 WP2에 따라 tool/runtime 실행 전후에 공통 정책을 적용할 수 있는 middleware chain skeleton을 시작한다.
+2. request id, timeout budget, tool allowlist, audit log, unsafe action guard를 수용할 최소 실행기 구조를 만든다.
+3. 기존 `ToolContext.allow_mutation` guard와 runtime budget 정보를 middleware 입력으로 연결한다.
+
+완료 기준:
+- middleware chain을 순차 적용할 수 있는 최소 실행기 구조가 생긴다.
+- 기존 tool registry adapter를 middleware 실행기로 감쌀 수 있다.
+- 기존 V1 API 계약과 `generic-baseline` live gate가 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-017` branch/commit 정리가 끝난 뒤, 최신 기준에서 middleware chain skeleton을 이어간다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

@@ -61,6 +61,13 @@
 - 기존 service 호출을 감싸는 thin adapter가 생긴다.
 - 기존 `/query` 기본 경로를 깨지 않는다.
 
+진행 상태 (2026-04-10):
+- `services/tool_registry_service.py`에 `ToolDefinition`, `ToolContext`, `RegisteredTool`, `invoke_tool()` skeleton을 추가했다.
+- 1차 등록 tool은 `search_docs`, `read_doc`, `list_collections`, `health_check`, `reindex`, `list_upload_requests`, `approve_upload_request`, `reject_upload_request`다.
+- `search_docs`는 LLM 호출 없이 기존 collection routing과 context builder를 감싸고, `read_doc`는 seed/managed active markdown을 읽는다.
+- `reindex`와 upload approval 계열처럼 쓰기 부작용이 있는 tool은 `ToolContext.allow_mutation=True`가 없으면 실행하지 않는다.
+- upload 승인/반려 로직은 API route 전용 helper에서 service 함수로 이동해 endpoint와 tool adapter가 같은 경로를 사용한다.
+
 ### WP2. Middleware Chain Skeleton
 - tool/runtime 실행 전후에 공통 정책을 넣을 수 있는 체인을 추가한다.
 - 1차 미들웨어:
