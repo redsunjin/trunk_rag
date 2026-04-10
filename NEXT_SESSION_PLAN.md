@@ -30,8 +30,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-018`
-- current_active_title: `V1.5 middleware chain skeleton 착수`
+- current_active_id: `LOOP-019`
+- current_active_title: `V1.5 execution trace contract 착수`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -455,7 +455,7 @@ closeout 메모 (2026-04-10):
 - README/SPEC와 `docs/V1_5_AGENT_READY_PLAN.md`에 V1.5 internal tool registry skeleton 상태를 반영했다.
 - 검증은 `13 passed`, `73 passed`, 전체 `146 passed`, live gate `ready`(`generic-baseline 3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=10807.335`), `roadmap_harness.py validate` `ready`까지 확인했다.
 
-### A-Next11. V1.5 middleware chain skeleton 착수 (현재 active)
+### A-Next11. V1.5 middleware chain skeleton 착수 (완료: 2026-04-10)
 1. `docs/V1_5_AGENT_READY_PLAN.md`의 WP2에 따라 tool/runtime 실행 전후에 공통 정책을 적용할 수 있는 middleware chain skeleton을 시작한다.
 2. request id, timeout budget, tool allowlist, audit log, unsafe action guard를 수용할 최소 실행기 구조를 만든다.
 3. 기존 `ToolContext.allow_mutation` guard와 runtime budget 정보를 middleware 입력으로 연결한다.
@@ -472,6 +472,32 @@ closeout 메모 (2026-04-10):
 
 진행 메모 (2026-04-10):
 - `LOOP-017` branch/commit 정리가 끝난 뒤, 최신 기준에서 middleware chain skeleton을 이어간다.
+
+closeout 메모 (2026-04-10):
+- `services/tool_middleware_service.py`에 `invoke_tool_with_middlewares()` 기반 middleware 실행기 skeleton을 추가했다.
+- 기본 chain은 `request_id`, `timeout_budget`, `tool_allowlist`, `unsafe_action_guard`, `audit_log` 순서로 실행된다.
+- `ToolContext.timeout_seconds`를 추가해 runtime budget 정보를 middleware 입력과 registry adapter context에 연결했다.
+- 쓰기 tool은 middleware unsafe action guard에서 먼저 차단되고, 기존 registry의 mutation guard도 유지된다.
+- 실행 결과에는 `middleware.request_id`, `timeout_seconds`, `allowed_tools`, `trace`, `audit_log`가 포함된다.
+- 검증은 `10 passed`(middleware + tool registry), 전체 `151 passed`, live gate `ready`(`generic-baseline 3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=13232.923`), `roadmap_harness.py validate` `ready`까지 확인했다.
+
+### A-Next12. V1.5 execution trace contract 착수 (현재 active)
+1. `docs/V1_5_AGENT_READY_PLAN.md`의 WP3에 따라 한 요청에서 어떤 middleware/tool 단계가 실행됐는지 구조적으로 남기는 trace schema를 고정한다.
+2. request id, runtime budget, route reason, tool result/error, middleware 차단 사유를 하나의 내부 계약으로 정리한다.
+3. 기존 middleware result metadata를 schema와 테스트로 고정하되, 사용자 기본 `/query` 계약은 변경하지 않는다.
+
+완료 기준:
+- execution trace schema 초안이 코드/문서/테스트에 고정된다.
+- tool 실행 성공/실패와 middleware 차단 사유가 동일한 trace 계약에 남는다.
+- 기존 V1 API 계약과 `generic-baseline` live gate가 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-018` branch/commit 정리가 끝난 뒤, middleware result metadata를 기준으로 execution trace contract를 고정한다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

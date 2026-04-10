@@ -81,6 +81,13 @@
 - 미들웨어를 순차 적용할 수 있는 최소 실행기 구조가 생긴다.
 - 기존 runtime profile/budget 정보가 미들웨어 입력으로 연결된다.
 
+진행 상태 (2026-04-10):
+- `services/tool_middleware_service.py`에 `invoke_tool_with_middlewares()`와 `DEFAULT_TOOL_MIDDLEWARES`를 추가했다.
+- 기본 체인은 `request_id`, `timeout_budget`, `tool_allowlist`, `unsafe_action_guard`, `audit_log` 순서로 실행된다.
+- `ToolContext.timeout_seconds`를 추가해 runtime budget 입력을 tool adapter 호출 context까지 전달한다.
+- 쓰기 tool은 middleware의 unsafe action guard에서 먼저 차단되며, 기존 `ToolContext.allow_mutation` guard도 registry adapter에 그대로 남겨 이중 안전장치를 유지한다.
+- 실행 결과에는 `middleware.request_id`, `timeout_seconds`, `allowed_tools`, `trace`, `audit_log`가 포함된다.
+
 ### WP3. Execution Trace Contract
 - 한 요청에서 어떤 단계와 tool이 실행됐는지 구조적으로 남긴다.
 - 현재 `request_id`, runtime profile, route reason, budget profile을 trace seed로 사용한다.

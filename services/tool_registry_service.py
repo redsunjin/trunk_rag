@@ -23,6 +23,7 @@ class ToolContext:
     request_id: str = "-"
     actor: str = "internal"
     allow_mutation: bool = False
+    timeout_seconds: float | None = None
 
 
 @dataclass(frozen=True)

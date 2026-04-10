@@ -48,7 +48,8 @@
 | LOOP-015 | done | V1 경계 정리 릴리즈 스윕 | `./.venv/bin/python -m pytest -q tests/test_documentation_boundaries.py tests/test_collection_service.py tests/api/test_system_api.py tests/test_check_ops_baseline_gate.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-016 | done | V1 릴리즈 후보 실측 게이트/태그 준비 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-017 | done | V1.5 internal tool registry skeleton 착수 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-018 | active | V1.5 middleware chain skeleton 착수 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-018 | done | V1.5 middleware chain skeleton 착수 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-019 | active | V1.5 execution trace contract 착수 | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -511,7 +512,7 @@ closeout 메모 (2026-04-10):
 - 검증은 `13 passed`(tool registry + upload API), `73 passed`(인접 API/service), 전체 `146 passed`, live gate `ready`(`generic-baseline 3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=10807.335`), `roadmap_harness.py validate` `ready`까지 확인했다.
 - closeout review에서는 기존 `/query`, `/health`, collection/upload/admin 경로의 API 계약을 유지하면서 WP1 skeleton이 완료됐다고 판단했고 다음 active loop는 `LOOP-018`로 승격했다.
 
-## 현재 Active Loop (LOOP-018)
+## 완료 Loop (LOOP-018)
 
 목표:
 - `docs/V1_5_AGENT_READY_PLAN.md`의 WP2에 따라 tool/runtime 실행 전후에 공통 정책을 적용할 수 있는 middleware chain skeleton을 시작한다.
@@ -532,6 +533,37 @@ closeout 메모 (2026-04-10):
 
 진행 메모 (2026-04-10):
 - `LOOP-017` branch/commit 정리가 끝난 뒤, 최신 기준에서 middleware chain skeleton을 이어간다.
+
+closeout 메모 (2026-04-10):
+- `services/tool_middleware_service.py`에 `invoke_tool_with_middlewares()` 기반 middleware 실행기 skeleton을 추가했다.
+- 기본 middleware chain은 `request_id`, `timeout_budget`, `tool_allowlist`, `unsafe_action_guard`, `audit_log` 순서로 동작한다.
+- `ToolContext.timeout_seconds`를 추가해 runtime budget 정보를 middleware 입력과 registry adapter context에 연결했다.
+- 쓰기 부작용 tool은 middleware의 unsafe action guard에서 먼저 차단하고, 기존 registry의 `ToolContext.allow_mutation` guard도 유지했다.
+- 실행 결과에는 `middleware.request_id`, `timeout_seconds`, `allowed_tools`, `trace`, `audit_log`가 포함된다.
+- 검증은 `10 passed`(middleware + tool registry), 전체 `151 passed`, live gate `ready`(`generic-baseline 3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=13232.923`), `roadmap_harness.py validate` `ready`까지 확인했다.
+- closeout review에서는 기존 `/query`, `/health`, upload/admin API 계약을 건드리지 않고 WP2 skeleton이 완료됐다고 판단했고 다음 active loop는 `LOOP-019`로 승격했다.
+
+## 현재 Active Loop (LOOP-019)
+
+목표:
+- `docs/V1_5_AGENT_READY_PLAN.md`의 WP3에 따라 한 요청에서 실행된 middleware/tool 단계와 실패 원인을 구조적으로 남기는 execution trace 계약을 고정한다.
+
+범위:
+- 포함: trace schema 초안, middleware trace와 tool result/error를 묶는 내부 계약, request_id/runtime budget/route reason seed 정리
+- 제외: 사용자용 agent runtime, planner/worker, skill 자동 선택, MCP 통합, GraphRAG 재개
+
+완료 기준:
+- V1.5 tool/middleware 실행 결과의 trace schema가 문서와 테스트로 고정된다.
+- tool 실행 성공/실패와 middleware 차단 사유가 동일한 trace 계약에 남는다.
+- 기존 V1 API 계약과 `generic-baseline` live gate가 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-018` branch/commit 정리가 끝난 뒤, middleware result metadata를 기준으로 execution trace contract를 고정한다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
