@@ -15,6 +15,10 @@ def test_health_returns_200(client):
     assert body["default_runtime_collection_keys"] == ["all"]
     assert body["compatibility_bundle_key"] == "sample_pack"
     assert body["compatibility_bundle_optional"] is True
+    assert body["seed_corpus_key"] == "sample_pack_bootstrap"
+    assert body["seed_corpus_role"] == "demo_bootstrap"
+    assert body["seed_corpus_dataset"] == "sample-eu-science-history"
+    assert "not product-domain data" in body["seed_corpus_description"]
     assert "collection" in body
     assert "persist_dir" in body
     assert body["chunking_mode"] in {"char", "token"}

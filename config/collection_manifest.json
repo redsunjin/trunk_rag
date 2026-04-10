@@ -15,6 +15,13 @@
     ],
     "optional": true
   },
+  "seed_corpus": {
+    "key": "sample_pack_bootstrap",
+    "label": "sample-pack demo/bootstrap corpus",
+    "role": "demo_bootstrap",
+    "dataset": "sample-eu-science-history",
+    "description": "First-run demo corpus used to populate the core all collection and the optional sample-pack compatibility collections. It is bundled example data, not product-domain data."
+  },
   "seed_documents": {
     "eu_summry": {
       "file_name": "eu_summry.md",

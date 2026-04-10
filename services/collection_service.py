@@ -10,6 +10,7 @@ from core.settings import (
     DEFAULT_COLLECTION_KEY,
     DEFAULT_RUNTIME_COLLECTION_KEYS,
     MAX_QUERY_COLLECTIONS,
+    SEED_CORPUS_CONFIG,
 )
 
 
@@ -148,6 +149,16 @@ def get_compatibility_bundle_config() -> dict[str, object]:
         "label": str(COMPATIBILITY_BUNDLE_CONFIG.get("label", "sample-pack 호환 번들")),
         "collection_keys": list(COMPATIBILITY_BUNDLE_CONFIG.get("collection_keys", [])),
         "optional": bool(COMPATIBILITY_BUNDLE_CONFIG.get("optional", True)),
+    }
+
+
+def get_seed_corpus_config() -> dict[str, object]:
+    return {
+        "key": str(SEED_CORPUS_CONFIG.get("key", "bootstrap")),
+        "label": str(SEED_CORPUS_CONFIG.get("label", "bootstrap corpus")),
+        "role": str(SEED_CORPUS_CONFIG.get("role", "demo_bootstrap")),
+        "dataset": str(SEED_CORPUS_CONFIG.get("dataset", "unknown")),
+        "description": str(SEED_CORPUS_CONFIG.get("description", "")),
     }
 
 

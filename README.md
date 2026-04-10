@@ -8,6 +8,7 @@
 현재 버전 기준은 `V1 = RAG product`다. 다음 단계는 `V2 = Agent-enabled RAG`, 장기 목표는 `V3 = Agent system`이며, 버전 경계와 후속 아키텍처 기준은 `VERSION_ROADMAP.md`를 따른다.
 
 - 문서: 전처리 완료된 `data/*.md` 입력
+- 기본 번들 문서: 첫 실행 검증용 sample-pack demo/bootstrap corpus이며, 제품 본체 도메인 데이터가 아닙니다.
 - 청킹: `##`, `###`, `####` 헤더 기반 + 문자 분할(기본), 토큰 분할(옵션)
 - 벡터스토어: Chroma (로컬 폴더)
 - LLM: `openai` / `ollama` / `lmstudio` / `groq` 선택(기본 예시: `ollama` + `gemma4:e4b`)
@@ -39,13 +40,14 @@
 2. `trunk_rag` 단계(현재 + 다음 우선순위)
 - 현재: 정제된 md를 인덱싱/검색/질의
 - 현재: 데이터 등록 시 검증(사용 가능/불가 판정) 적용
-- 현재: 분야별 컬렉션 + 단순 라우팅 적용
+- 현재: core 기본 컬렉션(`all`)과 sample-pack compatibility 컬렉션을 분리해 운영
 - 현재: 승인된 업로드는 `chroma_db/managed_docs/`의 active markdown 원본 기준으로 유지
 - 현재: answer-level eval fixture + `/query` 품질 평가 하네스 추가
 - 현재: `generic-baseline`/`sample-pack-baseline`/`graph-candidate`로 answer-level 평가 버킷을 분리했다
 - 현재: 업로드 관리자 Slice 2 완료(`pending` 기본 필터, update 강조, active 문서 미리보기, reject reason code/decision_note)
 - 아카이브: GraphRAG 관련 질문셋/계약/PoC/판단 문서는 `docs/GRAPH_RAG_ARCHIVE_INDEX.md` 기준으로만 유지한다
 - 현재: `/reindex`와 `build_index.py --reset` 기본 경로는 core 기본 컬렉션 `all`만 재생성하고, sample-pack route 컬렉션은 compatibility bundle opt-in으로 분리했다
+- 현재: core `all`에 들어가는 번들 seed 문서는 첫 실행 demo/bootstrap corpus이며, sample-pack compatibility 평가를 위한 예시 데이터로만 해석한다
 - 현재: 본체 회귀 게이트는 `generic-baseline 3/3 pass` 기준으로 유지한다
 - 현재: `/query`는 runtime profile 기반 query budget(`single/multi`, `verified/experimental/not_recommended`)을 내부 정책으로 적용한다
 - 현재: `/query` context build는 MMR retrieval 뒤에 collection pool에서 lexical match가 강한 문서를 최대 2개까지 보강하고, 이어서 경량 lexical boost와 multi-collection coverage rerank로 문서 순서를 한 번 더 보정한다
@@ -139,6 +141,7 @@ cd <repo>
 .venv\Scripts\python.exe build_index.py --reset
 ```
    - 기본 `Reindex`와 `build_index.py --reset`은 core 기본 컬렉션 `all`만 갱신합니다.
+   - 이때 번들 seed 문서는 첫 실행 확인용 sample-pack demo/bootstrap corpus로 `all`에 적재됩니다.
    - sample-pack route 컬렉션까지 같이 맞추려면 `build_index.py --reset --include-compatibility-bundle` 또는 `POST /reindex`의 `include_compatibility_bundle=true`를 사용합니다.
 4. 선택형 데스크톱 런처를 쓰려면:
 ```powershell

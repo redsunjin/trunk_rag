@@ -62,6 +62,7 @@ def health() -> dict[str, object]:
     default_collection = collection_service.get_collection_name(DEFAULT_COLLECTION_KEY)
     default_runtime_collection_keys = collection_service.list_default_runtime_collection_keys()
     compatibility_bundle = collection_service.get_compatibility_bundle_config()
+    seed_corpus = collection_service.get_seed_corpus_config()
     compatibility_bundle_keys = list(compatibility_bundle.get("collection_keys", []))
     pending_count = len(upload_service.list_upload_requests(status=REQUEST_STATUS_PENDING))
     chunking = runtime_service.get_chunking_config()
@@ -94,6 +95,11 @@ def health() -> dict[str, object]:
         "compatibility_bundle_label": compatibility_bundle["label"],
         "compatibility_bundle_collection_keys": compatibility_bundle["collection_keys"],
         "compatibility_bundle_optional": compatibility_bundle["optional"],
+        "seed_corpus_key": seed_corpus["key"],
+        "seed_corpus_label": seed_corpus["label"],
+        "seed_corpus_role": seed_corpus["role"],
+        "seed_corpus_dataset": seed_corpus["dataset"],
+        "seed_corpus_description": seed_corpus["description"],
         "persist_dir": PERSIST_DIR,
         "vectors": vectors,
         "auto_approve": runtime_service.is_auto_approve_enabled(),

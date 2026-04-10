@@ -9,6 +9,7 @@ from core.collection_manifest import (
     COMPATIBILITY_BUNDLE_CONFIG,
     DEFAULT_COLLECTION_KEY,
     DEFAULT_RUNTIME_COLLECTION_KEYS,
+    SEED_CORPUS_CONFIG,
 )
 
 PERSIST_DIR = str(default_persist_dir())

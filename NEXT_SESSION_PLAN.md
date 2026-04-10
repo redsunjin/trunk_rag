@@ -29,8 +29,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-014`
-- current_active_title: `core seed 데이터/부트스트랩 경계 검토`
+- current_active_id: `LOOP-015`
+- current_active_title: `V1 경계 정리 릴리즈 스윕`
 - current_version_track: `V1`
 - current_harness_mode: `v1_operating_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -344,7 +344,7 @@ closeout 메모 (2026-04-10):
 - `tests/test_documentation_boundaries.py`를 추가해 core/sample-pack 문서 예시 경계를 검증한다.
 - 검증은 `18 passed`와 `roadmap_harness.py validate` `ready`까지 확인했다.
 
-### A-Next7. core seed 데이터/부트스트랩 경계 검토 (현재 active)
+### A-Next7. core seed 데이터/부트스트랩 경계 검토 (완료: 2026-04-10)
 1. 현재 core 기본 컬렉션 `all`이 sample-pack seed 문서로 구성된 상태를 제품/샘플 경계 관점에서 재검토한다.
 2. 첫 실행 bootstrap/demo 데이터와 sample-pack compatibility 데이터의 관계를 문서/manifest 기준으로 명확히 한다.
 3. 성급한 데이터 삭제나 migration 없이, 운영자가 현재 seed corpus의 역할을 오해하지 않게 만든다.
@@ -361,6 +361,30 @@ closeout 메모 (2026-04-10):
 진행 메모 (2026-04-10):
 - `LOOP-013` closeout으로 문서 예시 경계는 정리됐지만, 실제 첫 실행 seed corpus는 여전히 sample-pack 문서가 core `all` 컬렉션에도 들어가는 구조다.
 - 다음 구현 단위는 동작을 성급히 바꾸기보다 bootstrap/demo/compatibility 경계를 문서와 manifest 관점에서 먼저 고정하는 것이다.
+
+closeout 메모 (2026-04-10):
+- manifest와 fallback manifest에 `seed_corpus` 메타데이터를 추가해 번들 seed 문서가 `sample_pack_bootstrap` demo/bootstrap corpus임을 명시했다.
+- `/health`는 `seed_corpus_*` 필드를 노출해 core `all`에 적재되는 번들 문서가 제품 본체 도메인 데이터가 아니라 첫 실행 확인용 예시 데이터임을 보여 준다.
+- README/SPEC는 기본 `Reindex`에서 core `all`에 적재되는 seed corpus의 demo/bootstrap 역할을 설명한다.
+- 검증은 `18 passed`, `28 passed`, manifest JSON parse, `roadmap_harness.py validate` `ready`까지 확인했다.
+
+### A-Next8. V1 경계 정리 릴리즈 스윕 (현재 active)
+1. `LOOP-011`부터 이어진 V1 본체/sample-pack/archive 경계 정리를 릴리즈 관점에서 훑는다.
+2. README/SPEC/TODO/NEXT와 릴리즈 체크리스트의 core/sample-pack 용어가 같은 의미로 쓰이는지 확인한다.
+3. 하네스/게이트 명령이 현재 상태와 충돌하지 않게 정리한다.
+
+완료 기준:
+- V1 본체 기본 경로, sample-pack compatibility 경로, archive 경로가 주요 운영 문서에서 같은 의미로 쓰인다.
+- 릴리즈/운영 검증 명령이 현재 active 기준과 충돌하지 않는다.
+- 후속 작업이 기능 확장이 아니라 실제 사용자/릴리즈 판단을 위한 명확한 후보로 정리된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_documentation_boundaries.py tests/test_collection_service.py tests/api/test_system_api.py tests/test_check_ops_baseline_gate.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-014` closeout으로 sample-pack seed corpus의 bootstrap/demo 역할은 명시됐다.
+- 다음 구현 단위는 추가 기능보다 릴리즈 문서와 검증 명령의 용어/상태 불일치를 줄이는 final sweep이다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

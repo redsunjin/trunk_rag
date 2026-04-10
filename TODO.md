@@ -43,7 +43,8 @@
 | LOOP-011 | done | sample-pack 기본 번들 분리 | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_index_service.py tests/test_runtime_preflight.py tests/api/test_system_api.py tests/test_query_service.py tests/api/test_query_api.py tests/test_check_ops_baseline_gate.py` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-012 | done | sample-pack 라우팅/프로파일 경계 정리 | `./.venv/bin/python -m pytest -q tests/test_answer_level_eval_fixtures.py tests/test_eval_query_quality.py tests/test_collection_service.py tests/test_index_service.py tests/test_runtime_preflight.py tests/api/test_system_api.py tests/test_query_service.py tests/api/test_query_api.py tests/test_check_ops_baseline_gate.py` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-013 | done | sample-pack 문서/예시 경계 잔여 정리 | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/api/test_system_api.py tests/test_answer_level_eval_fixtures.py tests/test_documentation_boundaries.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-014 | active | core seed 데이터/부트스트랩 경계 검토 | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_index_service.py tests/api/test_system_api.py tests/test_documentation_boundaries.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-014 | done | core seed 데이터/부트스트랩 경계 검토 | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_index_service.py tests/api/test_system_api.py tests/test_documentation_boundaries.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-015 | active | V1 경계 정리 릴리즈 스윕 | `./.venv/bin/python -m pytest -q tests/test_documentation_boundaries.py tests/test_collection_service.py tests/api/test_system_api.py tests/test_check_ops_baseline_gate.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -375,7 +376,7 @@ closeout 메모 (2026-04-10):
 - 검증은 `18 passed`(`tests/test_collection_service.py tests/api/test_system_api.py tests/test_answer_level_eval_fixtures.py tests/test_documentation_boundaries.py`)와 `roadmap_harness.py validate` `ready`까지 확인했다.
 - closeout review에서는 문서/예시 경계 잔여 정리가 완료 기준을 충족한다고 판단했고 다음 active loop는 `LOOP-014`로 승격했다.
 
-## 현재 Active Loop (LOOP-014)
+## 완료 Loop (LOOP-014)
 
 목표:
 - 현재 core 기본 컬렉션 `all`이 sample-pack seed 문서로 구성된 상태를 제품/샘플 경계 관점에서 재검토하고, 첫 실행 부트스트랩과 sample-pack seed 데이터의 관계를 더 명확히 한다.
@@ -396,6 +397,36 @@ closeout 메모 (2026-04-10):
 진행 메모 (2026-04-10):
 - `LOOP-013` closeout으로 문서 예시 경계는 정리됐지만, 실제 첫 실행 seed corpus는 여전히 sample-pack 문서가 core `all` 컬렉션에도 들어가는 구조다.
 - 다음 구현 단위는 동작을 성급히 바꾸기보다 bootstrap/demo/compatibility 경계를 문서와 manifest 관점에서 먼저 고정하는 것이다.
+
+closeout 메모 (2026-04-10):
+- `config/collection_manifest.json`과 fallback manifest에 `seed_corpus` 메타데이터를 추가해 번들 seed 문서가 `sample_pack_bootstrap` demo/bootstrap corpus임을 명시했다.
+- `/health`는 `seed_corpus_*` 필드를 노출해 core `all`에 적재되는 번들 문서가 제품 본체 도메인 데이터가 아니라 첫 실행 확인용 예시 데이터임을 보여 준다.
+- README/SPEC는 기본 `Reindex`가 core `all`만 갱신하되, 이때 적재되는 번들 seed 문서는 sample-pack demo/bootstrap corpus라고 설명하도록 정리했다.
+- `tests/test_collection_service.py`, `tests/api/test_system_api.py`, `tests/test_documentation_boundaries.py`에 seed corpus 경계 검증을 추가했다.
+- 검증은 `18 passed`(seed corpus target), `28 passed`(LOOP-014 suite), manifest JSON parse, `roadmap_harness.py validate` `ready`까지 확인했다.
+- closeout review에서는 bootstrap/demo/compatibility 경계가 manifest, health, 문서, 테스트에 반영됐다고 판단했고 다음 active loop는 `LOOP-015`로 승격했다.
+
+## 현재 Active Loop (LOOP-015)
+
+목표:
+- `LOOP-011`부터 이어진 V1 본체/sample-pack/archive 경계 정리를 릴리즈 관점에서 한 번 더 훑고, 남은 문서/검증 명령 불일치를 줄인다.
+
+범위:
+- 포함: README/SPEC/TODO/NEXT와 릴리즈 체크리스트의 core/sample-pack 용어 일치 점검, 하네스/게이트 명령 일치 확인, 필요한 소규모 문서/테스트 보강
+- 제외: 새 retrieval 실험, sample-pack 데이터 삭제, 데스크톱 패키징, GraphRAG 재개
+
+완료 기준:
+- V1 본체 기본 경로, sample-pack compatibility 경로, archive 경로가 주요 운영 문서에서 같은 의미로 쓰인다.
+- 릴리즈/운영 검증 명령이 현재 active 기준과 충돌하지 않는다.
+- 후속 작업이 기능 확장이 아니라 실제 사용자/릴리즈 판단을 위한 명확한 후보로 정리된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_documentation_boundaries.py tests/test_collection_service.py tests/api/test_system_api.py tests/test_check_ops_baseline_gate.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-014` closeout으로 sample-pack seed corpus의 bootstrap/demo 역할은 명시됐다.
+- 다음 구현 단위는 추가 기능보다 릴리즈 문서와 검증 명령의 용어/상태 불일치를 줄이는 final sweep이다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

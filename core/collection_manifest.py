@@ -20,6 +20,16 @@ _FALLBACK_COLLECTION_MANIFEST: dict[str, Any] = {
         "collection_keys": ["eu", "fr", "ge", "it", "uk"],
         "optional": True,
     },
+    "seed_corpus": {
+        "key": "sample_pack_bootstrap",
+        "label": "sample-pack demo/bootstrap corpus",
+        "role": "demo_bootstrap",
+        "dataset": "sample-eu-science-history",
+        "description": (
+            "First-run demo corpus used to populate the core all collection and the optional "
+            "sample-pack compatibility collections. It is bundled example data, not product-domain data."
+        ),
+    },
     "seed_documents": {
         "eu_summry": {
             "file_name": "eu_summry.md",
@@ -320,6 +330,22 @@ def _normalize_compatibility_bundle(
     }
 
 
+def _normalize_seed_corpus(raw_corpus: object, *, fallback: dict[str, object]) -> dict[str, object]:
+    if not isinstance(raw_corpus, dict):
+        raw_corpus = {}
+
+    corpus = {
+        "key": str(raw_corpus.get("key") or fallback.get("key") or "bootstrap").strip(),
+        "label": str(raw_corpus.get("label") or fallback.get("label") or "bootstrap corpus").strip(),
+        "role": str(raw_corpus.get("role") or fallback.get("role") or "demo_bootstrap").strip(),
+        "dataset": str(raw_corpus.get("dataset") or fallback.get("dataset") or "unknown").strip(),
+        "description": str(raw_corpus.get("description") or fallback.get("description") or "").strip(),
+    }
+    if not corpus["key"] or not corpus["label"]:
+        raise ValueError("seed_corpus requires key and label")
+    return corpus
+
+
 def _normalize_collection_manifest(
     payload: dict[str, Any],
 ) -> tuple[
@@ -327,6 +353,7 @@ def _normalize_collection_manifest(
     dict[str, dict[str, object]],
     dict[str, dict[str, object]],
     list[str],
+    dict[str, object],
     dict[str, object],
 ]:
     fallback = _FALLBACK_COLLECTION_MANIFEST
@@ -351,7 +378,18 @@ def _normalize_collection_manifest(
         collection_keys=collection_keys,
         fallback=dict(fallback.get("compatibility_bundle", {})),
     )
-    return default_collection_key, seed_documents, collections, default_runtime_collection_keys, compatibility_bundle
+    seed_corpus = _normalize_seed_corpus(
+        payload.get("seed_corpus"),
+        fallback=dict(fallback.get("seed_corpus", {})),
+    )
+    return (
+        default_collection_key,
+        seed_documents,
+        collections,
+        default_runtime_collection_keys,
+        compatibility_bundle,
+        seed_corpus,
+    )
 
 
 def _load_collection_manifest(
@@ -361,6 +399,7 @@ def _load_collection_manifest(
     dict[str, dict[str, object]],
     dict[str, dict[str, object]],
     list[str],
+    dict[str, object],
     dict[str, object],
 ]:
     if not path.exists():
@@ -387,6 +426,7 @@ def _copy_metadata(metadata: dict[str, object]) -> dict[str, object]:
     COLLECTION_CONFIGS,
     DEFAULT_RUNTIME_COLLECTION_KEYS,
     COMPATIBILITY_BUNDLE_CONFIG,
+    SEED_CORPUS_CONFIG,
 ) = _load_collection_manifest(COLLECTION_MANIFEST_PATH)
 DEFAULT_FILE_NAMES = list(COLLECTION_CONFIGS[DEFAULT_COLLECTION_KEY]["file_names"])
 COUNTRY_BY_STEM = {

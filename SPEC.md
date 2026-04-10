@@ -21,13 +21,13 @@
 
 ## 현재 범위
 ### 포함
-- 로컬 문서 로딩: `data/*.md` (현재 샘플 5개 파일)
+- 로컬 문서 로딩: `data/*.md` (현재 번들 파일은 첫 실행 확인용 sample-pack demo/bootstrap corpus)
 - 헤더 기반 청킹: `##`, `###`, `####` + 모드(`char` 기본, `token` 옵션)
 - 임베딩 + 로컬 벡터스토어: HuggingFace + Chroma
 - LLM provider 선택: `ollama`, `lmstudio`, `openai`, `groq`
 - FastAPI 서버 + 브라우저 UI
 - `/query` 표준 에러 응답 + 요청 ID 추적
-- 컬렉션 라우팅(`collection` 선택 + 키워드 fallback)
+- 컬렉션 라우팅(`collection` 선택 + sample-pack compatibility profile의 키워드 라우팅)
 - 컬렉션 상태 조회(`/collections`) + cap 사용률
 - 등록 전 문서 검증(`usable/reasons/warnings`) 1차 적용
 - 업로드 요청/승인 워크플로우(`pending/approved/rejected`) 1차 적용
@@ -182,6 +182,10 @@
   "compatibility_bundle_label": "sample-pack 호환 번들",
   "compatibility_bundle_collection_keys": ["eu", "fr", "ge", "it", "uk"],
   "compatibility_bundle_optional": true,
+  "seed_corpus_key": "sample_pack_bootstrap",
+  "seed_corpus_label": "sample-pack demo/bootstrap corpus",
+  "seed_corpus_role": "demo_bootstrap",
+  "seed_corpus_dataset": "sample-eu-science-history",
   "persist_dir": "C:/.../chroma_db",
   "vectors": 37,
   "auto_approve": false,
@@ -202,6 +206,7 @@
 - 메인 UI 기본 모드는 `default_llm_*` 값을 자동 사용한다.
 - `vectors=0`이면 사용자가 질의하기 전에 `Reindex`를 먼저 실행하도록 안내한다.
 - `default_runtime_collection_keys`와 `compatibility_bundle_*`는 core 기본 경로와 sample-pack compatibility 범위를 함께 보여 준다.
+- `seed_corpus_*`는 기본 `all` 컬렉션에 적재되는 번들 seed 문서가 첫 실행 demo/bootstrap corpus이며 제품 본체 도메인 데이터가 아님을 보여 준다.
 - `embedding_fingerprint_status`는 core 기본 컬렉션 기준이고, `compatibility_bundle_embedding_fingerprint_*`는 sample-pack compatibility bundle 상태를 따로 보여 준다.
 - `runtime_query_budget_*`는 현재 기본 런타임이 어떤 경량 query budget으로 동작하는지 보여 준다.
 - `embedding_fingerprint_status`가 `mismatch` 또는 `missing`이면 query 전에 reindex를 다시 실행하는 것이 기본 복구 경로다.

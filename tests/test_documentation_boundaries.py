@@ -41,3 +41,14 @@ def test_preprocessing_docs_label_sample_pack_metadata_examples():
     assert "sample-pack compatibility `metadata_json`" in prompt_template
     assert '"country": "france"' in prompt_template
     assert "country (all|france|germany|italy|uk)" not in prompt_template
+
+
+def test_docs_describe_bundled_seed_corpus_as_demo_bootstrap_data():
+    readme = _read_doc("README.md")
+    spec = _read_doc("SPEC.md")
+
+    assert "sample-pack demo/bootstrap corpus" in readme
+    assert "제품 본체 도메인 데이터가 아닙니다" in readme
+    assert "첫 실행 확인용 sample-pack demo/bootstrap corpus" in spec
+    assert "seed_corpus_*" in spec
+    assert "제품 본체 도메인 데이터가 아님" in spec
