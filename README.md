@@ -5,7 +5,7 @@
 
 폐쇄망/로컬 환경에서 사용하는 경량 RAG 서버이며, 현재 목표는 "배포 가능한 웹 MVP" 기준으로 웹 UI 기본 경로를 닫는 것입니다.
 
-현재 버전 기준은 `V1 = RAG product`다. `v1.0.1` 이후에는 `V1.5 = agent-ready runtime` 준비 트랙에서 내부 tool registry와 middleware chain skeleton을 시작하며, `V2 = Agent-enabled RAG`와 `V3 = Agent system`의 경계는 `VERSION_ROADMAP.md`를 따른다.
+현재 버전 기준은 `V1 = RAG product`다. `v1.0.1` 이후에는 `V1.5 = agent-ready runtime` 준비 트랙에서 내부 tool registry, middleware chain, execution trace skeleton을 시작하며, `V2 = Agent-enabled RAG`와 `V3 = Agent system`의 경계는 `VERSION_ROADMAP.md`를 따른다.
 
 - 문서: 전처리 완료된 `data/*.md` 입력
 - 기본 번들 문서: 첫 실행 검증용 sample-pack demo/bootstrap corpus이며, 제품 본체 도메인 데이터가 아닙니다.
@@ -31,7 +31,7 @@
 `trunk_rag`는 "가벼운 RAG 런타임" 역할에 집중합니다.
 
 - 현재 제품 경계: `V1` 안정화 + `V1.5` 내부 구조 준비
-- 현재 범위 안: 기존 RAG 기능을 깨지 않는 internal tool registry와 middleware chain skeleton
+- 현재 범위 안: 기존 RAG 기능을 깨지 않는 internal tool registry, middleware chain, execution trace skeleton
 - 현재 범위 밖: `skill registry`, 사용자용 `agent runtime`, `MCP` 기반 외부 tool orchestration
 
 1. 외부 전처리 단계(별도 프로세스, 클라우드 LLM 포함 가능)
@@ -57,7 +57,8 @@
 - 현재: reindex 시 컬렉션별 embedding fingerprint를 저장하고, `/query`는 mismatch를 invoke 전에 먼저 차단한다
 - 현재: `services/tool_registry_service.py`는 `search_docs`, `read_doc`, `list_collections`, `health_check`, `reindex`, upload approval 계열을 internal tool 후보로 등록한다
 - 현재: `services/tool_middleware_service.py`는 request id, timeout budget, tool allowlist, audit log, unsafe action guard를 순차 적용하는 internal middleware 실행기 skeleton을 제공한다
-- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 execution trace 계약으로 확장
+- 현재: `services/tool_trace_service.py`는 tool/middleware 실행 결과를 `v1.5.tool_execution_trace.v1` schema로 고정한다
+- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 agent runtime entry draft로 확장
 
 비목표(현재 단계):
 - 원본 수집/크롤링
@@ -73,6 +74,7 @@
 - `services/*.py`: 질의/인덱싱/업로드 서비스 모듈
 - `services/tool_registry_service.py`: V1.5 internal tool registry skeleton
 - `services/tool_middleware_service.py`: V1.5 internal tool middleware chain skeleton
+- `services/tool_trace_service.py`: V1.5 internal tool execution trace contract
 - `core/*.py`: 설정/에러/HTTP 유틸
 - `build_index.py`: 초기 인덱스 생성 스크립트
 - `common.py`: 공통 유틸리티

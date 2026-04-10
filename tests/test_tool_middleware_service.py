@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from services import tool_middleware_service
+from services import tool_middleware_service, tool_trace_service
 from services.tool_registry_service import ToolContext
 
 
@@ -30,6 +30,11 @@ def test_tool_middleware_wraps_read_tool_with_request_id_budget_and_audit():
         "tool.invoke.requested",
         "tool.invoke.completed",
     ]
+    assert result["execution_trace"]["schema_version"] == tool_trace_service.TRACE_SCHEMA_VERSION
+    assert result["execution_trace"]["request_id"] == result["middleware"]["request_id"]
+    assert result["execution_trace"]["tool"]["name"] == "read_doc"
+    assert result["execution_trace"]["tool"]["result_seed"]["origin"] == "seed"
+    assert result["execution_trace"]["outcome"] == {"ok": True, "error": None}
 
 
 def test_tool_allowlist_blocks_before_adapter(monkeypatch):
@@ -47,6 +52,8 @@ def test_tool_allowlist_blocks_before_adapter(monkeypatch):
     assert result["ok"] is False
     assert result["error"]["code"] == "TOOL_NOT_ALLOWED"
     assert result["middleware"]["audit_log"][-1]["event"] == "tool.invoke.blocked"
+    assert result["execution_trace"]["middleware"]["blocked_by"] == "tool_allowlist"
+    assert result["execution_trace"]["outcome"]["error"]["code"] == "TOOL_NOT_ALLOWED"
 
 
 def test_unsafe_action_guard_blocks_write_without_mutation_context(monkeypatch):
@@ -61,6 +68,7 @@ def test_unsafe_action_guard_blocks_write_without_mutation_context(monkeypatch):
     assert result["error"]["code"] == "MUTATION_NOT_ALLOWED"
     assert result["middleware"]["trace"][-1]["middleware"] == "unsafe_action_guard"
     assert result["middleware"]["trace"][-1]["status"] == "blocked"
+    assert result["execution_trace"]["middleware"]["blocked_by"] == "unsafe_action_guard"
 
 
 def test_mutation_context_and_timeout_budget_are_passed_to_registry(monkeypatch):
@@ -90,6 +98,32 @@ def test_mutation_context_and_timeout_budget_are_passed_to_registry(monkeypatch)
     assert captured["context"].allow_mutation is True
     assert captured["context"].timeout_seconds == 7.0
     assert result["middleware"]["audit_log"][-1]["event"] == "tool.invoke.completed"
+
+
+def test_execution_trace_includes_search_docs_routing_seed(monkeypatch):
+    def fake_build_collection_context(*, question, collection_keys, trace, budget):
+        trace.update({"collections": list(collection_keys), "sources": [{"source": "fr.md"}]})
+        return "context"
+
+    monkeypatch.setattr(
+        tool_middleware_service.tool_registry_service.query_service,
+        "build_collection_context",
+        fake_build_collection_context,
+    )
+
+    result = tool_middleware_service.invoke_tool_with_middlewares(
+        "search_docs",
+        {"query": "프랑스 과학 인재 양성을 요약해줘.", "query_profile": "sample_pack"},
+        context=ToolContext(request_id="req-search"),
+        allowed_tools=("search_docs",),
+        timeout_seconds=9,
+    )
+
+    assert result["ok"] is True
+    assert result["execution_trace"]["routing"]["route_reason"] == "compatibility_keyword"
+    assert result["execution_trace"]["routing"]["collections"] == ["fr"]
+    assert result["execution_trace"]["routing"]["query_profile"] == "sample_pack"
+    assert result["execution_trace"]["tool"]["result_seed"]["source_count"] == 1
 
 
 def test_custom_middlewares_run_in_sequence(monkeypatch):

@@ -96,6 +96,13 @@
 - trace schema가 고정된다.
 - tool 실행 결과와 실패 원인이 trace에 남는다.
 
+진행 상태 (2026-04-10):
+- `services/tool_trace_service.py`에 `TRACE_SCHEMA_VERSION = "v1.5.tool_execution_trace.v1"`와 `build_execution_trace()`를 추가했다.
+- `services/tool_middleware_service.py`의 결과에 기존 `middleware` metadata와 별도로 `execution_trace`를 추가했다.
+- trace는 `request_id`, `actor`, `runtime`, `policy`, `tool`, `routing`, `middleware`, `outcome`, `audit`를 최상위 필드로 고정한다.
+- `search_docs` 결과의 `query_profile`, `collections`, `route_reason`, `budget_profile`은 `routing` seed로 들어간다.
+- middleware 차단은 `middleware.blocked_by`와 `outcome.error.code`에 함께 남는다.
+
 ### WP4. Agent Runtime Entry Draft
 - 기존 `/query`를 대체하지 않고 별도 실험 엔트리로 시작한다.
 - 예: `/agent/query` 또는 내부 service entry

@@ -30,8 +30,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-019`
-- current_active_title: `V1.5 execution trace contract 착수`
+- current_active_id: `LOOP-020`
+- current_active_title: `V1.5 agent runtime entry draft 착수`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -481,7 +481,7 @@ closeout 메모 (2026-04-10):
 - 실행 결과에는 `middleware.request_id`, `timeout_seconds`, `allowed_tools`, `trace`, `audit_log`가 포함된다.
 - 검증은 `10 passed`(middleware + tool registry), 전체 `151 passed`, live gate `ready`(`generic-baseline 3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=13232.923`), `roadmap_harness.py validate` `ready`까지 확인했다.
 
-### A-Next12. V1.5 execution trace contract 착수 (현재 active)
+### A-Next12. V1.5 execution trace contract 착수 (완료: 2026-04-10)
 1. `docs/V1_5_AGENT_READY_PLAN.md`의 WP3에 따라 한 요청에서 어떤 middleware/tool 단계가 실행됐는지 구조적으로 남기는 trace schema를 고정한다.
 2. request id, runtime budget, route reason, tool result/error, middleware 차단 사유를 하나의 내부 계약으로 정리한다.
 3. 기존 middleware result metadata를 schema와 테스트로 고정하되, 사용자 기본 `/query` 계약은 변경하지 않는다.
@@ -498,6 +498,32 @@ closeout 메모 (2026-04-10):
 
 진행 메모 (2026-04-10):
 - `LOOP-018` branch/commit 정리가 끝난 뒤, middleware result metadata를 기준으로 execution trace contract를 고정한다.
+
+closeout 메모 (2026-04-10):
+- `services/tool_trace_service.py`에 `TRACE_SCHEMA_VERSION = "v1.5.tool_execution_trace.v1"`와 `build_execution_trace()`를 추가했다.
+- middleware 실행 결과에는 기존 `middleware` metadata와 별도로 `execution_trace`가 포함된다.
+- trace 최상위 필드는 `request_id`, `actor`, `runtime`, `policy`, `tool`, `routing`, `middleware`, `outcome`, `audit`로 고정했다.
+- `search_docs`의 `query_profile`, `collections`, `route_reason`, `budget_profile`은 `routing` seed로 남긴다.
+- middleware 차단은 `middleware.blocked_by`와 `outcome.error.code`에 함께 기록된다.
+- 검증은 `13 passed`(trace + middleware + tool registry), 전체 `154 passed`, live gate `ready`(`generic-baseline 3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=12578.583`), `roadmap_harness.py validate` `ready`까지 확인했다.
+
+### A-Next13. V1.5 agent runtime entry draft 착수 (현재 active)
+1. `docs/V1_5_AGENT_READY_PLAN.md`의 WP4에 따라 기존 `/query`를 대체하지 않는 내부 agent runtime entry draft를 시작한다.
+2. 단일 입력을 받아 allowlist/middleware/trace가 붙은 tool call 흐름을 테스트할 수 있는 service entry를 만든다.
+3. 사용자 기본 `/query` 계약은 변경하지 않는다.
+
+완료 기준:
+- 내부 agent runtime entry가 단일 입력을 받아 최소 tool call 흐름을 실행할 수 있다.
+- 실행 결과에 middleware와 execution trace 계약이 유지된다.
+- 기존 V1 API 계약과 `generic-baseline` live gate가 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-019` branch/commit 정리가 끝난 뒤, `services/tool_middleware_service.py`와 `services/tool_trace_service.py`를 조합해 내부 agent runtime entry draft를 만든다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

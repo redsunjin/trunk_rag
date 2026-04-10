@@ -5,7 +5,7 @@ import time
 from typing import Callable
 from uuid import uuid4
 
-from services import runtime_service, tool_registry_service
+from services import runtime_service, tool_registry_service, tool_trace_service
 from services.tool_registry_service import ToolContext, ToolInputError, ToolPayload
 
 ToolExecutionResult = dict[str, object]
@@ -102,16 +102,31 @@ def _attach_middleware_metadata(
     state: ToolExecutionState,
 ) -> ToolExecutionResult:
     enriched = dict(result)
-    enriched["middleware"] = {
+    allowed_tools = list(state.allowed_tools) if state.allowed_tools is not None else None
+    middleware_metadata = {
         "request_id": state.context.request_id,
         "actor": state.context.actor,
         "allow_mutation": state.context.allow_mutation,
         "timeout_seconds": state.timeout_seconds,
-        "allowed_tools": list(state.allowed_tools) if state.allowed_tools is not None else None,
+        "allowed_tools": allowed_tools,
         "elapsed_ms": state.elapsed_ms,
         "trace": list(state.middleware_trace),
         "audit_log": list(state.audit_log),
     }
+    enriched["middleware"] = middleware_metadata
+    enriched["execution_trace"] = tool_trace_service.build_execution_trace(
+        request_id=state.context.request_id,
+        actor=state.context.actor,
+        tool_name=state.tool_name,
+        side_effect=state.side_effect,
+        allow_mutation=state.context.allow_mutation,
+        allowed_tools=allowed_tools,
+        timeout_seconds=state.timeout_seconds,
+        elapsed_ms=state.elapsed_ms,
+        middleware_steps=list(state.middleware_trace),
+        audit_events=list(state.audit_log),
+        result=result,
+    )
     return enriched
 
 
