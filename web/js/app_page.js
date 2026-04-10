@@ -272,20 +272,18 @@ async function loadOpsBaselineStatus() {
   }
 }
 
+function collectionInfo(collectionKey) {
+  return collectionItems.find((item) => item.key === collectionKey) || null;
+}
+
 function defaultUploadCountry(collectionKey) {
-  const mapping = {
-    all: "all",
-    eu: "all",
-    fr: "france",
-    ge: "germany",
-    it: "italy",
-    uk: "uk",
-  };
-  return mapping[collectionKey] || "all";
+  const item = collectionInfo(collectionKey);
+  return item?.default_country || "all";
 }
 
 function defaultUploadDocType(collectionKey) {
-  return collectionKey === "all" || collectionKey === "eu" ? "summary" : "country";
+  const item = collectionInfo(collectionKey);
+  return item?.default_doc_type || "summary";
 }
 
 function updateUploadDefaultsSummary() {
@@ -398,7 +396,11 @@ function updateCollectionHint() {
 
   const labels = selectedInfos.map((item) => `${item.label}(${item.key})`).join(", ");
   const maxHardPct = Math.max(...selectedInfos.map((item) => Math.round((item.hard_usage_ratio || 0) * 100)));
-  collectionHint.textContent = `선택: ${labels} | 최대 hard-cap 사용률 ${maxHardPct}%`;
+  if (selectedKeys.length === 1 && selectedKeys[0] === "all") {
+    collectionHint.textContent = `선택: ${labels} | core 기본 경로 | 최대 hard-cap 사용률 ${maxHardPct}%`;
+  } else {
+    collectionHint.textContent = `선택: ${labels} | sample-pack 호환 경로(명시 선택) | 최대 hard-cap 사용률 ${maxHardPct}%`;
+  }
   updateUploadDefaultsSummary();
 }
 

@@ -6,8 +6,11 @@ from core.settings import (
     COLLECTION_CONFIGS,
     COLLECTION_HARD_CAP,
     COLLECTION_SOFT_CAP,
+    COMPATIBILITY_BUNDLE_CONFIG,
     DEFAULT_COLLECTION_KEY,
+    DEFAULT_RUNTIME_COLLECTION_KEYS,
     MAX_QUERY_COLLECTIONS,
+    SEED_CORPUS_CONFIG,
 )
 
 
@@ -96,6 +99,8 @@ def resolve_collection_keys_for_query(
     query: str,
     requested_collection: str | None,
     requested_collections: list[str] | None,
+    *,
+    allow_keyword_routing: bool = False,
 ) -> tuple[list[str], str, bool]:
     explicit_values = [value.strip() for value in (requested_collections or []) if value.strip()]
     if explicit_values:
@@ -117,18 +122,48 @@ def resolve_collection_keys_for_query(
     if explicit_key:
         return [explicit_key], "explicit", False
 
+    if not allow_keyword_routing:
+        return [DEFAULT_COLLECTION_KEY], "default", False
+
     matched_keys = guess_collection_keys_from_query(query)
     if not matched_keys:
         return [DEFAULT_COLLECTION_KEY], "default", False
     if len(matched_keys) == 1:
-        return matched_keys, "keyword", True
+        return matched_keys, "compatibility_keyword", True
     if len(matched_keys) <= MAX_QUERY_COLLECTIONS:
-        return matched_keys, "keyword_multi", True
-    return [DEFAULT_COLLECTION_KEY], "keyword_overflow", False
+        return matched_keys, "compatibility_keyword_multi", True
+    return [DEFAULT_COLLECTION_KEY], "compatibility_keyword_overflow", False
 
 
 def list_collection_keys() -> list[str]:
     return list(COLLECTION_CONFIGS.keys())
+
+
+def list_default_runtime_collection_keys() -> list[str]:
+    return list(DEFAULT_RUNTIME_COLLECTION_KEYS)
+
+
+def get_compatibility_bundle_config() -> dict[str, object]:
+    return {
+        "key": str(COMPATIBILITY_BUNDLE_CONFIG.get("key", "sample_pack")),
+        "label": str(COMPATIBILITY_BUNDLE_CONFIG.get("label", "sample-pack 호환 번들")),
+        "collection_keys": list(COMPATIBILITY_BUNDLE_CONFIG.get("collection_keys", [])),
+        "optional": bool(COMPATIBILITY_BUNDLE_CONFIG.get("optional", True)),
+    }
+
+
+def get_seed_corpus_config() -> dict[str, object]:
+    return {
+        "key": str(SEED_CORPUS_CONFIG.get("key", "bootstrap")),
+        "label": str(SEED_CORPUS_CONFIG.get("label", "bootstrap corpus")),
+        "role": str(SEED_CORPUS_CONFIG.get("role", "demo_bootstrap")),
+        "dataset": str(SEED_CORPUS_CONFIG.get("dataset", "unknown")),
+        "description": str(SEED_CORPUS_CONFIG.get("description", "")),
+    }
+
+
+def list_compatibility_collection_keys() -> list[str]:
+    return list(get_compatibility_bundle_config().get("collection_keys", []))
 
 
 def get_collection_name(collection_key: str) -> str:
@@ -162,6 +197,8 @@ def list_collection_statuses(get_vector_count_fast: Callable[[str], int | None])
                 "name": collection_name,
                 "label": config["label"],
                 "file_names": list(config["file_names"]),
+                "default_country": default_country_for_collection(key),
+                "default_doc_type": default_doc_type_for_collection(key),
                 "vectors": vectors,
                 **cap_status,
             }

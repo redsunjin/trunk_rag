@@ -8,7 +8,6 @@ from json import JSONDecodeError
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 FIXTURE_PATH = ROOT_DIR / "evals" / "answer_level_eval_fixtures.jsonl"
-QUESTION_SET_PATH = ROOT_DIR / "docs" / "GRAPH_RAG_QUESTION_SET.md"
 
 REQUIRED_TOP_KEYS = {
     "format_version",
@@ -19,7 +18,7 @@ REQUIRED_TOP_KEYS = {
     "query",
     "evaluation",
 }
-REQUIRED_BUCKETS = {"ops-baseline", "graph-candidate"}
+REQUIRED_BUCKETS = {"generic-baseline", "sample-pack-baseline", "graph-candidate"}
 REQUIRED_EVAL_KEYS = {
     "min_answer_chars",
     "must_include",
@@ -27,9 +26,9 @@ REQUIRED_EVAL_KEYS = {
 }
 
 
-def _load_graph_rag_question_set() -> dict[str, dict[str, object]]:
+def _load_question_set(path: Path) -> dict[str, dict[str, object]]:
     questions: dict[str, dict[str, object]] = {}
-    with QUESTION_SET_PATH.open(encoding="utf-8") as handle:
+    with path.open(encoding="utf-8") as handle:
         for raw_line in handle:
             line = raw_line.strip()
             if not line.startswith("| GQ-"):
@@ -82,7 +81,7 @@ def _is_float(value: object) -> bool:
 def test_fixture_records_are_loadable_and_complete():
     records = _load_fixtures()
     assert records, "fixture 파일이 비어있으면 안 됩니다."
-    question_set = _load_graph_rag_question_set()
+    question_sets: dict[Path, dict[str, dict[str, object]]] = {}
     ids: set[str] = set()
 
     for record in records:
@@ -91,6 +90,15 @@ def test_fixture_records_are_loadable_and_complete():
             assert key in record, f"line {line_no}: missing key '{key}'"
         assert record["format_version"] == "1.0", f"line {line_no}: format_version은 1.0이어야 합니다."
 
+        eval_block = record["evaluation"]
+        assert isinstance(eval_block, dict), f"line {line_no}: evaluation should be dict"
+        for key in REQUIRED_EVAL_KEYS:
+            assert key in eval_block, f"line {line_no}: missing evaluation key '{key}'"
+
+        source_path = ROOT_DIR / str(eval_block.get("source", "")).strip()
+        assert source_path.exists(), f"line {line_no}: evaluation.source file missing"
+        question_set = question_sets.setdefault(source_path, _load_question_set(source_path))
+
         qid = record["id"]
         assert isinstance(qid, str) and qid in question_set, f"line {line_no}: {qid} is not in question set"
         assert qid not in ids, f"line {line_no}: duplicated id {qid}"
@@ -98,11 +106,9 @@ def test_fixture_records_are_loadable_and_complete():
 
         bucket = record["bucket"]
         assert isinstance(bucket, str) and bucket in REQUIRED_BUCKETS, f"line {line_no}: invalid bucket"
-
-        eval_block = record["evaluation"]
-        assert isinstance(eval_block, dict), f"line {line_no}: evaluation should be dict"
-        for key in REQUIRED_EVAL_KEYS:
-            assert key in eval_block, f"line {line_no}: missing evaluation key '{key}'"
+        query_profile = str(record.get("query_profile", "")).strip()
+        if query_profile:
+            assert query_profile in {"generic", "sample_pack"}, f"line {line_no}: invalid query_profile"
 
         collection_keys = record["collection_keys"]
         assert isinstance(collection_keys, list) and collection_keys, f"line {line_no}: collection_keys empty"
@@ -157,11 +163,15 @@ def test_fixture_records_are_loadable_and_complete():
 
 def test_fixture_coverage_with_question_set():
     records = _load_fixtures()
-    question_set = _load_graph_rag_question_set()
     buckets = {record["bucket"] for record in records}
-    assert "ops-baseline" in buckets, "ops-baseline 항목이 최소 1개 필요합니다."
+    assert "generic-baseline" in buckets, "generic-baseline 항목이 최소 1개 필요합니다."
+    assert "sample-pack-baseline" in buckets, "sample-pack-baseline 항목이 최소 1개 필요합니다."
     assert "graph-candidate" in buckets, "graph-candidate 항목이 최소 1개 필요합니다."
-    assert "ops-baseline" in {
-        record["bucket"] for record in records
-    } and "graph-candidate" in {record["bucket"] for record in records}
-    assert {record["id"] for record in records} <= set(question_set.keys())
+    source_paths = {
+        ROOT_DIR / str(record["evaluation"].get("source", "")).strip()
+        for record in records
+    }
+    question_ids: set[str] = set()
+    for source_path in source_paths:
+        question_ids |= set(_load_question_set(source_path).keys())
+    assert {record["id"] for record in records} <= question_ids

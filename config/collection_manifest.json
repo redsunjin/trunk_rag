@@ -1,15 +1,109 @@
 {
   "default_collection_key": "all",
+  "default_runtime_collection_keys": [
+    "all"
+  ],
+  "compatibility_bundle": {
+    "key": "sample_pack",
+    "label": "sample-pack 호환 번들",
+    "collection_keys": [
+      "eu",
+      "fr",
+      "ge",
+      "it",
+      "uk"
+    ],
+    "optional": true
+  },
+  "seed_corpus": {
+    "key": "sample_pack_bootstrap",
+    "label": "sample-pack demo/bootstrap corpus",
+    "role": "demo_bootstrap",
+    "dataset": "sample-eu-science-history",
+    "description": "First-run demo corpus used to populate the core all collection and the optional sample-pack compatibility collections. It is bundled example data, not product-domain data."
+  },
+  "seed_documents": {
+    "eu_summry": {
+      "file_name": "eu_summry.md",
+      "route_collection_key": "eu",
+      "metadata": {
+        "dataset": "sample-eu-science-history",
+        "source_type": "seed_markdown",
+        "country": "all",
+        "doc_type": "summary",
+        "tags": [
+          "sample-pack",
+          "summary"
+        ]
+      }
+    },
+    "fr": {
+      "file_name": "fr.md",
+      "route_collection_key": "fr",
+      "metadata": {
+        "dataset": "sample-eu-science-history",
+        "source_type": "seed_markdown",
+        "country": "france",
+        "doc_type": "country",
+        "tags": [
+          "sample-pack",
+          "country:france"
+        ]
+      }
+    },
+    "ge": {
+      "file_name": "ge.md",
+      "route_collection_key": "ge",
+      "metadata": {
+        "dataset": "sample-eu-science-history",
+        "source_type": "seed_markdown",
+        "country": "germany",
+        "doc_type": "country",
+        "tags": [
+          "sample-pack",
+          "country:germany"
+        ]
+      }
+    },
+    "it": {
+      "file_name": "it.md",
+      "route_collection_key": "it",
+      "metadata": {
+        "dataset": "sample-eu-science-history",
+        "source_type": "seed_markdown",
+        "country": "italy",
+        "doc_type": "country",
+        "tags": [
+          "sample-pack",
+          "country:italy"
+        ]
+      }
+    },
+    "uk": {
+      "file_name": "uk.md",
+      "route_collection_key": "uk",
+      "metadata": {
+        "dataset": "sample-eu-science-history",
+        "source_type": "seed_markdown",
+        "country": "uk",
+        "doc_type": "country",
+        "tags": [
+          "sample-pack",
+          "country:uk"
+        ]
+      }
+    }
+  },
   "collections": {
     "all": {
       "name": "w2_007_header_rag",
       "label": "전체 (기본)",
-      "file_names": [
-        "eu_summry.md",
-        "fr.md",
-        "ge.md",
-        "it.md",
-        "uk.md"
+      "seed_doc_keys": [
+        "eu_summry",
+        "fr",
+        "ge",
+        "it",
+        "uk"
       ],
       "keywords": [],
       "default_country": "all",
@@ -18,8 +112,8 @@
     "eu": {
       "name": "rag_science_history_eu",
       "label": "유럽 요약",
-      "file_names": [
-        "eu_summry.md"
+      "seed_doc_keys": [
+        "eu_summry"
       ],
       "keywords": [
         "유럽",
@@ -31,8 +125,8 @@
     "fr": {
       "name": "rag_science_history_fr",
       "label": "프랑스",
-      "file_names": [
-        "fr.md"
+      "seed_doc_keys": [
+        "fr"
       ],
       "keywords": [
         "프랑스",
@@ -45,8 +139,8 @@
     "ge": {
       "name": "rag_science_history_ge",
       "label": "독일",
-      "file_names": [
-        "ge.md"
+      "seed_doc_keys": [
+        "ge"
       ],
       "keywords": [
         "독일",
@@ -59,8 +153,8 @@
     "it": {
       "name": "rag_science_history_it",
       "label": "이탈리아",
-      "file_names": [
-        "it.md"
+      "seed_doc_keys": [
+        "it"
       ],
       "keywords": [
         "이탈리아",
@@ -73,8 +167,8 @@
     "uk": {
       "name": "rag_science_history_uk",
       "label": "영국",
-      "file_names": [
-        "uk.md"
+      "seed_doc_keys": [
+        "uk"
       ],
       "keywords": [
         "영국",

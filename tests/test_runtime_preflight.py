@@ -89,11 +89,11 @@ def test_check_runtime_profile_blocks_not_recommended_model():
     assert result["name"] == "runtime_profile"
     assert result["ready"] is False
     assert result["status"] == "not_recommended"
-    assert "llama3.1:8b" in str(result["recommendation"])
+    assert "gemma4:e4b" in str(result["recommendation"])
 
 
 def test_check_runtime_profile_accepts_verified_local_model():
-    result = runtime_preflight.check_runtime_profile("ollama", "llama3.1:8b", 30)
+    result = runtime_preflight.check_runtime_profile("ollama", "gemma4:e4b", 30)
 
     assert result["name"] == "runtime_profile"
     assert result["ready"] is True

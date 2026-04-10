@@ -21,13 +21,13 @@
 
 ## 현재 범위
 ### 포함
-- 로컬 문서 로딩: `data/*.md` (현재 샘플 5개 파일)
+- 로컬 문서 로딩: `data/*.md` (현재 번들 파일은 첫 실행 확인용 sample-pack demo/bootstrap corpus)
 - 헤더 기반 청킹: `##`, `###`, `####` + 모드(`char` 기본, `token` 옵션)
 - 임베딩 + 로컬 벡터스토어: HuggingFace + Chroma
 - LLM provider 선택: `ollama`, `lmstudio`, `openai`, `groq`
 - FastAPI 서버 + 브라우저 UI
 - `/query` 표준 에러 응답 + 요청 ID 추적
-- 컬렉션 라우팅(`collection` 선택 + 키워드 fallback)
+- 컬렉션 라우팅(`collection` 선택 + sample-pack compatibility profile의 키워드 라우팅)
 - 컬렉션 상태 조회(`/collections`) + cap 사용률
 - 등록 전 문서 검증(`usable/reasons/warnings`) 1차 적용
 - 업로드 요청/승인 워크플로우(`pending/approved/rejected`) 1차 적용
@@ -40,6 +40,7 @@
 - `/health` 기반 runtime query budget profile/summary 노출
 - 최신 `ops-baseline` 상태 조회(`/ops-baseline/latest`) + intro/app 카드 노출
 - `/query` debug 메타의 citation/support label 노출
+- `/query` context build의 경량 lexical rerank 적용
 - 컬렉션별 embedding fingerprint 저장 및 `/health`/preflight 선검사
 - 기본 모드 UI에서 고급 LLM 설정 기본 숨김
 - 빈 인덱스/LLM 연결 오류에 대한 가이드 메시지
@@ -47,14 +48,9 @@
 - 전처리 규칙 문서(`docs/PREPROCESSING_RULES.md`)
 - 실험용 Electron 데스크톱 래퍼 PoC(`desktop/electron`)
 - 업로드/갱신 관리자 워크플로우 설계 문서(`docs/UPLOAD_ADMIN_WORKFLOW.md`)
-- GraphRAG 판단용 질문셋 문서(`docs/GRAPH_RAG_QUESTION_SET.md`)
-- Vector RAG 실패 사례 문서(`docs/reports/GRAPH_RAG_VECTOR_GAP_REPORT_2026-03-17.md`)
-- GraphRAG sidecar 계약 문서(`docs/GRAPH_RAG_SIDECAR_CONTRACT.md`)
-- GraphRAG retrieval PoC/실측 스크립트(`scripts/benchmark_graphrag_sidecar.py`)
+- query eval 질문셋 문서(`docs/QUERY_EVAL_QUESTION_SET.md`)
 - answer-level 평가 fixture + `/query` 품질 평가 스크립트(`evals/answer_level_eval_fixtures.jsonl`, `scripts/eval_query_quality.py`)
 - Vector RAG answer-level baseline 리포트(`docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md`)
-- Graph snapshot answer-level 비교 리포트(`docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_GRAPH_SNAPSHOT.md`)
-- GraphRAG Go/No-Go 판단 리포트(`docs/reports/GRAPH_RAG_GO_NO_GO_REVIEW_2026-03-18.md`)
 - GraphRAG 관련 문서/PoC 아카이브 유지
 
 ### 제외(현재 단계)
@@ -92,7 +88,10 @@
 - Markdown 문서 로딩
 - 헤더 기준 분할 + 모드별 분할(`char`/`token`)
 - 임베딩 생성(`BAAI/bge-m3`)
-- Chroma 인덱싱/조회
+- Chroma 인덱싱/조회 + MMR 기반 retrieval
+- collection pool에서 lexical match가 강한 문서를 소량 합류시키는 light hybrid candidate merge
+- 경량 lexical boost로 context 문서 순서 재조정
+- multi-collection 질문에서 상위 context가 한 컬렉션에 쏠리지 않게 하는 light coverage rerank
 - graph snapshot 기반 entity/relation 추출 PoC(아카이브)
 
 ### 품질/검증
@@ -154,7 +153,7 @@
 - `desktop/electron/README.md`: 데스크톱 런처 사용 가이드
 - `services/graphrag_poc_service.py`: GraphRAG snapshot/benchmark 보조 서비스
 - `scripts/eval_query_quality.py`: answer-level `/query` 품질 평가 하네스
-- `scripts/check_ops_baseline_gate.py`: runtime preflight + all-routes 벡터 상태 + `ops-baseline` 회귀 게이트/diagnostics 점검
+- `scripts/check_ops_baseline_gate.py`: runtime preflight + core 기본 컬렉션 상태 + `generic-baseline` 회귀 게이트/diagnostics 점검
 - `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩
 - `scripts/roadmap_harness.py`: 실행 큐 상태와 현재 active 항목 점검
 - `scripts/diagnose_ollama_runtime.py`: Ollama 직접 호출 기준 prompt/eval 처리량 진단
@@ -166,10 +165,8 @@
 - `web/js/*.js`: 프론트 로직 모듈
 - `docs/UPLOAD_ADMIN_WORKFLOW.md`: 업로드/갱신 관리자 운영 설계
 - `docs/RELEASE_WEB_MVP_CHECKLIST.md`: 배포형 웹 MVP 릴리즈 체크리스트
-- `docs/GRAPH_RAG_QUESTION_SET.md`: GraphRAG 판단용 질문셋
-- `docs/reports/GRAPH_RAG_VECTOR_GAP_REPORT_2026-03-17.md`: Vector RAG 실패 사례와 Graph 후보 범위
-- `docs/GRAPH_RAG_SIDECAR_CONTRACT.md`: GraphRAG sidecar 계약
-- `docs/reports/GRAPH_RAG_ACTUAL_POC_REPORT_2026-03-17.md`: GraphRAG retrieval PoC 1차 실측
+- `docs/QUERY_EVAL_QUESTION_SET.md`: generic/sample-pack/graph 평가 질문셋
+- `docs/GRAPH_RAG_ARCHIVE_INDEX.md`: GraphRAG archive 문서 진입점
 
 ## API 계약
 ### GET `/health`
@@ -180,6 +177,15 @@
   "status": "ok",
   "collection_key": "all",
   "collection": "w2_007_header_rag",
+  "default_runtime_collection_keys": ["all"],
+  "compatibility_bundle_key": "sample_pack",
+  "compatibility_bundle_label": "sample-pack 호환 번들",
+  "compatibility_bundle_collection_keys": ["eu", "fr", "ge", "it", "uk"],
+  "compatibility_bundle_optional": true,
+  "seed_corpus_key": "sample_pack_bootstrap",
+  "seed_corpus_label": "sample-pack demo/bootstrap corpus",
+  "seed_corpus_role": "demo_bootstrap",
+  "seed_corpus_dataset": "sample-eu-science-history",
   "persist_dir": "C:/.../chroma_db",
   "vectors": 37,
   "auto_approve": false,
@@ -189,20 +195,24 @@
   "query_timeout_seconds": 30,
   "max_context_chars": 1500,
   "default_llm_provider": "ollama",
-  "default_llm_model": "llama3.1:8b",
+  "default_llm_model": "gemma4:e4b",
   "default_llm_base_url": "http://localhost:11434",
   "runtime_query_budget_profile": "verified_local_single",
   "runtime_query_budget_summary": "profile=verified_local_single | k=3 | fetch_k=10 | max_docs=3 | context=1500 | generation=standard | max_output_tokens=192",
-  "embedding_fingerprint_status": "ready"
+  "embedding_fingerprint_status": "ready",
+  "compatibility_bundle_embedding_fingerprint_status": "empty"
 }
 ```
 - 메인 UI 기본 모드는 `default_llm_*` 값을 자동 사용한다.
 - `vectors=0`이면 사용자가 질의하기 전에 `Reindex`를 먼저 실행하도록 안내한다.
+- `default_runtime_collection_keys`와 `compatibility_bundle_*`는 core 기본 경로와 sample-pack compatibility 범위를 함께 보여 준다.
+- `seed_corpus_*`는 기본 `all` 컬렉션에 적재되는 번들 seed 문서가 첫 실행 demo/bootstrap corpus이며 제품 본체 도메인 데이터가 아님을 보여 준다.
+- `embedding_fingerprint_status`는 core 기본 컬렉션 기준이고, `compatibility_bundle_embedding_fingerprint_*`는 sample-pack compatibility bundle 상태를 따로 보여 준다.
 - `runtime_query_budget_*`는 현재 기본 런타임이 어떤 경량 query budget으로 동작하는지 보여 준다.
 - `embedding_fingerprint_status`가 `mismatch` 또는 `missing`이면 query 전에 reindex를 다시 실행하는 것이 기본 복구 경로다.
 
 ### GET `/collections`
-- 목적: 컬렉션별 벡터 수/cap 사용률 조회
+- 목적: 컬렉션별 벡터 수/cap 사용률과 업로드 기본 메타데이터 조회
 - 응답 예:
 ```json
 {
@@ -212,6 +222,8 @@
       "key": "all",
       "name": "w2_007_header_rag",
       "label": "전체 (기본)",
+      "default_country": "all",
+      "default_doc_type": "summary",
       "vectors": 37,
       "soft_cap": 30000,
       "hard_cap": 50000,
@@ -223,6 +235,7 @@
   ]
 }
 ```
+- `default_country`, `default_doc_type`는 업로드 요청 UI와 서버 기본 메타데이터가 같은 manifest 기준을 쓰도록 노출한다.
 
 ### GET `/ops-baseline/latest`
 - 목적: 최근 `ops-baseline` 게이트 결과를 읽기 전용으로 조회
@@ -254,9 +267,12 @@
 ```json
 {
   "reset": true,
-  "collection": "all"
+  "collection": "all",
+  "include_compatibility_bundle": false
 }
 ```
+- `collection=all` + `include_compatibility_bundle=false`면 core 기본 컬렉션 `all`만 재생성한다.
+- sample-pack route 컬렉션까지 함께 맞추려면 `include_compatibility_bundle=true`를 사용한다.
 - 응답 예:
 ```json
 {
@@ -266,7 +282,8 @@
   "vectors": 37,
   "persist_dir": "C:/.../chroma_db",
   "collection": "w2_007_header_rag",
-  "collection_key": "all"
+  "collection_key": "all",
+  "reindex_scope": "default_runtime_only"
 }
 ```
 
@@ -278,20 +295,24 @@
   "query": "각 국가별 대표적인 과학적 성과를 요약해줘",
   "collection": "all",
   "llm_provider": "ollama",
-  "llm_model": "llama3.1:8b",
+  "llm_model": "gemma4:e4b",
   "llm_api_key": null,
-  "llm_base_url": "http://localhost:11434"
+  "llm_base_url": "http://localhost:11434",
+  "query_profile": "generic"
 }
 ```
-- `collection`/`collections`를 생략하면 키워드 기반 자동 라우팅을 사용한다.
-- `debug=true`면 route/budget/stage timing/source/support 메타를 함께 반환한다.
+- `collection`/`collections`를 생략하면 기본 core 컬렉션 `all`을 사용한다.
+- `query_profile`는 기본 `generic`이며, 샘플팩 호환 평가가 필요할 때만 `sample_pack`을 사용한다. `sample_pack`일 때만 sample-pack 키워드 기반 compatibility 라우팅과 전용 프롬프트/후처리가 활성화된다.
+- `debug=true`면 route/budget/stage timing/source/support/retrieval trace 메타를 함께 반환한다.
+- retrieval trace에는 `retrieval_strategy`, `lexical_query_terms`, `hybrid_candidate_merge_applied`, `hybrid_candidate_count`, `hybrid_scan_doc_count`, `hybrid_skipped_collections`, `coverage_rerank_applied`, `coverage_rerank_collection_count`, `coverage_rerank_covered_term_count`가 포함된다.
 - 응답 헤더:
   - `X-Request-ID`
   - `X-RAG-Collection`
   - `X-RAG-Collections`
   - `X-RAG-Budget-Profile`
   - `X-RAG-Route-Reason`
-- 자동 라우팅은 최대 2개 컬렉션까지 확장한다.
+- `X-RAG-Query-Profile`
+- sample-pack compatibility 자동 라우팅은 최대 2개 컬렉션까지 확장한다.
 - 키워드가 없거나 과도하게 많이 매칭되면 기본 컬렉션 `all`로 fallback 한다.
 - 응답 헤더 `X-RAG-Collection`, `X-RAG-Collections`에 실제 사용 컬렉션이 담긴다.
 
@@ -319,7 +340,7 @@
     {
       "id": "uuid",
       "status": "pending",
-      "collection_key": "fr",
+      "collection_key": "all",
       "source_name": "new_doc.md",
       "doc_key": "new_doc",
       "request_type": "create",
@@ -332,19 +353,20 @@
 
 ### POST `/upload-requests`
 - 목적: 일반 사용자 업로드 요청 생성
-- 요청:
+- 요청(core 기본 경로):
 ```json
 {
   "source_name": "new_doc.md",
-  "collection": "fr",
+  "collection": "all",
   "request_type": "create",
   "doc_key": "new_doc",
   "change_summary": "초안 등록",
-  "country": "france",
-  "doc_type": "country",
+  "country": "all",
+  "doc_type": "summary",
   "content": "## 제목\n본문"
 }
 ```
+- sample-pack compatibility 컬렉션에 직접 올리는 경우에만 `collection=fr`, `country=france`, `doc_type=country` 같은 샘플팩 메타데이터 예시를 사용한다.
 - 응답 예:
 ```json
 {
@@ -434,7 +456,7 @@
       "updated_at": 1766079999,
       "origin": "managed",
       "doc_key": "new_doc",
-      "collection_key": "fr"
+      "collection_key": "all"
     }
   ]
 }
@@ -454,7 +476,7 @@
 {
   "answer": "...",
   "provider": "ollama",
-  "model": "llama3.1:8b"
+  "model": "gemma4:e4b"
 }
 ```
 
@@ -474,13 +496,18 @@ cd <repo>
 cd <repo>
 copy .env.example .env
 ```
-- `.env.example` 기본값은 로컬 우선(`ollama`, `llama3.1:8b`)이며, `OLLAMA_BASE_URL`은 `http://localhost:11434`를 사용한다.
+- `.env.example` 기본값은 로컬 우선(`ollama`, `gemma4:e4b`)이며, `OLLAMA_BASE_URL`은 `http://localhost:11434`를 사용한다.
 - 임베딩 모델은 `DOC_RAG_EMBEDDING_MODEL`로 override 가능하며, HuggingFace 모델 ID 또는 로컬 경로를 받을 수 있다.
 - 로컬 embedding 모델이 `MPS`에서 불안정하면 `DOC_RAG_EMBEDDING_DEVICE=cpu`로 강제할 수 있다.
 - 인덱스 생성:
 ```powershell
 cd <repo>
 .venv\Scripts\python.exe build_index.py --reset
+```
+- sample-pack compatibility route까지 함께 재생성하려면:
+```powershell
+cd <repo>
+.venv\Scripts\python.exe build_index.py --reset --include-compatibility-bundle
 ```
 - 서버 실행(권장):
 ```powershell
@@ -543,7 +570,7 @@ npm start
   - 분야별 컬렉션 + 최대 2개 자동 다중 라우팅
 
 ## 벡터스토어 정책
-- 기본 컬렉션(`all`) + 분야별 컬렉션(`eu/fr/ge/it/uk`)을 운영
+- 기본 컬렉션(`all`)을 core runtime으로 운영하고, `eu/fr/ge/it/uk`는 sample-pack compatibility 컬렉션으로 유지
 - 컬렉션당 cap은 `30,000 ~ 50,000 vectors`
 - 벡터 수 증가 시 성능/품질 저하를 방지하기 위해 용량 정책 적용
 - 상세는 `docs/VECTORSTORE_POLICY.md` 참조
@@ -555,7 +582,7 @@ npm start
 ## 다음 진행 방향
 ### 1순위
 - MVP 기본 경로 품질 유지
-- 내용: `run_doc_rag.bat`를 배포형 웹 MVP 기준 단일 부트스트랩/실행 경로로 유지하고, `/reindex`와 `build_index.py --reset` 기본 경로가 all-routes를 함께 재생성하도록 유지하며, `ops-baseline`의 `3/3 pass` 상태를 회귀 게이트로 유지한다.
+- 내용: `run_doc_rag.bat`를 배포형 웹 MVP 기준 단일 부트스트랩/실행 경로로 유지하고, `/reindex`와 `build_index.py --reset` 기본 경로는 core 컬렉션 `all` 중심으로 유지하며, sample-pack route는 compatibility opt-in으로 분리하고, `generic-baseline`의 `3/3 pass` 상태를 본체 회귀 게이트로 유지한다.
 
 ### 2순위
 - 보류 항목 유지

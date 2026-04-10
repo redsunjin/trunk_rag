@@ -10,11 +10,8 @@ from fastapi import HTTPException
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 
-from common import (
-    COUNTRY_BY_STEM,
-    create_embeddings,
-    split_by_markdown_headers,
-)
+from common import create_embeddings, split_by_markdown_headers
+from core.collection_manifest import build_seed_document_metadata, get_seed_document_collection_key
 from core.settings import (
     CHUNK_OVERLAP,
     CHUNK_SIZE,
@@ -30,6 +27,7 @@ EMBEDDING_FINGERPRINTS_FILE = "embedding_fingerprints.json"
 VECTOR_COUNT_CACHE_TTL_SECONDS = 5.0
 _EMBEDDINGS_CACHE: dict[str, object] = {}
 _DB_CACHE: dict[tuple[str, str], Chroma] = {}
+_COLLECTION_DOCS_CACHE: dict[tuple[str, str], list[Document]] = {}
 _VECTOR_COUNT_CACHE: dict[str, tuple[float, int | None]] = {}
 _CACHE_LOCK = threading.RLock()
 
@@ -120,10 +118,54 @@ def get_vector_count_snapshot(
     return vectors
 
 
+def _clone_documents(docs: list[Document]) -> list[Document]:
+    return [
+        Document(page_content=str(doc.page_content), metadata=dict(doc.metadata))
+        for doc in docs
+    ]
+
+
+def get_collection_documents_from_store(collection_key: str = DEFAULT_COLLECTION_KEY) -> list[Document]:
+    embedding_model = runtime_service.get_embedding_model()
+    cache_key = _db_cache_key(collection_key, embedding_model)
+    with _CACHE_LOCK:
+        cached = _COLLECTION_DOCS_CACHE.get(cache_key)
+    if cached is not None:
+        return _clone_documents(cached)
+
+    try:
+        db = get_db(collection_key)
+        payload = db._collection.get(include=["documents", "metadatas"])
+    except Exception:
+        return []
+
+    if not isinstance(payload, dict):
+        return []
+
+    documents = payload.get("documents", [])
+    metadatas = payload.get("metadatas", [])
+    if not isinstance(documents, list):
+        return []
+    if not isinstance(metadatas, list):
+        metadatas = []
+
+    loaded_docs: list[Document] = []
+    for index, text in enumerate(documents):
+        if not isinstance(text, str) or not text.strip():
+            continue
+        metadata = metadatas[index] if index < len(metadatas) and isinstance(metadatas[index], dict) else {}
+        loaded_docs.append(Document(page_content=text, metadata=dict(metadata)))
+
+    with _CACHE_LOCK:
+        _COLLECTION_DOCS_CACHE[cache_key] = _clone_documents(loaded_docs)
+    return loaded_docs
+
+
 def invalidate_runtime_state(collection_keys: list[str] | None = None) -> None:
     with _CACHE_LOCK:
         if collection_keys is None:
             _DB_CACHE.clear()
+            _COLLECTION_DOCS_CACHE.clear()
             _VECTOR_COUNT_CACHE.clear()
             return
 
@@ -135,6 +177,9 @@ def invalidate_runtime_state(collection_keys: list[str] | None = None) -> None:
         db_keys = [key for key in _DB_CACHE if key[0] in key_set]
         for key in db_keys:
             _DB_CACHE.pop(key, None)
+        doc_keys = [key for key in _COLLECTION_DOCS_CACHE if key[0] in key_set]
+        for key in doc_keys:
+            _COLLECTION_DOCS_CACHE.pop(key, None)
         for collection_name in collection_names:
             _VECTOR_COUNT_CACHE.pop(collection_name, None)
 
@@ -331,13 +376,7 @@ def build_validation_summary(
 
 
 def _collection_key_for_seed_file(file_name: str) -> str:
-    for key in collection_service.list_collection_keys():
-        if key == DEFAULT_COLLECTION_KEY:
-            continue
-        config = collection_service.get_collection_config(key)
-        if file_name in set(config.get("file_names", [])):
-            return key
-    return DEFAULT_COLLECTION_KEY
+    return get_seed_document_collection_key(file_name)
 
 
 def _load_seed_source_records(collection_key: str) -> list[dict[str, object]]:
@@ -353,6 +392,7 @@ def _load_seed_source_records(collection_key: str) -> list[dict[str, object]]:
 
         stem = path.stem
         stat = path.stat()
+        metadata = build_seed_document_metadata(path.name, doc_key=stem.lower())
         records.append(
             {
                 "name": path.name,
@@ -363,11 +403,7 @@ def _load_seed_source_records(collection_key: str) -> list[dict[str, object]]:
                 "size": stat.st_size,
                 "updated_at": int(stat.st_mtime),
                 "metadata": {
-                    "source": path.name,
-                    "topic": "europe_science_history",
-                    "country": COUNTRY_BY_STEM.get(stem, "unknown"),
-                    "doc_type": "summary" if stem == "eu_summry" else "country",
-                    "doc_key": stem.lower(),
+                    **metadata,
                     "origin": "seed",
                 },
             }
@@ -527,13 +563,30 @@ def index_documents_for_collection(
     }
 
 
-def reindex(reset: bool = True, collection_key: str = DEFAULT_COLLECTION_KEY) -> dict[str, object]:
-    return reindex_with_related(reset=reset, collection_key=collection_key)
+def reindex(
+    reset: bool = True,
+    collection_key: str = DEFAULT_COLLECTION_KEY,
+    *,
+    include_compatibility_bundle: bool = False,
+) -> dict[str, object]:
+    return reindex_with_related(
+        reset=reset,
+        collection_key=collection_key,
+        include_compatibility_bundle=include_compatibility_bundle,
+    )
 
 
-def expand_reindex_collection_keys(collection_key: str = DEFAULT_COLLECTION_KEY) -> list[str]:
+def expand_reindex_collection_keys(
+    collection_key: str = DEFAULT_COLLECTION_KEY,
+    *,
+    include_compatibility_bundle: bool = False,
+) -> list[str]:
     if collection_key == DEFAULT_COLLECTION_KEY:
-        return collection_service.list_collection_keys()
+        target_keys = collection_service.list_default_runtime_collection_keys()
+        if include_compatibility_bundle:
+            compatibility_keys = collection_service.list_compatibility_collection_keys()
+            target_keys = collection_service.dedupe_collection_keys(target_keys + compatibility_keys)
+        return target_keys
     return collection_service.dedupe_collection_keys([collection_key, DEFAULT_COLLECTION_KEY])
 
 
@@ -580,8 +633,16 @@ def reindex_single_collection(reset: bool = True, collection_key: str = DEFAULT_
     }
 
 
-def reindex_with_related(reset: bool = True, collection_key: str = DEFAULT_COLLECTION_KEY) -> dict[str, object]:
-    target_keys = expand_reindex_collection_keys(collection_key)
+def reindex_with_related(
+    reset: bool = True,
+    collection_key: str = DEFAULT_COLLECTION_KEY,
+    *,
+    include_compatibility_bundle: bool = False,
+) -> dict[str, object]:
+    target_keys = expand_reindex_collection_keys(
+        collection_key,
+        include_compatibility_bundle=include_compatibility_bundle,
+    )
     invalidate_runtime_state(target_keys)
     results: dict[str, dict[str, object]] = {}
     for key in target_keys:
@@ -590,7 +651,17 @@ def reindex_with_related(reset: bool = True, collection_key: str = DEFAULT_COLLE
     primary = dict(results[collection_key])
     primary["collections"] = results
     primary["related_collection_keys"] = target_keys
-    primary["reindex_scope"] = "all_routes" if collection_key == DEFAULT_COLLECTION_KEY else "selected_plus_default"
+    if collection_key == DEFAULT_COLLECTION_KEY:
+        primary["reindex_scope"] = (
+            "default_plus_compatibility_bundle" if include_compatibility_bundle else "default_runtime_only"
+        )
+        compatibility_bundle = collection_service.get_compatibility_bundle_config()
+        primary["compatibility_bundle"] = {
+            **compatibility_bundle,
+            "included": include_compatibility_bundle,
+        }
+    else:
+        primary["reindex_scope"] = "selected_plus_default"
     return primary
 
 

@@ -47,7 +47,7 @@
 | layer | meaning | examples | policy |
 | --- | --- | --- | --- |
 | `Core Product` | 도메인 독립 본체 | query/index/upload/admin/runtime gate | 버전 기준의 주체 |
-| `Sample Pack` | 샘플 데이터/샘플 평가 | 유럽 과학사 문서셋, 국가별 라우팅 예시 | 본체에서 분리 대상 |
+| `Sample Pack` | 샘플 데이터/샘플 평가 | 유럽 과학사 문서셋, sample-pack demo/bootstrap corpus, 국가별 라우팅 예시 | 본체에서 분리 대상 |
 | `Archive` | 과거 실험/판단 이력 | GraphRAG PoC, 데스크톱 보류 판단 | 참고용 보존 |
 
 ## V1 Boundary
@@ -58,7 +58,7 @@
 - Markdown 문서 기반 인덱싱/검색/질의
 - 웹 UI(`intro -> app/admin`)
 - 업로드 요청/승인 워크플로우
-- runtime profile, fingerprint, `ops-baseline` 같은 운영 게이트
+- runtime profile, fingerprint, `generic-baseline` 같은 본체 운영 게이트
 - 경량 로컬 스택(FastAPI + Chroma + 선택형 LLM)
 
 ### Out
@@ -72,9 +72,11 @@
 
 ### V1 Exit Criteria
 - 기본 설치/실행/복구 경로가 고정된다.
-- `ops-baseline`과 all-routes 게이트가 운영 기준으로 유지된다.
+- core 컬렉션 `all`과 `generic-baseline` `3/3 pass`가 본체 운영 기준으로 유지된다.
+- sample-pack route와 `sample-pack-baseline`은 별도 호환성 검증으로 분리된다.
 - 업로드 요청/승인 경로가 운영자 기준으로 재현 가능하다.
-- 기본 로컬 런타임(`ollama + llama3.1:8b + timeout 30s`)이 문서/게이트 기준으로 고정된다.
+- 기본 로컬 런타임(`ollama + gemma4:e4b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`)이 문서/게이트 기준으로 고정된다.
+- 기본 번들 seed corpus는 첫 실행 확인용 `sample-pack demo/bootstrap corpus`이며 제품 본체 도메인 데이터가 아님이 문서/API 기준으로 드러난다.
 
 ## V2 Boundary
 
@@ -160,7 +162,7 @@
 - middleware 기본 체인 도입
 - request/state/audit 구조 준비
 - 아직 제품 정체성은 `RAG product`
-- 실행 브랜치와 첫 작업 묶음은 `docs/V1_5_AGENT_READY_PLAN.md`를 따른다.
+- 실행 원칙과 첫 작업 묶음은 `docs/V1_5_AGENT_READY_PLAN.md`를 따른다.
 
 ### `V2.0` Single Agent
 - 단일 agent runtime 도입

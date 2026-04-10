@@ -16,6 +16,7 @@ from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langchain_core.runnables import RunnableLambda
 from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
+from core.collection_manifest import COUNTRY_BY_STEM, DEFAULT_FILE_NAMES, build_seed_document_metadata
 
 try:
     from langchain_openai import ChatOpenAI
@@ -29,22 +30,6 @@ except ImportError:  # pragma: no cover
         from langchain_community.chat_models import ChatOllama  # type: ignore[no-redef]
     except ImportError:  # pragma: no cover
         ChatOllama = None  # type: ignore[assignment]
-
-DEFAULT_FILE_NAMES = [
-    "eu_summry.md",
-    "fr.md",
-    "ge.md",
-    "it.md",
-    "uk.md",
-]
-
-COUNTRY_BY_STEM = {
-    "eu_summry": "all",
-    "fr": "france",
-    "ge": "germany",
-    "it": "italy",
-    "uk": "uk",
-}
 
 CHUNKING_MODE_CHAR = "char"
 CHUNKING_MODE_TOKEN = "token"
@@ -123,7 +108,7 @@ def default_llm_model(provider: str) -> str:
     value = normalize_provider(provider)
     defaults = {
         "openai": "gpt-4o-mini",
-        "ollama": "llama3.1:8b",
+        "ollama": "gemma4:e4b",
         "lmstudio": "local-model",
         "groq": "groq-model",
     }
@@ -344,16 +329,12 @@ def load_markdown_documents(data_dir: Path, file_names: Iterable[str]) -> list[D
 
         text = path.read_text(encoding="utf-8")
         stem = path.stem
+        metadata = build_seed_document_metadata(path.name, doc_key=stem.lower())
 
         docs.append(
             Document(
                 page_content=text,
-                metadata={
-                    "source": path.name,
-                    "topic": "europe_science_history",
-                    "country": COUNTRY_BY_STEM.get(stem, "unknown"),
-                    "doc_type": "summary" if stem == "eu_summry" else "country",
-                },
+                metadata=metadata,
             )
         )
 

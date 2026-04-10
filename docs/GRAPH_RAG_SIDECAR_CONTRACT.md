@@ -1,4 +1,7 @@
-# GraphRAG Sidecar Contract (2026-03-17)
+# GraphRAG Sidecar Contract (Archive, 2026-03-17)
+
+> 이 문서는 GraphRAG 잠정 중단 이후 참고용 아카이브다.
+> 현재 본체 기준 문맥은 `docs/GRAPH_RAG_ARCHIVE_INDEX.md`에서만 연결하고, 운영/릴리즈 판단에는 직접 사용하지 않는다.
 
 ## 목적
 - GraphRAG를 본체 직접 통합이 아니라 sidecar로 붙일 때의 최소 계약을 고정한다.

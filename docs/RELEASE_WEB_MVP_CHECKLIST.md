@@ -38,20 +38,22 @@
 
 ### 4. 인덱싱/질의 게이트
 
-- [ ] `build_index.py --reset` 또는 `/reindex`로 all-routes 인덱싱 확인
-- [ ] `all/eu/fr/ge/it/uk` 컬렉션 벡터 상태 확인
-- [ ] `ops-baseline` `3/3 pass` 확인
+- [ ] `build_index.py --reset` 또는 `/reindex`로 core 컬렉션 `all` 인덱싱 확인
+- [ ] `/health`의 `seed_corpus_role=demo_bootstrap`와 `seed_corpus_label=sample-pack demo/bootstrap corpus` 확인
+- [ ] core `all`에 적재된 번들 seed corpus가 제품 본체 도메인 데이터가 아닌 첫 실행 확인용 데이터로 설명되는지 확인
+- [ ] sample-pack 호환성까지 같이 볼 때만 `--include-compatibility-bundle` 또는 `include_compatibility_bundle=true`로 route 컬렉션 상태 확인
+- [ ] `generic-baseline` `3/3 pass` 확인
 - [ ] 게이트가 `blocked`면 `Runtime Preflight`와 `Diagnostics`에서 `APP_HEALTH_UNREACHABLE` / `COLLECTIONS_CHECK_FAILED` / `OPS_EVAL_FAILED` 원인 확인
 - [ ] 오프라인 재인덱싱이면 `HF_HUB_OFFLINE=1` + 로컬 HuggingFace cache 경로로 복구 가능한지 확인
 
 ## 권장 검증 명령
 
-현재 verified 로컬 운영 프로파일은 `.env` 기본값 기준 `ollama + llama3.1:8b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`이다.
+현재 verified 로컬 운영 프로파일은 `.env` 기본값 기준 `ollama + gemma4:e4b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`이다.
 
 ```powershell
 .venv\Scripts\python.exe -m pytest -q
 .venv\Scripts\python.exe scripts\roadmap_harness.py validate
-.venv\Scripts\python.exe scripts\check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434
+.venv\Scripts\python.exe scripts\check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434
 ```
 
 ## 현재 릴리즈 blocker 판단
@@ -59,5 +61,6 @@
 - 기본 LLM 런타임(Ollama 또는 로컬에서 지정한 LM Studio 경로)이 미기동 상태면 질의 게이트를 통과할 수 없다.
 - 로컬 임베딩 모델 캐시 또는 `DOC_RAG_EMBEDDING_MODEL` 경로가 없으면 오프라인 환경 첫 실행이 막힐 수 있다.
 - `scripts/check_ops_baseline_gate.py`가 `blocked`면 먼저 앱 기동 여부와 diagnostics 코드를 확인한 뒤, 필요한 경우 Reindex 또는 LLM 런타임 복구를 진행한다.
-- `VECTORSTORE_EMBEDDING_MISMATCH(409)`가 보이면 현재 임베딩 기준으로 all-routes를 다시 생성하고, 오프라인 환경이면 `HF_HUB_OFFLINE=1` 경로를 우선 사용한다.
+- 이 스크립트의 현재 본체 기본 대상은 `generic-baseline`이며, `sample-pack-baseline`은 별도 호환성 평가로 본다.
+- `VECTORSTORE_EMBEDDING_MISMATCH(409)`가 보이면 현재 임베딩 기준으로 core 컬렉션 `all`을 다시 생성하고, sample-pack route까지 운용 중이면 compatibility bundle도 함께 재생성한다. 오프라인 환경이면 `HF_HUB_OFFLINE=1` 경로를 우선 사용한다.
 - 위 blocker가 남아 있으면 릴리즈 완료로 닫지 않고, `active` 상태를 유지한다.

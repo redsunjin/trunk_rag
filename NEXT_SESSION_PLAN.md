@@ -22,6 +22,7 @@
 - `docs/WIP_SNAPSHOT_2026-02-28.md`
 - `docs/reports/GENERIC_RAG_REFOCUS_REVIEW_2026-04-04.md`
 - `docs/reports/VERSION_BOUNDARY_RESET_2026-04-04.md`
+- `docs/reports/V1_RELEASE_CANDIDATE_GATE_2026-04-10.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -29,17 +30,18 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-007`
-- current_active_title: `범용 RAG 전환 정리`
+- current_active_id: `LOOP-016`
+- current_active_title: `V1 릴리즈 후보 실측 게이트/태그 준비`
 - current_version_track: `V1`
 - current_harness_mode: `v1_operating_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
-- default_regression_gate: `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`
+- default_regression_gate: `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
 - branch_execution_policy: `non-main branches do not override official active loop without explicit redirect or queue promotion`
 - branch_plan_doc: `docs/V1_5_AGENT_READY_PLAN.md`
 - closeout_rule: `active` 항목은 검증 결과와 문서 반영, 커밋까지 끝난 뒤에만 `done`으로 본다.
 - blocked_rule: blocker와 재개 조건 없이 `blocked` 상태로 이동하지 않는다.
 - promotion_rule: 현재 `active`가 `done`이 되면 첫 번째 `pending` 항목을 즉시 다음 `active`로 승격한다.
+- legacy_gate_note: 역사 메모의 `ops-baseline` 표기는 `generic-baseline`/`sample-pack-baseline` 분리 이전 명칭이며, 현재 본체 기본 gate는 `generic-baseline`이다.
 
 ## 0. 2026-03-13 우선순위 재정렬
 
@@ -66,6 +68,9 @@
 11. 2026-03-20 기준 Electron 경로는 정식 패키징이 아니라 선택형 앱 런처로 유지한다.
 
 ## 0.2 2026-03-17 GraphRAG 게이트 업데이트 (아카이브)
+
+주의:
+- 이 섹션의 `ops-baseline` 표기는 2026-04-05 bucket split 이전 역사 메모다.
 
 결론:
 1. `docs/GRAPH_RAG_QUESTION_SET.md`에 관계형/다중 홉 질문 18개를 고정했다.
@@ -125,13 +130,13 @@
 - 실패 시 복구 경로가 사용자 관점 문구로 정리돼야 함
 
 3. 릴리즈 운영 체크리스트 고정
-- `ops-baseline` 회귀 게이트
+- `generic-baseline` 회귀 게이트
 - all-routes 인덱싱 상태 확인
 - 운영 문서/핸드오버 문서 동기화
 
 실행 순서 (2026-04-01 업데이트):
 1. 문서/인트로 톤 정리 + `/query` 실행 상세(trace/source) 노출
-2. 최신 `ops-baseline` 상태를 읽기 전용 API/카드로 노출 완료
+2. 최신 본체 게이트 상태(`/ops-baseline/latest`, bucket=`generic-baseline`)를 읽기 전용 API/카드로 노출 완료
 3. citation/support label을 경량 메타데이터로 추가 완료
 4. lexical boost 등 검색 보정은 `LOOP-001` 종료 후 후보로만 보관
 
@@ -141,17 +146,17 @@
 
 검증:
 - `./.venv/bin/python -m pytest -q`
-- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model llama3.1:8b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 closeout 메모:
 - `2026-04-04` 기준 `./.venv/bin/python -m pytest -q -> 108 passed in 9.40s`
 - 같은 날짜 verified gate는 `ready=true`, `pass_rate=1.0`, `avg_weighted_score=0.9645`, `p95_latency_ms=12917.239`로 통과했다.
 
-### A-Next. 범용 RAG 전환 정리 (현재 active)
+### A-Prev. 범용 RAG 전환 정리 (완료: 2026-04-05)
 1. 컬렉션 하드코딩을 dataset manifest 기반 구조로 치환
 2. 질문 유형별 후처리와 유럽사 전용 answer eval fixture를 본체 기준에서 분리
-3. `ops-baseline`을 범용 질문셋과 샘플팩 질문셋으로 이원화
+3. 본체 기본 게이트를 `generic-baseline`으로 고정하고, 샘플팩 질문셋은 `sample-pack-baseline`으로 분리
 4. README/SPEC/TODO/NEXT에서 본체 제품과 샘플 데이터셋 문서를 분리
 
 완료 기준:
@@ -166,8 +171,255 @@ closeout 메모:
 진행 메모 (2026-04-04):
 - 1차 구현으로 `config/collection_manifest.json`를 추가했고, `core/settings.py`가 컬렉션 이름/레이블/키워드/기본 메타데이터를 manifest에서 읽도록 바꿨다.
 - `services/collection_service.py`의 `default_country_for_collection`, `default_doc_type_for_collection`도 manifest 기반으로 전환해 `COUNTRY_BY_COLLECTION_KEY`와 조건문 하드코딩 의존을 줄였다.
+- `2026-04-05`에는 manifest를 `seed_documents` + `seed_doc_keys` 구조로 확장하고 `core/collection_manifest.py`를 추가해 `common.py`, `services/index_service.py`, `scripts/validate_rag_doc.py`의 sample-pack 파일명/metadata 하드코딩을 manifest 기준으로 치환했다.
+- 같은 변경으로 seed 문서 메타데이터에 `dataset`, `source_type`, `tags`를 넣어 본체 코드에서 `topic=europe_science_history`와 stem 기반 `country/doc_type` 파생을 제거했다.
+- 같은 날짜 `services/query_service.py`는 기본 query profile을 `generic`으로 전환했고, 유럽사 전용 시스템 프롬프트와 `역할/비교/상징` 후처리 규칙은 `DOC_RAG_QUERY_PROFILE=sample_pack`일 때만 적용되도록 분리했다.
+- `tests/test_query_service.py`는 기본 경로에서 sample-pack 전용 문장 보정이 더 이상 주입되지 않는지와, `sample_pack` profile에서만 기존 보정이 유지되는지를 함께 검증하도록 바뀌었다.
+- `2026-04-05`에는 `evals/answer_level_eval_fixtures.jsonl`을 `generic-baseline`, `sample-pack-baseline`, `graph-candidate` 버킷으로 재구성했고, `docs/QUERY_EVAL_QUESTION_SET.md`를 추가해 본체 기본 게이트 질문과 샘플팩/graph 질문을 분리했다.
+- 같은 변경으로 `scripts/check_ops_baseline_gate.py` 기본 대상은 `generic-baseline`이 됐고, `/query`는 `query_profile` 요청 필드를 받아 sample-pack fixture만 `sample_pack` profile로 별도 평가할 수 있게 됐다.
+- 같은 날짜 `README.md`, `SPEC.md`, `docs/RELEASE_WEB_MVP_CHECKLIST.md`는 본체 기본 게이트를 `generic-baseline` 기준으로 다시 설명하도록 정리했고, GraphRAG 관련 문서는 `docs/GRAPH_RAG_ARCHIVE_INDEX.md`를 진입점으로 모아 아카이브 문맥을 분리했다.
+- `docs/GRAPH_RAG_QUESTION_SET.md`, `docs/GRAPH_RAG_SIDECAR_CONTRACT.md`는 archive 문서임을 헤더에서 바로 드러내도록 갱신했다.
 - 현재 단계는 구조 분리 1차라서 `all/eu/fr/ge/it/uk` 키와 기존 업로드 기본값, 질의 라우팅 동작은 그대로 유지한다.
-- 다음 구현 단위는 `common.py`/`services/index_service.py`에 남아 있는 sample-pack 파일명/metadata 하드코딩을 manifest 또는 dataset descriptor로 옮기는 것이다.
+- `2026-04-05` closeout review 기준으로 본체 문서/샘플팩 문서 분리, manifest 기반 seed metadata 정리, query/eval profile 분리가 모두 완료 기준을 충족했고, 후속 범위는 `LOOP-008`로 승격했다.
+
+### A-Next. 경량 retrieval 품질 보정 (완료: 2026-04-05)
+1. `generic-baseline` 기준으로 실제 품질 부족 케이스를 다시 좁혀 잡는다.
+2. lexical boost 같은 경량 검색 보정 후보를 범용 경로에서만 검토한다.
+3. sample-pack 전용 규칙 재도입 없이 채택/기각 근거를 문서와 테스트 기준으로 고정한다.
+
+완료 기준:
+- 본체 기본 경로에서 시도할 경량 retrieval 보정 후보가 채택 또는 기각 근거와 함께 정리된다.
+- `generic-baseline` 기본 게이트와 `sample-pack-baseline` 호환 경계가 다시 흐려지지 않는다.
+- 변경된 검색 동작 또는 기각 판단이 테스트/문서 기준에 반영된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_query_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_check_ops_baseline_gate.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-05):
+- `LOOP-007` closeout 이후 `LOOP-001`에서 후보로만 남겨 둔 lexical boost 계열 경량 검색 보정을 다음 active loop로 승격했다.
+- 이번 loop에서는 heavy rerank, multi-vector, GraphRAG 재개 없이 `generic-baseline` 중심 회귀 기준을 유지한다.
+- 역사 메모에 남아 있는 `ops-baseline` 표기는 유지하되, 현재 운영 기준은 `generic-baseline`으로 해석한다.
+- 같은 날짜 `services/query_service.py`에는 MMR retrieval 뒤에 문서 순서를 다시 정렬하는 경량 lexical boost를 추가했다.
+- 질문에서 추출한 lexical term은 한국어 조사/질문 wrapper를 일부 정리한 뒤 사용하고, `debug` trace에는 `retrieval_strategy`, `lexical_query_terms`, `lexical_boost_applied`를 남기도록 했다.
+- 1차 회귀는 `tests/test_query_service.py`, `tests/api/test_query_api.py`로 통과 확인했고, 다음 구현 단위는 이 보정이 `generic-baseline` fixture에 실제로 어떤 채택/기각 근거를 남기는지 평가 경로까지 연결하는 것이다.
+- 같은 날짜 `docs/reports/OLLAMA_GEMMA4_PERF_CHECK_2026-04-05.md`에 `gemma4:e4b` Ollama 실측을 기록했다.
+- 직접 Ollama 진단에서는 `gemma4:e4b`가 `avg_eval_tokens_per_second=40.088`, `assessment=borderline`이었다.
+- 같은 날짜 후속 보강으로 `services/query_service.py` prompt에 영어 사고과정 서두 금지 문구를 추가하고, `Here's a thinking process...`/`Let me think...` 계열을 reasoning leakage 패턴으로 더 강하게 제거했다.
+- 그 뒤 `gemma4:e4b` 단일 `GQ-20` 질의는 정상 답변으로 바뀌었고, warm 상태 `generic-baseline` gate도 `3/3 pass`, `avg_latency_ms=4328.464`, `p95_latency_ms=4831.276`, `avg_weighted_score=0.8933`까지 회복됐다.
+- 같은 날짜 fresh app 기준 warm-up 뒤 재실측에서도 `gemma4:e4b`는 `3/3 pass`, `avg_latency_ms=3890.691`, `p95_latency_ms=4283.135`, `avg_weighted_score=0.8933`로 다시 재현됐다.
+- 같은 세션 더 작은 후보 `qwen3.5:4b-nvfp4`는 `avg_latency_ms=2671.665`, `p95_latency_ms=3770.352`, `avg_weighted_score=0.9022`로 더 빨랐지만 `GQ-21`에서 짧은 답변으로 `2/3 pass`에 머물렀다.
+- 같은 날짜 후속 정리로 로컬 verified 기본 운영 프로파일과 `.env.example`/기본 회귀 게이트를 `gemma4:e4b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`으로 승격했다.
+- 같은 날짜 fresh app 기준 full gate도 `ready=true`, `pass_rate=1.0`, `avg_latency_ms=7700.859`, `p95_latency_ms=13043.855`, `avg_weighted_score=0.9067`로 통과했다.
+- `qwen3.5:4b-nvfp4`는 runtime policy에서 latency 우선 local fallback으로만 남기고, 기본 gate와 `/health` 권장 메시지는 `gemma4:e4b` 기준으로 정렬했다.
+- 같은 날짜 closeout review에서는 경량 lexical boost 채택, reasoning leakage 보강, `gemma4:e4b` verified default 승격이 모두 완료 기준을 충족한다고 판단해 `LOOP-008`을 `done`으로 닫았다.
+
+### A-Next2. 경량 hybrid retrieval 후보 검증 (완료: 2026-04-05)
+1. dense MMR 결과에 소량 lexical candidate를 합류시키는 hybrid search 후보를 검증한다.
+2. collection scan 상한과 trace를 통해 비용/효과를 고정한다.
+3. rerank 후보와 비교하기 전 채택/기각 근거를 `generic-baseline` 기준으로 문서화한다.
+
+완료 기준:
+- 경량 hybrid candidate merge의 채택/기각 근거가 `generic-baseline` gate와 함께 정리된다.
+- 새로운 retrieval trace와 안전장치가 테스트/문서에 반영된다.
+- 큰 컬렉션에서 무제한 lexical full scan을 하지 않는 제한이 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_query_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_check_ops_baseline_gate.py`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-05):
+- `docs/reports/GENERIC_RAG_REFOCUS_REVIEW_2026-04-04.md`의 Quality Upgrade 우선순위에서 hybrid search 후보를 다음 top-level loop로 승격했다.
+- `services/index_service.py`는 collection 문서를 `(collection_key, embedding_model)` 기준으로 캐시해 lightweight lexical scan이 store 전체를 매번 다시 읽지 않게 했다.
+- `services/query_service.py`는 dense MMR 결과에 대해 collection pool에서 lexical match가 강한 문서를 최대 2개까지 합류시킨 뒤, 기존 light lexical boost를 다시 적용하도록 바뀌었다.
+- `debug` trace에는 `hybrid_candidate_merge_applied`, `hybrid_candidate_count`, `retrieval_strategy=mmr+light_hybrid+lexical_boost`가 추가됐다.
+- 관련 회귀는 `44 passed`(`tests/test_query_service.py tests/test_collection_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_check_ops_baseline_gate.py`)로 통과했다.
+- fresh app 기준 full gate는 `ready=true`, `pass_rate=1.0`, `avg_latency_ms=6685.677`, `p95_latency_ms=11030.653`, `avg_weighted_score=0.9067`로 유지됐고, 이전 verified default gate보다 지연이 내려갔다.
+- 같은 날짜 후속 보강으로 `hybrid_scan_doc_count`, `hybrid_skipped_collections`, per-collection `hybrid_skipped`/`hybrid_candidate_limit`/`hybrid_matched_doc_count`를 trace에 추가해 큰 컬렉션 skip과 실제 scan 비용을 더 명확히 관찰할 수 있게 했다.
+- 큰 컬렉션 skip 회귀는 `tests/test_query_service.py`에 `collection_too_large` fixture로 고정했다.
+- trace 보강 뒤 재실측에서도 full gate는 `ready=true`, `pass_rate=1.0`, `avg_latency_ms=7220.103`, `p95_latency_ms=12405.726`, `avg_weighted_score=0.9067`로 유지됐다.
+- 같은 날짜 후속 구현으로 aggregated docs에 multi-collection coverage rerank를 추가해 비교 질문에서 상위 context가 `fr` 한쪽으로만 쏠리지 않게 조정했다.
+- debug 응답 기준 `GQ-21` 타입 질의는 `retrieval_strategy=mmr+light_hybrid+lexical_boost+coverage_rerank`, top sources `fr -> ge -> fr ...`, `coverage_rerank_collection_count=2`로 바뀌었다.
+- rerank candidate 비교 gate는 `ready=true`, `pass_rate=1.0`, `avg_latency_ms=4329.476`, `p95_latency_ms=4411.131`, `avg_weighted_score=0.92`로 이전 hybrid baseline보다 score와 latency가 모두 좋아졌다.
+- `GQ-21` answer-level score도 `0.88 -> 0.92`로 올라 multi-collection context packing 문제가 실제로 줄어든 것으로 본다.
+- 같은 날짜 closeout review에서는 light hybrid merge, scan cost trace, multi-collection coverage rerank가 모두 완료 기준을 충족한다고 판단했고, 현재 기본 경로는 `mmr+light_hybrid+lexical_boost+coverage_rerank` 조합으로 유지한다.
+
+### A-Next3. contextual retrieval 후보 검토 (완료: 2026-04-07)
+1. bundled runtime index 점검 결과 `all/eu/fr/ge/it/uk` 컬렉션의 현재 chunk metadata에는 비어 있지 않은 `h2/h3/h4`가 없어, same-section contextual packing을 "existing metadata만으로" 바로 붙이는 경로는 막혀 있다.
+2. fallback으로 같은 `source`의 인접 chunk 1개를 추가하는 source-adjacent contextual pack을 시험했지만, `generic-baseline` full gate가 `ready=false`, `pass_rate=0.6667`, `avg_latency_ms=5585.961`, `p95_latency_ms=8009.759`, `avg_weighted_score=0.8911`로 내려가 `GQ-21`이 `weighted_score=0.7534`로 실패해 기각했다.
+3. `2026-04-07` closeout review에서는 no-reindex 제약 아래 채택 가능한 contextual retrieval 후보가 없다고 판단해 이 루프를 no-go로 닫고, 기본 경로는 계속 `mmr+light_hybrid+lexical_boost+coverage_rerank`로 유지하기로 했다.
+
+완료 기준:
+- contextual retrieval 후보의 채택/기각 근거가 `generic-baseline` gate와 함께 정리된다.
+- 현재 hybrid + coverage 경로보다 나은 점이 있는지, 혹은 왜 기각하는지가 테스트/문서 기준으로 고정된다.
+- 기존 기본 경로의 verified local gate를 흐리지 않는 선에서만 실험한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_query_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_check_ops_baseline_gate.py`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-04-07):
+- `docs/reports/GENERIC_RAG_REFOCUS_REVIEW_2026-04-04.md`의 Quality Upgrade 우선순위에서 hybrid search와 rerank 후보를 먼저 정리했고, 남은 다음 top-level 후보는 contextual retrieval이다.
+- 현재 기준 기본 경로는 `mmr+light_hybrid+lexical_boost+coverage_rerank`이며, `generic-baseline` full gate는 `ready=true`, `pass_rate=1.0`, `avg_latency_ms=4329.476`, `p95_latency_ms=4411.131`, `avg_weighted_score=0.92`다.
+- bundled runtime index를 직접 점검한 결과 `all/eu/fr/ge/it/uk` 컬렉션의 현재 chunk metadata에는 비어 있지 않은 `h2/h3/h4`가 하나도 없었다(`all=37`, `eu=9`, `fr/ge/it/uk=각 7` docs).
+- source-adjacent fallback은 full gate를 `ready=false`, `pass_rate=0.6667`, `avg_weighted_score=0.8911`로 악화시켜 `GQ-21`을 실패시켰고, 채택하지 않았다.
+- no-reindex 제약 아래서는 더 진행할 가치가 있는 contextual candidate가 없다고 판단해 `LOOP-010`은 no-go로 종료한다.
+
+### A-Next4. sample-pack 기본 번들 분리 (완료: 2026-04-08)
+1. 본체 기본 runtime/reindex 경로에서 `all/eu/fr/ge/it/uk` sample-pack 번들이 제품 기본값처럼 드러나는 지점을 정리한다.
+2. manifest, `/reindex`, `/health`, 운영 문서 기준으로 core runtime 기본 경로와 sample-pack 호환 번들 경계를 다시 맞춘다.
+3. sample-pack은 선택형 호환 번들로 남기되, generic runtime 설명과 충돌하지 않게 테스트/문서 기준을 고정한다.
+
+완료 기준:
+- 본체 기본 경로가 sample-pack 컬렉션 묶음을 제품 기본값처럼 전제하지 않도록 정리된다.
+- sample-pack은 여전히 검증 가능한 호환 번들로 남되, 선택형 경로라는 점이 테스트/문서에 반영된다.
+- generic runtime 설명과 sample-pack 운영 설명의 경계가 `TODO/NEXT/README/SPEC` 중 필요한 문서에 맞춰진다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_index_service.py tests/test_runtime_preflight.py tests/api/test_system_api.py tests/test_query_service.py tests/api/test_query_api.py tests/test_check_ops_baseline_gate.py`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-07):
+- `LOOP-010` closeout으로 retrieval quality 후보군의 다음 실험은 일단 멈추고, 현재 기본 경로 `mmr+light_hybrid+lexical_boost+coverage_rerank`를 유지한다.
+- 현재 남아 있는 가장 큰 범용화 결합은 본체 기본 runtime/reindex 경로가 여전히 `all/eu/fr/ge/it/uk` sample-pack 번들을 자연스러운 기본처럼 드러낸다는 점이다.
+- 첫 구현 단위는 manifest, `/reindex`, `/health`, 운영 문서에서 "본체 기본값"과 "sample-pack 호환 번들"이 섞여 있는 지점을 찾고, 필요한 최소 코드/문서 변경 범위를 좁히는 것이다.
+
+closeout 메모 (2026-04-08):
+- manifest에 core 기본 runtime 컬렉션(`all`)과 sample-pack compatibility bundle(`eu/fr/ge/it/uk`) 메타데이터를 추가했다.
+- `/health`는 core 기본 경로와 sample-pack compatibility 범위를 따로 노출하고, core `embedding_fingerprint_status`와 compatibility bundle fingerprint 상태를 분리했다.
+- `/reindex`와 `build_index.py --reset` 기본 경로는 core 컬렉션 `all`만 재생성하고, sample-pack route는 `include_compatibility_bundle`/`--include-compatibility-bundle` opt-in으로만 함께 갱신한다.
+- `generic-baseline` fixture는 core `all` 컬렉션 기준으로 재정렬했고, sample-pack compare 질문은 `sample-pack-baseline`에 유지했다.
+- 검증은 `79 passed`(fixture/schema + target pytest), live `scripts/check_ops_baseline_gate.py` `ready`, `scripts/roadmap_harness.py validate` `ready`까지 확인했다.
+
+### A-Next5. sample-pack 라우팅/프로파일 경계 정리 (완료: 2026-04-10)
+1. 본체 기본 `/query` 경로에서 sample-pack 국가 키워드 라우팅과 `sample_pack` query profile 전제가 남아 있는 지점을 정리한다.
+2. core default query path와 sample-pack compatibility query path의 경계를 테스트/문서 기준까지 다시 맞춘다.
+3. sample-pack route/profile은 opt-in 호환 경로로 남기되, generic 기본 설명과 충돌하지 않게 유지한다.
+
+완료 기준:
+- core 기본 `/query` 경로가 sample-pack route/profile을 제품 기본값처럼 전제하지 않도록 정리된다.
+- sample-pack route/profile은 여전히 호환 가능한 opt-in 경로로 남고, 테스트/문서에 그 경계가 반영된다.
+- `generic-baseline`과 `sample-pack-baseline`의 역할 차이가 query path 설명과 검증 기준에 맞춰진다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_answer_level_eval_fixtures.py tests/test_eval_query_quality.py tests/test_collection_service.py tests/test_index_service.py tests/test_runtime_preflight.py tests/api/test_system_api.py tests/test_query_service.py tests/api/test_query_api.py tests/test_check_ops_baseline_gate.py`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-08):
+- `LOOP-011` closeout으로 core 기본 reindex/gate는 `all` 중심으로 분리됐지만, 기본 질의 경로에는 여전히 sample-pack 국가 키워드 라우팅과 query profile 경계가 남아 있다.
+- 다음 구현 단위는 core default `/query`가 sample-pack compatibility route/profile을 암묵 기본처럼 보이지 않게 만드는 최소 코드/문서 변경을 찾는 것이다.
+
+closeout 메모 (2026-04-10):
+- 기본 `/query`는 `collection`/`collections` 생략 시 `generic` profile + core 컬렉션 `all`만 사용한다.
+- sample-pack 국가 키워드 라우팅은 `query_profile=sample_pack`일 때만 compatibility 경로로 동작하고, route reason은 `compatibility_keyword*`로 분리했다.
+- `/query` 응답 헤더와 debug meta는 실제 적용 profile을 `X-RAG-Query-Profile`/`query_profile`로 노출한다.
+- `/collections`는 manifest 기반 `default_country`, `default_doc_type`을 내려 주고, 웹 업로드 기본값은 프런트 하드코딩 대신 이 값을 사용한다.
+- 웹 UI의 컬렉션 힌트는 `all` 단일 선택을 `core 기본 경로`, sample-pack 컬렉션 명시 선택을 `sample-pack 호환 경로(명시 선택)`으로 구분한다.
+- 검증은 `52 passed`(query/profile target), `82 passed`(broader unit suite), Playwright E2E `2 passed`, live `check_ops_baseline_gate.py` `ready`(`3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=9354.412`), `roadmap_harness.py validate` `ready`까지 확인했다.
+
+### A-Next6. sample-pack 문서/예시 경계 잔여 정리 (완료: 2026-04-10)
+1. 본체 문서/예시에서 sample-pack 전용 업로드/전처리 예시가 제품 기본값처럼 읽히는 지점을 줄인다.
+2. README/SPEC와 preprocessing 문서에서 core 기본 예시와 sample-pack compatibility 예시를 구분한다.
+3. `default_country`, `default_doc_type` 컬렉션 메타데이터 노출이 운영 문서와 테스트 기준에 반영되도록 마무리한다.
+
+완료 기준:
+- core 기본 문서가 특정 국가/샘플팩 컬렉션을 제품 기본값처럼 암시하지 않는다.
+- sample-pack 업로드/전처리 예시는 호환 예시 또는 샘플팩 예시로 명확히 표시된다.
+- 새로 노출한 컬렉션 기본 메타데이터가 운영 문서와 테스트 기준에 반영된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/api/test_system_api.py tests/test_answer_level_eval_fixtures.py tests/test_documentation_boundaries.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-012` closeout으로 runtime/query/UI 기본 경계는 정리됐지만, README/SPEC와 preprocessing 문서에는 여전히 `fr`, `country=france`, `doc_type=country` 같은 sample-pack 예시가 core 흐름 근처에 남아 있다.
+- 다음 구현 단위는 예시를 삭제하지 않고, core 기본 예시와 sample-pack compatibility 예시를 문서상 분리하는 것이다.
+
+closeout 메모 (2026-04-10):
+- README/SPEC의 업로드 요청 예시는 core 기본 경로와 sample-pack compatibility 예시를 분리했다.
+- 전처리 규칙/프롬프트 템플릿은 `country/doc_type`을 manifest 기준 메타데이터로 설명하고, sample-pack 국가 예시는 compatibility 예시로만 남겼다.
+- `tests/test_documentation_boundaries.py`를 추가해 core/sample-pack 문서 예시 경계를 검증한다.
+- 검증은 `18 passed`와 `roadmap_harness.py validate` `ready`까지 확인했다.
+
+### A-Next7. core seed 데이터/부트스트랩 경계 검토 (완료: 2026-04-10)
+1. 현재 core 기본 컬렉션 `all`이 sample-pack seed 문서로 구성된 상태를 제품/샘플 경계 관점에서 재검토한다.
+2. 첫 실행 bootstrap/demo 데이터와 sample-pack compatibility 데이터의 관계를 문서/manifest 기준으로 명확히 한다.
+3. 성급한 데이터 삭제나 migration 없이, 운영자가 현재 seed corpus의 역할을 오해하지 않게 만든다.
+
+완료 기준:
+- core 기본 실행 경로가 sample-pack seed 데이터를 제품 본체 데이터로 오해하게 만들지 않는다.
+- sample-pack seed 데이터는 demo/compatibility bootstrap 역할로 명확히 설명된다.
+- manifest/index/health 문서와 테스트가 이 경계 설명과 충돌하지 않는다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_index_service.py tests/api/test_system_api.py tests/test_documentation_boundaries.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-013` closeout으로 문서 예시 경계는 정리됐지만, 실제 첫 실행 seed corpus는 여전히 sample-pack 문서가 core `all` 컬렉션에도 들어가는 구조다.
+- 다음 구현 단위는 동작을 성급히 바꾸기보다 bootstrap/demo/compatibility 경계를 문서와 manifest 관점에서 먼저 고정하는 것이다.
+
+closeout 메모 (2026-04-10):
+- manifest와 fallback manifest에 `seed_corpus` 메타데이터를 추가해 번들 seed 문서가 `sample_pack_bootstrap` demo/bootstrap corpus임을 명시했다.
+- `/health`는 `seed_corpus_*` 필드를 노출해 core `all`에 적재되는 번들 문서가 제품 본체 도메인 데이터가 아니라 첫 실행 확인용 예시 데이터임을 보여 준다.
+- README/SPEC는 기본 `Reindex`에서 core `all`에 적재되는 seed corpus의 demo/bootstrap 역할을 설명한다.
+- 검증은 `18 passed`, `28 passed`, manifest JSON parse, `roadmap_harness.py validate` `ready`까지 확인했다.
+
+### A-Next8. V1 경계 정리 릴리즈 스윕 (완료: 2026-04-10)
+1. `LOOP-011`부터 이어진 V1 본체/sample-pack/archive 경계 정리를 릴리즈 관점에서 훑는다.
+2. README/SPEC/TODO/NEXT와 릴리즈 체크리스트의 core/sample-pack 용어가 같은 의미로 쓰이는지 확인한다.
+3. 하네스/게이트 명령이 현재 상태와 충돌하지 않게 정리한다.
+
+완료 기준:
+- V1 본체 기본 경로, sample-pack compatibility 경로, archive 경로가 주요 운영 문서에서 같은 의미로 쓰인다.
+- 릴리즈/운영 검증 명령이 현재 active 기준과 충돌하지 않는다.
+- 후속 작업이 기능 확장이 아니라 실제 사용자/릴리즈 판단을 위한 명확한 후보로 정리된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_documentation_boundaries.py tests/test_collection_service.py tests/api/test_system_api.py tests/test_check_ops_baseline_gate.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-014` closeout으로 sample-pack seed corpus의 bootstrap/demo 역할은 명시됐다.
+- 다음 구현 단위는 추가 기능보다 릴리즈 문서와 검증 명령의 용어/상태 불일치를 줄이는 final sweep이다.
+
+closeout 메모 (2026-04-10):
+- `VERSION_ROADMAP.md`의 V1 exit criteria를 현재 기준인 core 컬렉션 `all`, `generic-baseline` `3/3 pass`, `ollama + gemma4:e4b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`으로 정렬했다.
+- sample-pack route와 `sample-pack-baseline`은 별도 호환성 검증으로 분리된다는 점을 로드맵에 명시했다.
+- 릴리즈 체크리스트에 `/health`의 `seed_corpus_role=demo_bootstrap`와 `seed_corpus_label=sample-pack demo/bootstrap corpus` 확인 항목을 추가했다.
+- 문서 경계 회귀 테스트를 보강해 과거 `ops-baseline/all-routes/llama3.1` 기준이 현재 V1 릴리즈 문서로 재유입되지 않게 했다.
+- 검증은 `4 passed`, `21 passed`, `roadmap_harness.py validate` `ready`까지 확인했다.
+
+### A-Next9. V1 릴리즈 후보 실측 게이트/태그 준비 (현재 active)
+1. V1 릴리즈 후보로 닫기 전에 실제 로컬 런타임 기준의 전체 회귀와 live gate를 한 번 더 측정한다.
+2. verified 로컬 프로파일(`ollama + gemma4:e4b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`)이 현재 환경에서 `generic-baseline`을 통과하는지 확인한다.
+3. 태그/릴리즈 준비가 가능한지, 또는 blocker로 남겨야 하는지 판단한다.
+
+완료 기준:
+- 전체 정적/단위 회귀가 통과한다.
+- live `generic-baseline` 게이트가 `3/3 pass`이거나, 실패 시 blocker와 재개 조건이 명확히 기록된다.
+- 릴리즈 후보로 태그할 수 있는지 여부가 문서와 커밋 상태 기준으로 판단된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-015` closeout으로 문서/게이트 용어 스윕은 완료됐다.
+- 다음 구현 단위는 문서 수정이 아니라 실제 릴리즈 후보 검증이며, live LLM/runtime이 준비되지 않으면 `blocked`로 전환하고 재개 조건을 남긴다.
+
+실측 메모 (2026-04-10):
+- 전체 회귀는 `./.venv/bin/python -m pytest -q` -> `141 passed in 8.00s`로 통과했다.
+- 첫 live gate는 앱/Ollama API 미응답으로 `blocked`였으나, FastAPI 앱 기동 후 `/health`가 `release_web_status=ready`, `vectors=37`, `seed_corpus_role=demo_bootstrap`, `embedding_fingerprint_status=ready`를 반환했다.
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434` 재실행은 `ready`, `generic-baseline 3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=14058.994`로 통과했다.
+- 실측 리포트는 `docs/reports/V1_RELEASE_CANDIDATE_GATE_2026-04-10.md`에 기록했다.
+- 기존 tag `v1.0.0`은 `6eb5329`에 있고 현재 HEAD는 그보다 `37` commits 앞서 있으므로, `v1.0.0`을 이동하지 않는다.
+- 현재 브랜치가 `feature/loop-007-manifest-decouple`이므로 실제 릴리즈 tag는 main/release target 병합 후 생성하거나, 현재 브랜치를 태그하기로 명시 결정한 뒤 생성한다. V1 안정화 릴리즈로 유지할 경우 다음 후보 tag는 `v1.0.1`이다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
@@ -250,7 +502,7 @@ closeout 메모:
 - P3-Prep 게이트(`app_api.py <= 350`, inline script 외부화, 회귀 통과)는 충족됨.
 - 쉬운 RAG 운영 게이트와 성능/품질 게이트는 완료됐고, answer-level eval harness까지 준비됐다.
 - 업로드/갱신 관리자 워크플로우 2차는 완료됐고, GraphRAG 트랙은 "MVP 통합 No-Go" 판단 이후 잠정 중단 상태로 정리됐다.
-- Vector baseline 신뢰성 복구와 answer completeness 보정은 완료됐고, 이후에는 `ops-baseline`을 기본 경로 회귀 게이트로 유지한다.
+- Vector baseline 신뢰성 복구와 answer completeness 보정은 완료됐고, 이후에는 `generic-baseline`을 본체 기본 경로 회귀 게이트로 유지한다.
 
 ## 4. 현재 남은 작업 범위 (핵심)
 
@@ -302,7 +554,8 @@ closeout 메모:
 - `2026-03-31`에는 `docs/RELEASE_WEB_MVP_CHECKLIST.md`의 권장 게이트 명령을 verified 운영 프로파일(`ollama + llama3.1:8b`)로 정렬해 릴리즈 문서와 실제 기본 회귀 게이트 기준을 다시 맞췄다.
 - 같은 날짜 `VERSION_ROADMAP.md`를 추가해 현재 `trunk_rag`를 `V1 = RAG product`로 고정하고, 다음 제품을 `V2 = Agent-enabled RAG`, 장기 목표를 `V3 = Agent system`으로 정의했다.
 - `V2`의 공식 아키텍처 초안은 `internal tools first, MCP second` 원칙과 `tool registry + middleware + skill registry + execution state + single-agent runtime` 조합을 기준으로 한다.
-- 같은 날짜 `feature/v1.5-agent-ready-runtime` 브랜치를 분리하고, `V1.5`의 첫 작업 묶음(`tool registry -> middleware -> execution trace -> agent entry`)을 `docs/V1_5_AGENT_READY_PLAN.md`에 고정했다.
+- 같은 날짜 `V1.5` 준비 트랙을 분리하고, 첫 작업 묶음(`tool registry -> middleware -> execution trace -> agent entry`)을 `docs/V1_5_AGENT_READY_PLAN.md`에 고정했다.
+- `2026-04-04` 기준 `V1.5`는 장기 브랜치명이 아니라 준비 트랙으로 유지하며, 실제 구현은 최신 `main`에서 분기한 짧은 작업 브랜치로 진행한다.
 
 후속 대상 (P3):
 1. GraphRAG 관련 문서/PoC는 잠정 중단 상태의 아카이브로만 유지
@@ -312,7 +565,7 @@ closeout 메모:
 
 ### A. MVP 기본 경로 품질 유지
 1. 릴리즈 전 기본 설치/실행/복구 경로를 문서와 스크립트 기준으로 1개로 고정
-2. `ops-baseline`의 `3/3 pass` 상태를 릴리즈 회귀 게이트로 유지
+2. `generic-baseline`의 `3/3 pass` 상태를 릴리즈 회귀 게이트로 유지
 3. `scripts/check_ops_baseline_gate.py` 기준으로 `build_index.py --reset` / `/reindex`의 all-routes 동작과 eval 결과를 함께 확인
 
 ### B. 보류/유지 항목
@@ -362,7 +615,7 @@ closeout 메모:
 5. GraphRAG/AuraDB는 운영 모델(폐쇄망/로컬/경량)과 충돌 가능성이 커서 현재는 잠정 중단 상태를 유지한다.
 6. Electron PoC는 가능성을 확인했지만 설치형 제품으로 가려면 Python/모델 번들링 전략이 별도로 필요하며, 현재는 보류 상태다.
 7. 업로드 관리자 워크플로우는 active 버전/manifest까지는 구현됐지만, diff 뷰/이력 조회/rollback UI는 아직 없다.
-8. GraphRAG 실험 결과는 판단 이력으로는 남아 있지만, 현재 운영 의사결정 기준은 `ops-baseline` 회귀 게이트 유지다.
+8. GraphRAG 실험 결과는 판단 이력으로는 남아 있지만, 현재 운영 의사결정 기준은 `generic-baseline` 회귀 게이트 유지다.
 9. 현재 answer-level eval fixture는 대표 질문 6개만 포함하고, `uk` 컬렉션 비어 있음/다중 컬렉션 timeout 같은 운영 이슈가 그대로 드러난다.
 
 ## 9. 다음 커밋 목표 (권장)

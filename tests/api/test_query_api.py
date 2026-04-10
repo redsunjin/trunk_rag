@@ -51,6 +51,7 @@ def test_query_success_case(client, monkeypatch):
     assert response.headers.get("X-Request-ID") == "req-success-1"
     assert response.headers.get("X-RAG-Budget-Profile") == "not_recommended_local"
     assert response.headers.get("X-RAG-Route-Reason") == "default"
+    assert response.headers.get("X-RAG-Query-Profile") == "generic"
     assert response.json() == {
         "answer": "모킹 응답",
         "provider": "ollama",
@@ -116,6 +117,7 @@ def test_query_debug_response_includes_meta(client, monkeypatch):
     body = response.json()
     assert body["answer"] == "메타 포함 응답"
     assert body["meta"]["request_id"] == "req-debug-1"
+    assert body["meta"]["query_profile"] == "generic"
     assert body["meta"]["collections"] == ["fr", "ge"]
     assert body["meta"]["route_reason"] == "explicit_multi"
     assert body["meta"]["budget_profile"] == "not_recommended_local"
@@ -125,6 +127,101 @@ def test_query_debug_response_includes_meta(client, monkeypatch):
     assert body["meta"]["invoke"]["status"] == "ok"
     assert body["meta"]["sources"]
     assert body["meta"]["sources"][0]["collection_key"] in {"fr", "ge"}
+
+
+def test_query_supports_query_profile_override(client, monkeypatch):
+    class DummyDB:
+        def as_retriever(self, **kwargs):
+            return object()
+
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(routes_query.index_service, "get_db", lambda *args, **kwargs: DummyDB())
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count", lambda _db: 1)
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count_snapshot", lambda key="all": 1)
+    monkeypatch.setattr(
+        routes_query.index_service,
+        "get_embedding_fingerprint_status",
+        lambda keys=None: {"status": "ready", "message": "ok"},
+    )
+    monkeypatch.setattr(
+        routes_query,
+        "resolve_llm_config",
+        lambda **kwargs: ("ollama", "qwen3:4b", None, "http://localhost:11434"),
+    )
+    monkeypatch.setattr(routes_query, "create_chat_llm", lambda **kwargs: object())
+
+    def _build_query_chain(context_builder, llm, query_profile=None):
+        captured["query_profile_from_build"] = query_profile
+        return object()
+
+    def _invoke_query_chain(chain, question, timeout_seconds=15, trace=None, query_profile=None):
+        captured["query_profile_from_invoke"] = query_profile
+        return "profile override 응답"
+
+    monkeypatch.setattr(routes_query.query_service, "build_query_chain", _build_query_chain)
+    monkeypatch.setattr(routes_query.query_service, "invoke_query_chain", _invoke_query_chain)
+
+    response = client.post(
+        "/query",
+        json={"query": "테스트 질문", "llm_provider": "ollama", "query_profile": "sample_pack"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["answer"] == "profile override 응답"
+    assert response.headers.get("X-RAG-Query-Profile") == "sample_pack"
+    assert captured["query_profile_from_build"] == "sample_pack"
+    assert captured["query_profile_from_invoke"] == "sample_pack"
+
+
+def test_query_defaults_to_generic_all_route_even_when_env_prefers_sample_pack(client, monkeypatch):
+    class DummyDB:
+        def as_retriever(self, **kwargs):
+            return object()
+
+    captured: dict[str, object] = {}
+    monkeypatch.setenv("DOC_RAG_QUERY_PROFILE", "sample_pack")
+    monkeypatch.setattr(routes_query.index_service, "get_db", lambda *args, **kwargs: DummyDB())
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count", lambda _db: 1)
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count_snapshot", lambda key="all": 1)
+    monkeypatch.setattr(
+        routes_query.index_service,
+        "get_embedding_fingerprint_status",
+        lambda keys=None: {"status": "ready", "message": "ok"},
+    )
+    monkeypatch.setattr(
+        routes_query,
+        "resolve_llm_config",
+        lambda **kwargs: ("ollama", "qwen3:4b", None, "http://localhost:11434"),
+    )
+    monkeypatch.setattr(routes_query, "create_chat_llm", lambda **kwargs: object())
+
+    def _build_query_chain(context_builder, llm, query_profile=None):
+        captured["query_profile_from_build"] = query_profile
+        return object()
+
+    def _invoke_query_chain(chain, question, timeout_seconds=15, trace=None, query_profile=None):
+        captured["query_profile_from_invoke"] = query_profile
+        return "generic default 응답"
+
+    monkeypatch.setattr(routes_query.query_service, "build_query_chain", _build_query_chain)
+    monkeypatch.setattr(routes_query.query_service, "invoke_query_chain", _invoke_query_chain)
+
+    response = client.post(
+        "/query",
+        json={
+            "query": "프랑스와 독일의 공통 과학적 성과를 비교해줘",
+            "llm_provider": "ollama",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers.get("X-RAG-Collection") == routes_query.collection_service.get_collection_name("all")
+    assert response.headers.get("X-RAG-Collections") == routes_query.collection_service.get_collection_name("all")
+    assert response.headers.get("X-RAG-Route-Reason") == "default"
+    assert response.headers.get("X-RAG-Query-Profile") == "generic"
+    assert response.json()["answer"] == "generic default 응답"
+    assert captured["query_profile_from_build"] == "generic"
+    assert captured["query_profile_from_invoke"] == "generic"
 
 
 def test_query_vectorstore_empty(client, monkeypatch):
@@ -318,7 +415,7 @@ def test_query_with_two_collections(client, monkeypatch):
     assert response.json()["answer"] == "다중 컬렉션 응답"
 
 
-def test_query_auto_routes_multi_country_keywords(client, monkeypatch):
+def test_query_auto_routes_multi_country_keywords_only_for_sample_pack_profile(client, monkeypatch):
     class DummyDB:
         def __init__(self, key: str):
             self.key = key
@@ -352,6 +449,7 @@ def test_query_auto_routes_multi_country_keywords(client, monkeypatch):
         json={
             "query": "프랑스와 독일의 공통 과학적 성과를 비교해줘",
             "llm_provider": "ollama",
+            "query_profile": "sample_pack",
         },
     )
 
@@ -364,7 +462,8 @@ def test_query_auto_routes_multi_country_keywords(client, monkeypatch):
         ]
     )
     assert response.headers.get("X-RAG-Budget-Profile") == "not_recommended_local"
-    assert response.headers.get("X-RAG-Route-Reason") == "keyword_multi"
+    assert response.headers.get("X-RAG-Route-Reason") == "compatibility_keyword_multi"
+    assert response.headers.get("X-RAG-Query-Profile") == "sample_pack"
     assert response.json()["answer"] == "자동 다중 라우팅 응답"
 
 

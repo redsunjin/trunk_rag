@@ -11,6 +11,7 @@ class QueryRequest(BaseModel):
     llm_model: str | None = None
     llm_api_key: str | None = None
     llm_base_url: str | None = None
+    query_profile: str | None = None
     collection: str | None = None
     collections: list[str] | None = None
     debug: bool = False
@@ -24,6 +25,7 @@ class QuerySource(BaseModel):
 
 class QueryMeta(BaseModel):
     request_id: str
+    query_profile: str = "generic"
     collections: list[str] = Field(default_factory=list)
     route_reason: str = "-"
     budget_profile: str | None = None
@@ -46,6 +48,7 @@ class QueryResponse(BaseModel):
 class ReindexRequest(BaseModel):
     reset: bool = True
     collection: str | None = None
+    include_compatibility_bundle: bool = False
 
 
 class AdminAuthRequest(BaseModel):

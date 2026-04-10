@@ -11,13 +11,15 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from common import load_project_env
-from core.settings import COLLECTION_CONFIGS
+from core.settings import DEFAULT_RUNTIME_COLLECTION_KEYS
 from scripts import eval_query_quality
 from scripts import runtime_preflight
 from services import runtime_service
 
 DEFAULT_OUTPUT_JSON = Path("docs/reports/ops_baseline_gate_latest.json")
 DEFAULT_OUTPUT_REPORT = Path("docs/reports/OPS_BASELINE_GATE_LATEST.md")
+DEFAULT_GATE_BUCKETS = {"generic-baseline"}
+DEFAULT_GATE_COLLECTION_KEYS = list(DEFAULT_RUNTIME_COLLECTION_KEYS)
 
 
 def summarize_collection_vectors(
@@ -25,7 +27,7 @@ def summarize_collection_vectors(
     *,
     required_keys: list[str] | None = None,
 ) -> dict[str, object]:
-    required = required_keys or list(COLLECTION_CONFIGS.keys())
+    required = required_keys or list(DEFAULT_GATE_COLLECTION_KEYS)
     vector_counts = {
         str(item.get("key", "")).strip(): int(item.get("vectors", 0) or 0)
         for item in collections_payload.get("collections", [])
@@ -104,6 +106,7 @@ def build_blocked_report(
         "collections": collection_summary or summarize_collection_vectors({"collections": []}),
         "eval": {
             "eval_file": str(eval_file),
+            "selected_buckets": sorted(DEFAULT_GATE_BUCKETS),
             "summary": empty_eval_summary(),
             "health": eval_health or {},
             "results": [],
@@ -172,7 +175,7 @@ def build_gate_report(
             base_url=base_url,
             timeout_seconds=timeout_seconds,
             eval_file=eval_file,
-            buckets={"ops-baseline"},
+            buckets=DEFAULT_GATE_BUCKETS,
             llm_provider=llm_provider,
             llm_model=llm_model,
             llm_base_url=llm_base_url,
@@ -212,6 +215,7 @@ def build_gate_report(
         "collections": collection_summary,
         "eval": {
             "eval_file": str(eval_file),
+            "selected_buckets": sorted(DEFAULT_GATE_BUCKETS),
             "summary": eval_payload["summary"],
             "health": eval_payload["health"],
             "results": eval_payload["results"],
@@ -244,7 +248,7 @@ def build_markdown_report(report: dict[str, object]) -> str:
     lines.extend(
         [
             "",
-            "## All-Routes Collections",
+            "## Core Runtime Collections",
         ]
     )
     for item in collection_summary["items"]:
@@ -259,6 +263,9 @@ def build_markdown_report(report: dict[str, object]) -> str:
             )
     lines.extend(
         [
+            "",
+            "## Eval Target",
+            f"- selected_buckets: `{', '.join(report['eval'].get('selected_buckets', [])) or '-'}`",
             "",
             "## Ops Baseline Eval",
             f"- cases: `{eval_summary['cases']}`",
@@ -283,7 +290,7 @@ def write_outputs(report: dict[str, object], *, output_json: Path, output_report
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Check the ops-baseline regression gate and all-routes vector readiness."
+        description="Check the generic-baseline regression gate and core runtime vector readiness."
     )
     parser.add_argument("--base-url", type=str, default="http://127.0.0.1:8000")
     parser.add_argument("--timeout-seconds", type=int, default=45)
@@ -323,6 +330,7 @@ def print_human_readable(report: dict[str, object]) -> None:
                 f"    - {diagnostic.get('code')}: {diagnostic.get('message')} | hint={diagnostic.get('hint')}"
             )
     eval_summary = report["eval"]["summary"]
+    print(f"  eval_buckets={','.join(report['eval'].get('selected_buckets', [])) or '-'}")
     print(
         "  eval:"
         f" cases={eval_summary['cases']}"

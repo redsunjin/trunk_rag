@@ -83,6 +83,7 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
     context_trace: dict[str, object] = {}
     invoke_trace: dict[str, object] = {}
     query_budget: dict[str, object] | None = None
+    resolved_query_profile = query_service.QUERY_PROFILE_GENERIC
 
     try:
         query_timeout_seconds = runtime_service.get_query_timeout_seconds()
@@ -106,6 +107,8 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
 
         log_provider = provider
         log_model = model
+        resolved_query_profile = query_service.normalize_query_profile(req.query_profile)
+        stage_timings["query_profile"] = resolved_query_profile
 
         try:
             route_started_at = time.perf_counter()
@@ -113,6 +116,7 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
                 req.query,
                 req.collection,
                 req.collections,
+                allow_keyword_routing=(resolved_query_profile == query_service.QUERY_PROFILE_SAMPLE_PACK),
             )
             stage_timings["resolve_route_ms"] = round((time.perf_counter() - route_started_at) * 1000, 3)
             stage_timings["requested_collections"] = list(collection_keys)
@@ -172,6 +176,7 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
         response.headers["X-RAG-Collection"] = active_collection_names[0]
         response.headers["X-RAG-Collections"] = ",".join(active_collection_names)
         response.headers["X-RAG-Route-Reason"] = route_reason
+        response.headers["X-RAG-Query-Profile"] = resolved_query_profile
 
         embedding_status = index_service.get_embedding_fingerprint_status(active_collection_keys)
         stage_timings["embedding_fingerprint_status"] = str(embedding_status["status"])
@@ -228,7 +233,10 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
             )
 
         chain_started_at = time.perf_counter()
-        chain = query_service.build_query_chain(_context_builder, llm)
+        if "query_profile" in inspect.signature(query_service.build_query_chain).parameters:
+            chain = query_service.build_query_chain(_context_builder, llm, query_profile=resolved_query_profile)
+        else:
+            chain = query_service.build_query_chain(_context_builder, llm)
         stage_timings["chain_build_ms"] = round((time.perf_counter() - chain_started_at) * 1000, 3)
         try:
             invoke_kwargs = {
@@ -238,6 +246,8 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
             }
             if "trace" in inspect.signature(query_service.invoke_query_chain).parameters:
                 invoke_kwargs["trace"] = invoke_trace
+            if "query_profile" in inspect.signature(query_service.invoke_query_chain).parameters:
+                invoke_kwargs["query_profile"] = resolved_query_profile
             answer = query_service.invoke_query_chain(**invoke_kwargs)
         except TimeoutError as exc:
             raise QueryAPIError(
@@ -299,6 +309,7 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
             )
             response_meta = QueryMeta(
                 request_id=request_id,
+                query_profile=resolved_query_profile,
                 collections=active_collection_keys,
                 route_reason=route_reason,
                 budget_profile=str(query_budget["profile"]) if query_budget else None,

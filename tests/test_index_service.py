@@ -7,8 +7,14 @@ from pathlib import Path
 from services import index_service
 
 
-def test_expand_reindex_collection_keys_for_default_includes_route_collections():
+def test_expand_reindex_collection_keys_for_default_uses_core_runtime_only():
     keys = index_service.expand_reindex_collection_keys("all")
+
+    assert keys == ["all"]
+
+
+def test_expand_reindex_collection_keys_can_include_compatibility_bundle():
+    keys = index_service.expand_reindex_collection_keys("all", include_compatibility_bundle=True)
 
     assert keys[0] == "all"
     assert "fr" in keys
@@ -23,7 +29,11 @@ def test_expand_reindex_collection_keys_for_named_collection_includes_default():
 
 
 def test_reindex_with_related_returns_nested_results(monkeypatch):
-    monkeypatch.setattr(index_service, "expand_reindex_collection_keys", lambda collection_key="all": ["uk", "all"])
+    monkeypatch.setattr(
+        index_service,
+        "expand_reindex_collection_keys",
+        lambda collection_key="all", include_compatibility_bundle=False: ["uk", "all"],
+    )
     monkeypatch.setattr(
         index_service,
         "reindex_single_collection",
@@ -48,6 +58,54 @@ def test_reindex_with_related_returns_nested_results(monkeypatch):
     assert result["related_collection_keys"] == ["uk", "all"]
     assert result["collections"]["uk"]["vectors"] == 3
     assert result["collections"]["all"]["vectors"] == 3
+
+
+def test_reindex_with_related_marks_default_plus_compatibility_bundle(monkeypatch):
+    monkeypatch.setattr(
+        index_service,
+        "expand_reindex_collection_keys",
+        lambda collection_key="all", include_compatibility_bundle=False: ["all", "eu", "fr"],
+    )
+    monkeypatch.setattr(
+        index_service,
+        "reindex_single_collection",
+        lambda reset=True, collection_key="all": {
+            "collection_key": collection_key,
+            "collection": f"mock_{collection_key}",
+            "docs": 1,
+            "docs_total": 1,
+            "chunks": 2,
+            "vectors": 3,
+            "persist_dir": "mock",
+            "cap": {},
+            "chunking": {"mode": "char"},
+            "validation": {"summary_text": "ok"},
+        },
+    )
+
+    result = index_service.reindex_with_related(
+        reset=True,
+        collection_key="all",
+        include_compatibility_bundle=True,
+    )
+
+    assert result["reindex_scope"] == "default_plus_compatibility_bundle"
+    assert result["compatibility_bundle"]["included"] is True
+
+
+def test_build_collection_source_records_uses_manifest_seed_metadata(monkeypatch):
+    monkeypatch.setattr(index_service, "_load_managed_source_records", lambda collection_key="all": [])
+
+    records = index_service.build_collection_source_records("fr")
+
+    assert len(records) == 1
+    record = records[0]
+    assert record["collection_key"] == "fr"
+    assert record["metadata"]["dataset"] == "sample-eu-science-history"
+    assert record["metadata"]["source_type"] == "seed_markdown"
+    assert record["metadata"]["country"] == "france"
+    assert record["metadata"]["doc_type"] == "country"
+    assert record["metadata"]["tags"] == ["sample-pack", "country:france"]
 
 
 def test_record_collection_embedding_fingerprint_persists_manifest(monkeypatch, tmp_path: Path):

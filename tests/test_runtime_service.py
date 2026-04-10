@@ -31,7 +31,7 @@ def test_build_release_web_guidance_marks_reindex_when_vectors_empty():
     guidance = runtime_service.build_release_web_guidance(
         vectors=0,
         default_llm_provider="ollama",
-        default_llm_model="llama3.1:8b",
+        default_llm_model="gemma4:e4b",
         default_llm_base_url="http://localhost:11434",
         query_timeout_seconds=30,
         embedding_model="BAAI/bge-m3",
@@ -47,7 +47,7 @@ def test_build_release_web_guidance_marks_ready_when_vectors_exist():
     guidance = runtime_service.build_release_web_guidance(
         vectors=7,
         default_llm_provider="ollama",
-        default_llm_model="llama3.1:8b",
+        default_llm_model="gemma4:e4b",
         default_llm_base_url="http://localhost:11434",
         query_timeout_seconds=30,
         embedding_model="/models/local-bge-m3",
@@ -55,7 +55,7 @@ def test_build_release_web_guidance_marks_ready_when_vectors_exist():
 
     assert guidance["status"] == "ready"
     assert any("/app" in step for step in guidance["steps"])
-    assert any("llama3.1:8b" in step for step in guidance["steps"])
+    assert any("gemma4:e4b" in step for step in guidance["steps"])
     assert guidance["runtime_profile"]["status"] == "verified"
 
 
@@ -68,7 +68,7 @@ def test_get_default_llm_config_defaults_to_ollama(monkeypatch):
 
     assert resolved == {
         "provider": "ollama",
-        "model": "llama3.1:8b",
+        "model": "gemma4:e4b",
         "base_url": "http://localhost:11434",
     }
 
@@ -90,7 +90,7 @@ def test_build_release_web_guidance_supports_groq():
 def test_build_runtime_profile_marks_verified_local_ollama():
     profile = runtime_service.build_runtime_profile(
         provider="ollama",
-        model="llama3.1:8b",
+        model="gemma4:e4b",
         timeout_seconds=30,
     )
 
@@ -101,7 +101,7 @@ def test_build_runtime_profile_marks_verified_local_ollama():
 def test_build_runtime_profile_marks_low_timeout_as_experimental():
     profile = runtime_service.build_runtime_profile(
         provider="ollama",
-        model="llama3.1:8b",
+        model="gemma4:e4b",
         timeout_seconds=15,
     )
 
@@ -117,13 +117,25 @@ def test_build_runtime_profile_marks_qwen_as_not_recommended():
     )
 
     assert profile["status"] == "not_recommended"
-    assert "llama3.1:8b" in str(profile["recommendation"])
+    assert "gemma4:e4b" in str(profile["recommendation"])
+
+
+def test_build_runtime_profile_marks_qwen4b_nvfp4_as_experimental_fallback():
+    profile = runtime_service.build_runtime_profile(
+        provider="ollama",
+        model="qwen3.5:4b-nvfp4",
+        timeout_seconds=30,
+    )
+
+    assert profile["status"] == "experimental"
+    assert "fallback" in str(profile["message"])
+    assert "gemma4:e4b" in str(profile["recommendation"])
 
 
 def test_plan_query_budget_keeps_verified_local_single_budget():
     budget = runtime_service.plan_query_budget(
         provider="ollama",
-        model="llama3.1:8b",
+        model="gemma4:e4b",
         timeout_seconds=30,
         collection_count=1,
         route_reason="default",
@@ -139,7 +151,7 @@ def test_plan_query_budget_keeps_verified_local_single_budget():
 def test_plan_query_budget_reduces_verified_local_multi_budget():
     budget = runtime_service.plan_query_budget(
         provider="ollama",
-        model="llama3.1:8b",
+        model="gemma4:e4b",
         timeout_seconds=30,
         collection_count=2,
         route_reason="keyword_multi",

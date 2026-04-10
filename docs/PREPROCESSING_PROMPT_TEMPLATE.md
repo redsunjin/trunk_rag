@@ -40,8 +40,8 @@
 [metadata_json 규칙]
 - 필수 필드:
   - source (파일명)
-  - country (all|france|germany|italy|uk)
-  - doc_type (summary|country)
+  - country (core 기본값은 all, 그 외 값은 collection manifest 기준)
+  - doc_type (core 기본값은 summary, 그 외 값은 collection manifest 기준)
 - 선택 필드:
   - preprocess_version
   - processed_at (ISO8601)
@@ -60,7 +60,29 @@
 
 ## 산출물 예시
 
-`document_md`:
+core 기본 `document_md`:
+
+```md
+## 설치와 실행
+로컬 환경에서 서버를 실행하고 브라우저로 접속하는 절차를 설명한다.
+```
+
+core 기본 `metadata_json`:
+
+```json
+{
+  "source": "product_guide.md",
+  "country": "all",
+  "doc_type": "summary",
+  "preprocess_version": "v1",
+  "processed_at": "2026-02-24T00:00:00Z",
+  "source_license": "internal",
+  "language": "ko",
+  "tags": ["product-guide"]
+}
+```
+
+sample-pack compatibility `document_md`:
 
 ```md
 ## 절대왕정과 과학 정책
@@ -70,7 +92,7 @@
 대규모 양수 설비를 통해 기술력과 왕권 상징을 동시에 확보했다.
 ```
 
-`metadata_json`:
+sample-pack compatibility `metadata_json`:
 
 ```json
 {
@@ -84,4 +106,3 @@
   "tags": ["france", "science-history"]
 }
 ```
-

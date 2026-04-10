@@ -12,6 +12,13 @@ def test_health_returns_200(client):
     body = response.json()
     assert body["status"] == "ok"
     assert body["collection_key"] == "all"
+    assert body["default_runtime_collection_keys"] == ["all"]
+    assert body["compatibility_bundle_key"] == "sample_pack"
+    assert body["compatibility_bundle_optional"] is True
+    assert body["seed_corpus_key"] == "sample_pack_bootstrap"
+    assert body["seed_corpus_role"] == "demo_bootstrap"
+    assert body["seed_corpus_dataset"] == "sample-eu-science-history"
+    assert "not product-domain data" in body["seed_corpus_description"]
     assert "collection" in body
     assert "persist_dir" in body
     assert body["chunking_mode"] in {"char", "token"}
@@ -26,6 +33,7 @@ def test_health_returns_200(client):
     assert isinstance(body["runtime_query_budget_profile"], str)
     assert isinstance(body["runtime_query_budget_summary"], str)
     assert body["embedding_fingerprint_status"] in {"ready", "missing", "mismatch", "empty"}
+    assert body["compatibility_bundle_embedding_fingerprint_status"] in {"ready", "missing", "mismatch", "empty"}
 
 
 def test_collections_returns_200(client):
@@ -34,7 +42,12 @@ def test_collections_returns_200(client):
     body = response.json()
     assert body["default_collection_key"] == "all"
     assert isinstance(body["collections"], list)
-    assert any(item["key"] == "all" for item in body["collections"])
+    all_item = next(item for item in body["collections"] if item["key"] == "all")
+    fr_item = next(item for item in body["collections"] if item["key"] == "fr")
+    assert all_item["default_country"] == "all"
+    assert all_item["default_doc_type"] == "summary"
+    assert fr_item["default_country"] == "france"
+    assert fr_item["default_doc_type"] == "country"
 
 
 def test_ops_baseline_latest_returns_missing_when_report_does_not_exist(client, monkeypatch, tmp_path):
@@ -135,7 +148,7 @@ def test_reindex_returns_200_with_monkeypatch(client, monkeypatch):
     monkeypatch.setattr(
         routes_system.index_service,
         "reindex",
-        lambda reset=True, collection_key="all": {
+        lambda reset=True, collection_key="all", include_compatibility_bundle=False: {
             "docs": 5,
             "chunks": 37,
             "vectors": 37,

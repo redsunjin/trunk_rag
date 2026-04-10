@@ -158,6 +158,9 @@ def build_query_payload(
     payload["llm_model"] = llm_model
     payload["llm_base_url"] = llm_base_url
     payload["llm_api_key"] = llm_api_key
+    query_profile = str(case.get("query_profile", "")).strip()
+    if query_profile:
+        payload["query_profile"] = query_profile
     return payload, expected_route_keys, request_mode
 
 
