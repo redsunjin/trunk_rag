@@ -30,8 +30,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-023`
-- current_active_title: `V1.5 후속 정책/공개 API 여부 정리`
+- current_active_id: `LOOP-024`
+- current_active_title: `V1.5 agent runtime smoke test 추가`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -583,7 +583,7 @@ closeout 메모 (2026-04-10):
 - post-merge 검증은 `git diff --check HEAD~1..HEAD` 통과, `roadmap_harness.py validate` `ready`, 전체 `158 passed`, live gate `ready`(`generic-baseline 3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=9638.144`)로 통과했다.
 - `docs/reports/V1_5_AGENT_READY_RUNTIME_REVIEW_2026-04-10.md`에 post-merge main validation 결과를 추가했다.
 
-### A-Next16. V1.5 후속 정책/공개 API 여부 정리 (현재 active)
+### A-Next16. V1.5 후속 정책/공개 API 여부 정리 (완료: 2026-04-10)
 1. V1.5 내부 runtime 기반을 어디까지 public API나 운영 정책으로 승격할지 결정하기 위한 후속 기준을 정리한다.
 2. `/agent/*` 공개 여부, trace persistence, actor별 allowlist/mutation policy, branch cleanup/publish 체크를 분리한다.
 3. 실제 public API 구현은 다음 명시 loop로 넘긴다.
@@ -599,6 +599,31 @@ closeout 메모 (2026-04-10):
 
 진행 메모 (2026-04-10):
 - `LOOP-022` closeout commit 후 public API 승격 여부와 policy 후속 작업을 정리한다.
+
+closeout 메모 (2026-04-10):
+- `docs/reports/V1_5_FOLLOWUP_POLICY_2026-04-10.md`에 public `/agent/*` API, execution trace persistence, actor allowlist/mutation policy, branch cleanup/publish 상태를 정리했다.
+- 결정은 public `/agent/*` API를 즉시 공개하지 않고, `agent_runtime_service.run_agent_entry()`를 내부 service draft로 유지하는 것이다.
+- `execution_trace` persistence는 redaction/storage/retention 정책이 생길 때까지 보류하고, 기본 agent allowlist는 read-only tool로 유지한다.
+- `main`은 `origin/main`에 push 완료됐고, 병합된 feature branch 삭제는 되돌리기 어려운 정리 작업이므로 별도 명시 지시 전까지 보존하기로 했다.
+- README/SPEC와 `docs/V1_5_AGENT_READY_PLAN.md`에 후속 정책 리포트를 연결했다.
+- 검증은 전체 `158 passed`, `roadmap_harness.py validate` `ready`, `git diff --check` 통과까지 확인했다.
+
+### A-Next17. V1.5 agent runtime smoke test 추가 (현재 active)
+1. public API를 열지 않는 상태에서 내부 `agent_runtime_service` 흐름을 운영자가 빠르게 점검할 수 있는 smoke test를 추가한다.
+2. read-only tool 성공 경로와 write tool 차단 경로를 함께 확인한다.
+3. 실제 public `/agent/*` endpoint는 만들지 않는다.
+
+완료 기준:
+- agent runtime smoke 경로가 단일 명령 또는 명확한 테스트로 실행 가능하다.
+- read-only tool 성공과 write tool 차단이 모두 확인된다.
+- 기존 V1 API 계약과 로드맵 하네스가 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-023` closeout commit 후 내부 smoke 경로를 추가한다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

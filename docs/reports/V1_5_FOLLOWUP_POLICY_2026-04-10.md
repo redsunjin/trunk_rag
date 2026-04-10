@@ -1,0 +1,87 @@
+# V1.5 Follow-up Policy - 2026-04-10
+
+## Scope
+
+- 대상 루프: `LOOP-023 V1.5 후속 정책/공개 API 여부 정리`
+- 기준 커밋: `3e5609e docs(agent): record v1.5 post-merge validation`
+- 목적: V1.5 내부 agent-ready runtime 기반을 public API나 운영 정책으로 승격하기 전 필요한 판단 기준을 정리한다.
+
+## Decisions
+
+### 1. Public `/agent/*` API
+
+결정: 지금은 공개하지 않는다.
+
+이유:
+- `agent_runtime_service.run_agent_entry()`는 내부 single-tool draft이며, 사용자에게 노출할 answer generation/UX 계약이 없다.
+- `search_docs`는 retrieval context를 반환할 뿐 최종 답변을 생성하지 않는다.
+- 현재 V1 사용자 기본 경로는 `/query`이며, 이 경로를 대체할 근거가 없다.
+
+다음 조건이 충족되면 재검토한다:
+- public response schema, auth, rate/timeout, error shape가 문서화된다.
+- agent entry가 최소 1개 사용자 가치 흐름을 `/query`와 명확히 다르게 제공한다.
+- live gate 외에 agent-specific smoke test가 생긴다.
+
+### 2. Execution Trace Persistence
+
+결정: 지금은 response-local metadata로 유지하고, persistence는 보류한다.
+
+이유:
+- `execution_trace`는 현재 내부 schema 검증 목적이며 운영 감사 저장소가 없다.
+- 파일/DB 저장을 시작하면 retention, 민감 정보, 용량, 검색 정책이 필요하다.
+- write tool audit persistence는 admin auth 정책과 함께 설계해야 한다.
+
+다음 조건이 충족되면 재검토한다:
+- trace redaction 규칙이 정해진다.
+- request id 기준 조회 UX 또는 admin endpoint 필요성이 확인된다.
+- storage backend와 retention 기간이 정해진다.
+
+### 3. Actor Allowlist and Mutation Policy
+
+결정: 기본은 read-only allowlist로 유지한다.
+
+현재 기본 허용:
+- `search_docs`
+- `read_doc`
+- `list_collections`
+- `health_check`
+- `list_upload_requests`
+
+현재 기본 차단:
+- `reindex`
+- `approve_upload_request`
+- `reject_upload_request`
+
+write tool을 agent runtime에 열기 전 필요한 조건:
+- actor별 policy source가 생긴다.
+- admin auth와 mutation intent 확인이 붙는다.
+- dry-run 또는 preview 결과가 먼저 제공된다.
+- audit persistence가 준비된다.
+
+### 4. Branch Cleanup and Publish
+
+상태:
+- `main`은 `a429fe1 merge: v1.5 agent-ready runtime prep`와 `3e5609e docs(agent): record v1.5 post-merge validation`을 포함한다.
+- `main`은 `origin/main`에 push 완료됐다.
+- `feature/loop-017-tool-registry-skeleton`은 병합 완료 상태지만, 삭제는 되돌리기 어려운 정리 작업이므로 별도 명시 지시 전까지 보존한다.
+- 기존 untracked `.DS_Store`, `TRUNK_RAG_LINKS.md`는 작업 범위 밖이므로 그대로 둔다.
+
+## Immediate Next Steps
+
+1. Public API는 만들지 않는다.
+2. V1 기본 `/query` 경로는 유지한다.
+3. agent runtime은 내부 service + unit test 기준으로만 유지한다.
+4. 다음 구현 후보는 `agent-specific smoke test`, `trace redaction policy`, `actor allowlist policy source` 중 하나로 제한한다.
+
+## Deferred
+
+- `/agent/query` public endpoint
+- MCP tool orchestration
+- planner/worker runtime
+- skill registry
+- write tool automation
+- GraphRAG 재개
+
+## Conclusion
+
+V1.5 결과물은 `main`에 병합됐지만 아직 public agent product가 아니다. 다음 단계는 기능 확장보다 정책 경계 고정이 우선이며, public API는 별도 loop에서 schema/auth/test 기준이 생긴 뒤에만 열어야 한다.

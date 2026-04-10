@@ -120,8 +120,14 @@
 
 ## Integration Review
 - 2026-04-10 통합 검토는 `docs/reports/V1_5_AGENT_READY_RUNTIME_REVIEW_2026-04-10.md`에 기록했다.
-- 결론은 조건부 merge-ready다. 조건은 최신 `main` 기준 충돌 확인, full regression, live `generic-baseline` gate 재실행이다.
+- 결론은 `main` 병합 후 검증 통과다. post-merge 기준 full regression과 live `generic-baseline` gate를 재실행했다.
 - WP1-WP4는 모두 내부 service 경계로 추가됐고, 사용자 기본 `/query` 계약은 변경하지 않았다.
+
+## Follow-up Policy
+- 2026-04-10 후속 정책 판단은 `docs/reports/V1_5_FOLLOWUP_POLICY_2026-04-10.md`에 기록했다.
+- public `/agent/*` API는 지금 열지 않는다.
+- `execution_trace` persistence는 redaction/storage/retention 정책이 생길 때까지 보류한다.
+- agent runtime 기본 allowlist는 read-only tool로 유지한다.
 
 ## Suggested Order
 1. `WP1` tool registry skeleton
