@@ -118,6 +118,11 @@
 - 명시 tool/payload는 전달하되, write tool은 기본 allowlist와 mutation guard를 통과하지 못한다.
 - 결과는 `entry`, `tool_call`, `execution_trace`, `error`를 포함하고, 사용자 기본 `/query` 경로는 변경하지 않는다.
 
+## Integration Review
+- 2026-04-10 통합 검토는 `docs/reports/V1_5_AGENT_READY_RUNTIME_REVIEW_2026-04-10.md`에 기록했다.
+- 결론은 조건부 merge-ready다. 조건은 최신 `main` 기준 충돌 확인, full regression, live `generic-baseline` gate 재실행이다.
+- WP1-WP4는 모두 내부 service 경계로 추가됐고, 사용자 기본 `/query` 계약은 변경하지 않았다.
+
 ## Suggested Order
 1. `WP1` tool registry skeleton
 2. `WP2` middleware chain skeleton

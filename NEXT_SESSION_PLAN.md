@@ -30,8 +30,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-021`
-- current_active_title: `V1.5 agent-ready runtime 통합 검토/병합 준비`
+- current_active_id: `LOOP-022`
+- current_active_title: `V1.5 브랜치 병합/사후 검증`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -533,7 +533,7 @@ closeout 메모 (2026-04-10):
 - 결과 shape는 `entry`, `tool_call`, `execution_trace`, `error`를 포함하며 사용자 기본 `/query` 경로는 변경하지 않았다.
 - 검증은 `12 passed`(agent runtime + trace/middleware), 전체 `158 passed`, live gate `ready`(`generic-baseline 3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=9962.081`), `roadmap_harness.py validate` `ready`까지 확인했다.
 
-### A-Next14. V1.5 agent-ready runtime 통합 검토/병합 준비 (현재 active)
+### A-Next14. V1.5 agent-ready runtime 통합 검토/병합 준비 (완료: 2026-04-10)
 1. WP1-WP4 결과를 병합 준비 관점으로 검토한다.
 2. 신규 service 경계, 테스트, 문서, 검증 이력을 한 번에 요약한다.
 3. 병합 전 필수 리스크와 후속 작업 후보를 분리한다.
@@ -550,6 +550,32 @@ closeout 메모 (2026-04-10):
 
 진행 메모 (2026-04-10):
 - `LOOP-020` branch/commit 정리가 끝난 뒤, V1.5 internal runtime 준비 트랙 전체를 병합 준비 관점으로 검토한다.
+
+closeout 메모 (2026-04-10):
+- `docs/reports/V1_5_AGENT_READY_RUNTIME_REVIEW_2026-04-10.md`에 WP1-WP4 통합 검토, commit summary, service boundary, safety controls, 검증 이력, merge readiness, risks, follow-up candidates를 정리했다.
+- 통합 검토 결론은 조건부 merge-ready다. 조건은 최신 `main` 기준 충돌 확인, full regression, live `generic-baseline` gate 재실행이다.
+- 신규 구조는 `tool_registry_service`, `tool_middleware_service`, `tool_trace_service`, `agent_runtime_service` 내부 service 경계에 머물며 사용자 기본 `/query` 계약을 대체하지 않는다.
+- 병합 전 리스크로 public API 승격 전 versioning, trace persistence, actor별 allowlist/mutation policy, write tool audit persistence를 남겼다.
+- README/SPEC와 `docs/V1_5_AGENT_READY_PLAN.md`에 통합 검토 리포트와 병합 준비 판단을 연결했다.
+- 검증은 전체 `158 passed`, live gate `ready`(`generic-baseline 3/3 pass`, `avg_weighted_score=0.9467`, `p95_latency_ms=12089.431`), `roadmap_harness.py validate` `ready`, `git diff --check` 통과까지 확인했다.
+
+### A-Next15. V1.5 브랜치 병합/사후 검증 (현재 active)
+1. `feature/loop-017-tool-registry-skeleton`의 V1.5 WP1-WP4 결과를 최신 `main`에 병합한다.
+2. 병합 후 full regression과 live `generic-baseline` gate를 재실행한다.
+3. 병합 결과와 다음 작업 기준을 문서에 남긴다.
+
+완료 기준:
+- `main`이 V1.5 internal runtime 준비 커밋을 포함한다.
+- post-merge full regression과 live `generic-baseline` gate가 통과한다.
+- 병합 결과와 다음 작업 기준이 문서에 남는다.
+
+검증:
+- `./.venv/bin/python -m pytest -q`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-10):
+- `LOOP-021` closeout commit 후 최신 `main`으로 전환해 병합과 post-merge 검증을 진행한다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
