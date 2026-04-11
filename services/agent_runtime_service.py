@@ -2,16 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from services import tool_middleware_service
+from services import actor_policy_service, tool_middleware_service
 from services.tool_registry_service import ToolContext, ToolPayload
-
-DEFAULT_AGENT_TOOL_ALLOWLIST = (
-    "search_docs",
-    "read_doc",
-    "list_collections",
-    "health_check",
-    "list_upload_requests",
-)
 
 
 @dataclass(frozen=True)
@@ -54,6 +46,13 @@ def _build_default_payload(tool_name: str, user_input: str) -> ToolPayload:
     return {"input": user_input}
 
 
+def _normalize_allowed_tools(allowed_tools: tuple[str, ...] | None) -> tuple[str, ...] | None:
+    if allowed_tools is None:
+        return None
+    normalized = tuple(str(tool_name).strip() for tool_name in allowed_tools if str(tool_name).strip())
+    return normalized or None
+
+
 def run_agent_entry(request: AgentRuntimeRequest) -> dict[str, object]:
     user_input = str(request.input or "").strip()
     if not user_input:
@@ -65,7 +64,16 @@ def run_agent_entry(request: AgentRuntimeRequest) -> dict[str, object]:
 
     tool_name = _normalize_tool_name(request.tool_name)
     payload = dict(request.tool_payload) if isinstance(request.tool_payload, dict) else _build_default_payload(tool_name, user_input)
-    allowed_tools = request.allowed_tools if request.allowed_tools is not None else DEFAULT_AGENT_TOOL_ALLOWLIST
+    policy_decision = actor_policy_service.resolve_actor_policy(request.actor)
+    requested_allowed_tools = _normalize_allowed_tools(request.allowed_tools)
+    if requested_allowed_tools is None:
+        allowed_tools = policy_decision.effective_allowed_tools
+    else:
+        allowed_tools = tuple(
+            tool_name
+            for tool_name in requested_allowed_tools
+            if tool_name in policy_decision.effective_allowed_tools
+        )
     context = ToolContext(
         request_id=request.request_id,
         actor=request.actor,
@@ -77,6 +85,7 @@ def run_agent_entry(request: AgentRuntimeRequest) -> dict[str, object]:
         payload,
         context=context,
         allowed_tools=allowed_tools,
+        policy_decision=policy_decision,
         timeout_seconds=request.timeout_seconds,
     )
     execution_trace = tool_call.get("execution_trace") if isinstance(tool_call.get("execution_trace"), dict) else None
@@ -88,7 +97,16 @@ def run_agent_entry(request: AgentRuntimeRequest) -> dict[str, object]:
             "request_id": trace_request_id,
             "input": user_input,
             "selected_tool": tool_name,
+            "actor_category": policy_decision.actor_category,
             "allowed_tools": list(allowed_tools),
+            "mutation_candidate_tools": list(policy_decision.mutation_candidate_tools),
+            "policy_flags": {
+                "requires_admin_auth": policy_decision.requires_admin_auth,
+                "requires_mutation_intent": policy_decision.requires_mutation_intent,
+                "requires_preview_before_apply": policy_decision.requires_preview_before_apply,
+                "audit_scope": policy_decision.audit_scope,
+                "used_fallback": policy_decision.used_fallback,
+            },
         },
         "tool_call": tool_call,
         "execution_trace": execution_trace,

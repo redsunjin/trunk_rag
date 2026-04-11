@@ -5,7 +5,7 @@ import time
 from typing import Callable
 from uuid import uuid4
 
-from services import runtime_service, tool_registry_service, tool_trace_service
+from services import actor_policy_service, runtime_service, tool_registry_service, tool_trace_service
 from services.tool_registry_service import ToolContext, ToolInputError, ToolPayload
 
 ToolExecutionResult = dict[str, object]
@@ -18,6 +18,7 @@ class ToolExecutionState:
     payload: ToolPayload
     context: ToolContext
     definition: dict[str, object]
+    policy_decision: actor_policy_service.ActorPolicyDecision | None = None
     allowed_tools: tuple[str, ...] | None = None
     timeout_seconds: float | None = None
     started_at: float = field(default_factory=time.monotonic)
@@ -109,6 +110,7 @@ def _attach_middleware_metadata(
         "allow_mutation": state.context.allow_mutation,
         "timeout_seconds": state.timeout_seconds,
         "allowed_tools": allowed_tools,
+        "policy": state.policy_decision.as_dict() if state.policy_decision else None,
         "elapsed_ms": state.elapsed_ms,
         "trace": list(state.middleware_trace),
         "audit_log": list(state.audit_log),
@@ -121,6 +123,7 @@ def _attach_middleware_metadata(
         side_effect=state.side_effect,
         allow_mutation=state.context.allow_mutation,
         allowed_tools=allowed_tools,
+        policy_details=state.policy_decision.as_dict() if state.policy_decision else None,
         timeout_seconds=state.timeout_seconds,
         elapsed_ms=state.elapsed_ms,
         middleware_steps=list(state.middleware_trace),
@@ -253,12 +256,16 @@ def invoke_tool_with_middlewares(
     *,
     context: ToolContext | None = None,
     allowed_tools: list[str] | tuple[str, ...] | None = None,
+    policy_decision: actor_policy_service.ActorPolicyDecision | None = None,
     timeout_seconds: float | None = None,
     middlewares: tuple[ToolMiddleware, ...] | list[ToolMiddleware] | None = None,
 ) -> ToolExecutionResult:
     resolved_payload = _normalize_payload(payload)
     resolved_context = context or ToolContext()
+    resolved_policy_decision = policy_decision or actor_policy_service.resolve_actor_policy(resolved_context.actor)
     normalized_allowed_tools = _normalize_allowed_tools(allowed_tools)
+    if normalized_allowed_tools is None:
+        normalized_allowed_tools = resolved_policy_decision.effective_allowed_tools
     try:
         definition = tool_registry_service.get_tool_definition(name)
     except ToolInputError as exc:
@@ -267,6 +274,7 @@ def invoke_tool_with_middlewares(
             payload=resolved_payload,
             context=replace(resolved_context, request_id=_resolve_request_id(resolved_context.request_id)),
             definition={"side_effect": "unknown"},
+            policy_decision=resolved_policy_decision,
             allowed_tools=normalized_allowed_tools,
             timeout_seconds=timeout_seconds,
         )
@@ -281,6 +289,7 @@ def invoke_tool_with_middlewares(
         payload=resolved_payload,
         context=resolved_context,
         definition=definition,
+        policy_decision=resolved_policy_decision,
         allowed_tools=normalized_allowed_tools,
         timeout_seconds=timeout_seconds,
     )

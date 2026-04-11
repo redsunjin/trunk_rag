@@ -152,6 +152,13 @@ def _redact_common_trace(trace: dict[str, object], *, include_actor: bool) -> di
         "policy": {
             "allow_mutation": policy.get("allow_mutation"),
             "allowed_tools": policy.get("allowed_tools"),
+            "actor_category": policy.get("actor_category"),
+            "mutation_candidate_tools": policy.get("mutation_candidate_tools"),
+            "requires_admin_auth": policy.get("requires_admin_auth"),
+            "requires_mutation_intent": policy.get("requires_mutation_intent"),
+            "requires_preview_before_apply": policy.get("requires_preview_before_apply"),
+            "audit_scope": policy.get("audit_scope"),
+            "used_fallback": policy.get("used_fallback"),
         },
         "tool": {
             "name": tool.get("name"),
@@ -239,6 +246,7 @@ def build_execution_trace(
     side_effect: str,
     allow_mutation: bool,
     allowed_tools: list[str] | None,
+    policy_details: dict[str, object] | None,
     timeout_seconds: float | None,
     elapsed_ms: int,
     middleware_steps: list[dict[str, object]],
@@ -259,6 +267,16 @@ def build_execution_trace(
         "policy": {
             "allow_mutation": allow_mutation,
             "allowed_tools": list(allowed_tools) if allowed_tools is not None else None,
+            "actor_category": _safe_dict(policy_details).get("actor_category"),
+            "read_allowed_tools": _safe_dict(policy_details).get("read_allowed_tools"),
+            "mutation_candidate_tools": _safe_dict(policy_details).get("mutation_candidate_tools"),
+            "effective_allowed_tools": _safe_dict(policy_details).get("effective_allowed_tools"),
+            "requires_admin_auth": _safe_dict(policy_details).get("requires_admin_auth"),
+            "requires_mutation_intent": _safe_dict(policy_details).get("requires_mutation_intent"),
+            "requires_preview_before_apply": _safe_dict(policy_details).get("requires_preview_before_apply"),
+            "audit_scope": _safe_dict(policy_details).get("audit_scope"),
+            "source_schema_version": _safe_dict(policy_details).get("source_schema_version"),
+            "used_fallback": _safe_dict(policy_details).get("used_fallback"),
         },
         "tool": {
             "name": tool_name,

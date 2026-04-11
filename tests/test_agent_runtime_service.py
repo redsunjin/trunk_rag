@@ -6,11 +6,20 @@ from services import agent_runtime_service
 def test_agent_entry_defaults_single_input_to_search_docs(monkeypatch):
     captured = {}
 
-    def fake_invoke_tool_with_middlewares(name, payload, *, context=None, allowed_tools=None, timeout_seconds=None):
+    def fake_invoke_tool_with_middlewares(
+        name,
+        payload,
+        *,
+        context=None,
+        allowed_tools=None,
+        policy_decision=None,
+        timeout_seconds=None,
+    ):
         captured["name"] = name
         captured["payload"] = payload
         captured["context"] = context
         captured["allowed_tools"] = allowed_tools
+        captured["policy_decision"] = policy_decision
         captured["timeout_seconds"] = timeout_seconds
         return {
             "tool": name,
@@ -42,7 +51,15 @@ def test_agent_entry_defaults_single_input_to_search_docs(monkeypatch):
     assert captured["context"].request_id == "agent-1"
     assert captured["context"].actor == "internal_agent"
     assert captured["context"].timeout_seconds == 8
-    assert "search_docs" in captured["allowed_tools"]
+    assert captured["policy_decision"].actor_category == "internal_read_only"
+    assert captured["allowed_tools"] == (
+        "search_docs",
+        "read_doc",
+        "list_collections",
+        "health_check",
+    )
+    assert result["entry"]["actor_category"] == "internal_read_only"
+    assert result["entry"]["mutation_candidate_tools"] == []
     assert result["execution_trace"]["request_id"] == "agent-1"
 
 
@@ -63,10 +80,19 @@ def test_agent_entry_rejects_empty_input_without_tool_call(monkeypatch):
 def test_agent_entry_forwards_explicit_tool_payload(monkeypatch):
     captured = {}
 
-    def fake_invoke_tool_with_middlewares(name, payload, *, context=None, allowed_tools=None, timeout_seconds=None):
+    def fake_invoke_tool_with_middlewares(
+        name,
+        payload,
+        *,
+        context=None,
+        allowed_tools=None,
+        policy_decision=None,
+        timeout_seconds=None,
+    ):
         captured["name"] = name
         captured["payload"] = payload
         captured["allowed_tools"] = allowed_tools
+        captured["policy_decision"] = policy_decision
         return {
             "tool": name,
             "ok": True,
@@ -89,7 +115,26 @@ def test_agent_entry_forwards_explicit_tool_payload(monkeypatch):
     assert result["ok"] is True
     assert captured["name"] == "read_doc"
     assert captured["payload"] == {"collection": "fr", "doc_key": "fr"}
+    assert captured["policy_decision"].actor_category == "internal_read_only"
     assert "read_doc" in captured["allowed_tools"]
+
+
+def test_agent_entry_uses_actor_policy_fallback_for_unknown_actor():
+    result = agent_runtime_service.run_agent_entry(
+        agent_runtime_service.AgentRuntimeRequest(
+            input="문서 상태를 보여줘.",
+            tool_name="read_doc",
+            tool_payload={"collection": "fr", "doc_key": "fr"},
+            actor="guest-bot",
+            request_id="guest-1",
+        )
+    )
+
+    assert result["ok"] is False
+    assert result["entry"]["actor_category"] == "unknown_read_only"
+    assert result["entry"]["allowed_tools"] == ["health_check"]
+    assert result["entry"]["policy_flags"]["used_fallback"] is True
+    assert result["error"]["code"] == "TOOL_NOT_ALLOWED"
 
 
 def test_agent_entry_uses_read_only_allowlist_by_default():
@@ -104,4 +149,6 @@ def test_agent_entry_uses_read_only_allowlist_by_default():
 
     assert result["ok"] is False
     assert result["error"]["code"] == "TOOL_NOT_ALLOWED"
+    assert result["entry"]["actor_category"] == "internal_read_only"
+    assert result["entry"]["mutation_candidate_tools"] == []
     assert result["execution_trace"]["middleware"]["blocked_by"] == "tool_allowlist"

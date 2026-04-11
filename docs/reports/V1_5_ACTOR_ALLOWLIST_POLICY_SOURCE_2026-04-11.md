@@ -135,6 +135,22 @@ preview에서 기대하는 최소 결과:
 - preview payload 생성
 - audit persistence 저장소 구현
 
+## Resolver Implementation Note (2026-04-11)
+
+- `config/actor_policy_manifest.json`에 actor category, tool group, read/mutation group, policy flag source를 고정했다.
+- `core/actor_policy_manifest.py`는 manifest 정규화와 fallback load를 담당한다.
+- `services/actor_policy_service.py`는 `actor -> actor_category -> read_allowed_tools/mutation_candidate_tools/effective_allowed_tools`를 계산한다.
+- `services/agent_runtime_service.py`는 더 이상 read-only allowlist 상수를 직접 들고 있지 않고 actor policy decision을 기본 allowlist로 사용한다.
+- `services/tool_middleware_service.py`는 explicit allowlist가 없을 때 actor policy decision을 기본 allowlist로 사용하고, middleware metadata/trace에 policy seed를 남긴다.
+- `services/tool_trace_service.py`는 `actor_category`, `mutation_candidate_tools`, policy flag를 trace `policy` 필드에 포함한다.
+
+이번 단계에서 의도적으로 하지 않은 것:
+
+- write tool auth 성공 시 effective allowlist 승격
+- mutation intent 확인
+- preview 선행조건 enforcement
+- audit persistence 저장소 구현
+
 ## Test Candidates
 
 ### LOOP-028

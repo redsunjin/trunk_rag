@@ -11,6 +11,18 @@ def test_build_execution_trace_captures_success_routing_seed():
         side_effect="read",
         allow_mutation=False,
         allowed_tools=["search_docs"],
+        policy_details={
+            "actor_category": "internal_read_only",
+            "read_allowed_tools": ["search_docs"],
+            "mutation_candidate_tools": [],
+            "effective_allowed_tools": ["search_docs"],
+            "requires_admin_auth": False,
+            "requires_mutation_intent": False,
+            "requires_preview_before_apply": False,
+            "audit_scope": "request_only",
+            "source_schema_version": "v1.5.actor_policy_source.v1",
+            "used_fallback": False,
+        },
         timeout_seconds=5.0,
         elapsed_ms=12,
         middleware_steps=[
@@ -36,6 +48,8 @@ def test_build_execution_trace_captures_success_routing_seed():
     assert trace["request_id"] == "req-1"
     assert trace["runtime"]["timeout_seconds"] == 5.0
     assert trace["policy"]["allowed_tools"] == ["search_docs"]
+    assert trace["policy"]["actor_category"] == "internal_read_only"
+    assert trace["policy"]["mutation_candidate_tools"] == []
     assert trace["tool"]["name"] == "search_docs"
     assert trace["tool"]["result_seed"]["source_count"] == 1
     assert trace["routing"]["route_reason"] == "compatibility_keyword"
@@ -51,6 +65,18 @@ def test_build_execution_trace_captures_blocked_middleware_and_error():
         side_effect="write",
         allow_mutation=False,
         allowed_tools=None,
+        policy_details={
+            "actor_category": "internal_read_only",
+            "read_allowed_tools": ["search_docs"],
+            "mutation_candidate_tools": ["reindex"],
+            "effective_allowed_tools": ["search_docs"],
+            "requires_admin_auth": True,
+            "requires_mutation_intent": True,
+            "requires_preview_before_apply": True,
+            "audit_scope": "maintenance",
+            "source_schema_version": "v1.5.actor_policy_source.v1",
+            "used_fallback": False,
+        },
         timeout_seconds=30.0,
         elapsed_ms=3,
         middleware_steps=[
@@ -71,6 +97,8 @@ def test_build_execution_trace_captures_blocked_middleware_and_error():
 
     assert trace["tool"]["side_effect"] == "write"
     assert trace["policy"]["allow_mutation"] is False
+    assert trace["policy"]["actor_category"] == "internal_read_only"
+    assert trace["policy"]["mutation_candidate_tools"] == ["reindex"]
     assert trace["middleware"]["blocked_by"] == "unsafe_action_guard"
     assert trace["outcome"]["ok"] is False
     assert trace["outcome"]["error"]["code"] == "MUTATION_NOT_ALLOWED"
@@ -82,7 +110,17 @@ def _sample_trace_with_sensitive_fields():
         "request_id": "req-sensitive",
         "actor": "admin@example.test",
         "runtime": {"timeout_seconds": 30.0, "elapsed_ms": 17},
-        "policy": {"allow_mutation": False, "allowed_tools": ["search_docs"]},
+        "policy": {
+            "allow_mutation": False,
+            "allowed_tools": ["search_docs"],
+            "actor_category": "admin_review_mutation",
+            "mutation_candidate_tools": ["approve_upload_request", "reject_upload_request"],
+            "requires_admin_auth": True,
+            "requires_mutation_intent": True,
+            "requires_preview_before_apply": True,
+            "audit_scope": "mutation_review",
+            "used_fallback": False,
+        },
         "tool": {
             "name": "search_docs",
             "side_effect": "read",
@@ -151,6 +189,8 @@ def test_redact_execution_trace_public_profile_keeps_minimal_safe_fields():
     assert redacted["audience"] == "public"
     assert redacted["request_id"] == "req-sensitive"
     assert redacted["tool"] == {"name": "search_docs", "side_effect": "read"}
+    assert redacted["policy"]["actor_category"] == "admin_review_mutation"
+    assert redacted["policy"]["mutation_candidate_tools"] == ["approve_upload_request", "reject_upload_request"]
     assert redacted["outcome"]["error"] == {"code": "HTTP_ERROR", "status_code": 500}
     assert redacted["middleware"] == {"blocked_by": None}
     assert "actor" not in redacted

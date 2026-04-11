@@ -61,6 +61,8 @@ write tool을 agent runtime에 열기 전 필요한 조건:
 2026-04-11 구현 메모:
 - actor category, tool group, mutation gate, preview/audit 선행조건 초안은 `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`에 분리했다.
 - 후속 구현 순서는 `resolver skeleton -> admin auth + mutation intent gate -> dry-run preview + audit persistence contract`로 고정한다.
+- 같은 날짜 `config/actor_policy_manifest.json` + `services/actor_policy_service.py`로 resolver skeleton을 추가해 runtime/middleware가 actor category별 read allowlist와 mutation candidate metadata를 읽도록 정리했다.
+- 아직 충족되지 않은 조건은 admin auth, mutation intent, preview enforcement, audit persistence다.
 
 ### 4. Branch Cleanup and Publish
 
@@ -75,7 +77,7 @@ write tool을 agent runtime에 열기 전 필요한 조건:
 1. Public API는 만들지 않는다.
 2. V1 기본 `/query` 경로는 유지한다.
 3. agent runtime은 내부 service + unit test + smoke script 기준으로만 유지한다.
-4. 다음 구현 후보는 `trace redaction policy`, `actor allowlist policy source` 중 하나로 제한한다.
+4. actor policy source가 구현된 뒤 다음 구현 후보는 `admin auth + mutation intent gate`, `dry-run preview + audit persistence contract`로 제한한다.
 
 ## Smoke Check
 

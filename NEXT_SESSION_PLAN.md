@@ -31,8 +31,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-028`
-- current_active_title: `V1.5 actor policy resolver skeleton`
+- current_active_id: `LOOP-029`
+- current_active_title: `V1.5 admin auth + mutation intent gate`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -714,7 +714,7 @@ closeout 메모 (2026-04-11):
 - README, SPEC, `docs/V1_5_AGENT_READY_PLAN.md`, `docs/reports/V1_5_FOLLOWUP_POLICY_2026-04-10.md`에 actor policy source 리포트를 연결했다.
 - 검증은 전체 `./.venv/bin/python -m pytest -q`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 기준으로 마감한다.
 
-### A-Next21. V1.5 actor policy resolver skeleton (현재 active)
+### A-Next21. V1.5 actor policy resolver skeleton (완료: 2026-04-11)
 1. `LOOP-027`에서 정리한 actor policy source 초안을 코드에서 읽을 수 있는 최소 resolver/manifest interface로 고정한다.
 2. actor category별 allowed tools, mutation 가능 여부, preview 요구 여부를 runtime 입력과 연결한다.
 3. write tool 실행은 아직 열지 않고, policy decision metadata와 차단 이유만 안정적으로 노출한다.
@@ -728,7 +728,17 @@ closeout 메모 (2026-04-11):
 - `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
-### A-Next22. V1.5 admin auth + mutation intent gate (pending)
+closeout 메모 (2026-04-11):
+- `config/actor_policy_manifest.json`을 추가해 actor category, tool group, read/mutation group, policy flag source를 manifest로 고정했다.
+- `core/actor_policy_manifest.py`와 `services/actor_policy_service.py`를 추가해 `actor -> actor_category -> read_allowed_tools/mutation_candidate_tools/effective_allowed_tools` resolver skeleton을 구현했다.
+- `services/agent_runtime_service.py`는 기본 read-only allowlist 상수를 제거하고 actor policy decision을 runtime 기본 allowlist로 사용하도록 변경했다.
+- `services/tool_middleware_service.py`는 explicit allowlist가 없을 때 actor policy decision을 기본 allowlist로 적용하고 middleware metadata에 policy 정보를 남기도록 변경했다.
+- `services/tool_trace_service.py`는 `actor_category`, `mutation_candidate_tools`, policy flag를 trace `policy` seed에 포함하도록 확장했다.
+- `tests/test_actor_policy_service.py`를 추가했고, `tests/test_agent_runtime_service.py`, `tests/test_tool_middleware_service.py`, `tests/test_tool_trace_service.py`를 actor policy resolver 기준으로 갱신했다.
+- README, SPEC, `docs/V1_5_AGENT_READY_PLAN.md`, `docs/reports/V1_5_FOLLOWUP_POLICY_2026-04-10.md`, `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`에 구현 상태를 반영했다.
+- 검증은 타깃 `21 passed`, 전체 `172 passed`, `./.venv/bin/python scripts/smoke_agent_runtime.py -> ok=true`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과 기준으로 마감한다.
+
+### A-Next22. V1.5 admin auth + mutation intent gate (현재 active)
 1. write tool 요청 전 actor auth 수준과 explicit mutation intent를 분리해 확인하는 내부 gate를 추가한다.
 2. admin actor만 mutation 후보를 시도할 수 있게 하고, intent 누락/권한 부족/preview 선행 필요를 서로 다른 차단 코드로 분리한다.
 3. read-only actor는 계속 기존 기본 allowlist 경로만 통과하게 유지한다.
@@ -742,6 +752,9 @@ closeout 메모 (2026-04-11):
 - `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
 - `./.venv/bin/python scripts/smoke_agent_runtime.py`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-11):
+- `LOOP-028` closeout commit 후 actor policy resolver 위에 admin auth + mutation intent gate를 추가한다.
 
 ### A-Next23. V1.5 dry-run preview + audit persistence contract (pending)
 1. write tool 실제 실행 전에 필요한 dry-run/preview 응답 계약을 정리하고, side effect 전후 audit record shape를 고정한다.

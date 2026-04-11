@@ -56,11 +56,12 @@
 - 현재: `/health`는 `runtime_query_budget_*`, `embedding_fingerprint_*` 상태를 노출해 경량 경로와 인덱스 호환 상태를 먼저 보여 준다
 - 현재: reindex 시 컬렉션별 embedding fingerprint를 저장하고, `/query`는 mismatch를 invoke 전에 먼저 차단한다
 - 현재: `services/tool_registry_service.py`는 `search_docs`, `read_doc`, `list_collections`, `health_check`, `reindex`, upload approval 계열을 internal tool 후보로 등록한다
-- 현재: `services/tool_middleware_service.py`는 request id, timeout budget, tool allowlist, audit log, unsafe action guard를 순차 적용하는 internal middleware 실행기 skeleton을 제공한다
-- 현재: `services/tool_trace_service.py`는 tool/middleware 실행 결과를 `v1.5.tool_execution_trace.v1` schema로 고정하고 `internal/public/persisted` audience별 redaction 함수를 제공한다
-- 현재: `services/agent_runtime_service.py`는 단일 입력을 안전한 allowlist/middleware/trace가 붙은 내부 single-tool runtime 흐름으로 실행한다
-- 현재: actor별 allowlist/mutation 정책 초안은 `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`에 고정했고, 다음 구현은 resolver/auth/preview 후속 loop로 분리한다
-- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 actor policy resolver, admin auth + mutation intent gate, dry-run preview 계약을 순차 구현한다
+- 현재: `config/actor_policy_manifest.json`, `core/actor_policy_manifest.py`, `services/actor_policy_service.py`가 actor category별 read allowlist/mutation candidate를 해석하는 resolver skeleton을 제공한다
+- 현재: `services/tool_middleware_service.py`는 request id, timeout budget, tool allowlist, audit log, unsafe action guard를 순차 적용하는 internal middleware 실행기 skeleton을 제공하고, explicit allowlist가 없으면 actor policy source를 기본값으로 읽는다
+- 현재: `services/tool_trace_service.py`는 tool/middleware 실행 결과를 `v1.5.tool_execution_trace.v1` schema로 고정하고 `actor_category`, `mutation_candidate_tools`, policy flag seed와 `internal/public/persisted` audience별 redaction 함수를 제공한다
+- 현재: `services/agent_runtime_service.py`는 단일 입력을 actor policy source 기반 allowlist/middleware/trace가 붙은 내부 single-tool runtime 흐름으로 실행한다
+- 현재: actor별 allowlist/mutation 정책 초안과 resolver skeleton은 `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`에 고정했고, 다음 구현은 auth/intent/preview 후속 loop로 분리한다
+- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 admin auth + mutation intent gate, dry-run preview + audit persistence 계약을 순차 구현한다
 
 비목표(현재 단계):
 - 원본 수집/크롤링
@@ -75,10 +76,13 @@
 - `api/routes_*.py`: API/UI 라우트 모듈
 - `services/*.py`: 질의/인덱싱/업로드 서비스 모듈
 - `services/tool_registry_service.py`: V1.5 internal tool registry skeleton
+- `services/actor_policy_service.py`: V1.5 actor category -> allowlist/mutation candidate resolver
 - `services/tool_middleware_service.py`: V1.5 internal tool middleware chain skeleton
 - `services/tool_trace_service.py`: V1.5 internal tool execution trace contract
 - `services/agent_runtime_service.py`: V1.5 internal agent runtime entry draft
+- `core/actor_policy_manifest.py`: V1.5 actor policy manifest loader/normalizer
 - `core/*.py`: 설정/에러/HTTP 유틸
+- `config/actor_policy_manifest.json`: V1.5 actor policy source manifest
 - `build_index.py`: 초기 인덱스 생성 스크립트
 - `common.py`: 공통 유틸리티
 - `web/index.html`: 간단 웹 UI

@@ -1,0 +1,103 @@
+{
+  "schema_version": "v1.5.actor_policy_source.v1",
+  "default_actor_category": "internal_read_only",
+  "fallback_actor_category": "unknown_read_only",
+  "tool_groups": {
+    "read_query": [
+      "search_docs",
+      "read_doc",
+      "list_collections",
+      "health_check"
+    ],
+    "read_admin": [
+      "list_upload_requests"
+    ],
+    "maintenance_read": [
+      "health_check",
+      "list_collections"
+    ],
+    "fallback_runtime": [
+      "health_check"
+    ],
+    "write_upload_review": [
+      "approve_upload_request",
+      "reject_upload_request"
+    ],
+    "write_index_maintenance": [
+      "reindex"
+    ]
+  },
+  "actor_aliases": {
+    "internal": "internal_read_only",
+    "internal_agent": "internal_read_only",
+    "admin": "admin_review_mutation",
+    "admin_read_only": "admin_read_only",
+    "admin_review": "admin_review_mutation",
+    "maintenance": "maintenance_mutation",
+    "operator": "maintenance_mutation"
+  },
+  "actor_prefix_aliases": {
+    "internal": "internal_read_only",
+    "admin": "admin_review_mutation",
+    "maintenance": "maintenance_mutation",
+    "operator": "maintenance_mutation"
+  },
+  "actors": {
+    "internal_read_only": {
+      "read_groups": [
+        "read_query"
+      ],
+      "mutation_groups": [],
+      "requires_admin_auth": false,
+      "requires_mutation_intent": false,
+      "requires_preview_before_apply": false,
+      "audit_scope": "request_only"
+    },
+    "admin_read_only": {
+      "read_groups": [
+        "read_query",
+        "read_admin"
+      ],
+      "mutation_groups": [],
+      "requires_admin_auth": true,
+      "requires_mutation_intent": false,
+      "requires_preview_before_apply": false,
+      "audit_scope": "request_only"
+    },
+    "admin_review_mutation": {
+      "read_groups": [
+        "read_query",
+        "read_admin"
+      ],
+      "mutation_groups": [
+        "write_upload_review"
+      ],
+      "requires_admin_auth": true,
+      "requires_mutation_intent": true,
+      "requires_preview_before_apply": true,
+      "audit_scope": "mutation_review"
+    },
+    "maintenance_mutation": {
+      "read_groups": [
+        "maintenance_read"
+      ],
+      "mutation_groups": [
+        "write_index_maintenance"
+      ],
+      "requires_admin_auth": true,
+      "requires_mutation_intent": true,
+      "requires_preview_before_apply": true,
+      "audit_scope": "maintenance"
+    },
+    "unknown_read_only": {
+      "read_groups": [
+        "fallback_runtime"
+      ],
+      "mutation_groups": [],
+      "requires_admin_auth": false,
+      "requires_mutation_intent": false,
+      "requires_preview_before_apply": false,
+      "audit_scope": "request_only"
+    }
+  }
+}
