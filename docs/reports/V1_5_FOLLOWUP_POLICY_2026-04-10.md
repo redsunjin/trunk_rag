@@ -58,6 +58,10 @@ write tool을 agent runtime에 열기 전 필요한 조건:
 - dry-run 또는 preview 결과가 먼저 제공된다.
 - audit persistence가 준비된다.
 
+2026-04-11 구현 메모:
+- actor category, tool group, mutation gate, preview/audit 선행조건 초안은 `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`에 분리했다.
+- 후속 구현 순서는 `resolver skeleton -> admin auth + mutation intent gate -> dry-run preview + audit persistence contract`로 고정한다.
+
 ### 4. Branch Cleanup and Publish
 
 상태:

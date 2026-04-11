@@ -129,6 +129,7 @@
 - `execution_trace` persistence는 redaction/storage/retention 정책이 생길 때까지 보류한다.
 - agent runtime 기본 allowlist는 read-only tool로 유지한다.
 - trace redaction 정책 초안은 `docs/reports/V1_5_TRACE_REDACTION_POLICY_2026-04-10.md`에 기록했다.
+- actor별 allowlist/mutation source 초안은 `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`에 기록했다.
 - raw input, retrieved context, document content, local path, admin code, credential은 저장/노출 기본 대상에서 제외한다.
 - `services/tool_trace_service.py`는 `redact_execution_trace()`로 `internal`, `public`, `persisted` audience별 trace 정규화를 제공한다.
 

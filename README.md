@@ -59,7 +59,8 @@
 - 현재: `services/tool_middleware_service.py`는 request id, timeout budget, tool allowlist, audit log, unsafe action guard를 순차 적용하는 internal middleware 실행기 skeleton을 제공한다
 - 현재: `services/tool_trace_service.py`는 tool/middleware 실행 결과를 `v1.5.tool_execution_trace.v1` schema로 고정하고 `internal/public/persisted` audience별 redaction 함수를 제공한다
 - 현재: `services/agent_runtime_service.py`는 단일 입력을 안전한 allowlist/middleware/trace가 붙은 내부 single-tool runtime 흐름으로 실행한다
-- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 agent-ready runtime 통합 검토와 병합 준비를 진행
+- 현재: actor별 allowlist/mutation 정책 초안은 `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`에 고정했고, 다음 구현은 resolver/auth/preview 후속 loop로 분리한다
+- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 actor policy resolver, admin auth + mutation intent gate, dry-run preview 계약을 순차 구현한다
 
 비목표(현재 단계):
 - 원본 수집/크롤링
@@ -98,6 +99,7 @@
 - `docs/reports/V1_5_AGENT_READY_RUNTIME_REVIEW_2026-04-10.md`: V1.5 WP1-WP4 통합 검토와 병합 준비 판단
 - `docs/reports/V1_5_FOLLOWUP_POLICY_2026-04-10.md`: V1.5 public API/trace persistence/allowlist 후속 정책 판단
 - `docs/reports/V1_5_TRACE_REDACTION_POLICY_2026-04-10.md`: V1.5 execution trace 저장/노출 전 redaction 정책 초안
+- `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`: V1.5 actor category/tool group/mutation gate 정책 초안
 - `scripts/diagnose_ollama_runtime.py`: Ollama 직접 호출 기준 `eval_tokens_per_second`/wall time 진단 스크립트
 - `chroma_db/embedding_fingerprints.json`: 컬렉션별 임베딩 fingerprint 메타데이터
 - `run_doc_rag.bat`: 배포형 웹 MVP 기준 단일 부트스트랩/실행 엔트리포인트

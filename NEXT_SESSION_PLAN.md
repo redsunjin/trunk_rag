@@ -23,6 +23,7 @@
 - `docs/reports/GENERIC_RAG_REFOCUS_REVIEW_2026-04-04.md`
 - `docs/reports/VERSION_BOUNDARY_RESET_2026-04-04.md`
 - `docs/reports/V1_RELEASE_CANDIDATE_GATE_2026-04-10.md`
+- `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -30,8 +31,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-027`
-- current_active_title: `V1.5 actor allowlist policy source draft`
+- current_active_id: `LOOP-028`
+- current_active_title: `V1.5 actor policy resolver skeleton`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -685,7 +686,7 @@ closeout 메모 (2026-04-10):
 - README, `docs/V1_5_AGENT_READY_PLAN.md`, `docs/reports/V1_5_TRACE_REDACTION_POLICY_2026-04-10.md`, `docs/reports/V1_5_FOLLOWUP_POLICY_2026-04-10.md`에 구현 상태를 반영했다.
 - 검증은 `6 passed`(tool trace), 전체 `164 passed`, `roadmap_harness.py validate` `ready`, `git diff --check` 통과까지 확인했다.
 
-### A-Next20. V1.5 actor allowlist policy source draft (현재 active)
+### A-Next20. V1.5 actor allowlist policy source draft (완료: 2026-04-11)
 1. agent runtime의 actor별 tool allowlist와 mutation policy를 코드화하기 전, policy source 초안을 정리한다.
 2. actor category, read/write tool allowlist, mutation 허용 조건, dry-run/preview 필요성, 테스트 후보를 분리한다.
 3. 실제 policy engine 구현은 다음 명시 loop로 넘긴다.
@@ -706,7 +707,14 @@ closeout 메모 (2026-04-10):
 - `LOOP-027` closeout 뒤 자동 진행이 끊기지 않도록 `LOOP-028~030`을 공식 pending loop로 예약한다.
 - 다음 구현 순서는 `actor policy resolver skeleton -> admin auth + mutation intent gate -> dry-run preview + audit persistence contract`로 고정한다.
 
-### A-Next21. V1.5 actor policy resolver skeleton (pending)
+closeout 메모 (2026-04-11):
+- `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`를 추가해 actor category, tool group, mutation gate, preview/audit 선행조건, 테스트 후보를 고정했다.
+- policy source는 `read_allowed_tools`와 `mutation_candidate_tools`를 분리해 계산하고, write tool은 auth/intent/preview/audit 조건이 모두 충족될 때만 effective allowlist로 승격한다는 기준을 문서화했다.
+- `read_query`, `read_admin`, `write_upload_review`, `write_index_maintenance` tool group과 `internal_read_only`, `admin_read_only`, `admin_review_mutation`, `maintenance_mutation`, `unknown_read_only` actor category 초안을 분리했다.
+- README, SPEC, `docs/V1_5_AGENT_READY_PLAN.md`, `docs/reports/V1_5_FOLLOWUP_POLICY_2026-04-10.md`에 actor policy source 리포트를 연결했다.
+- 검증은 전체 `./.venv/bin/python -m pytest -q`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 기준으로 마감한다.
+
+### A-Next21. V1.5 actor policy resolver skeleton (현재 active)
 1. `LOOP-027`에서 정리한 actor policy source 초안을 코드에서 읽을 수 있는 최소 resolver/manifest interface로 고정한다.
 2. actor category별 allowed tools, mutation 가능 여부, preview 요구 여부를 runtime 입력과 연결한다.
 3. write tool 실행은 아직 열지 않고, policy decision metadata와 차단 이유만 안정적으로 노출한다.
