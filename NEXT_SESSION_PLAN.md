@@ -702,6 +702,53 @@ closeout 메모 (2026-04-10):
 진행 메모 (2026-04-10):
 - `LOOP-026` closeout commit 후 actor별 allowlist/mutation policy source 초안을 정리한다.
 
+진행 메모 (2026-04-11):
+- `LOOP-027` closeout 뒤 자동 진행이 끊기지 않도록 `LOOP-028~030`을 공식 pending loop로 예약한다.
+- 다음 구현 순서는 `actor policy resolver skeleton -> admin auth + mutation intent gate -> dry-run preview + audit persistence contract`로 고정한다.
+
+### A-Next21. V1.5 actor policy resolver skeleton (pending)
+1. `LOOP-027`에서 정리한 actor policy source 초안을 코드에서 읽을 수 있는 최소 resolver/manifest interface로 고정한다.
+2. actor category별 allowed tools, mutation 가능 여부, preview 요구 여부를 runtime 입력과 연결한다.
+3. write tool 실행은 아직 열지 않고, policy decision metadata와 차단 이유만 안정적으로 노출한다.
+
+완료 기준:
+- actor category 기준 policy lookup/resolver skeleton이 추가된다.
+- agent runtime/middleware가 기본 allowlist를 상수 나열이 아니라 actor policy source 기준으로 읽는다.
+- read-only 기본 경로와 기존 V1 `/query` 계약이 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+### A-Next22. V1.5 admin auth + mutation intent gate (pending)
+1. write tool 요청 전 actor auth 수준과 explicit mutation intent를 분리해 확인하는 내부 gate를 추가한다.
+2. admin actor만 mutation 후보를 시도할 수 있게 하고, intent 누락/권한 부족/preview 선행 필요를 서로 다른 차단 코드로 분리한다.
+3. read-only actor는 계속 기존 기본 allowlist 경로만 통과하게 유지한다.
+
+완료 기준:
+- admin actor와 read-only actor의 mutation 진입 조건이 코드와 문서에서 분리된다.
+- mutation intent 누락/권한 부족/preview 필요 차단 이유가 trace와 error code에서 식별된다.
+- public `/agent/*` endpoint 없이 내부 runtime/smoke 기준으로만 검증된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+### A-Next23. V1.5 dry-run preview + audit persistence contract (pending)
+1. write tool 실제 실행 전에 필요한 dry-run/preview 응답 계약을 정리하고, side effect 전후 audit record shape를 고정한다.
+2. preview 결과와 persisted audit에 남길 최소 필드(request id, actor, tool, outcome, side effect, blocked_by)를 분리한다.
+3. storage backend 구현은 별도 loop로 넘기되, persistence contract와 redaction 경계는 이 단계에서 고정한다.
+
+완료 기준:
+- dry-run/preview payload 계약이 문서와 테스트 기준으로 정리된다.
+- write tool audit persistence에 필요한 최소 schema/redaction 경계가 정의된다.
+- 실제 write automation 없이도 후속 mutation loop가 기대할 계약이 고정된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
 2. `/query` E2E 재측정

@@ -60,6 +60,9 @@
 | LOOP-025 | done | V1.5 trace redaction policy draft | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-026 | done | V1.5 trace redaction function 구현 | `./.venv/bin/python -m pytest -q tests/test_tool_trace_service.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-027 | active | V1.5 actor allowlist policy source draft | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-028 | pending | V1.5 actor policy resolver skeleton | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-029 | pending | V1.5 admin auth + mutation intent gate | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-030 | pending | V1.5 dry-run preview + audit persistence contract | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -815,6 +818,9 @@ closeout 메모 (2026-04-10):
 
 진행 메모 (2026-04-10):
 - `LOOP-026` closeout commit 후 actor별 allowlist/mutation policy source 초안을 정리한다.
+
+진행 메모 (2026-04-11):
+- `LOOP-027` closeout 이후 자동 진행 후보를 `LOOP-028 actor policy resolver skeleton`, `LOOP-029 admin auth + mutation intent gate`, `LOOP-030 dry-run preview + audit persistence contract` 순으로 예약한다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
