@@ -24,6 +24,8 @@ class ToolContext:
     actor: str = "internal"
     allow_mutation: bool = False
     timeout_seconds: float | None = None
+    admin_code: str | None = None
+    mutation_intent: str | None = None
 
 
 @dataclass(frozen=True)

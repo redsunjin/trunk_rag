@@ -48,6 +48,13 @@ def _normalize_allowed_tools(allowed_tools: list[str] | tuple[str, ...] | None) 
     return tuple(str(name).strip() for name in allowed_tools if str(name).strip())
 
 
+def _normalize_optional_text(value: object) -> str | None:
+    if value is None:
+        return None
+    normalized = str(value).strip()
+    return normalized or None
+
+
 def _resolve_request_id(request_id: str) -> str:
     normalized = request_id.strip()
     if normalized and normalized != "-":
@@ -200,6 +207,95 @@ def tool_allowlist_middleware(state: ToolExecutionState) -> None:
     )
 
 
+def _resolve_admin_code(state: ToolExecutionState) -> str | None:
+    return (
+        _normalize_optional_text(state.context.admin_code)
+        or _normalize_optional_text(state.payload.get("admin_code"))
+        or _normalize_optional_text(state.payload.get("code"))
+    )
+
+
+def _resolve_mutation_intent(state: ToolExecutionState) -> str | None:
+    return (
+        _normalize_optional_text(state.context.mutation_intent)
+        or _normalize_optional_text(state.payload.get("mutation_intent"))
+    )
+
+
+def mutation_policy_guard_middleware(state: ToolExecutionState) -> None:
+    if state.side_effect != "write":
+        _append_trace(
+            state,
+            "mutation_policy_guard",
+            "ok",
+            detail={"side_effect": state.side_effect or "unknown"},
+        )
+        return
+
+    decision = state.policy_decision
+    mutation_candidates = set(decision.mutation_candidate_tools) if decision else set()
+    if state.tool_name not in mutation_candidates:
+        _append_trace(
+            state,
+            "mutation_policy_guard",
+            "skipped",
+            detail={"actor_category": decision.actor_category if decision else None},
+        )
+        return
+
+    admin_code = _resolve_admin_code(state)
+    mutation_intent = _resolve_mutation_intent(state)
+    detail = {
+        "actor_category": decision.actor_category if decision else None,
+        "requires_admin_auth": decision.requires_admin_auth if decision else False,
+        "requires_mutation_intent": decision.requires_mutation_intent if decision else False,
+        "requires_preview_before_apply": decision.requires_preview_before_apply if decision else False,
+        "admin_authenticated": False,
+        "mutation_intent_present": mutation_intent is not None,
+    }
+
+    if decision and decision.requires_admin_auth:
+        if admin_code is None:
+            state.blocked_result = _error_result(
+                state.tool_name,
+                "ADMIN_AUTH_REQUIRED",
+                "Mutation candidate tool requires admin authentication.",
+            )
+            _append_trace(state, "mutation_policy_guard", "blocked", detail=detail)
+            return
+        try:
+            runtime_service.verify_admin_code(admin_code)
+        except Exception:
+            state.blocked_result = _error_result(
+                state.tool_name,
+                "ADMIN_AUTH_FAILED",
+                "Mutation candidate tool failed admin authentication.",
+            )
+            _append_trace(state, "mutation_policy_guard", "blocked", detail=detail)
+            return
+        detail["admin_authenticated"] = True
+
+    if decision and decision.requires_mutation_intent and mutation_intent is None:
+        state.blocked_result = _error_result(
+            state.tool_name,
+            "MUTATION_INTENT_REQUIRED",
+            "Mutation candidate tool requires an explicit mutation intent.",
+        )
+        _append_trace(state, "mutation_policy_guard", "blocked", detail=detail)
+        return
+
+    if decision and decision.requires_preview_before_apply:
+        state.blocked_result = _error_result(
+            state.tool_name,
+            "PREVIEW_REQUIRED",
+            "Mutation candidate tool requires a preview step before apply.",
+        )
+        _append_trace(state, "mutation_policy_guard", "blocked", detail=detail)
+        return
+
+    _append_trace(state, "mutation_policy_guard", "ok", detail=detail)
+
+
 def unsafe_action_guard_middleware(state: ToolExecutionState) -> None:
     if state.side_effect != "write":
         _append_trace(
@@ -245,6 +341,7 @@ DEFAULT_TOOL_MIDDLEWARES: tuple[ToolMiddleware, ...] = (
     request_id_middleware,
     timeout_budget_middleware,
     tool_allowlist_middleware,
+    mutation_policy_guard_middleware,
     unsafe_action_guard_middleware,
     audit_log_middleware,
 )
@@ -263,9 +360,11 @@ def invoke_tool_with_middlewares(
     resolved_payload = _normalize_payload(payload)
     resolved_context = context or ToolContext()
     resolved_policy_decision = policy_decision or actor_policy_service.resolve_actor_policy(resolved_context.actor)
-    normalized_allowed_tools = _normalize_allowed_tools(allowed_tools)
-    if normalized_allowed_tools is None:
-        normalized_allowed_tools = resolved_policy_decision.effective_allowed_tools
+    normalized_allowed_tools = actor_policy_service.resolve_allowed_tools(
+        resolved_policy_decision,
+        tool_name=name,
+        requested_allowed_tools=_normalize_allowed_tools(allowed_tools),
+    )
     try:
         definition = tool_registry_service.get_tool_definition(name)
     except ToolInputError as exc:

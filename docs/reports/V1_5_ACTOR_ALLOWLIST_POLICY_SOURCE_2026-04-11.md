@@ -10,11 +10,19 @@
 
 현재 내부 runtime은 다음 기준으로만 동작한다.
 
-- `services/agent_runtime_service.py`의 기본 allowlist는 `search_docs`, `read_doc`, `list_collections`, `health_check`, `list_upload_requests`다.
-- `services/tool_middleware_service.py`는 `tool_allowlist`와 `unsafe_action_guard`를 순차 적용한다.
-- write tool은 `ToolContext.allow_mutation=True`가 없으면 막히지만, actor category별 auth/intent/preview 정책은 아직 없다.
+- `services/agent_runtime_service.py`의 기본 allowlist는 actor policy source에서 계산한 read allowlist를 사용하고, mutation candidate일 때만 선택 tool을 한시적으로 포함시킨다.
+- `services/tool_middleware_service.py`는 `tool_allowlist`, `mutation_policy_guard`, `unsafe_action_guard`를 순차 적용한다.
+- mutation candidate write는 actor category별 policy flag에 따라 `ADMIN_AUTH_REQUIRED`/`ADMIN_AUTH_FAILED`/`MUTATION_INTENT_REQUIRED`/`PREVIEW_REQUIRED`로 차단되고, 실제 preview/audit contract는 아직 없다.
 
 이 문서는 "지금 코드가 이미 안전하다"를 주장하는 문서가 아니다. 현재 read-only default를 유지하되, 다음 loop가 어떤 policy source를 구현해야 하는지 경계를 고정하는 문서다.
+
+## 2026-04-11 Implementation Update
+
+- `config/actor_policy_manifest.json`, `core/actor_policy_manifest.py`, `services/actor_policy_service.py`로 actor category, read allowlist, mutation candidate, policy flag source를 manifest 기준으로 고정했다.
+- `services/agent_runtime_service.py`는 `admin_code`, `mutation_intent` 입력을 받아 entry metadata에 presence를 기록한다.
+- `services/tool_middleware_service.py`는 mutation candidate write를 auth/intent/preview 순서로 차단하고 trace/audit에 blocker를 남긴다.
+- `services/tool_trace_service.py`는 mutation policy detail에서 safe diagnostic seed만 redaction 결과에 남긴다.
+- 남은 구현은 preview payload와 persisted audit contract를 실제 schema/test 기준으로 고정하는 것이다.
 
 ## Tool Inventory
 
@@ -162,7 +170,7 @@ preview에서 기대하는 최소 결과:
 
 ### LOOP-029
 
-- admin auth 누락 시 write tool은 `AUTH_REQUIRED`류 코드로 차단된다.
+- admin auth 누락 시 write tool은 `ADMIN_AUTH_REQUIRED` 또는 `ADMIN_AUTH_FAILED` 코드로 차단된다.
 - mutation intent 누락 시 `MUTATION_INTENT_REQUIRED`류 코드로 차단된다.
 - preview 선행 필요 시 `PREVIEW_REQUIRED`류 코드로 차단된다.
 - read-only actor는 기존 read tool 경로만 그대로 통과한다.
@@ -182,4 +190,4 @@ preview에서 기대하는 최소 결과:
 
 ## Conclusion
 
-`LOOP-027`의 결론은 "기본 read-only allowlist를 유지하되, 이후 write tool 개방은 actor category별 policy source와 auth/intent/preview/audit 조건을 모두 거친 뒤에만 가능하다"는 점이다. 다음 구현 순서는 `resolver skeleton -> admin auth + mutation intent gate -> dry-run preview + audit persistence contract`로 고정한다.
+`LOOP-027`의 결론은 "기본 read-only allowlist를 유지하되, 이후 write tool 개방은 actor category별 policy source와 auth/intent/preview/audit 조건을 모두 거친 뒤에만 가능하다"는 점이다. 2026-04-11 기준 `resolver skeleton -> admin auth + mutation intent gate`까지 구현됐고, 다음 구현 순서는 `dry-run preview + audit persistence contract -> preview seed + audit sink skeleton`으로 이어진다.

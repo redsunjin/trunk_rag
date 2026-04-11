@@ -14,6 +14,8 @@ class AgentRuntimeRequest:
     request_id: str = "-"
     actor: str = "internal_agent"
     allow_mutation: bool = False
+    admin_code: str | None = None
+    mutation_intent: str | None = None
     allowed_tools: tuple[str, ...] | None = None
     timeout_seconds: float | None = None
 
@@ -53,6 +55,13 @@ def _normalize_allowed_tools(allowed_tools: tuple[str, ...] | None) -> tuple[str
     return normalized or None
 
 
+def _normalize_optional_text(value: object) -> str | None:
+    if value is None:
+        return None
+    normalized = str(value).strip()
+    return normalized or None
+
+
 def run_agent_entry(request: AgentRuntimeRequest) -> dict[str, object]:
     user_input = str(request.input or "").strip()
     if not user_input:
@@ -66,19 +75,20 @@ def run_agent_entry(request: AgentRuntimeRequest) -> dict[str, object]:
     payload = dict(request.tool_payload) if isinstance(request.tool_payload, dict) else _build_default_payload(tool_name, user_input)
     policy_decision = actor_policy_service.resolve_actor_policy(request.actor)
     requested_allowed_tools = _normalize_allowed_tools(request.allowed_tools)
-    if requested_allowed_tools is None:
-        allowed_tools = policy_decision.effective_allowed_tools
-    else:
-        allowed_tools = tuple(
-            tool_name
-            for tool_name in requested_allowed_tools
-            if tool_name in policy_decision.effective_allowed_tools
-        )
+    allowed_tools = actor_policy_service.resolve_allowed_tools(
+        policy_decision,
+        tool_name=tool_name,
+        requested_allowed_tools=requested_allowed_tools,
+    )
+    admin_code = _normalize_optional_text(request.admin_code) or _normalize_optional_text(payload.get("admin_code")) or _normalize_optional_text(payload.get("code"))
+    mutation_intent = _normalize_optional_text(request.mutation_intent) or _normalize_optional_text(payload.get("mutation_intent"))
     context = ToolContext(
         request_id=request.request_id,
         actor=request.actor,
         allow_mutation=request.allow_mutation,
         timeout_seconds=request.timeout_seconds,
+        admin_code=admin_code,
+        mutation_intent=mutation_intent,
     )
     tool_call = tool_middleware_service.invoke_tool_with_middlewares(
         tool_name,
@@ -100,6 +110,8 @@ def run_agent_entry(request: AgentRuntimeRequest) -> dict[str, object]:
             "actor_category": policy_decision.actor_category,
             "allowed_tools": list(allowed_tools),
             "mutation_candidate_tools": list(policy_decision.mutation_candidate_tools),
+            "admin_code_present": admin_code is not None,
+            "mutation_intent_present": mutation_intent is not None,
             "policy_flags": {
                 "requires_admin_auth": policy_decision.requires_admin_auth,
                 "requires_mutation_intent": policy_decision.requires_mutation_intent,

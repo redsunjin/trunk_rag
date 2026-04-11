@@ -98,7 +98,20 @@ def _redact_middleware_steps(steps: object, *, include_detail: bool) -> list[dic
             detail = {
                 key: value
                 for key, value in dict(step["detail"]).items()
-                if key in {"request_id", "timeout_seconds", "allowed_tools", "side_effect", "allow_mutation"}
+                if key
+                in {
+                    "request_id",
+                    "timeout_seconds",
+                    "allowed_tools",
+                    "side_effect",
+                    "allow_mutation",
+                    "actor_category",
+                    "requires_admin_auth",
+                    "admin_authenticated",
+                    "requires_mutation_intent",
+                    "mutation_intent_present",
+                    "requires_preview_before_apply",
+                }
             }
             if detail:
                 item["detail"] = detail

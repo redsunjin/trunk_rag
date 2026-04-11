@@ -37,6 +37,24 @@ class ActorPolicyDecision:
         }
 
 
+def resolve_allowed_tools(
+    policy_decision: ActorPolicyDecision,
+    *,
+    tool_name: str,
+    requested_allowed_tools: tuple[str, ...] | None = None,
+) -> tuple[str, ...]:
+    permitted_tools = list(policy_decision.effective_allowed_tools)
+    normalized_tool_name = str(tool_name or "").strip()
+    if normalized_tool_name and normalized_tool_name in policy_decision.mutation_candidate_tools:
+        if normalized_tool_name not in permitted_tools:
+            permitted_tools.append(normalized_tool_name)
+
+    if requested_allowed_tools is None:
+        return tuple(permitted_tools)
+
+    return tuple(tool for tool in requested_allowed_tools if tool in permitted_tools)
+
+
 def _expand_tool_groups(group_names: list[str], tool_groups: dict[str, list[str]]) -> tuple[str, ...]:
     tools: list[str] = []
     for group_name in group_names:

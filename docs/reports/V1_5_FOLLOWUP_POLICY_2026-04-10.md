@@ -62,7 +62,8 @@ write tool을 agent runtime에 열기 전 필요한 조건:
 - actor category, tool group, mutation gate, preview/audit 선행조건 초안은 `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`에 분리했다.
 - 후속 구현 순서는 `resolver skeleton -> admin auth + mutation intent gate -> dry-run preview + audit persistence contract`로 고정한다.
 - 같은 날짜 `config/actor_policy_manifest.json` + `services/actor_policy_service.py`로 resolver skeleton을 추가해 runtime/middleware가 actor category별 read allowlist와 mutation candidate metadata를 읽도록 정리했다.
-- 아직 충족되지 않은 조건은 admin auth, mutation intent, preview enforcement, audit persistence다.
+- 같은 날짜 `services/tool_middleware_service.py`에 `mutation_policy_guard`를 추가해 mutation candidate write를 `ADMIN_AUTH_REQUIRED`/`ADMIN_AUTH_FAILED`/`MUTATION_INTENT_REQUIRED`/`PREVIEW_REQUIRED`로 분리 차단하고, `services/agent_runtime_service.py`는 `admin_code`/`mutation_intent` presence를 entry metadata에 남기도록 정리했다.
+- 아직 충족되지 않은 조건은 preview payload contract와 audit persistence contract/저장소다.
 
 ### 4. Branch Cleanup and Publish
 
@@ -77,7 +78,7 @@ write tool을 agent runtime에 열기 전 필요한 조건:
 1. Public API는 만들지 않는다.
 2. V1 기본 `/query` 경로는 유지한다.
 3. agent runtime은 내부 service + unit test + smoke script 기준으로만 유지한다.
-4. actor policy source가 구현된 뒤 다음 구현 후보는 `admin auth + mutation intent gate`, `dry-run preview + audit persistence contract`로 제한한다.
+4. 다음 구현 후보는 `dry-run preview + audit persistence contract`, 그다음 `preview seed + audit sink skeleton`으로 제한한다.
 
 ## Smoke Check
 
@@ -87,8 +88,10 @@ write tool을 agent runtime에 열기 전 필요한 조건:
 ./.venv/bin/python scripts/smoke_agent_runtime.py
 ok=true
 read_only_health_check=true
-write_tool_blocked=true
-write_error_code=TOOL_NOT_ALLOWED
+write_tool_blocked_read_only=true
+write_tool_requires_admin_auth=true
+write_tool_requires_mutation_intent=true
+write_tool_requires_preview=true
 ```
 
 ## Trace Redaction Follow-up

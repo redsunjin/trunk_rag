@@ -18,13 +18,21 @@ def test_smoke_agent_runtime_checks_read_success_and_write_block(monkeypatch):
                     "middleware": {"blocked_by": None},
                 },
             }
+        error_code = {
+            "agent-smoke-write-read-only": "TOOL_NOT_ALLOWED",
+            "agent-smoke-auth": "ADMIN_AUTH_REQUIRED",
+            "agent-smoke-intent": "MUTATION_INTENT_REQUIRED",
+            "agent-smoke-preview": "PREVIEW_REQUIRED",
+        }[request.request_id]
         return {
             "ok": False,
             "entry": {"selected_tool": "reindex"},
-            "error": {"code": "TOOL_NOT_ALLOWED"},
+            "error": {"code": error_code},
             "execution_trace": {
                 "request_id": request.request_id,
-                "middleware": {"blocked_by": "tool_allowlist"},
+                "middleware": {
+                    "blocked_by": "tool_allowlist" if error_code == "TOOL_NOT_ALLOWED" else "mutation_policy_guard"
+                },
             },
         }
 
@@ -34,10 +42,19 @@ def test_smoke_agent_runtime_checks_read_success_and_write_block(monkeypatch):
     result = smoke_agent_runtime.run_smoke()
 
     assert result["ok"] is True
-    assert [call.tool_name for call in calls] == ["health_check", "reindex"]
+    assert [call.tool_name for call in calls] == [
+        "health_check",
+        "reindex",
+        "reindex",
+        "reindex",
+        "reindex",
+    ]
     assert result["checks"][0]["summary"]["selected_tool"] == "health_check"
     assert result["checks"][1]["summary"]["error_code"] == "TOOL_NOT_ALLOWED"
     assert result["checks"][1]["summary"]["blocked_by"] == "tool_allowlist"
+    assert result["checks"][2]["summary"]["error_code"] == "ADMIN_AUTH_REQUIRED"
+    assert result["checks"][3]["summary"]["error_code"] == "MUTATION_INTENT_REQUIRED"
+    assert result["checks"][4]["summary"]["error_code"] == "PREVIEW_REQUIRED"
 
 
 def test_smoke_agent_runtime_fails_when_write_tool_is_not_blocked(monkeypatch):

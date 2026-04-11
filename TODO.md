@@ -62,8 +62,9 @@
 | LOOP-026 | done | V1.5 trace redaction function 구현 | `./.venv/bin/python -m pytest -q tests/test_tool_trace_service.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-027 | done | V1.5 actor allowlist policy source draft | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-028 | done | V1.5 actor policy resolver skeleton | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-029 | active | V1.5 admin auth + mutation intent gate | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-030 | pending | V1.5 dry-run preview + audit persistence contract | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-029 | done | V1.5 admin auth + mutation intent gate | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-030 | active | V1.5 dry-run preview + audit persistence contract | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-031 | pending | V1.5 preview seed + audit sink skeleton | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -863,7 +864,7 @@ closeout 메모 (2026-04-11):
 - 검증은 타깃 `21 passed`, 전체 `172 passed`, `./.venv/bin/python scripts/smoke_agent_runtime.py -> ok=true`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과 기준으로 마감한다.
 - closeout review에서는 actor policy resolver skeleton이 runtime/middleware/trace 경계에 반영됐다고 판단했고 다음 active loop는 `LOOP-029`로 승격한다.
 
-## 현재 Active Loop (LOOP-029)
+## 완료 Loop (LOOP-029)
 
 목표:
 - write tool 요청 전 actor auth 수준과 explicit mutation intent를 분리해 확인하는 내부 gate를 추가한다.
@@ -884,6 +885,38 @@ closeout 메모 (2026-04-11):
 
 진행 메모 (2026-04-11):
 - `LOOP-028` closeout commit 후 actor policy resolver 위에 admin auth + mutation intent gate를 추가한다.
+
+closeout 메모 (2026-04-11):
+- `services/tool_registry_service.py`의 `ToolContext`와 `services/agent_runtime_service.py`의 `AgentRuntimeRequest`에 `admin_code`, `mutation_intent` 필드를 추가해 runtime 입력에서 mutation gate 신호를 분리했다.
+- `services/actor_policy_service.py`는 선택한 tool이 해당 actor category의 mutation candidate일 때만 `resolve_allowed_tools()`로 allowlist에 포함시키도록 확장했다.
+- `services/tool_middleware_service.py`는 `mutation_policy_guard_middleware`를 추가해 mutation candidate write를 `ADMIN_AUTH_REQUIRED`/`ADMIN_AUTH_FAILED`/`MUTATION_INTENT_REQUIRED`/`PREVIEW_REQUIRED` 순서로 차단하고 trace/audit에 blocker를 남기도록 변경했다.
+- `services/agent_runtime_service.py`는 actor policy 결정과 함께 `admin_code_present`, `mutation_intent_present`를 entry metadata에 기록하고, read-only actor와 mutation actor의 allowlist 경계를 분리한다.
+- `services/tool_trace_service.py`는 mutation policy trace detail redaction allowlist를 확장해 `actor_category`, auth/intent/preview flag, `admin_authenticated`, `mutation_intent_present`만 안전하게 남기도록 조정했다.
+- `scripts/smoke_agent_runtime.py`는 read-only block, admin auth 필요, mutation intent 필요, preview 필요를 각각 분리한 5단계 smoke check로 갱신했다.
+- `tests/test_actor_policy_service.py`, `tests/test_agent_runtime_service.py`, `tests/test_tool_middleware_service.py`, `tests/test_tool_trace_service.py`, `tests/test_smoke_agent_runtime.py`를 gate 순서와 error code 기준으로 갱신했다.
+- 검증은 타깃 `30 passed`, 전체 `179 passed`, `./.venv/bin/python scripts/smoke_agent_runtime.py -> ok=true`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과 기준으로 마감한다.
+- closeout review에서는 admin auth + mutation intent gate가 runtime/middleware/trace/smoke 경계에 반영됐다고 판단했고 다음 active loop는 `LOOP-030`, 다음 pending loop는 `LOOP-031`로 정리한다.
+
+## 현재 Active Loop (LOOP-030)
+
+목표:
+- write tool 실제 실행 전에 필요한 dry-run/preview 응답 계약과 persisted audit schema/redaction 경계를 고정한다.
+
+범위:
+- 포함: preview result seed shape, persisted audit 최소 필드, audience별 redaction 정렬, runtime/trace/docs/test 계약 정리
+- 제외: storage backend 구현, 실제 write apply, public `/agent/*` endpoint
+
+완료 기준:
+- dry-run/preview payload 계약이 문서와 테스트 기준으로 정리된다.
+- write tool audit persistence에 필요한 최소 schema/redaction 경계가 정의된다.
+- 실제 write automation 없이도 후속 mutation loop가 기대할 계약이 고정된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-11):
+- `LOOP-029` closeout commit 후 preview payload seed와 persisted audit contract를 문서/테스트 기준으로 고정한다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

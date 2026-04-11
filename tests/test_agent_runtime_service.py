@@ -152,3 +152,81 @@ def test_agent_entry_uses_read_only_allowlist_by_default():
     assert result["entry"]["actor_category"] == "internal_read_only"
     assert result["entry"]["mutation_candidate_tools"] == []
     assert result["execution_trace"]["middleware"]["blocked_by"] == "tool_allowlist"
+
+
+def test_agent_entry_requires_admin_auth_for_mutation_candidate(monkeypatch):
+    monkeypatch.setattr(
+        agent_runtime_service.tool_middleware_service.runtime_service,
+        "verify_admin_code",
+        lambda code: None,
+    )
+
+    result = agent_runtime_service.run_agent_entry(
+        agent_runtime_service.AgentRuntimeRequest(
+            input="Reindex the core collection.",
+            tool_name="reindex",
+            tool_payload={"collection": "all"},
+            actor="maintenance",
+            allow_mutation=True,
+            request_id="maintenance-auth-1",
+        )
+    )
+
+    assert result["ok"] is False
+    assert result["entry"]["actor_category"] == "maintenance_mutation"
+    assert result["entry"]["allowed_tools"] == ["health_check", "list_collections", "reindex"]
+    assert result["error"]["code"] == "ADMIN_AUTH_REQUIRED"
+    assert result["execution_trace"]["middleware"]["blocked_by"] == "mutation_policy_guard"
+
+
+def test_agent_entry_requires_mutation_intent_after_admin_auth(monkeypatch):
+    monkeypatch.setattr(
+        agent_runtime_service.tool_middleware_service.runtime_service,
+        "verify_admin_code",
+        lambda code: None,
+    )
+
+    result = agent_runtime_service.run_agent_entry(
+        agent_runtime_service.AgentRuntimeRequest(
+            input="Reindex the core collection.",
+            tool_name="reindex",
+            tool_payload={"collection": "all"},
+            actor="maintenance",
+            admin_code="admin1234",
+            allow_mutation=True,
+            request_id="maintenance-intent-1",
+        )
+    )
+
+    assert result["ok"] is False
+    assert result["entry"]["admin_code_present"] is True
+    assert result["entry"]["mutation_intent_present"] is False
+    assert result["error"]["code"] == "MUTATION_INTENT_REQUIRED"
+    assert result["execution_trace"]["middleware"]["blocked_by"] == "mutation_policy_guard"
+
+
+def test_agent_entry_requires_preview_after_admin_auth_and_intent(monkeypatch):
+    monkeypatch.setattr(
+        agent_runtime_service.tool_middleware_service.runtime_service,
+        "verify_admin_code",
+        lambda code: None,
+    )
+
+    result = agent_runtime_service.run_agent_entry(
+        agent_runtime_service.AgentRuntimeRequest(
+            input="Reindex the core collection.",
+            tool_name="reindex",
+            tool_payload={"collection": "all"},
+            actor="maintenance",
+            admin_code="admin1234",
+            mutation_intent="reindex all",
+            allow_mutation=True,
+            request_id="maintenance-preview-1",
+        )
+    )
+
+    assert result["ok"] is False
+    assert result["entry"]["admin_code_present"] is True
+    assert result["entry"]["mutation_intent_present"] is True
+    assert result["error"]["code"] == "PREVIEW_REQUIRED"
+    assert result["execution_trace"]["middleware"]["blocked_by"] == "mutation_policy_guard"

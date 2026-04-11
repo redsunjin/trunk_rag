@@ -40,3 +40,15 @@ def test_resolve_actor_policy_uses_fallback_for_unknown_actor():
     assert decision.read_allowed_tools == ("health_check",)
     assert decision.mutation_candidate_tools == ()
     assert decision.used_fallback is True
+
+
+def test_resolve_allowed_tools_includes_selected_mutation_candidate_only_for_matching_actor():
+    decision = actor_policy_service.resolve_actor_policy("maintenance")
+
+    allowed_tools = actor_policy_service.resolve_allowed_tools(
+        decision,
+        tool_name="reindex",
+        requested_allowed_tools=None,
+    )
+
+    assert allowed_tools == ("health_check", "list_collections", "reindex")

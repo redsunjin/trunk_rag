@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from services import tool_middleware_service, tool_trace_service
+from services import actor_policy_service, tool_middleware_service, tool_trace_service
 from services.tool_registry_service import ToolContext
 
 
@@ -8,7 +8,7 @@ def test_tool_middleware_wraps_read_tool_with_request_id_budget_and_audit():
     result = tool_middleware_service.invoke_tool_with_middlewares(
         "read_doc",
         {"collection": "fr", "doc_key": "fr"},
-        context=ToolContext(request_id="", actor="tester"),
+        context=ToolContext(request_id="", actor="internal_agent"),
         allowed_tools=("read_doc",),
         timeout_seconds=12,
     )
@@ -16,15 +16,16 @@ def test_tool_middleware_wraps_read_tool_with_request_id_budget_and_audit():
     assert result["ok"] is True
     assert result["result"]["origin"] == "seed"
     assert result["middleware"]["request_id"].startswith("tool-")
-    assert result["middleware"]["actor"] == "tester"
+    assert result["middleware"]["actor"] == "internal_agent"
     assert result["middleware"]["timeout_seconds"] == 12.0
     assert result["middleware"]["allowed_tools"] == ["read_doc"]
-    assert result["middleware"]["policy"]["actor_category"] == "unknown_read_only"
+    assert result["middleware"]["policy"]["actor_category"] == "internal_read_only"
     assert result["middleware"]["policy"]["mutation_candidate_tools"] == []
     assert [item["middleware"] for item in result["middleware"]["trace"]] == [
         "request_id",
         "timeout_budget",
         "tool_allowlist",
+        "mutation_policy_guard",
         "unsafe_action_guard",
         "audit_log",
     ]
@@ -35,7 +36,7 @@ def test_tool_middleware_wraps_read_tool_with_request_id_budget_and_audit():
     assert result["execution_trace"]["schema_version"] == tool_trace_service.TRACE_SCHEMA_VERSION
     assert result["execution_trace"]["request_id"] == result["middleware"]["request_id"]
     assert result["execution_trace"]["tool"]["name"] == "read_doc"
-    assert result["execution_trace"]["policy"]["actor_category"] == "unknown_read_only"
+    assert result["execution_trace"]["policy"]["actor_category"] == "internal_read_only"
     assert result["execution_trace"]["tool"]["result_seed"]["origin"] == "seed"
     assert result["execution_trace"]["outcome"] == {"ok": True, "error": None}
 
@@ -74,16 +75,92 @@ def test_tool_allowlist_defaults_to_actor_policy_when_not_explicitly_provided(mo
     assert result["execution_trace"]["middleware"]["blocked_by"] == "tool_allowlist"
 
 
-def test_unsafe_action_guard_blocks_write_without_mutation_context(monkeypatch):
+def test_mutation_policy_guard_requires_admin_auth_for_candidate_write(monkeypatch):
     def fail_if_invoked(*args, **kwargs):
-        raise AssertionError("write adapter must not be called without mutation context")
+        raise AssertionError("write adapter must not be called before auth")
 
     monkeypatch.setattr(tool_middleware_service.tool_registry_service, "invoke_tool", fail_if_invoked)
 
     result = tool_middleware_service.invoke_tool_with_middlewares(
         "reindex",
         {"collection": "all"},
-        allowed_tools=("reindex",),
+        context=ToolContext(actor="maintenance", allow_mutation=True),
+    )
+
+    assert result["ok"] is False
+    assert result["error"]["code"] == "ADMIN_AUTH_REQUIRED"
+    assert result["middleware"]["trace"][-1]["middleware"] == "mutation_policy_guard"
+    assert result["execution_trace"]["middleware"]["blocked_by"] == "mutation_policy_guard"
+
+
+def test_mutation_policy_guard_requires_intent_after_admin_auth(monkeypatch):
+    def fail_if_invoked(*args, **kwargs):
+        raise AssertionError("write adapter must not be called before mutation intent")
+
+    monkeypatch.setattr(tool_middleware_service.tool_registry_service, "invoke_tool", fail_if_invoked)
+    monkeypatch.setattr(tool_middleware_service.runtime_service, "verify_admin_code", lambda code: None)
+
+    result = tool_middleware_service.invoke_tool_with_middlewares(
+        "reindex",
+        {"collection": "all"},
+        context=ToolContext(actor="maintenance", admin_code="admin1234", allow_mutation=True),
+    )
+
+    assert result["ok"] is False
+    assert result["error"]["code"] == "MUTATION_INTENT_REQUIRED"
+    assert result["middleware"]["trace"][-1]["middleware"] == "mutation_policy_guard"
+    assert result["execution_trace"]["middleware"]["blocked_by"] == "mutation_policy_guard"
+
+
+def test_mutation_policy_guard_requires_preview_after_auth_and_intent(monkeypatch):
+    def fail_if_invoked(*args, **kwargs):
+        raise AssertionError("write adapter must not be called before preview")
+
+    monkeypatch.setattr(tool_middleware_service.tool_registry_service, "invoke_tool", fail_if_invoked)
+    monkeypatch.setattr(tool_middleware_service.runtime_service, "verify_admin_code", lambda code: None)
+
+    result = tool_middleware_service.invoke_tool_with_middlewares(
+        "reindex",
+        {"collection": "all"},
+        context=ToolContext(
+            actor="maintenance",
+            admin_code="admin1234",
+            mutation_intent="reindex all",
+            allow_mutation=True,
+        ),
+    )
+
+    assert result["ok"] is False
+    assert result["error"]["code"] == "PREVIEW_REQUIRED"
+    assert result["middleware"]["trace"][-1]["middleware"] == "mutation_policy_guard"
+    assert result["execution_trace"]["middleware"]["blocked_by"] == "mutation_policy_guard"
+
+
+def test_unsafe_action_guard_blocks_write_without_mutation_context(monkeypatch):
+    def fail_if_invoked(*args, **kwargs):
+        raise AssertionError("write adapter must not be called without mutation context")
+
+    monkeypatch.setattr(tool_middleware_service.tool_registry_service, "invoke_tool", fail_if_invoked)
+    policy_decision = actor_policy_service.ActorPolicyDecision(
+        actor="maintenance",
+        actor_category="maintenance_mutation",
+        read_allowed_tools=("health_check",),
+        mutation_candidate_tools=("reindex",),
+        effective_allowed_tools=("reindex",),
+        requires_admin_auth=False,
+        requires_mutation_intent=False,
+        requires_preview_before_apply=False,
+        audit_scope="maintenance",
+        source_schema_version="v1.5.actor_policy_source.v1",
+        source_path="config/actor_policy_manifest.json",
+        used_fallback=False,
+    )
+
+    result = tool_middleware_service.invoke_tool_with_middlewares(
+        "reindex",
+        {"collection": "all"},
+        context=ToolContext(actor="maintenance"),
+        policy_decision=policy_decision,
     )
 
     assert result["ok"] is False
@@ -103,12 +180,26 @@ def test_mutation_context_and_timeout_budget_are_passed_to_registry(monkeypatch)
         return {"tool": name, "ok": True, "result": {"status": "queued"}, "error": None}
 
     monkeypatch.setattr(tool_middleware_service.tool_registry_service, "invoke_tool", fake_invoke_tool)
+    policy_decision = actor_policy_service.ActorPolicyDecision(
+        actor="maintenance",
+        actor_category="maintenance_mutation",
+        read_allowed_tools=("health_check", "list_collections"),
+        mutation_candidate_tools=("reindex",),
+        effective_allowed_tools=("health_check", "list_collections", "reindex"),
+        requires_admin_auth=False,
+        requires_mutation_intent=False,
+        requires_preview_before_apply=False,
+        audit_scope="maintenance",
+        source_schema_version="v1.5.actor_policy_source.v1",
+        source_path="config/actor_policy_manifest.json",
+        used_fallback=False,
+    )
 
     result = tool_middleware_service.invoke_tool_with_middlewares(
         "reindex",
         {"collection": "all"},
-        context=ToolContext(request_id="req-1", actor="admin", allow_mutation=True),
-        allowed_tools=("reindex",),
+        context=ToolContext(request_id="req-1", actor="maintenance", allow_mutation=True),
+        policy_decision=policy_decision,
         timeout_seconds=7,
     )
 
@@ -116,14 +207,11 @@ def test_mutation_context_and_timeout_budget_are_passed_to_registry(monkeypatch)
     assert captured["name"] == "reindex"
     assert captured["payload"] == {"collection": "all"}
     assert captured["context"].request_id == "req-1"
-    assert captured["context"].actor == "admin"
+    assert captured["context"].actor == "maintenance"
     assert captured["context"].allow_mutation is True
     assert captured["context"].timeout_seconds == 7.0
-    assert result["middleware"]["policy"]["actor_category"] == "admin_review_mutation"
-    assert result["middleware"]["policy"]["mutation_candidate_tools"] == [
-        "approve_upload_request",
-        "reject_upload_request",
-    ]
+    assert result["middleware"]["policy"]["actor_category"] == "maintenance_mutation"
+    assert result["middleware"]["policy"]["mutation_candidate_tools"] == ["reindex"]
     assert result["middleware"]["audit_log"][-1]["event"] == "tool.invoke.completed"
 
 

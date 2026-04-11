@@ -57,11 +57,11 @@
 - 현재: reindex 시 컬렉션별 embedding fingerprint를 저장하고, `/query`는 mismatch를 invoke 전에 먼저 차단한다
 - 현재: `services/tool_registry_service.py`는 `search_docs`, `read_doc`, `list_collections`, `health_check`, `reindex`, upload approval 계열을 internal tool 후보로 등록한다
 - 현재: `config/actor_policy_manifest.json`, `core/actor_policy_manifest.py`, `services/actor_policy_service.py`가 actor category별 read allowlist/mutation candidate를 해석하는 resolver skeleton을 제공한다
-- 현재: `services/tool_middleware_service.py`는 request id, timeout budget, tool allowlist, audit log, unsafe action guard를 순차 적용하는 internal middleware 실행기 skeleton을 제공하고, explicit allowlist가 없으면 actor policy source를 기본값으로 읽는다
+- 현재: `services/tool_middleware_service.py`는 request id, timeout budget, tool allowlist, mutation policy guard, unsafe action guard, audit log를 순차 적용하는 internal middleware 실행기 skeleton을 제공하고, explicit allowlist가 없으면 actor policy source를 기본값으로 읽는다
 - 현재: `services/tool_trace_service.py`는 tool/middleware 실행 결과를 `v1.5.tool_execution_trace.v1` schema로 고정하고 `actor_category`, `mutation_candidate_tools`, policy flag seed와 `internal/public/persisted` audience별 redaction 함수를 제공한다
-- 현재: `services/agent_runtime_service.py`는 단일 입력을 actor policy source 기반 allowlist/middleware/trace가 붙은 내부 single-tool runtime 흐름으로 실행한다
-- 현재: actor별 allowlist/mutation 정책 초안과 resolver skeleton은 `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`에 고정했고, 다음 구현은 auth/intent/preview 후속 loop로 분리한다
-- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 admin auth + mutation intent gate, dry-run preview + audit persistence 계약을 순차 구현한다
+- 현재: `services/agent_runtime_service.py`는 단일 입력을 actor policy source 기반 allowlist/middleware/trace가 붙은 내부 single-tool runtime 흐름으로 실행하고, mutation candidate에 대해서는 `admin_code`/`mutation_intent` 신호를 middleware gate에 전달한다
+- 현재: actor별 allowlist/mutation 정책 초안은 `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`에 고정했고, resolver skeleton과 admin auth + mutation intent gate까지 반영됐다
+- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 dry-run preview + audit persistence 계약, 이후 preview seed + audit sink skeleton을 순차 구현한다
 
 비목표(현재 단계):
 - 원본 수집/크롤링
