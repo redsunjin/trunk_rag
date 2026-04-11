@@ -19,8 +19,10 @@
    - 정적 검증, 타깃 테스트, 필요 시 더 넓은 회귀 테스트를 수행한다.
 5. 문서 반영
    - `README.md`, `SPEC.md`, `TODO.md`, `NEXT_SESSION_PLAN.md`를 현재 상태에 맞춘다.
+   - 구현 중간이라도 범위 변경, 검증 결과, blocker, 다음 액션이 생기면 `TODO.md`와 `NEXT_SESSION_PLAN.md`를 같은 작업 단위에서 함께 갱신한다.
 6. 커밋
    - 완료된 단계마다 집중된 커밋 하나를 남긴다.
+   - 커밋 전에는 해당 단계의 `TODO.md`/`NEXT_SESSION_PLAN.md` 현행화가 끝났는지 확인한다.
 7. 다음 항목 진행
    - 현재 `active`가 `done`이면 첫 번째 `pending`을 다음 `active`로 승격해 자동 이동한다.
 
@@ -39,6 +41,14 @@
 3. `blocked`로 옮길 때는 blocker와 재개 조건을 `TODO.md`에 함께 남긴다.
 4. `done` 처리 뒤에는 `NEXT_SESSION_PLAN.md`의 `current_active_id`도 즉시 동기화한다.
 5. 기능 브랜치나 버전 준비 브랜치에 있더라도, 별도 지시나 공식 승격이 없으면 `TODO.md`의 `active`가 기본 실행 대상이다.
+6. tracked 변경이 있는데 `TODO.md`와 `NEXT_SESSION_PLAN.md`가 둘 다 그대로면 handoff가 stale 상태로 본다.
+
+## 세션 문서 현행화
+
+- `TODO.md`는 실행 큐, 현재 `active`의 범위, 진행 메모를 담당한다.
+- `NEXT_SESSION_PLAN.md`는 세션 재진입용 최신 스냅샷과 재개 규칙을 담당한다.
+- 구현, 검증, 판단, blocker가 바뀌면 두 문서를 같은 작업 단위 안에서 함께 갱신한다.
+- pause/commit 전에는 `./.venv/bin/python scripts/roadmap_harness.py status`로 handoff 상태를 확인한다.
 
 ## 현재 우선순위 기준
 

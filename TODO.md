@@ -31,6 +31,8 @@
 - `active`가 `done`이 되면 가장 먼저 오는 `pending`을 즉시 다음 `active`로 승격한다.
 - `blocked`로 옮길 때는 blocker와 재개 조건을 함께 기록한다.
 - `archived`는 실행 큐에서 제외하고 이력만 보관한다.
+- 범위 변경, 구현 메모, 검증 결과, blocker, 다음 액션이 생기면 현재 `active` 섹션과 `NEXT_SESSION_PLAN.md`의 현재 스냅샷을 같은 작업 단위에서 함께 갱신한다.
+- 커밋 전과 세션 pause 전에는 `TODO.md`와 `NEXT_SESSION_PLAN.md`가 모두 최신 상태인지 확인한다.
 
 ### Execution Queue
 

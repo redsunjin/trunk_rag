@@ -34,6 +34,8 @@ NEXT_SESSION_TEXT = """
 - closeout_rule: `done after docs and commit`
 - blocked_rule: `record blocker and reopen rule`
 - promotion_rule: `promote first pending item`
+- progress_sync_rule: `update TODO active memo and NEXT_SESSION snapshot whenever scope or verification changes`
+- commit_sync_rule: `refresh TODO and NEXT_SESSION before every commit and before pausing a dirty worktree`
 """
 
 
@@ -122,3 +124,38 @@ def test_build_report_warns_on_non_main_branch():
     assert report["ready"] is True
     assert report["warnings"]
     assert "Non-main branch detected" in report["warnings"][0]
+
+
+def test_build_report_warns_when_dirty_worktree_lacks_handoff_updates():
+    report = roadmap_harness.build_report(
+        todo_text=TODO_TEXT,
+        next_session_text=NEXT_SESSION_TEXT,
+        current_branch="main",
+        tracked_dirty_paths=["services/query_service.py"],
+    )
+
+    assert report["ready"] is True
+    assert any("Tracked worktree changes exist without TODO.md or NEXT_SESSION_PLAN.md updates" in item for item in report["warnings"])
+
+
+def test_build_report_allows_dirty_worktree_when_handoff_docs_are_dirty_too():
+    report = roadmap_harness.build_report(
+        todo_text=TODO_TEXT,
+        next_session_text=NEXT_SESSION_TEXT,
+        current_branch="main",
+        tracked_dirty_paths=["services/query_service.py", "TODO.md"],
+    )
+
+    assert report["ready"] is True
+    assert not any("Tracked worktree changes exist without TODO.md or NEXT_SESSION_PLAN.md updates" in item for item in report["warnings"])
+
+
+def test_build_report_warns_when_no_pending_item_exists():
+    report = roadmap_harness.build_report(
+        todo_text=TODO_TEXT.replace("| LOOP-002 | pending | Pending Task | python check.py |\n", ""),
+        next_session_text=NEXT_SESSION_TEXT,
+        current_branch="main",
+    )
+
+    assert report["ready"] is True
+    assert any("No pending item is queued after the active loop" in item for item in report["warnings"])

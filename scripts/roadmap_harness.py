@@ -10,6 +10,7 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).resolve().parents[1]
 TODO_PATH = ROOT_DIR / "TODO.md"
 NEXT_SESSION_PLAN_PATH = ROOT_DIR / "NEXT_SESSION_PLAN.md"
+SYNC_DOC_PATHS = {"TODO.md", "NEXT_SESSION_PLAN.md"}
 VALID_STATUSES = {"active", "pending", "blocked", "done", "archived"}
 VALID_VERSION_TRACKS = {"V1", "V1.5", "V2", "V3"}
 VALID_HARNESS_MODES = {
@@ -33,6 +34,35 @@ def get_current_branch(root_dir: Path = ROOT_DIR) -> str | None:
         return None
     branch = result.stdout.strip()
     return branch or None
+
+
+def get_head_commit(root_dir: Path = ROOT_DIR) -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=root_dir,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    commit = result.stdout.strip()
+    return commit or None
+
+
+def get_tracked_dirty_paths(root_dir: Path = ROOT_DIR) -> list[str]:
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--name-only", "HEAD"],
+            cwd=root_dir,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return []
+    return [line.strip() for line in result.stdout.splitlines() if line.strip()]
 
 
 def read_text(path: Path) -> str:
@@ -134,6 +164,8 @@ def build_report(
     todo_text: str,
     next_session_text: str,
     current_branch: str | None = None,
+    head_commit: str | None = None,
+    tracked_dirty_paths: list[str] | None = None,
 ) -> dict[str, object]:
     queue = parse_execution_queue(todo_text)
     session = parse_session_loop_harness(next_session_text)
@@ -159,7 +191,16 @@ def build_report(
         "closeout_rule",
         "blocked_rule",
         "promotion_rule",
+        "progress_sync_rule",
+        "commit_sync_rule",
     }
+    tracked_dirty_paths = tracked_dirty_paths or []
+    dirty_sync_docs = sorted(path for path in tracked_dirty_paths if path in SYNC_DOC_PATHS)
+    counts = {status: 0 for status in VALID_STATUSES}
+    for row in queue:
+        status = row["status"]
+        if status in counts:
+            counts[status] += 1
 
     if queue_validation["duplicate_ids"]:
         errors.append(f"Duplicate ids: {', '.join(queue_validation['duplicate_ids'])}")
@@ -200,12 +241,16 @@ def build_report(
         )
     if current_branch and current_branch not in {"main", "HEAD"} and not branch_execution_policy:
         errors.append("branch_execution_policy is required on non-main branches")
-
-    counts = {status: 0 for status in VALID_STATUSES}
-    for row in queue:
-        status = row["status"]
-        if status in counts:
-            counts[status] += 1
+    if counts["pending"] == 0:
+        warnings.append(
+            "No pending item is queued after the active loop; automatic next-session promotion will stop "
+            "when the current active item closes."
+        )
+    if tracked_dirty_paths and not dirty_sync_docs:
+        warnings.append(
+            "Tracked worktree changes exist without TODO.md or NEXT_SESSION_PLAN.md updates; "
+            "refresh the handoff docs before pausing or committing."
+        )
 
     return {
         "ready": not errors,
@@ -216,6 +261,11 @@ def build_report(
         "counts": counts,
         "session": session,
         "branch": current_branch,
+        "git": {
+            "head_commit": head_commit,
+            "tracked_dirty_paths": tracked_dirty_paths,
+            "sync_docs_dirty": dirty_sync_docs,
+        },
     }
 
 
@@ -224,6 +274,8 @@ def load_report(todo_path: Path = TODO_PATH, next_session_path: Path = NEXT_SESS
         todo_text=read_text(todo_path),
         next_session_text=read_text(next_session_path),
         current_branch=get_current_branch(),
+        head_commit=get_head_commit(),
+        tracked_dirty_paths=get_tracked_dirty_paths(),
     )
 
 
@@ -238,6 +290,13 @@ def print_status(report: dict[str, object]) -> None:
     branch = report.get("branch")
     if branch:
         print(f"  branch={branch}")
+    git_info = report.get("git", {})
+    if git_info.get("head_commit"):
+        print(f"  head={git_info['head_commit']}")
+    tracked_dirty_paths = git_info.get("tracked_dirty_paths", [])
+    print(f"  tracked_dirty={bool(tracked_dirty_paths)}")
+    if git_info.get("sync_docs_dirty"):
+        print(f"  sync_docs_dirty={','.join(git_info['sync_docs_dirty'])}")
     counts = report["counts"]
     print(
         "  queue:"
@@ -254,6 +313,8 @@ def print_status(report: dict[str, object]) -> None:
     print(f"  gate={session.get('default_regression_gate', '-')}")
     print(f"  branch_policy={session.get('branch_execution_policy', '-')}")
     print(f"  branch_plan_doc={session.get('branch_plan_doc', '-')}")
+    print(f"  progress_sync={session.get('progress_sync_rule', '-')}")
+    print(f"  commit_sync={session.get('commit_sync_rule', '-')}")
     print(f"  closeout={session.get('closeout_rule', '-')}")
     if report["errors"]:
         print("  errors:")

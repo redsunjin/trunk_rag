@@ -33,10 +33,20 @@
    - 필요하면 더 넓은 회귀 테스트까지 확장한다.
 5. 문서 반영
    - 동작, 상태, 우선순위가 바뀌면 `README.md`, `SPEC.md`, `TODO.md`, `NEXT_SESSION_PLAN.md`를 갱신한다.
+   - 진행 중이라도 범위 변경, 구현 메모, 검증 결과, blocker, 다음 액션이 생기면 `TODO.md`의 현재 `active` 메모와 `NEXT_SESSION_PLAN.md`의 현재 스냅샷을 즉시 같이 갱신한다.
 6. 커밋
    - 검증이 끝난 단위로 집중된 커밋을 만든다.
+   - 커밋은 해당 단위의 `TODO.md`/`NEXT_SESSION_PLAN.md` 현행화가 함께 끝난 뒤에만 만든다.
 7. 다음 항목 자동 진행
    - 중단 조건이 없으면 현재 `active`를 닫고, 첫 번째 `pending`을 다음 `active`로 승격해 바로 진행한다.
+
+## 세션 문서 현행화 규칙
+
+- `TODO.md`는 실행 큐와 현재 `active` 작업 메모의 기준 문서로 유지한다.
+- `NEXT_SESSION_PLAN.md`는 다음 세션이 바로 이어받을 수 있는 최신 스냅샷으로 유지한다.
+- 의미 있는 구현, 검증, 판단, blocker가 생기면 같은 작업 단위 안에서 두 문서를 함께 갱신한다.
+- dirty worktree 상태로 멈출 때는 최소한 `TODO.md` 또는 `NEXT_SESSION_PLAN.md` 중 하나가 아니라 둘 다 최신 진행 상태를 설명해야 한다.
+- 커밋 메시지나 closeout 메모에는 가능한 한 loop id와 검증 결과를 남겨 다음 세션이 추적 가능해야 한다.
 
 ## 루프 상태 모델
 

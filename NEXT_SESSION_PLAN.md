@@ -1,4 +1,4 @@
-# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-03-20 기준)
+# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-04-11 기준)
 
 기준 문서:
 - `SPEC.md`
@@ -41,6 +41,8 @@
 - closeout_rule: `active` 항목은 검증 결과와 문서 반영, 커밋까지 끝난 뒤에만 `done`으로 본다.
 - blocked_rule: blocker와 재개 조건 없이 `blocked` 상태로 이동하지 않는다.
 - promotion_rule: 현재 `active`가 `done`이 되면 첫 번째 `pending` 항목을 즉시 다음 `active`로 승격한다.
+- progress_sync_rule: 범위 변경, 구현 메모, 검증 결과, blocker, 다음 액션이 생기면 `TODO.md` 현재 `active` 메모와 본 문서의 현재 스냅샷을 같은 작업 단위에서 함께 갱신한다.
+- commit_sync_rule: 커밋 전과 세션 pause 전에는 `TODO.md`/`NEXT_SESSION_PLAN.md`가 모두 최신 진행 상태를 반영한 뒤 `./.venv/bin/python scripts/roadmap_harness.py status`로 handoff 상태를 확인한다.
 - legacy_gate_note: 역사 메모의 `ops-baseline` 표기는 `generic-baseline`/`sample-pack-baseline` 분리 이전 명칭이며, 현재 본체 기본 gate는 `generic-baseline`이다.
 
 ## 0. 2026-03-13 우선순위 재정렬
