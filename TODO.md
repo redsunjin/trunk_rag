@@ -12,6 +12,7 @@
 - `docs/reports/V1_RELEASE_CANDIDATE_GATE_2026-04-10.md`
 - `docs/V1_5_AGENT_READY_PLAN.md`
 - `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`
+- `docs/reports/V1_5_PREVIEW_AUDIT_CONTRACT_2026-04-12.md`
 - `docs/PREPROCESSING_RULES.md`
 - `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md`
 - `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
@@ -63,8 +64,9 @@
 | LOOP-027 | done | V1.5 actor allowlist policy source draft | `./.venv/bin/python -m pytest -q` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-028 | done | V1.5 actor policy resolver skeleton | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-029 | done | V1.5 admin auth + mutation intent gate | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-030 | active | V1.5 dry-run preview + audit persistence contract | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-031 | pending | V1.5 preview seed + audit sink skeleton | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-030 | done | V1.5 dry-run preview + audit persistence contract | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-031 | active | V1.5 preview seed + audit sink skeleton | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-032 | pending | V1.5 preview-confirmed mutation apply draft | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -897,7 +899,7 @@ closeout 메모 (2026-04-11):
 - 검증은 타깃 `30 passed`, 전체 `179 passed`, `./.venv/bin/python scripts/smoke_agent_runtime.py -> ok=true`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과 기준으로 마감한다.
 - closeout review에서는 admin auth + mutation intent gate가 runtime/middleware/trace/smoke 경계에 반영됐다고 판단했고 다음 active loop는 `LOOP-030`, 다음 pending loop는 `LOOP-031`로 정리한다.
 
-## 현재 Active Loop (LOOP-030)
+## 완료 Loop (LOOP-030)
 
 목표:
 - write tool 실제 실행 전에 필요한 dry-run/preview 응답 계약과 persisted audit schema/redaction 경계를 고정한다.
@@ -917,6 +919,37 @@ closeout 메모 (2026-04-11):
 
 진행 메모 (2026-04-11):
 - `LOOP-029` closeout commit 후 preview payload seed와 persisted audit contract를 문서/테스트 기준으로 고정한다.
+
+closeout 메모 (2026-04-12):
+- `docs/reports/V1_5_PREVIEW_AUDIT_CONTRACT_2026-04-12.md`를 추가해 preview payload와 persisted audit record의 최소 schema, redaction 규칙, tool별 target seed shape를 고정했다.
+- `services/tool_trace_service.py`에 `PREVIEW_CONTRACT_SCHEMA_VERSION`, `PERSISTED_AUDIT_RECORD_SCHEMA_VERSION`, `build_preview_contract()`, `build_persisted_audit_record()`를 추가했다.
+- `services/tool_middleware_service.py`는 `PREVIEW_REQUIRED` 응답에 `preview_contract`를 포함하고, middleware metadata/execution trace에 `contracts.preview`, `contracts.persisted_audit`를 함께 남기도록 변경했다.
+- `tests/test_tool_trace_service.py`는 reindex/upload review preview contract와 persisted audit record가 raw admin code/reason/document body 없이 생성되는지 검증하도록 확장했다.
+- `tests/test_tool_middleware_service.py`, `tests/test_agent_runtime_service.py`는 preview-required 응답과 execution trace가 동일한 contract shape를 반환하는지 검증하도록 갱신했다.
+- README, SPEC, `docs/V1_5_AGENT_READY_PLAN.md`, `docs/reports/V1_5_FOLLOWUP_POLICY_2026-04-10.md`, `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`에 구현 상태와 다음 순서를 반영했다.
+- 검증은 타깃 `27 passed`, 전체 `182 passed`, `./.venv/bin/python scripts/smoke_agent_runtime.py -> ok=true`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과 기준으로 마감한다.
+- closeout review에서는 preview/audit contract가 코드/테스트/문서 기준으로 고정됐다고 판단했고 다음 active loop는 `LOOP-031`, 다음 pending loop는 `LOOP-032`로 정리한다.
+
+## 현재 Active Loop (LOOP-031)
+
+목표:
+- `LOOP-030`에서 고정한 contract shape를 실제 preview seed builder와 append-only audit sink interface 경계에 연결한다.
+
+범위:
+- 포함: preview payload seed helper, persisted audit sink interface, persisted audience redaction 입력 강제, runtime/trace/docs/test 정리
+- 제외: 실제 write apply, storage backend 확장, public `/agent/*` endpoint
+
+완료 기준:
+- preview seed builder가 최소 contract 필드를 실제 helper로 반환한다.
+- audit sink interface가 persisted trace/audit schema만 입력으로 받는다.
+- 실제 write automation 없이도 preview/sink 재사용 경계가 테스트와 문서로 고정된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-12):
+- `LOOP-030` closeout commit 후 preview contract를 실제 seed helper와 append-only sink interface로 연결한다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

@@ -130,9 +130,11 @@
 - agent runtime 기본 allowlist는 read-only tool로 유지한다.
 - trace redaction 정책 초안은 `docs/reports/V1_5_TRACE_REDACTION_POLICY_2026-04-10.md`에 기록했다.
 - actor별 allowlist/mutation source 초안은 `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`에 기록했다.
+- preview payload/persisted audit contract는 `docs/reports/V1_5_PREVIEW_AUDIT_CONTRACT_2026-04-12.md`에 기록했다.
 - `config/actor_policy_manifest.json` + `services/actor_policy_service.py` 기준 actor policy resolver가 추가돼 runtime/middleware가 actor category별 read allowlist와 mutation candidate metadata를 읽는다.
 - `services/tool_middleware_service.py`는 `mutation_policy_guard`를 통해 mutation candidate write를 `ADMIN_AUTH_REQUIRED` -> `MUTATION_INTENT_REQUIRED` -> `PREVIEW_REQUIRED` 순서로 차단하고, `services/agent_runtime_service.py`는 `admin_code`/`mutation_intent` presence를 entry metadata에 남긴다.
-- 다음 구현은 preview payload/audit persistence contract를 고정하는 `LOOP-030`이다.
+- `services/tool_trace_service.py`는 `build_preview_contract()`와 `build_persisted_audit_record()`로 preview/audit contract를 순수 함수로 고정하고, `PREVIEW_REQUIRED` 응답과 execution trace contract seed에 이를 포함한다.
+- 다음 구현은 preview seed + audit sink skeleton을 추가하는 `LOOP-031`이다.
 - raw input, retrieved context, document content, local path, admin code, credential은 저장/노출 기본 대상에서 제외한다.
 - `services/tool_trace_service.py`는 `redact_execution_trace()`로 `internal`, `public`, `persisted` audience별 trace 정규화를 제공한다.
 

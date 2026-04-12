@@ -111,32 +111,49 @@ def _attach_middleware_metadata(
 ) -> ToolExecutionResult:
     enriched = dict(result)
     allowed_tools = list(state.allowed_tools) if state.allowed_tools is not None else None
+    policy_details = state.policy_decision.as_dict() if state.policy_decision else None
+    preview_contract = tool_trace_service.build_preview_contract(
+        request_id=state.context.request_id,
+        tool_name=state.tool_name,
+        side_effect=state.side_effect,
+        payload=state.payload,
+        policy_details=policy_details,
+    )
     middleware_metadata = {
         "request_id": state.context.request_id,
         "actor": state.context.actor,
         "allow_mutation": state.context.allow_mutation,
         "timeout_seconds": state.timeout_seconds,
         "allowed_tools": allowed_tools,
-        "policy": state.policy_decision.as_dict() if state.policy_decision else None,
+        "policy": policy_details,
         "elapsed_ms": state.elapsed_ms,
         "trace": list(state.middleware_trace),
         "audit_log": list(state.audit_log),
     }
-    enriched["middleware"] = middleware_metadata
-    enriched["execution_trace"] = tool_trace_service.build_execution_trace(
+    execution_trace = tool_trace_service.build_execution_trace(
         request_id=state.context.request_id,
         actor=state.context.actor,
         tool_name=state.tool_name,
         side_effect=state.side_effect,
         allow_mutation=state.context.allow_mutation,
         allowed_tools=allowed_tools,
-        policy_details=state.policy_decision.as_dict() if state.policy_decision else None,
+        policy_details=policy_details,
         timeout_seconds=state.timeout_seconds,
         elapsed_ms=state.elapsed_ms,
         middleware_steps=list(state.middleware_trace),
         audit_events=list(state.audit_log),
         result=result,
     )
+    persisted_audit_record = tool_trace_service.build_persisted_audit_record(execution_trace)
+    contracts: dict[str, object] = {
+        "persisted_audit": persisted_audit_record,
+    }
+    if preview_contract is not None:
+        contracts["preview"] = preview_contract
+    middleware_metadata["contracts"] = contracts
+    execution_trace["contracts"] = contracts
+    enriched["middleware"] = middleware_metadata
+    enriched["execution_trace"] = execution_trace
     return enriched
 
 
@@ -285,10 +302,18 @@ def mutation_policy_guard_middleware(state: ToolExecutionState) -> None:
         return
 
     if decision and decision.requires_preview_before_apply:
+        preview_contract = tool_trace_service.build_preview_contract(
+            request_id=state.context.request_id,
+            tool_name=state.tool_name,
+            side_effect=state.side_effect,
+            payload=state.payload,
+            policy_details=decision.as_dict(),
+        )
         state.blocked_result = _error_result(
             state.tool_name,
             "PREVIEW_REQUIRED",
             "Mutation candidate tool requires a preview step before apply.",
+            preview_contract=preview_contract,
         )
         _append_trace(state, "mutation_policy_guard", "blocked", detail=detail)
         return

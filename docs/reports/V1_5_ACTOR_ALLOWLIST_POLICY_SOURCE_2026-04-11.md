@@ -22,7 +22,8 @@
 - `services/agent_runtime_service.py`는 `admin_code`, `mutation_intent` 입력을 받아 entry metadata에 presence를 기록한다.
 - `services/tool_middleware_service.py`는 mutation candidate write를 auth/intent/preview 순서로 차단하고 trace/audit에 blocker를 남긴다.
 - `services/tool_trace_service.py`는 mutation policy detail에서 safe diagnostic seed만 redaction 결과에 남긴다.
-- 남은 구현은 preview payload와 persisted audit contract를 실제 schema/test 기준으로 고정하는 것이다.
+- 2026-04-12에는 `docs/reports/V1_5_PREVIEW_AUDIT_CONTRACT_2026-04-12.md` 기준 preview payload/persisted audit contract를 고정했다.
+- 남은 구현은 preview seed builder와 append-only audit sink interface를 실제 runtime 경계에 연결하는 것이다.
 
 ## Tool Inventory
 
@@ -181,6 +182,12 @@ preview에서 기대하는 최소 결과:
 - persisted audit contract가 request id, actor category, tool, outcome, blocked_by, side effect를 남긴다.
 - redaction 규칙이 `internal/public/persisted` audience 계약과 충돌하지 않는다.
 
+### LOOP-031
+
+- preview seed builder가 `LOOP-030` contract shape를 실제 runtime helper로 채운다.
+- audit sink interface는 `persisted` audience redaction 결과만 입력으로 받는다.
+- 실제 write apply는 여전히 막아 두고 adapter 경계만 만든다.
+
 ## Non-goals
 
 - public `/agent/*` endpoint 개방
@@ -190,4 +197,4 @@ preview에서 기대하는 최소 결과:
 
 ## Conclusion
 
-`LOOP-027`의 결론은 "기본 read-only allowlist를 유지하되, 이후 write tool 개방은 actor category별 policy source와 auth/intent/preview/audit 조건을 모두 거친 뒤에만 가능하다"는 점이다. 2026-04-11 기준 `resolver skeleton -> admin auth + mutation intent gate`까지 구현됐고, 다음 구현 순서는 `dry-run preview + audit persistence contract -> preview seed + audit sink skeleton`으로 이어진다.
+`LOOP-027`의 결론은 "기본 read-only allowlist를 유지하되, 이후 write tool 개방은 actor category별 policy source와 auth/intent/preview/audit 조건을 모두 거친 뒤에만 가능하다"는 점이다. 2026-04-12 기준 `resolver skeleton -> admin auth + mutation intent gate -> dry-run preview + audit persistence contract`까지 구현됐고, 다음 구현 순서는 `preview seed + audit sink skeleton -> preview-confirmed mutation apply draft`로 이어진다.

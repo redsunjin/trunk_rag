@@ -104,6 +104,89 @@ def test_build_execution_trace_captures_blocked_middleware_and_error():
     assert trace["outcome"]["error"]["code"] == "MUTATION_NOT_ALLOWED"
 
 
+def test_build_preview_contract_for_reindex_keeps_safe_target_summary_only():
+    contract = tool_trace_service.build_preview_contract(
+        request_id="req-preview",
+        tool_name="reindex",
+        side_effect="write",
+        payload={"collection": "all"},
+        policy_details={
+            "actor_category": "maintenance_mutation",
+            "mutation_candidate_tools": ["reindex"],
+            "requires_preview_before_apply": True,
+            "audit_scope": "maintenance",
+        },
+    )
+
+    assert contract == {
+        "schema_version": tool_trace_service.PREVIEW_CONTRACT_SCHEMA_VERSION,
+        "request_id": "req-preview",
+        "actor_category": "maintenance_mutation",
+        "audit_scope": "maintenance",
+        "tool": {
+            "name": "reindex",
+            "side_effect": "write",
+        },
+        "target": {
+            "collection_key": "all",
+            "reset": True,
+            "include_compatibility_bundle": False,
+            "impact_scope": "core_all_only",
+        },
+        "preview_fields": [
+            "collection_key",
+            "reset",
+            "include_compatibility_bundle",
+            "impact_summary",
+        ],
+        "expected_side_effect": "Reindex all collection contents.",
+        "redaction": {
+            "audiences": ["internal", "public", "persisted"],
+            "raw_content_allowed": False,
+            "admin_code_allowed": False,
+            "document_body_allowed": False,
+        },
+    }
+
+
+def test_build_preview_contract_for_upload_review_excludes_admin_code_and_reason_text():
+    contract = tool_trace_service.build_preview_contract(
+        request_id="req-review",
+        tool_name="reject_upload_request",
+        side_effect="write",
+        payload={
+            "request_id": "upload-1",
+            "code": "admin1234",
+            "reason": "Contains sensitive content",
+            "decision_note": "Operator note",
+        },
+        policy_details={
+            "actor_category": "admin_review_mutation",
+            "mutation_candidate_tools": ["approve_upload_request", "reject_upload_request"],
+            "requires_preview_before_apply": True,
+            "audit_scope": "mutation_review",
+        },
+    )
+
+    assert contract is not None
+    assert contract["target"] == {
+        "request_id": "upload-1",
+        "decision": "reject",
+        "reason_code": "OTHER",
+        "reason_present": True,
+        "decision_note_present": True,
+    }
+    assert contract["preview_fields"] == [
+        "request_id",
+        "status",
+        "request_type",
+        "doc_key",
+        "expected_side_effect",
+    ]
+    assert "code" not in contract["target"]
+    assert "reason" not in contract["target"]
+
+
 def _sample_trace_with_sensitive_fields():
     return {
         "schema_version": tool_trace_service.TRACE_SCHEMA_VERSION,
@@ -223,6 +306,40 @@ def test_redact_execution_trace_persisted_profile_keeps_diagnostic_seed_only():
         }
     ]
     assert redacted["outcome"]["error"] == {"code": "HTTP_ERROR", "status_code": 500}
+
+
+def test_build_persisted_audit_record_uses_persisted_redaction_boundary():
+    record = tool_trace_service.build_persisted_audit_record(_sample_trace_with_sensitive_fields())
+
+    assert record == {
+        "schema_version": tool_trace_service.PERSISTED_AUDIT_RECORD_SCHEMA_VERSION,
+        "source_schema_version": tool_trace_service.TRACE_SCHEMA_VERSION,
+        "request_id": "req-sensitive",
+        "actor_category": "admin_review_mutation",
+        "audit_scope": "mutation_review",
+        "tool": {
+            "name": "search_docs",
+            "side_effect": "read",
+        },
+        "blocked_by": None,
+        "runtime": {
+            "elapsed_ms": 17,
+        },
+        "outcome": {
+            "ok": False,
+            "error": {"code": "HTTP_ERROR", "status_code": 500},
+        },
+        "audit": {
+            "events": [
+                {
+                    "event": "tool.invoke.failed",
+                    "elapsed_ms": 17,
+                    "code": "HTTP_ERROR",
+                    "tool": "search_docs",
+                }
+            ]
+        },
+    }
 
 
 def test_redact_execution_trace_internal_profile_still_removes_raw_content_and_secrets():

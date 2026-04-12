@@ -24,6 +24,7 @@
 - `docs/reports/VERSION_BOUNDARY_RESET_2026-04-04.md`
 - `docs/reports/V1_RELEASE_CANDIDATE_GATE_2026-04-10.md`
 - `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`
+- `docs/reports/V1_5_PREVIEW_AUDIT_CONTRACT_2026-04-12.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -31,8 +32,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-030`
-- current_active_title: `V1.5 dry-run preview + audit persistence contract`
+- current_active_id: `LOOP-031`
+- current_active_title: `V1.5 preview seed + audit sink skeleton`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -765,7 +766,7 @@ closeout 메모 (2026-04-11):
 - `scripts/smoke_agent_runtime.py`는 read-only block, admin auth 필요, mutation intent 필요, preview 필요를 각각 분리한 5단계 smoke check로 갱신했다.
 - 테스트는 타깃 `30 passed`, 전체 `179 passed`, `./.venv/bin/python scripts/smoke_agent_runtime.py -> ok=true`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과 기준으로 마감한다.
 
-### A-Next23. V1.5 dry-run preview + audit persistence contract (현재 active)
+### A-Next23. V1.5 dry-run preview + audit persistence contract (완료: 2026-04-12)
 1. write tool 실제 실행 전에 필요한 dry-run/preview 응답 계약을 정리하고, side effect 전후 audit record shape를 고정한다.
 2. preview 결과와 persisted audit에 남길 최소 필드(request id, actor, tool, outcome, side effect, blocked_by)를 분리한다.
 3. storage backend 구현은 별도 loop로 넘기되, persistence contract와 redaction 경계는 이 단계에서 고정한다.
@@ -782,7 +783,14 @@ closeout 메모 (2026-04-11):
 진행 메모 (2026-04-11):
 - `LOOP-029` closeout 이후 preview payload seed와 persisted audit contract를 문서/테스트 기준으로 먼저 고정한다.
 
-### A-Next24. V1.5 preview seed + audit sink skeleton (pending)
+closeout 메모 (2026-04-12):
+- `docs/reports/V1_5_PREVIEW_AUDIT_CONTRACT_2026-04-12.md`를 추가해 preview payload와 persisted audit record의 최소 schema, redaction 규칙, tool별 target seed shape를 고정했다.
+- `services/tool_trace_service.py`에 `build_preview_contract()`, `build_persisted_audit_record()`, contract schema version 상수를 추가했다.
+- `services/tool_middleware_service.py`는 `PREVIEW_REQUIRED` 응답에 `preview_contract`를 포함하고 execution trace/middleware metadata에 `contracts.preview`, `contracts.persisted_audit`를 함께 남기도록 변경했다.
+- `tests/test_tool_trace_service.py`, `tests/test_tool_middleware_service.py`, `tests/test_agent_runtime_service.py`는 preview/audit contract가 safe seed만 반환하는지 검증하도록 갱신했다.
+- 검증은 타깃 `27 passed`, 전체 `182 passed`, `./.venv/bin/python scripts/smoke_agent_runtime.py -> ok=true`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과 기준으로 마감한다.
+
+### A-Next24. V1.5 preview seed + audit sink skeleton (현재 active)
 1. `LOOP-030`에서 고정한 preview/audit contract를 바탕으로 내부 preview payload seed와 append-only audit sink interface를 추가한다.
 2. persisted audience redaction 결과만 sink 입력으로 허용하고 raw payload/admin code/document body는 계속 제외한다.
 3. 실제 write apply는 여전히 막아 두고, 후속 mutation loop가 재사용할 adapter 경계만 만든다.
@@ -791,6 +799,23 @@ closeout 메모 (2026-04-11):
 - preview seed builder가 최소 contract 필드만 반환한다.
 - audit sink interface가 persisted trace/audit schema를 입력으로 받는다.
 - 실제 write automation 없이도 preview/sink 재사용 경계가 테스트와 문서로 고정된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-12):
+- `LOOP-030` closeout 이후 preview contract를 실제 seed helper와 append-only sink interface로 연결한다.
+
+### A-Next25. V1.5 preview-confirmed mutation apply draft (pending)
+1. preview seed와 persisted audit sink가 생긴 뒤, preview reference와 intent summary를 묶는 mutation apply envelope를 정의한다.
+2. preview reference 누락/불일치와 audit seed 누락을 서로 다른 error code로 분리한다.
+3. 실제 write adapter 호출은 여전히 막아 두고, 후속 loop가 사용할 apply handshake 경계만 고정한다.
+
+완료 기준:
+- mutation apply envelope schema가 문서와 테스트 기준으로 정리된다.
+- preview reference 누락/불일치 error가 분리된다.
+- 실제 write automation 없이도 후속 apply loop가 기대할 handshake가 고정된다.
 
 검증:
 - `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_smoke_agent_runtime.py`
