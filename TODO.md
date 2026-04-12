@@ -67,8 +67,10 @@
 | LOOP-029 | done | V1.5 admin auth + mutation intent gate | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-030 | done | V1.5 dry-run preview + audit persistence contract | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-031 | done | V1.5 preview seed + audit sink skeleton | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_tool_preview_service.py tests/test_tool_audit_sink_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-032 | active | V1.5 preview-confirmed mutation apply draft | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_tool_preview_service.py tests/test_tool_audit_sink_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-033 | pending | V1.5 mutation apply guard skeleton | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_tool_preview_service.py tests/test_tool_audit_sink_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-032 | done | V1.5 preview-confirmed mutation apply draft | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_tool_preview_service.py tests/test_tool_audit_sink_service.py tests/test_tool_apply_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-033 | done | V1.5 mutation apply guard skeleton | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_tool_preview_service.py tests/test_tool_audit_sink_service.py tests/test_tool_apply_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-034 | active | V1.5 mutation execution go/no-go review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-035 | pending | V1.5 mutation executor interface draft | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_tool_preview_service.py tests/test_tool_audit_sink_service.py tests/test_tool_apply_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -964,26 +966,42 @@ closeout 메모 (2026-04-12):
 - 검증은 타깃 `33 passed`, 전체 `186 passed`, `./.venv/bin/python scripts/smoke_agent_runtime.py -> ok=true`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과 기준으로 마감한다.
 - closeout review에서는 preview seed helper와 append-only audit sink interface가 runtime/trace/docs/test 경계에 연결됐다고 판단했고 다음 active loop는 `LOOP-032`, 다음 pending loop는 `LOOP-033`으로 정리한다.
 
-## 현재 Active Loop (LOOP-032)
+## LOOP-032 closeout 메모 (2026-04-12)
+
+- `docs/reports/V1_5_MUTATION_APPLY_DRAFT_2026-04-12.md`를 추가해 preview-confirmed mutation apply envelope schema, draft shape, error taxonomy를 고정했다.
+- `services/tool_apply_service.py`를 추가해 `build_mutation_apply_envelope()`, `validate_mutation_apply_envelope()`, apply envelope schema version과 error code 상수를 구현했다.
+- `services/agent_runtime_service.py`와 `services/tool_registry_service.py`는 `apply_envelope` 입력과 `apply_envelope_present` entry metadata를 추가했다.
+- `services/tool_middleware_service.py`는 `PREVIEW_REQUIRED` 응답과 execution trace contract seed에 draft `apply_envelope`를 함께 노출하도록 변경했다.
+- `tests/test_tool_apply_service.py`, `tests/test_tool_middleware_service.py`, `tests/test_agent_runtime_service.py`는 apply envelope schema와 preview/audit/intention error taxonomy를 검증하도록 갱신했다.
+- 검증은 타깃 `40 passed`, 전체 `193 passed`, `./.venv/bin/python scripts/smoke_agent_runtime.py -> ok=true`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과 기준으로 마감한다.
+
+## LOOP-033 closeout 메모 (2026-04-12)
+
+- `docs/reports/V1_5_MUTATION_APPLY_GUARD_2026-04-12.md`를 추가해 preview-confirmed apply guard flow, trace/error contract, 아직 execution을 열지 않는 이유를 고정했다.
+- `services/tool_middleware_service.py`는 `mutation_apply_guard` middleware를 추가해 preview-confirmed envelope를 실제 guard 단계에서 검증하고 `PREVIEW_REFERENCE_MISMATCH`, `AUDIT_SINK_RECEIPT_REQUIRED`, `AUDIT_SINK_RECEIPT_INVALID`, `MUTATION_INTENT_SUMMARY_REQUIRED`, `MUTATION_APPLY_NOT_ENABLED`를 분리 차단하도록 변경했다.
+- `services/tool_trace_service.py`는 middleware detail redaction allowlist에 `apply_envelope_present`를 추가해 guard 상태를 안전하게 남기도록 조정했다.
+- `scripts/smoke_agent_runtime.py`와 `tests/test_smoke_agent_runtime.py`는 preview-confirmed apply path가 `mutation_apply_guard`에서 `MUTATION_APPLY_NOT_ENABLED`로 차단되는 smoke를 추가했다.
+- closeout review에서는 mutation apply guard skeleton이 runtime/middleware/trace/smoke 경계에 고정됐다고 판단했고 다음 active loop는 `LOOP-034`, 다음 pending loop는 `LOOP-035`로 정리한다.
+
+## 현재 Active Loop (LOOP-034)
 
 목표:
-- preview reference, intent summary, audit sink receipt를 묶는 mutation apply envelope와 error taxonomy를 고정한다.
+- 실제 mutation execution을 열기 전에 필요한 go/no-go 기준, 사용자 결정 경계, backend/retention 전제조건을 문서로 고정한다.
 
 범위:
-- 포함: apply envelope schema, preview reference/audit receipt validation error code, runtime/docs/test 정리
-- 제외: 실제 write adapter 호출, storage backend 구현, public `/agent/*` endpoint
+- 포함: execution go/no-go review, decision matrix, backend/retention 선택지 정리, 다음 executor interface loop 정의
+- 제외: 실제 write adapter 호출, persistence backend 구현, public `/agent/*` endpoint
 
 완료 기준:
-- mutation apply envelope schema가 문서와 테스트 기준으로 정리된다.
-- preview reference 누락/불일치와 audit seed 누락 error가 분리된다.
-- 실제 write automation 없이도 후속 apply loop가 기대할 handshake가 고정된다.
+- 실제 write apply를 열기 전 필요한 사용자 결정 항목이 문서로 정리된다.
+- mutation execution을 열지 않은 현재 이유와 해제 조건이 명확해진다.
+- 후속 executor interface draft loop가 공식 큐에 고정된다.
 
 검증:
-- `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_tool_preview_service.py tests/test_tool_audit_sink_service.py tests/test_smoke_agent_runtime.py`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 진행 메모 (2026-04-12):
-- `LOOP-031` closeout commit 후 preview-confirmed apply envelope와 error taxonomy를 문서/테스트 기준으로 고정한다.
+- `LOOP-033` closeout 이후 실제 mutation apply를 열기 전 필요한 go/no-go 판단과 backend 조건을 우선 정리한다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

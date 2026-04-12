@@ -8,6 +8,7 @@ from uuid import uuid4
 from services import (
     actor_policy_service,
     runtime_service,
+    tool_apply_service,
     tool_audit_sink_service,
     tool_preview_service,
     tool_registry_service,
@@ -34,6 +35,7 @@ class ToolExecutionState:
     blocked_result: ToolExecutionResult | None = None
     preview_contract: dict[str, object] | None = None
     preview_seed: dict[str, object] | None = None
+    apply_envelope: dict[str, object] | None = None
     persisted_audit_record: dict[str, object] | None = None
     audit_sink_receipt: dict[str, object] | None = None
 
@@ -167,6 +169,12 @@ def _attach_middleware_metadata(
     audit_sink_receipt = state.audit_sink_receipt or tool_audit_sink_service.append_persisted_audit_record(
         persisted_audit_record
     )
+    mutation_intent_summary = _resolve_mutation_intent(state)
+    apply_envelope_draft = tool_apply_service.build_mutation_apply_envelope(
+        preview_seed=preview_seed,
+        audit_sink_receipt=audit_sink_receipt,
+        mutation_intent_summary=mutation_intent_summary,
+    )
     contracts: dict[str, object] = {
         "persisted_audit": persisted_audit_record,
         "audit_sink": audit_sink_receipt,
@@ -175,8 +183,15 @@ def _attach_middleware_metadata(
         contracts["preview"] = preview_contract
     if preview_seed is not None:
         contracts["preview_seed"] = preview_seed
+    if apply_envelope_draft is not None:
+        contracts["apply_envelope"] = apply_envelope_draft
     middleware_metadata["contracts"] = contracts
     execution_trace["contracts"] = contracts
+    if isinstance(enriched.get("error"), dict) and apply_envelope_draft is not None:
+        enriched["error"] = {
+            **dict(enriched["error"]),
+            "apply_envelope": apply_envelope_draft,
+        }
     enriched["middleware"] = middleware_metadata
     enriched["execution_trace"] = execution_trace
     return enriched
@@ -264,6 +279,15 @@ def _resolve_mutation_intent(state: ToolExecutionState) -> str | None:
     )
 
 
+def _resolve_apply_envelope(state: ToolExecutionState) -> dict[str, object] | None:
+    if isinstance(state.context.apply_envelope, dict):
+        return dict(state.context.apply_envelope)
+    payload_apply_envelope = state.payload.get("apply_envelope")
+    if isinstance(payload_apply_envelope, dict):
+        return dict(payload_apply_envelope)
+    return None
+
+
 def mutation_policy_guard_middleware(state: ToolExecutionState) -> None:
     if state.side_effect != "write":
         _append_trace(
@@ -287,6 +311,7 @@ def mutation_policy_guard_middleware(state: ToolExecutionState) -> None:
 
     admin_code = _resolve_admin_code(state)
     mutation_intent = _resolve_mutation_intent(state)
+    apply_envelope = _resolve_apply_envelope(state)
     detail = {
         "actor_category": decision.actor_category if decision else None,
         "requires_admin_auth": decision.requires_admin_auth if decision else False,
@@ -294,6 +319,7 @@ def mutation_policy_guard_middleware(state: ToolExecutionState) -> None:
         "requires_preview_before_apply": decision.requires_preview_before_apply if decision else False,
         "admin_authenticated": False,
         "mutation_intent_present": mutation_intent is not None,
+        "apply_envelope_present": apply_envelope is not None,
     }
 
     if decision and decision.requires_admin_auth:
@@ -340,6 +366,10 @@ def mutation_policy_guard_middleware(state: ToolExecutionState) -> None:
         )
         state.preview_contract = preview_contract
         state.preview_seed = preview_seed
+        state.apply_envelope = apply_envelope
+        if apply_envelope is not None:
+            _append_trace(state, "mutation_policy_guard", "ok", detail=detail)
+            return
         state.blocked_result = _error_result(
             state.tool_name,
             "PREVIEW_REQUIRED",
@@ -351,6 +381,85 @@ def mutation_policy_guard_middleware(state: ToolExecutionState) -> None:
         return
 
     _append_trace(state, "mutation_policy_guard", "ok", detail=detail)
+
+
+def mutation_apply_guard_middleware(state: ToolExecutionState) -> None:
+    if state.side_effect != "write":
+        _append_trace(
+            state,
+            "mutation_apply_guard",
+            "ok",
+            detail={"side_effect": state.side_effect or "unknown"},
+        )
+        return
+
+    decision = state.policy_decision
+    if not decision or not decision.requires_preview_before_apply:
+        _append_trace(
+            state,
+            "mutation_apply_guard",
+            "skipped",
+            detail={"actor_category": decision.actor_category if decision else None},
+        )
+        return
+
+    apply_envelope = state.apply_envelope or _resolve_apply_envelope(state)
+    if apply_envelope is None:
+        _append_trace(
+            state,
+            "mutation_apply_guard",
+            "skipped",
+            detail={"actor_category": decision.actor_category},
+        )
+        return
+
+    preview_contract = state.preview_contract or tool_trace_service.build_preview_contract(
+        request_id=state.context.request_id,
+        tool_name=state.tool_name,
+        side_effect=state.side_effect,
+        payload=state.payload,
+        policy_details=decision.as_dict(),
+    )
+    preview_seed = state.preview_seed or tool_preview_service.build_preview_seed(
+        preview_contract,
+        payload=state.payload,
+    )
+    state.preview_contract = preview_contract
+    state.preview_seed = preview_seed
+    state.apply_envelope = apply_envelope
+
+    validation = tool_apply_service.validate_mutation_apply_envelope(
+        apply_envelope,
+        preview_seed=preview_seed,
+    )
+    if validation.get("ok") is not True:
+        error = validation.get("error") if isinstance(validation.get("error"), dict) else {}
+        state.blocked_result = _error_result(
+            state.tool_name,
+            str(error.get("code", "MUTATION_APPLY_INVALID")),
+            str(error.get("message", "Mutation apply envelope is invalid.")),
+            submitted_apply_envelope=apply_envelope,
+        )
+        _append_trace(
+            state,
+            "mutation_apply_guard",
+            "blocked",
+            detail={"actor_category": decision.actor_category, "apply_envelope_present": True},
+        )
+        return
+
+    state.blocked_result = _error_result(
+        state.tool_name,
+        tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED,
+        "Mutation apply handshake validated, but execution is not enabled yet.",
+        submitted_apply_envelope=apply_envelope,
+    )
+    _append_trace(
+        state,
+        "mutation_apply_guard",
+        "blocked",
+        detail={"actor_category": decision.actor_category, "apply_envelope_present": True},
+    )
 
 
 def unsafe_action_guard_middleware(state: ToolExecutionState) -> None:
@@ -399,6 +508,7 @@ DEFAULT_TOOL_MIDDLEWARES: tuple[ToolMiddleware, ...] = (
     timeout_budget_middleware,
     tool_allowlist_middleware,
     mutation_policy_guard_middleware,
+    mutation_apply_guard_middleware,
     unsafe_action_guard_middleware,
     audit_log_middleware,
 )

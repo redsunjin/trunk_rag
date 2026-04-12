@@ -16,6 +16,7 @@ class AgentRuntimeRequest:
     allow_mutation: bool = False
     admin_code: str | None = None
     mutation_intent: str | None = None
+    apply_envelope: dict[str, object] | None = None
     allowed_tools: tuple[str, ...] | None = None
     timeout_seconds: float | None = None
 
@@ -62,6 +63,12 @@ def _normalize_optional_text(value: object) -> str | None:
     return normalized or None
 
 
+def _normalize_optional_object(value: object) -> dict[str, object] | None:
+    if not isinstance(value, dict):
+        return None
+    return dict(value)
+
+
 def run_agent_entry(request: AgentRuntimeRequest) -> dict[str, object]:
     user_input = str(request.input or "").strip()
     if not user_input:
@@ -82,6 +89,7 @@ def run_agent_entry(request: AgentRuntimeRequest) -> dict[str, object]:
     )
     admin_code = _normalize_optional_text(request.admin_code) or _normalize_optional_text(payload.get("admin_code")) or _normalize_optional_text(payload.get("code"))
     mutation_intent = _normalize_optional_text(request.mutation_intent) or _normalize_optional_text(payload.get("mutation_intent"))
+    apply_envelope = _normalize_optional_object(request.apply_envelope) or _normalize_optional_object(payload.get("apply_envelope"))
     context = ToolContext(
         request_id=request.request_id,
         actor=request.actor,
@@ -89,6 +97,7 @@ def run_agent_entry(request: AgentRuntimeRequest) -> dict[str, object]:
         timeout_seconds=request.timeout_seconds,
         admin_code=admin_code,
         mutation_intent=mutation_intent,
+        apply_envelope=apply_envelope,
     )
     tool_call = tool_middleware_service.invoke_tool_with_middlewares(
         tool_name,
@@ -112,6 +121,7 @@ def run_agent_entry(request: AgentRuntimeRequest) -> dict[str, object]:
             "mutation_candidate_tools": list(policy_decision.mutation_candidate_tools),
             "admin_code_present": admin_code is not None,
             "mutation_intent_present": mutation_intent is not None,
+            "apply_envelope_present": apply_envelope is not None,
             "policy_flags": {
                 "requires_admin_auth": policy_decision.requires_admin_auth,
                 "requires_mutation_intent": policy_decision.requires_mutation_intent,

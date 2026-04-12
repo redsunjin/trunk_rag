@@ -195,6 +195,7 @@ def _redact_middleware_steps(steps: object, *, include_detail: bool) -> list[dic
                     "side_effect",
                     "allow_mutation",
                     "actor_category",
+                    "apply_envelope_present",
                     "requires_admin_auth",
                     "admin_authenticated",
                     "requires_mutation_intent",

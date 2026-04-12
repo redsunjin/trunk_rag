@@ -136,7 +136,8 @@
 - `services/tool_middleware_service.py`는 `mutation_policy_guard`를 통해 mutation candidate write를 `ADMIN_AUTH_REQUIRED` -> `MUTATION_INTENT_REQUIRED` -> `PREVIEW_REQUIRED` 순서로 차단하고, `services/agent_runtime_service.py`는 `admin_code`/`mutation_intent` presence를 entry metadata에 남긴다.
 - `services/tool_trace_service.py`는 `build_preview_contract()`와 `build_persisted_audit_record()`로 preview/audit contract를 순수 함수로 고정하고, `PREVIEW_REQUIRED` 응답과 execution trace contract seed에 이를 포함한다.
 - `services/tool_preview_service.py`는 contract를 실제 preview seed로 채우고, `services/tool_audit_sink_service.py`는 persisted record만 받는 append-only sink protocol/null-memory sink를 제공한다.
-- 다음 구현은 preview-confirmed mutation apply draft를 고정하는 `LOOP-032`이다.
+- `services/tool_apply_service.py`는 preview-confirmed mutation apply envelope draft와 validation error taxonomy를 제공하고, `services/tool_middleware_service.py`는 `mutation_apply_guard`로 preview-confirmed apply path를 `MUTATION_APPLY_NOT_ENABLED`까지 차단한다.
+- 다음 구현은 mutation execution go/no-go review를 고정하는 `LOOP-034`이다.
 - raw input, retrieved context, document content, local path, admin code, credential은 저장/노출 기본 대상에서 제외한다.
 - `services/tool_trace_service.py`는 `redact_execution_trace()`로 `internal`, `public`, `persisted` audience별 trace 정규화를 제공한다.
 

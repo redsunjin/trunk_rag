@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from services import agent_runtime_service
+from services import agent_runtime_service, tool_apply_service
 
 
 def test_agent_entry_defaults_single_input_to_search_docs(monkeypatch):
@@ -228,6 +228,7 @@ def test_agent_entry_requires_preview_after_admin_auth_and_intent(monkeypatch):
     assert result["ok"] is False
     assert result["entry"]["admin_code_present"] is True
     assert result["entry"]["mutation_intent_present"] is True
+    assert result["entry"]["apply_envelope_present"] is False
     assert result["error"]["code"] == "PREVIEW_REQUIRED"
     assert result["error"]["preview_contract"] == {
         "schema_version": "v1.5.mutation_preview_contract.v1",
@@ -297,8 +298,85 @@ def test_agent_entry_requires_preview_after_admin_auth_and_intent(monkeypatch):
             "document_body_allowed": False,
         },
     }
+    assert result["error"]["apply_envelope"] == {
+        "schema_version": tool_apply_service.MUTATION_APPLY_ENVELOPE_SCHEMA_VERSION,
+        "actor_category": "maintenance_mutation",
+        "audit_scope": "maintenance",
+        "tool": {
+            "name": "reindex",
+            "side_effect": "write",
+        },
+        "preview_ref": {
+            "preview_schema_version": "v1.5.mutation_preview_seed.v1",
+            "tool_name": "reindex",
+            "target": {
+                "collection_key": "all",
+                "reset": True,
+                "include_compatibility_bundle": False,
+                "impact_scope": "core_all_only",
+            },
+        },
+        "audit_ref": {
+            "sink_type": "null_append_only",
+            "record_schema_version": "v1.5.mutation_audit_record.v1",
+            "accepted": True,
+            "sequence_id": None,
+        },
+        "intent": {
+            "summary": "reindex all",
+        },
+        "apply_control": {
+            "execution_enabled": False,
+            "required_signals": ["preview_ref", "audit_ref", "intent.summary"],
+        },
+    }
     assert result["execution_trace"]["middleware"]["blocked_by"] == "mutation_policy_guard"
     assert result["execution_trace"]["contracts"]["preview"] == result["error"]["preview_contract"]
     assert result["execution_trace"]["contracts"]["preview_seed"] == result["error"]["preview_seed"]
+    assert result["execution_trace"]["contracts"]["apply_envelope"] == result["error"]["apply_envelope"]
     assert result["execution_trace"]["contracts"]["audit_sink"]["sink_type"] == "null_append_only"
     assert result["execution_trace"]["contracts"]["persisted_audit"]["request_id"] == "maintenance-preview-1"
+
+
+def test_agent_entry_blocks_preview_confirmed_apply_until_execution_is_enabled(monkeypatch):
+    monkeypatch.setattr(
+        agent_runtime_service.tool_middleware_service.runtime_service,
+        "verify_admin_code",
+        lambda code: None,
+    )
+
+    preview_result = agent_runtime_service.run_agent_entry(
+        agent_runtime_service.AgentRuntimeRequest(
+            input="Reindex the core collection.",
+            tool_name="reindex",
+            tool_payload={"collection": "all"},
+            actor="maintenance",
+            admin_code="admin1234",
+            mutation_intent="reindex all",
+            allow_mutation=True,
+            request_id="maintenance-preview-2",
+        )
+    )
+
+    result = agent_runtime_service.run_agent_entry(
+        agent_runtime_service.AgentRuntimeRequest(
+            input="Apply the confirmed reindex plan.",
+            tool_name="reindex",
+            tool_payload={"collection": "all"},
+            actor="maintenance",
+            admin_code="admin1234",
+            mutation_intent="reindex all",
+            apply_envelope=preview_result["error"]["apply_envelope"],
+            allow_mutation=True,
+            request_id="maintenance-apply-1",
+        )
+    )
+
+    assert result["ok"] is False
+    assert result["entry"]["admin_code_present"] is True
+    assert result["entry"]["mutation_intent_present"] is True
+    assert result["entry"]["apply_envelope_present"] is True
+    assert result["error"]["code"] == "MUTATION_APPLY_NOT_ENABLED"
+    assert result["error"]["submitted_apply_envelope"] == preview_result["error"]["apply_envelope"]
+    assert result["execution_trace"]["middleware"]["blocked_by"] == "mutation_apply_guard"
+    assert result["execution_trace"]["contracts"]["apply_envelope"] == result["error"]["apply_envelope"]

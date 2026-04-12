@@ -87,6 +87,22 @@ def run_smoke() -> dict[str, object]:
             timeout_seconds=5,
         )
     )
+    preview_error = preview_required_result.get("error") if isinstance(preview_required_result.get("error"), dict) else {}
+    apply_envelope = preview_error.get("apply_envelope") if isinstance(preview_error.get("apply_envelope"), dict) else None
+    apply_not_enabled_result = agent_runtime_service.run_agent_entry(
+        agent_runtime_service.AgentRuntimeRequest(
+            input="Apply the confirmed maintenance reindex.",
+            tool_name="reindex",
+            tool_payload={"collection": "all"},
+            actor="maintenance",
+            admin_code="admin1234",
+            mutation_intent="reindex core all collection",
+            apply_envelope=apply_envelope,
+            request_id="agent-smoke-apply",
+            allow_mutation=True,
+            timeout_seconds=5,
+        )
+    )
     checks = [
         {
             "name": "read_only_health_check",
@@ -112,6 +128,11 @@ def run_smoke() -> dict[str, object]:
             "name": "write_tool_requires_preview",
             "ok": preview_required_result.get("ok") is False and _error_code(preview_required_result) == "PREVIEW_REQUIRED",
             "summary": _summarize_result(preview_required_result),
+        },
+        {
+            "name": "write_tool_apply_not_enabled",
+            "ok": apply_not_enabled_result.get("ok") is False and _error_code(apply_not_enabled_result) == "MUTATION_APPLY_NOT_ENABLED",
+            "summary": _summarize_result(apply_not_enabled_result),
         },
     ]
     return {

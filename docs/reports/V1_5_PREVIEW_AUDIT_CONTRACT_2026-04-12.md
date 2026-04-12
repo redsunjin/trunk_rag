@@ -127,4 +127,4 @@ schema:
 
 ## Next Step
 
-2026-04-12 후속 구현으로 `LOOP-031 V1.5 preview seed + audit sink skeleton`까지 반영됐다. 다음 loop는 `LOOP-032 V1.5 preview-confirmed mutation apply draft`이며, 이 단계에서는 `preview_seed`와 `audit_sink` receipt를 참조하는 apply envelope/error taxonomy를 고정한다.
+2026-04-12 후속 구현으로 `LOOP-031 V1.5 preview seed + audit sink skeleton`, `LOOP-032 V1.5 preview-confirmed mutation apply draft`, `LOOP-033 V1.5 mutation apply guard skeleton`까지 반영됐다. 다음 loop는 `LOOP-034 V1.5 mutation execution go/no-go review`이며, 이 단계에서는 실제 write apply를 열기 전 필요한 사용자 결정 경계와 backend 조건을 고정한다.

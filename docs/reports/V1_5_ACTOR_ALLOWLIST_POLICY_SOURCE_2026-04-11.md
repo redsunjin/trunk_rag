@@ -24,7 +24,7 @@
 - `services/tool_trace_service.py`는 mutation policy detail에서 safe diagnostic seed만 redaction 결과에 남긴다.
 - 2026-04-12에는 `docs/reports/V1_5_PREVIEW_AUDIT_CONTRACT_2026-04-12.md` 기준 preview payload/persisted audit contract를 고정했다.
 - 같은 날짜 후속으로 `docs/reports/V1_5_PREVIEW_SEED_AUDIT_SINK_2026-04-12.md` 기준 preview seed builder와 append-only audit sink interface를 runtime 경계에 연결했다.
-- 남은 구현은 preview-confirmed apply envelope와 mutation apply guard를 고정하는 것이다.
+- 남은 구현은 mutation execution go/no-go와 executor interface 경계를 고정하는 것이다.
 
 ## Tool Inventory
 
@@ -204,4 +204,4 @@ preview에서 기대하는 최소 결과:
 
 ## Conclusion
 
-`LOOP-027`의 결론은 "기본 read-only allowlist를 유지하되, 이후 write tool 개방은 actor category별 policy source와 auth/intent/preview/audit 조건을 모두 거친 뒤에만 가능하다"는 점이다. 2026-04-12 기준 `resolver skeleton -> admin auth + mutation intent gate -> dry-run preview + audit persistence contract -> preview seed + audit sink skeleton`까지 구현됐고, 다음 구현 순서는 `preview-confirmed mutation apply draft -> mutation apply guard skeleton`으로 이어진다.
+`LOOP-027`의 결론은 "기본 read-only allowlist를 유지하되, 이후 write tool 개방은 actor category별 policy source와 auth/intent/preview/audit/apply 조건을 모두 거친 뒤에만 가능하다"는 점이다. 2026-04-12 기준 `resolver skeleton -> admin auth + mutation intent gate -> dry-run preview + audit persistence contract -> preview seed + audit sink skeleton -> mutation apply draft -> mutation apply guard skeleton`까지 구현됐고, 다음 구현 순서는 `mutation execution go/no-go review -> mutation executor interface draft`로 이어진다.

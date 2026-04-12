@@ -26,6 +26,7 @@ class ToolContext:
     timeout_seconds: float | None = None
     admin_code: str | None = None
     mutation_intent: str | None = None
+    apply_envelope: dict[str, object] | None = None
 
 
 @dataclass(frozen=True)

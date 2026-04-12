@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from services import actor_policy_service, tool_middleware_service, tool_trace_service
+from services import actor_policy_service, tool_apply_service, tool_middleware_service, tool_trace_service
 from services.tool_registry_service import ToolContext
 
 
@@ -39,6 +39,7 @@ def test_tool_middleware_wraps_read_tool_with_request_id_budget_and_audit():
         "timeout_budget",
         "tool_allowlist",
         "mutation_policy_guard",
+        "mutation_apply_guard",
         "unsafe_action_guard",
         "audit_log",
     ]
@@ -215,12 +216,148 @@ def test_mutation_policy_guard_requires_preview_after_auth_and_intent(monkeypatc
             "document_body_allowed": False,
         },
     }
+    assert result["error"]["apply_envelope"] == {
+        "schema_version": tool_apply_service.MUTATION_APPLY_ENVELOPE_SCHEMA_VERSION,
+        "actor_category": "maintenance_mutation",
+        "audit_scope": "maintenance",
+        "tool": {
+            "name": "reindex",
+            "side_effect": "write",
+        },
+        "preview_ref": {
+            "preview_schema_version": "v1.5.mutation_preview_seed.v1",
+            "tool_name": "reindex",
+            "target": {
+                "collection_key": "all",
+                "reset": True,
+                "include_compatibility_bundle": False,
+                "impact_scope": "core_all_only",
+            },
+        },
+        "audit_ref": {
+            "sink_type": "null_append_only",
+            "record_schema_version": "v1.5.mutation_audit_record.v1",
+            "accepted": True,
+            "sequence_id": None,
+        },
+        "intent": {
+            "summary": "reindex all",
+        },
+        "apply_control": {
+            "execution_enabled": False,
+            "required_signals": ["preview_ref", "audit_ref", "intent.summary"],
+        },
+    }
     assert result["middleware"]["trace"][-1]["middleware"] == "mutation_policy_guard"
     assert result["execution_trace"]["middleware"]["blocked_by"] == "mutation_policy_guard"
     assert result["execution_trace"]["contracts"]["preview"] == result["error"]["preview_contract"]
     assert result["execution_trace"]["contracts"]["preview_seed"] == result["error"]["preview_seed"]
+    assert result["execution_trace"]["contracts"]["apply_envelope"] == result["error"]["apply_envelope"]
     assert result["execution_trace"]["contracts"]["audit_sink"]["sink_type"] == "null_append_only"
     assert result["execution_trace"]["contracts"]["persisted_audit"]["actor_category"] == "maintenance_mutation"
+
+
+def test_mutation_apply_guard_detects_preview_reference_mismatch(monkeypatch):
+    monkeypatch.setattr(tool_middleware_service.runtime_service, "verify_admin_code", lambda code: None)
+
+    preview_result = tool_middleware_service.invoke_tool_with_middlewares(
+        "reindex",
+        {"collection": "all"},
+        context=ToolContext(
+            actor="maintenance",
+            admin_code="admin1234",
+            mutation_intent="reindex all",
+            allow_mutation=True,
+        ),
+    )
+    apply_envelope = dict(preview_result["error"]["apply_envelope"])
+    apply_envelope["preview_ref"] = {
+        **dict(apply_envelope["preview_ref"]),
+        "target": {"collection_key": "fr"},
+    }
+
+    result = tool_middleware_service.invoke_tool_with_middlewares(
+        "reindex",
+        {"collection": "all"},
+        context=ToolContext(
+            actor="maintenance",
+            admin_code="admin1234",
+            mutation_intent="reindex all",
+            apply_envelope=apply_envelope,
+            allow_mutation=True,
+        ),
+    )
+
+    assert result["ok"] is False
+    assert result["error"]["code"] == "PREVIEW_REFERENCE_MISMATCH"
+    assert result["middleware"]["trace"][-1]["middleware"] == "mutation_apply_guard"
+    assert result["execution_trace"]["middleware"]["blocked_by"] == "mutation_apply_guard"
+
+
+def test_mutation_apply_guard_requires_audit_sink_receipt(monkeypatch):
+    monkeypatch.setattr(tool_middleware_service.runtime_service, "verify_admin_code", lambda code: None)
+
+    preview_result = tool_middleware_service.invoke_tool_with_middlewares(
+        "reindex",
+        {"collection": "all"},
+        context=ToolContext(
+            actor="maintenance",
+            admin_code="admin1234",
+            mutation_intent="reindex all",
+            allow_mutation=True,
+        ),
+    )
+    apply_envelope = dict(preview_result["error"]["apply_envelope"])
+    apply_envelope.pop("audit_ref", None)
+
+    result = tool_middleware_service.invoke_tool_with_middlewares(
+        "reindex",
+        {"collection": "all"},
+        context=ToolContext(
+            actor="maintenance",
+            admin_code="admin1234",
+            mutation_intent="reindex all",
+            apply_envelope=apply_envelope,
+            allow_mutation=True,
+        ),
+    )
+
+    assert result["ok"] is False
+    assert result["error"]["code"] == "AUDIT_SINK_RECEIPT_REQUIRED"
+    assert result["middleware"]["trace"][-1]["middleware"] == "mutation_apply_guard"
+    assert result["execution_trace"]["middleware"]["blocked_by"] == "mutation_apply_guard"
+
+
+def test_mutation_apply_guard_blocks_valid_envelope_until_execution_is_enabled(monkeypatch):
+    monkeypatch.setattr(tool_middleware_service.runtime_service, "verify_admin_code", lambda code: None)
+
+    preview_result = tool_middleware_service.invoke_tool_with_middlewares(
+        "reindex",
+        {"collection": "all"},
+        context=ToolContext(
+            actor="maintenance",
+            admin_code="admin1234",
+            mutation_intent="reindex all",
+            allow_mutation=True,
+        ),
+    )
+
+    result = tool_middleware_service.invoke_tool_with_middlewares(
+        "reindex",
+        {"collection": "all"},
+        context=ToolContext(
+            actor="maintenance",
+            admin_code="admin1234",
+            mutation_intent="reindex all",
+            apply_envelope=preview_result["error"]["apply_envelope"],
+            allow_mutation=True,
+        ),
+    )
+
+    assert result["ok"] is False
+    assert result["error"]["code"] == "MUTATION_APPLY_NOT_ENABLED"
+    assert result["middleware"]["trace"][-1]["middleware"] == "mutation_apply_guard"
+    assert result["execution_trace"]["middleware"]["blocked_by"] == "mutation_apply_guard"
 
 
 def test_unsafe_action_guard_blocks_write_without_mutation_context(monkeypatch):

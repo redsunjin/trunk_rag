@@ -23,6 +23,7 @@ def test_smoke_agent_runtime_checks_read_success_and_write_block(monkeypatch):
             "agent-smoke-auth": "ADMIN_AUTH_REQUIRED",
             "agent-smoke-intent": "MUTATION_INTENT_REQUIRED",
             "agent-smoke-preview": "PREVIEW_REQUIRED",
+            "agent-smoke-apply": "MUTATION_APPLY_NOT_ENABLED",
         }[request.request_id]
         return {
             "ok": False,
@@ -31,7 +32,13 @@ def test_smoke_agent_runtime_checks_read_success_and_write_block(monkeypatch):
             "execution_trace": {
                 "request_id": request.request_id,
                 "middleware": {
-                    "blocked_by": "tool_allowlist" if error_code == "TOOL_NOT_ALLOWED" else "mutation_policy_guard"
+                    "blocked_by": (
+                        "tool_allowlist"
+                        if error_code == "TOOL_NOT_ALLOWED"
+                        else "mutation_apply_guard"
+                        if error_code == "MUTATION_APPLY_NOT_ENABLED"
+                        else "mutation_policy_guard"
+                    )
                 },
             },
         }
@@ -48,6 +55,7 @@ def test_smoke_agent_runtime_checks_read_success_and_write_block(monkeypatch):
         "reindex",
         "reindex",
         "reindex",
+        "reindex",
     ]
     assert result["checks"][0]["summary"]["selected_tool"] == "health_check"
     assert result["checks"][1]["summary"]["error_code"] == "TOOL_NOT_ALLOWED"
@@ -55,6 +63,8 @@ def test_smoke_agent_runtime_checks_read_success_and_write_block(monkeypatch):
     assert result["checks"][2]["summary"]["error_code"] == "ADMIN_AUTH_REQUIRED"
     assert result["checks"][3]["summary"]["error_code"] == "MUTATION_INTENT_REQUIRED"
     assert result["checks"][4]["summary"]["error_code"] == "PREVIEW_REQUIRED"
+    assert result["checks"][5]["summary"]["error_code"] == "MUTATION_APPLY_NOT_ENABLED"
+    assert result["checks"][5]["summary"]["blocked_by"] == "mutation_apply_guard"
 
 
 def test_smoke_agent_runtime_fails_when_write_tool_is_not_blocked(monkeypatch):
