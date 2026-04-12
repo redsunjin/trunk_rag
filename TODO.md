@@ -13,6 +13,7 @@
 - `docs/V1_5_AGENT_READY_PLAN.md`
 - `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`
 - `docs/reports/V1_5_PREVIEW_AUDIT_CONTRACT_2026-04-12.md`
+- `docs/reports/V1_5_PREVIEW_SEED_AUDIT_SINK_2026-04-12.md`
 - `docs/PREPROCESSING_RULES.md`
 - `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md`
 - `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
@@ -65,8 +66,9 @@
 | LOOP-028 | done | V1.5 actor policy resolver skeleton | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-029 | done | V1.5 admin auth + mutation intent gate | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-030 | done | V1.5 dry-run preview + audit persistence contract | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-031 | active | V1.5 preview seed + audit sink skeleton | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-032 | pending | V1.5 preview-confirmed mutation apply draft | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-031 | done | V1.5 preview seed + audit sink skeleton | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_tool_preview_service.py tests/test_tool_audit_sink_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-032 | active | V1.5 preview-confirmed mutation apply draft | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_tool_preview_service.py tests/test_tool_audit_sink_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-033 | pending | V1.5 mutation apply guard skeleton | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_tool_preview_service.py tests/test_tool_audit_sink_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -930,7 +932,7 @@ closeout 메모 (2026-04-12):
 - 검증은 타깃 `27 passed`, 전체 `182 passed`, `./.venv/bin/python scripts/smoke_agent_runtime.py -> ok=true`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과 기준으로 마감한다.
 - closeout review에서는 preview/audit contract가 코드/테스트/문서 기준으로 고정됐다고 판단했고 다음 active loop는 `LOOP-031`, 다음 pending loop는 `LOOP-032`로 정리한다.
 
-## 현재 Active Loop (LOOP-031)
+## 완료 Loop (LOOP-031)
 
 목표:
 - `LOOP-030`에서 고정한 contract shape를 실제 preview seed builder와 append-only audit sink interface 경계에 연결한다.
@@ -950,6 +952,38 @@ closeout 메모 (2026-04-12):
 
 진행 메모 (2026-04-12):
 - `LOOP-030` closeout commit 후 preview contract를 실제 seed helper와 append-only sink interface로 연결한다.
+
+closeout 메모 (2026-04-12):
+- `docs/reports/V1_5_PREVIEW_SEED_AUDIT_SINK_2026-04-12.md`를 추가해 preview seed schema, append-only audit sink interface, null/memory sink receipt, validation 규칙을 고정했다.
+- `services/tool_preview_service.py`를 추가해 `reindex`와 upload review mutation에 대한 safe preview seed helper를 구현했다.
+- `services/upload_service.py`는 `get_upload_request_view()`를 추가해 upload review preview seed가 현재 요청 상태를 안전하게 조회할 수 있게 했다.
+- `services/tool_audit_sink_service.py`를 추가해 persisted audit record 전용 append-only sink protocol, `NullAppendOnlyAuditSink`, `InMemoryAppendOnlyAuditSink`, validation helper를 구현했다.
+- `services/tool_middleware_service.py`는 `PREVIEW_REQUIRED` 응답에 `preview_seed`를 추가하고, execution trace/middleware metadata `contracts`에 `preview_seed`, `audit_sink` receipt를 함께 남기도록 변경했다.
+- `tests/test_tool_preview_service.py`, `tests/test_tool_audit_sink_service.py`를 추가했고, `tests/test_agent_runtime_service.py`, `tests/test_tool_middleware_service.py`는 preview seed와 sink receipt가 동일한 계약으로 노출되는지 검증하도록 갱신했다.
+- README, SPEC, `docs/V1_5_AGENT_READY_PLAN.md`, `docs/reports/V1_5_FOLLOWUP_POLICY_2026-04-10.md`, `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`에 구현 상태와 다음 순서를 반영했다.
+- 검증은 타깃 `33 passed`, 전체 `186 passed`, `./.venv/bin/python scripts/smoke_agent_runtime.py -> ok=true`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과 기준으로 마감한다.
+- closeout review에서는 preview seed helper와 append-only audit sink interface가 runtime/trace/docs/test 경계에 연결됐다고 판단했고 다음 active loop는 `LOOP-032`, 다음 pending loop는 `LOOP-033`으로 정리한다.
+
+## 현재 Active Loop (LOOP-032)
+
+목표:
+- preview reference, intent summary, audit sink receipt를 묶는 mutation apply envelope와 error taxonomy를 고정한다.
+
+범위:
+- 포함: apply envelope schema, preview reference/audit receipt validation error code, runtime/docs/test 정리
+- 제외: 실제 write adapter 호출, storage backend 구현, public `/agent/*` endpoint
+
+완료 기준:
+- mutation apply envelope schema가 문서와 테스트 기준으로 정리된다.
+- preview reference 누락/불일치와 audit seed 누락 error가 분리된다.
+- 실제 write automation 없이도 후속 apply loop가 기대할 handshake가 고정된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_tool_preview_service.py tests/test_tool_audit_sink_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-12):
+- `LOOP-031` closeout commit 후 preview-confirmed apply envelope와 error taxonomy를 문서/테스트 기준으로 고정한다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

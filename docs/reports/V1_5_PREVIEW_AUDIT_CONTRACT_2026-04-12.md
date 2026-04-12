@@ -127,4 +127,4 @@ schema:
 
 ## Next Step
 
-다음 loop는 `LOOP-031 V1.5 preview seed + audit sink skeleton`이다. 이 단계에서는 이번에 고정한 contract shape를 실제 preview seed builder와 append-only sink interface에 연결한다.
+2026-04-12 후속 구현으로 `LOOP-031 V1.5 preview seed + audit sink skeleton`까지 반영됐다. 다음 loop는 `LOOP-032 V1.5 preview-confirmed mutation apply draft`이며, 이 단계에서는 `preview_seed`와 `audit_sink` receipt를 참조하는 apply envelope/error taxonomy를 고정한다.

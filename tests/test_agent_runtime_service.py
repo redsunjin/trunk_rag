@@ -258,6 +258,47 @@ def test_agent_entry_requires_preview_after_admin_auth_and_intent(monkeypatch):
             "document_body_allowed": False,
         },
     }
+    assert result["error"]["preview_seed"] == {
+        "schema_version": "v1.5.mutation_preview_seed.v1",
+        "contract_schema_version": "v1.5.mutation_preview_contract.v1",
+        "request_id": "maintenance-preview-1",
+        "actor_category": "maintenance_mutation",
+        "audit_scope": "maintenance",
+        "tool": {
+            "name": "reindex",
+            "side_effect": "write",
+        },
+        "target": {
+            "collection_key": "all",
+            "reset": True,
+            "include_compatibility_bundle": False,
+            "impact_scope": "core_all_only",
+        },
+        "preview_fields": [
+            "collection_key",
+            "reset",
+            "include_compatibility_bundle",
+            "impact_summary",
+        ],
+        "preview": {
+            "collection_key": "all",
+            "reset": True,
+            "include_compatibility_bundle": False,
+            "impact_summary": "Reset and reindex all collection contents.",
+        },
+        "expected_side_effect": "Reindex all collection contents.",
+        "resolution": {
+            "status": "resolved",
+        },
+        "redaction": {
+            "audiences": ["internal", "public", "persisted"],
+            "raw_content_allowed": False,
+            "admin_code_allowed": False,
+            "document_body_allowed": False,
+        },
+    }
     assert result["execution_trace"]["middleware"]["blocked_by"] == "mutation_policy_guard"
     assert result["execution_trace"]["contracts"]["preview"] == result["error"]["preview_contract"]
+    assert result["execution_trace"]["contracts"]["preview_seed"] == result["error"]["preview_seed"]
+    assert result["execution_trace"]["contracts"]["audit_sink"]["sink_type"] == "null_append_only"
     assert result["execution_trace"]["contracts"]["persisted_audit"]["request_id"] == "maintenance-preview-1"

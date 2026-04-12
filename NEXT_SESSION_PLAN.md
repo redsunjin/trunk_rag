@@ -25,6 +25,7 @@
 - `docs/reports/V1_RELEASE_CANDIDATE_GATE_2026-04-10.md`
 - `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`
 - `docs/reports/V1_5_PREVIEW_AUDIT_CONTRACT_2026-04-12.md`
+- `docs/reports/V1_5_PREVIEW_SEED_AUDIT_SINK_2026-04-12.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -32,8 +33,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-031`
-- current_active_title: `V1.5 preview seed + audit sink skeleton`
+- current_active_id: `LOOP-032`
+- current_active_title: `V1.5 preview-confirmed mutation apply draft`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -790,7 +791,7 @@ closeout 메모 (2026-04-12):
 - `tests/test_tool_trace_service.py`, `tests/test_tool_middleware_service.py`, `tests/test_agent_runtime_service.py`는 preview/audit contract가 safe seed만 반환하는지 검증하도록 갱신했다.
 - 검증은 타깃 `27 passed`, 전체 `182 passed`, `./.venv/bin/python scripts/smoke_agent_runtime.py -> ok=true`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과 기준으로 마감한다.
 
-### A-Next24. V1.5 preview seed + audit sink skeleton (현재 active)
+### A-Next24. V1.5 preview seed + audit sink skeleton (완료: 2026-04-12)
 1. `LOOP-030`에서 고정한 preview/audit contract를 바탕으로 내부 preview payload seed와 append-only audit sink interface를 추가한다.
 2. persisted audience redaction 결과만 sink 입력으로 허용하고 raw payload/admin code/document body는 계속 제외한다.
 3. 실제 write apply는 여전히 막아 두고, 후속 mutation loop가 재사용할 adapter 경계만 만든다.
@@ -807,7 +808,15 @@ closeout 메모 (2026-04-12):
 진행 메모 (2026-04-12):
 - `LOOP-030` closeout 이후 preview contract를 실제 seed helper와 append-only sink interface로 연결한다.
 
-### A-Next25. V1.5 preview-confirmed mutation apply draft (pending)
+closeout 메모 (2026-04-12):
+- `docs/reports/V1_5_PREVIEW_SEED_AUDIT_SINK_2026-04-12.md`를 추가해 preview seed schema, append-only audit sink interface, null/memory sink receipt, validation 규칙을 고정했다.
+- `services/tool_preview_service.py`와 `services/tool_audit_sink_service.py`를 추가해 preview seed helper와 persisted audit 전용 sink protocol/null-memory sink를 구현했다.
+- `services/upload_service.py`는 `get_upload_request_view()`를 추가해 upload review preview seed가 현재 요청 상태를 안전하게 조회할 수 있게 했다.
+- `services/tool_middleware_service.py`는 `PREVIEW_REQUIRED` 응답에 `preview_seed`를 포함하고, execution trace/middleware metadata `contracts`에 `preview_seed`, `audit_sink` receipt를 함께 남기도록 변경했다.
+- `tests/test_tool_preview_service.py`, `tests/test_tool_audit_sink_service.py`를 추가했고, agent/middleware tests는 preview seed와 sink receipt가 같은 계약으로 노출되는지 검증하도록 갱신했다.
+- 검증은 타깃 `33 passed`, 전체 `186 passed`, `./.venv/bin/python scripts/smoke_agent_runtime.py -> ok=true`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과 기준으로 마감한다.
+
+### A-Next25. V1.5 preview-confirmed mutation apply draft (현재 active)
 1. preview seed와 persisted audit sink가 생긴 뒤, preview reference와 intent summary를 묶는 mutation apply envelope를 정의한다.
 2. preview reference 누락/불일치와 audit seed 누락을 서로 다른 error code로 분리한다.
 3. 실제 write adapter 호출은 여전히 막아 두고, 후속 loop가 사용할 apply handshake 경계만 고정한다.
@@ -818,7 +827,24 @@ closeout 메모 (2026-04-12):
 - 실제 write automation 없이도 후속 apply loop가 기대할 handshake가 고정된다.
 
 검증:
-- `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_tool_preview_service.py tests/test_tool_audit_sink_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-12):
+- `LOOP-031` closeout 이후 preview-confirmed apply envelope와 error taxonomy를 문서/테스트 기준으로 고정한다.
+
+### A-Next26. V1.5 mutation apply guard skeleton (pending)
+1. `LOOP-032`에서 고정한 apply envelope를 실제 middleware guard helper에 연결한다.
+2. preview reference, audit sink receipt, mutation intent summary가 모두 있을 때만 apply path 검증을 통과하게 한다.
+3. 실제 write adapter는 여전히 호출하지 않고, guard 결과와 trace/audit seed만 고정한다.
+
+완료 기준:
+- apply guard helper가 envelope validation 결과를 차단 코드와 함께 반환한다.
+- preview/audit/intention signal 누락이 trace와 error code에서 분리된다.
+- 실제 write automation 없이도 이후 apply execution loop가 기대할 guard 경계가 고정된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_tool_preview_service.py tests/test_tool_audit_sink_service.py tests/test_smoke_agent_runtime.py`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)

@@ -22,7 +22,14 @@ def test_tool_middleware_wraps_read_tool_with_request_id_budget_and_audit():
     assert result["middleware"]["policy"]["actor_category"] == "internal_read_only"
     assert result["middleware"]["policy"]["mutation_candidate_tools"] == []
     assert "preview" not in result["middleware"]["contracts"]
+    assert "preview_seed" not in result["middleware"]["contracts"]
     assert result["middleware"]["contracts"]["persisted_audit"]["request_id"] == result["middleware"]["request_id"]
+    assert result["middleware"]["contracts"]["audit_sink"] == {
+        "accepted": True,
+        "sink_type": "null_append_only",
+        "record_schema_version": "v1.5.mutation_audit_record.v1",
+        "sequence_id": None,
+    }
     assert result["middleware"]["contracts"]["persisted_audit"]["tool"] == {
         "name": "read_doc",
         "side_effect": "read",
@@ -43,6 +50,7 @@ def test_tool_middleware_wraps_read_tool_with_request_id_budget_and_audit():
     assert result["execution_trace"]["request_id"] == result["middleware"]["request_id"]
     assert result["execution_trace"]["tool"]["name"] == "read_doc"
     assert result["execution_trace"]["policy"]["actor_category"] == "internal_read_only"
+    assert result["execution_trace"]["contracts"]["audit_sink"]["sink_type"] == "null_append_only"
     assert result["execution_trace"]["contracts"]["persisted_audit"]["actor_category"] == "internal_read_only"
     assert result["execution_trace"]["tool"]["result_seed"]["origin"] == "seed"
     assert result["execution_trace"]["outcome"] == {"ok": True, "error": None}
@@ -168,9 +176,50 @@ def test_mutation_policy_guard_requires_preview_after_auth_and_intent(monkeypatc
             "document_body_allowed": False,
         },
     }
+    assert result["error"]["preview_seed"] == {
+        "schema_version": "v1.5.mutation_preview_seed.v1",
+        "contract_schema_version": tool_trace_service.PREVIEW_CONTRACT_SCHEMA_VERSION,
+        "request_id": result["middleware"]["request_id"],
+        "actor_category": "maintenance_mutation",
+        "audit_scope": "maintenance",
+        "tool": {
+            "name": "reindex",
+            "side_effect": "write",
+        },
+        "target": {
+            "collection_key": "all",
+            "reset": True,
+            "include_compatibility_bundle": False,
+            "impact_scope": "core_all_only",
+        },
+        "preview_fields": [
+            "collection_key",
+            "reset",
+            "include_compatibility_bundle",
+            "impact_summary",
+        ],
+        "preview": {
+            "collection_key": "all",
+            "reset": True,
+            "include_compatibility_bundle": False,
+            "impact_summary": "Reset and reindex all collection contents.",
+        },
+        "expected_side_effect": "Reindex all collection contents.",
+        "resolution": {
+            "status": "resolved",
+        },
+        "redaction": {
+            "audiences": ["internal", "public", "persisted"],
+            "raw_content_allowed": False,
+            "admin_code_allowed": False,
+            "document_body_allowed": False,
+        },
+    }
     assert result["middleware"]["trace"][-1]["middleware"] == "mutation_policy_guard"
     assert result["execution_trace"]["middleware"]["blocked_by"] == "mutation_policy_guard"
     assert result["execution_trace"]["contracts"]["preview"] == result["error"]["preview_contract"]
+    assert result["execution_trace"]["contracts"]["preview_seed"] == result["error"]["preview_seed"]
+    assert result["execution_trace"]["contracts"]["audit_sink"]["sink_type"] == "null_append_only"
     assert result["execution_trace"]["contracts"]["persisted_audit"]["actor_category"] == "maintenance_mutation"
 
 

@@ -236,6 +236,15 @@ def find_upload_request(request_id: str) -> tuple[list[dict[str, object]], dict[
     raise HTTPException(status_code=404, detail=f"Upload request not found: {request_id}")
 
 
+def get_upload_request_view(request_id: str) -> dict[str, object]:
+    with UPLOAD_REQUEST_LOCK:
+        items = _load_upload_requests_unlocked()
+        for item in items:
+            if item.get("id") == request_id:
+                return build_upload_request_view_unlocked(item)
+    raise HTTPException(status_code=404, detail=f"Upload request not found: {request_id}")
+
+
 def ensure_pending_status(item: dict[str, object]) -> None:
     status = str(item.get("status", ""))
     if status != REQUEST_STATUS_PENDING:

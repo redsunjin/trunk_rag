@@ -5,7 +5,14 @@ import time
 from typing import Callable
 from uuid import uuid4
 
-from services import actor_policy_service, runtime_service, tool_registry_service, tool_trace_service
+from services import (
+    actor_policy_service,
+    runtime_service,
+    tool_audit_sink_service,
+    tool_preview_service,
+    tool_registry_service,
+    tool_trace_service,
+)
 from services.tool_registry_service import ToolContext, ToolInputError, ToolPayload
 
 ToolExecutionResult = dict[str, object]
@@ -25,6 +32,10 @@ class ToolExecutionState:
     middleware_trace: list[dict[str, object]] = field(default_factory=list)
     audit_log: list[dict[str, object]] = field(default_factory=list)
     blocked_result: ToolExecutionResult | None = None
+    preview_contract: dict[str, object] | None = None
+    preview_seed: dict[str, object] | None = None
+    persisted_audit_record: dict[str, object] | None = None
+    audit_sink_receipt: dict[str, object] | None = None
 
     @property
     def side_effect(self) -> str:
@@ -112,13 +123,21 @@ def _attach_middleware_metadata(
     enriched = dict(result)
     allowed_tools = list(state.allowed_tools) if state.allowed_tools is not None else None
     policy_details = state.policy_decision.as_dict() if state.policy_decision else None
-    preview_contract = tool_trace_service.build_preview_contract(
-        request_id=state.context.request_id,
-        tool_name=state.tool_name,
-        side_effect=state.side_effect,
-        payload=state.payload,
-        policy_details=policy_details,
-    )
+    preview_contract = state.preview_contract
+    if preview_contract is None:
+        preview_contract = tool_trace_service.build_preview_contract(
+            request_id=state.context.request_id,
+            tool_name=state.tool_name,
+            side_effect=state.side_effect,
+            payload=state.payload,
+            policy_details=policy_details,
+        )
+    preview_seed = state.preview_seed
+    if preview_seed is None and preview_contract is not None:
+        preview_seed = tool_preview_service.build_preview_seed(
+            preview_contract,
+            payload=state.payload,
+        )
     middleware_metadata = {
         "request_id": state.context.request_id,
         "actor": state.context.actor,
@@ -144,12 +163,18 @@ def _attach_middleware_metadata(
         audit_events=list(state.audit_log),
         result=result,
     )
-    persisted_audit_record = tool_trace_service.build_persisted_audit_record(execution_trace)
+    persisted_audit_record = state.persisted_audit_record or tool_trace_service.build_persisted_audit_record(execution_trace)
+    audit_sink_receipt = state.audit_sink_receipt or tool_audit_sink_service.append_persisted_audit_record(
+        persisted_audit_record
+    )
     contracts: dict[str, object] = {
         "persisted_audit": persisted_audit_record,
+        "audit_sink": audit_sink_receipt,
     }
     if preview_contract is not None:
         contracts["preview"] = preview_contract
+    if preview_seed is not None:
+        contracts["preview_seed"] = preview_seed
     middleware_metadata["contracts"] = contracts
     execution_trace["contracts"] = contracts
     enriched["middleware"] = middleware_metadata
@@ -309,11 +334,18 @@ def mutation_policy_guard_middleware(state: ToolExecutionState) -> None:
             payload=state.payload,
             policy_details=decision.as_dict(),
         )
+        preview_seed = tool_preview_service.build_preview_seed(
+            preview_contract,
+            payload=state.payload,
+        )
+        state.preview_contract = preview_contract
+        state.preview_seed = preview_seed
         state.blocked_result = _error_result(
             state.tool_name,
             "PREVIEW_REQUIRED",
             "Mutation candidate tool requires a preview step before apply.",
             preview_contract=preview_contract,
+            preview_seed=preview_seed,
         )
         _append_trace(state, "mutation_policy_guard", "blocked", detail=detail)
         return
