@@ -63,7 +63,8 @@
 - 현재: `services/agent_runtime_service.py`는 단일 입력을 actor policy source 기반 allowlist/middleware/trace가 붙은 내부 single-tool runtime 흐름으로 실행하고, mutation candidate에 대해서는 `admin_code`/`mutation_intent`/`apply_envelope` 신호를 middleware gate에 전달한다
 - 현재: actor별 allowlist/mutation 정책 초안은 `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`에 고정했고, resolver skeleton과 admin auth + mutation intent gate, preview/audit contract, preview seed + audit sink skeleton, mutation apply draft/guard까지 반영됐다
 - 현재: `mutation_apply_guard`는 preview-confirmed envelope를 검증하고 `PREVIEW_REFERENCE_MISMATCH`, `AUDIT_SINK_RECEIPT_REQUIRED`, `AUDIT_SINK_RECEIPT_INVALID`, `MUTATION_INTENT_SUMMARY_REQUIRED`, `MUTATION_APPLY_NOT_ENABLED`를 분리해 차단한다
-- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 mutation execution go/no-go review, 이후 mutation executor interface draft를 순차 정리한다
+- 현재: `docs/reports/V1_5_MUTATION_EXECUTION_GO_NO_GO_REVIEW_2026-04-17.md` 기준 실제 mutation execution은 `No-Go`로 유지하며, durable audit backend/retention/operator activation이 준비되기 전까지 live write는 열지 않는다
+- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 mutation executor interface draft를 정리하고, live scope는 추후 `reindex` 단일 tool부터 다시 판단한다
 
 비목표(현재 단계):
 - 원본 수집/크롤링
@@ -110,6 +111,7 @@
 - `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`: V1.5 actor category/tool group/mutation gate 정책 초안
 - `docs/reports/V1_5_PREVIEW_AUDIT_CONTRACT_2026-04-12.md`: V1.5 preview payload/persisted audit contract 기준
 - `docs/reports/V1_5_PREVIEW_SEED_AUDIT_SINK_2026-04-12.md`: V1.5 preview seed helper/append-only audit sink skeleton 기준
+- `docs/reports/V1_5_MUTATION_EXECUTION_GO_NO_GO_REVIEW_2026-04-17.md`: V1.5 mutation execution activation go/no-go와 executor follow-up 기준
 - `scripts/diagnose_ollama_runtime.py`: Ollama 직접 호출 기준 `eval_tokens_per_second`/wall time 진단 스크립트
 - `chroma_db/embedding_fingerprints.json`: 컬렉션별 임베딩 fingerprint 메타데이터
 - `run_doc_rag.bat`: 배포형 웹 MVP 기준 단일 부트스트랩/실행 엔트리포인트

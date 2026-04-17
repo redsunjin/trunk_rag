@@ -1,4 +1,4 @@
-# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-04-12 기준)
+# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-04-17 기준)
 
 기준 문서:
 - `SPEC.md`
@@ -28,6 +28,7 @@
 - `docs/reports/V1_5_PREVIEW_SEED_AUDIT_SINK_2026-04-12.md`
 - `docs/reports/V1_5_MUTATION_APPLY_DRAFT_2026-04-12.md`
 - `docs/reports/V1_5_MUTATION_APPLY_GUARD_2026-04-12.md`
+- `docs/reports/V1_5_MUTATION_EXECUTION_GO_NO_GO_REVIEW_2026-04-17.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -35,8 +36,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-034`
-- current_active_title: `V1.5 mutation execution go/no-go review`
+- current_active_id: `LOOP-035`
+- current_active_title: `V1.5 mutation executor interface draft`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -867,7 +868,7 @@ closeout 메모 (2026-04-12):
 - `scripts/smoke_agent_runtime.py`, `tests/test_smoke_agent_runtime.py`는 preview-confirmed apply path가 `mutation_apply_guard`에서 `MUTATION_APPLY_NOT_ENABLED`로 차단되는 smoke를 추가했다.
 - 검증은 타깃 `40 passed`, 전체 `193 passed`, `./.venv/bin/python scripts/smoke_agent_runtime.py -> ok=true`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과 기준으로 마감한다.
 
-### A-Next27. V1.5 mutation execution go/no-go review (현재 active)
+### A-Next27. V1.5 mutation execution go/no-go review (완료: 2026-04-17)
 1. 실제 mutation execution을 열기 전에 필요한 사용자 결정 항목과 운영 전제조건을 문서로 고정한다.
 2. audit backend, retention, activation ownership, public surface 변경 여부를 decision matrix로 정리한다.
 3. 실제 write adapter 호출은 여전히 열지 않고, 후속 executor interface draft loop만 정의한다.
@@ -883,7 +884,13 @@ closeout 메모 (2026-04-12):
 진행 메모 (2026-04-12):
 - `LOOP-033` closeout 이후 실제 mutation apply를 열기 전 필요한 go/no-go 판단과 backend 조건을 우선 정리한다.
 
-### A-Next28. V1.5 mutation executor interface draft (pending)
+closeout 메모 (2026-04-17):
+- `docs/reports/V1_5_MUTATION_EXECUTION_GO_NO_GO_REVIEW_2026-04-17.md`를 추가해 mutation execution `No-Go` 결론, decision matrix, activation precondition, `LOOP-035` 입력 계약을 고정했다.
+- 실제 execution은 여전히 닫아 두고, public `/agent/*` 미개방, durable append-only audit backend 필요, `90일 rolling retention`, local operator explicit activation, 첫 live scope `reindex` 우선이라는 기준을 문서로 승격했다.
+- upload review execution은 managed markdown active 상태를 직접 바꾸므로 `reindex`와 분리된 후속 go/no-go 대상으로 남긴다.
+- 검증은 `./.venv/bin/python scripts/roadmap_harness.py validate -> ready` 기준으로 마감한다.
+
+### A-Next28. V1.5 mutation executor interface draft (현재 active)
 1. `LOOP-034`에서 고정한 go/no-go 기준을 바탕으로 실제 write adapter를 아직 열지 않는 executor interface draft를 설계한다.
 2. preview-confirmed apply request와 execution backend를 잇는 최소 protocol과 noop/default adapter 경계를 정의한다.
 3. public `/agent/*` endpoint와 persistence backend 활성화는 여전히 제외한다.
@@ -895,6 +902,24 @@ closeout 메모 (2026-04-12):
 
 검증:
 - `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_tool_preview_service.py tests/test_tool_audit_sink_service.py tests/test_tool_apply_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-17):
+- `LOOP-034` closeout으로 실제 execution activation은 아직 `No-Go`로 유지한다.
+- 이번 단계는 live write를 붙이지 않고 `MutationExecutor` protocol, `NoopMutationExecutor`, tool adapter registry 경계를 먼저 고정하는 것이다.
+
+### A-Next29. V1.5 durable mutation audit backend skeleton (pending)
+1. `LOOP-034`에서 고정한 backend/retention 결정을 기준으로 local append-only audit backend skeleton을 추가한다.
+2. stable `sequence_id`, rotation/prune metadata, config seam을 정리하되 실제 mutation execution activation은 여전히 제외한다.
+3. default sink는 보수적으로 유지하고, durable backend는 explicit local config가 있을 때만 선택되게 만든다.
+
+완료 기준:
+- local append-only audit backend skeleton이 문서와 테스트 기준으로 정리된다.
+- persisted audit receipt가 stable `sequence_id`와 backend metadata를 가질 수 있다.
+- execution activation 없이도 이후 live adapter 단계가 기대할 audit backend seam이 고정된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_tool_audit_sink_service.py tests/test_tool_trace_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
