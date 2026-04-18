@@ -139,7 +139,8 @@
 - `services/tool_apply_service.py`는 preview-confirmed mutation apply envelope draft와 validation error taxonomy를 제공하고, `services/tool_middleware_service.py`는 `mutation_apply_guard`로 preview-confirmed apply path를 `MUTATION_APPLY_NOT_ENABLED`까지 차단한다.
 - `docs/reports/V1_5_MUTATION_EXECUTION_GO_NO_GO_REVIEW_2026-04-17.md`는 실제 execution `No-Go`, local append-only backend/retention/operator activation 조건, `reindex` 우선 live scope를 고정했다.
 - `docs/reports/V1_5_MUTATION_EXECUTOR_INTERFACE_DRAFT_2026-04-18.md`는 `MutationExecutionRequest`, `NoopMutationExecutor`, `ReindexMutationExecutorAdapter`, `mutation_executor` contract seed를 고정했다.
-- 다음 구현은 `LOOP-036 durable mutation audit backend skeleton`이며, 이 단계에서는 explicit local config로만 선택되는 append-only file backend와 stable `sequence_id` seam을 정리한다.
+- `docs/reports/V1_5_DURABLE_MUTATION_AUDIT_BACKEND_SKELETON_2026-04-18.md`는 default null sink 유지, `local_file_append_only` opt-in, `90일 rolling_window`, stable `sequence_id` receipt를 고정했다.
+- 다음 구현은 `LOOP-037 reindex executor activation seam draft`이며, 이 단계에서는 live execution 없이 activation request, durable backend readiness, noop fallback 전환 조건을 정리한다.
 - raw input, retrieved context, document content, local path, admin code, credential은 저장/노출 기본 대상에서 제외한다.
 - `services/tool_trace_service.py`는 `redact_execution_trace()`로 `internal`, `public`, `persisted` audience별 trace 정규화를 제공한다.
 

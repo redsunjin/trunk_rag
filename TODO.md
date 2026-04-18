@@ -16,6 +16,7 @@
 - `docs/reports/V1_5_PREVIEW_SEED_AUDIT_SINK_2026-04-12.md`
 - `docs/reports/V1_5_MUTATION_EXECUTION_GO_NO_GO_REVIEW_2026-04-17.md`
 - `docs/reports/V1_5_MUTATION_EXECUTOR_INTERFACE_DRAFT_2026-04-18.md`
+- `docs/reports/V1_5_DURABLE_MUTATION_AUDIT_BACKEND_SKELETON_2026-04-18.md`
 - `docs/PREPROCESSING_RULES.md`
 - `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md`
 - `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
@@ -73,8 +74,9 @@
 | LOOP-033 | done | V1.5 mutation apply guard skeleton | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_tool_preview_service.py tests/test_tool_audit_sink_service.py tests/test_tool_apply_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-034 | done | V1.5 mutation execution go/no-go review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-035 | done | V1.5 mutation executor interface draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_tool_preview_service.py tests/test_tool_audit_sink_service.py tests/test_tool_apply_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-036 | active | V1.5 durable mutation audit backend skeleton | `./.venv/bin/python -m pytest -q tests/test_tool_audit_sink_service.py tests/test_mutation_executor_service.py tests/test_tool_trace_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-037 | pending | V1.5 reindex executor activation seam draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-036 | done | V1.5 durable mutation audit backend skeleton | `./.venv/bin/python -m pytest -q tests/test_tool_audit_sink_service.py tests/test_mutation_executor_service.py tests/test_tool_trace_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-037 | active | V1.5 reindex executor activation seam draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-038 | pending | V1.5 upload review executor boundary review | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -1042,7 +1044,7 @@ closeout 메모 (2026-04-18):
 - `tests/test_mutation_executor_service.py`를 추가했고, 타깃 회귀 `43 passed`로 executor stub/noop fallback/runtime integration을 확인했다.
 - 다음 active loop는 `LOOP-036`이며, 이 단계에서는 default sink를 유지한 채 explicit local config로만 선택되는 durable append-only audit backend skeleton을 추가한다.
 
-## 현재 Active Loop (LOOP-036)
+## 완료 Loop (LOOP-036)
 
 목표:
 - `LOOP-034`에서 고정한 backend/retention 결정을 기준으로 local append-only audit backend skeleton과 stable `sequence_id` seam을 정리한다.
@@ -1063,6 +1065,35 @@ closeout 메모 (2026-04-18):
 진행 메모 (2026-04-18):
 - `LOOP-035` closeout으로 executor interface와 noop default 경계는 고정됐다.
 - 이번 단계는 live executor activation이 아니라 append-only file backend skeleton과 stable receipt metadata를 추가하는 것이다.
+
+closeout 메모 (2026-04-18):
+- `docs/reports/V1_5_DURABLE_MUTATION_AUDIT_BACKEND_SKELETON_2026-04-18.md`를 추가해 local append-only file backend, `90일 rolling_window`, day rotation, stable `sequence_id` 규칙을 고정했다.
+- `services/tool_audit_sink_service.py`는 `LocalFileAppendOnlyAuditSink`, env 기반 backend selection, 기본 root dir `chroma_db/mutation_audit/`, `sequence_state.json` 기반 stable sequence 발급을 제공하도록 확장했다.
+- 기본 sink는 계속 `null_append_only`로 유지하고, `DOC_RAG_MUTATION_AUDIT_BACKEND=local_file`일 때만 durable backend가 선택되도록 제한했다.
+- `tests/test_tool_audit_sink_service.py`는 local file sink receipt/entry/config selection 회귀를 추가했고, 타깃 회귀 `40 passed`로 backend skeleton을 확인했다.
+- 다음 active loop는 `LOOP-037`이며, 이 단계에서는 `reindex` 전용 activation seam과 noop fallback 전환 조건을 정리한다.
+
+## 현재 Active Loop (LOOP-037)
+
+목표:
+- `reindex` 전용 mutation executor activation seam을 문서/코드 기준으로 정리하고, noop fallback에서 live candidate로 넘어갈 조건을 한 군데로 모은다.
+
+범위:
+- 포함: reindex activation guard, operator explicit activation 조건, durable audit backend readiness 판정, selection seam
+- 제외: 실제 live reindex execution, upload review executor, public `/agent/*` endpoint
+
+완료 기준:
+- `reindex` activation seam이 문서와 테스트 기준으로 정리된다.
+- noop fallback에서 stub/live candidate로 넘어갈 조건이 분리된다.
+- upload review execution은 계속 범위 밖으로 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-18):
+- `LOOP-036` closeout으로 durable append-only backend skeleton과 stable receipt metadata는 준비됐다.
+- 이번 단계는 여전히 live execution이 아니라 `reindex` 전용 activation guard와 selection seam을 먼저 고정하는 것이다.
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
 목표:
