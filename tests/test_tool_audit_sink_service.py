@@ -86,11 +86,37 @@ def test_local_file_append_only_audit_sink_persists_sequence_and_metadata(tmp_pa
     assert first["rotation_unit"] == "day"
     assert first["prune_policy"] == "rolling_window"
     assert first["retention_days"] == 90
+    assert first["ops"] == {
+        "storage_scope": "local_runtime_tree",
+        "storage_root_dir": str(tmp_path / "mutation_audit"),
+        "retention_days": 90,
+        "rotation_unit": "day",
+        "prune_policy": "rolling_window",
+        "prune_owner": "local_operator",
+        "prune_mode": "explicit_manual",
+        "runbook_required": True,
+        "activation_dependency": "retention_ops_documented",
+    }
     assert second["sequence_id"] == 2
     assert second["sink_type"] == "local_file_append_only"
     entries = sink.list_entries()
     assert [entry["sequence_id"] for entry in entries] == [1, 2]
     assert all(entry["record"]["request_id"] == "req-1" for entry in entries)
+    assert all(
+        entry["ops"]
+        == {
+            "storage_scope": "local_runtime_tree",
+            "storage_root_dir": str(tmp_path / "mutation_audit"),
+            "retention_days": 90,
+            "rotation_unit": "day",
+            "prune_policy": "rolling_window",
+            "prune_owner": "local_operator",
+            "prune_mode": "explicit_manual",
+            "runbook_required": True,
+            "activation_dependency": "retention_ops_documented",
+        }
+        for entry in entries
+    )
 
 
 def test_append_persisted_audit_record_uses_local_file_backend_when_configured(tmp_path, monkeypatch):
@@ -105,4 +131,15 @@ def test_append_persisted_audit_record_uses_local_file_backend_when_configured(t
     assert receipt["rotation_unit"] == "day"
     assert receipt["prune_policy"] == "rolling_window"
     assert receipt["retention_days"] == 90
+    assert receipt["ops"] == {
+        "storage_scope": "local_runtime_tree",
+        "storage_root_dir": str(tmp_path / "configured_audit"),
+        "retention_days": 90,
+        "rotation_unit": "day",
+        "prune_policy": "rolling_window",
+        "prune_owner": "local_operator",
+        "prune_mode": "explicit_manual",
+        "runbook_required": True,
+        "activation_dependency": "retention_ops_documented",
+    }
     assert Path(str(receipt["storage_path"])).exists() is True

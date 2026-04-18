@@ -16,6 +16,11 @@ AUDIT_SINK_BACKEND_MEMORY = "memory"
 AUDIT_SINK_BACKEND_LOCAL_FILE = "local_file"
 DEFAULT_AUDIT_RETENTION_DAYS = 90
 DEFAULT_AUDIT_ROTATION_UNIT = "day"
+DEFAULT_AUDIT_PRUNE_POLICY = "rolling_window"
+AUDIT_PRUNE_OWNER_LOCAL_OPERATOR = "local_operator"
+AUDIT_PRUNE_MODE_EXPLICIT_MANUAL = "explicit_manual"
+AUDIT_STORAGE_SCOPE_LOCAL_RUNTIME_TREE = "local_runtime_tree"
+AUDIT_ACTIVATION_DEPENDENCY = "retention_ops_documented"
 
 
 class AppendOnlyAuditSink(Protocol):
@@ -73,6 +78,19 @@ class LocalFileAppendOnlyAuditSink:
         date_token = runtime_service.utc_now_iso().split("T", 1)[0].replace("-", "")
         return self.root_dir / f"audit-{date_token}.jsonl"
 
+    def _ops_contract(self) -> dict[str, object]:
+        return {
+            "storage_scope": AUDIT_STORAGE_SCOPE_LOCAL_RUNTIME_TREE,
+            "storage_root_dir": str(self.root_dir),
+            "retention_days": self.retention_days,
+            "rotation_unit": self.rotation_unit,
+            "prune_policy": DEFAULT_AUDIT_PRUNE_POLICY,
+            "prune_owner": AUDIT_PRUNE_OWNER_LOCAL_OPERATOR,
+            "prune_mode": AUDIT_PRUNE_MODE_EXPLICIT_MANUAL,
+            "runbook_required": True,
+            "activation_dependency": AUDIT_ACTIVATION_DEPENDENCY,
+        }
+
     def _next_sequence_id(self) -> int:
         state_path = self._sequence_state_path()
         last_sequence_id = 0
@@ -108,12 +126,14 @@ class LocalFileAppendOnlyAuditSink:
         sequence_id = self._next_sequence_id()
         written_at = runtime_service.utc_now_iso()
         storage_path = self._log_path()
+        ops_contract = self._ops_contract()
         entry = {
             "sequence_id": sequence_id,
             "written_at": written_at,
             "rotation_unit": self.rotation_unit,
-            "prune_policy": "rolling_window",
+            "prune_policy": DEFAULT_AUDIT_PRUNE_POLICY,
             "retention_days": self.retention_days,
+            "ops": dict(ops_contract),
             "record": dict(record),
         }
         with storage_path.open("a", encoding="utf-8") as handle:
@@ -125,8 +145,9 @@ class LocalFileAppendOnlyAuditSink:
             "sequence_id": sequence_id,
             "storage_path": str(storage_path),
             "rotation_unit": self.rotation_unit,
-            "prune_policy": "rolling_window",
+            "prune_policy": DEFAULT_AUDIT_PRUNE_POLICY,
             "retention_days": self.retention_days,
+            "ops": ops_contract,
         }
 
     def list_entries(self) -> list[dict[str, object]]:

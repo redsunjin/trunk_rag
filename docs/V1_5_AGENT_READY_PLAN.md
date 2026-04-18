@@ -142,7 +142,8 @@
 - `docs/reports/V1_5_DURABLE_MUTATION_AUDIT_BACKEND_SKELETON_2026-04-18.md`는 default null sink 유지, `local_file_append_only` opt-in, `90일 rolling_window`, stable `sequence_id` receipt를 고정했다.
 - `docs/reports/V1_5_REINDEX_EXECUTOR_ACTIVATION_SEAM_DRAFT_2026-04-18.md`는 `reindex` activation guard, noop fallback, candidate stub selection contract를 고정했다.
 - `docs/reports/V1_5_UPLOAD_REVIEW_EXECUTOR_BOUNDARY_REVIEW_2026-04-18.md`는 upload review execution을 `boundary_noop` selection과 rollback/audit/document binding precondition으로 분리했다.
-- 다음 구현은 `LOOP-039 mutation audit retention ops draft`이며, 이 단계에서는 `90일 rolling_window` retention과 explicit prune ownership을 operator-facing 기준으로 정리한다.
+- `docs/reports/V1_5_MUTATION_AUDIT_RETENTION_OPS_DRAFT_2026-04-18.md`는 `90일 rolling_window`, explicit local-operator prune ownership, nested `ops` receipt contract를 고정했다.
+- 다음 구현은 `LOOP-040 reindex live readiness checklist draft`이며, 이 단계에서는 `reindex` activation seam, upload review boundary, retention ops를 한 checklist로 정리한다.
 - raw input, retrieved context, document content, local path, admin code, credential은 저장/노출 기본 대상에서 제외한다.
 - `services/tool_trace_service.py`는 `redact_execution_trace()`로 `internal`, `public`, `persisted` audience별 trace 정규화를 제공한다.
 
