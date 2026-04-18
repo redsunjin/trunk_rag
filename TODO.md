@@ -15,6 +15,7 @@
 - `docs/reports/V1_5_PREVIEW_AUDIT_CONTRACT_2026-04-12.md`
 - `docs/reports/V1_5_PREVIEW_SEED_AUDIT_SINK_2026-04-12.md`
 - `docs/reports/V1_5_MUTATION_EXECUTION_GO_NO_GO_REVIEW_2026-04-17.md`
+- `docs/reports/V1_5_MUTATION_EXECUTOR_INTERFACE_DRAFT_2026-04-18.md`
 - `docs/PREPROCESSING_RULES.md`
 - `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md`
 - `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
@@ -71,8 +72,9 @@
 | LOOP-032 | done | V1.5 preview-confirmed mutation apply draft | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_tool_preview_service.py tests/test_tool_audit_sink_service.py tests/test_tool_apply_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-033 | done | V1.5 mutation apply guard skeleton | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_tool_preview_service.py tests/test_tool_audit_sink_service.py tests/test_tool_apply_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-034 | done | V1.5 mutation execution go/no-go review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-035 | active | V1.5 mutation executor interface draft | `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_tool_preview_service.py tests/test_tool_audit_sink_service.py tests/test_tool_apply_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-036 | pending | V1.5 durable mutation audit backend skeleton | `./.venv/bin/python -m pytest -q tests/test_tool_audit_sink_service.py tests/test_tool_trace_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-035 | done | V1.5 mutation executor interface draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_tool_preview_service.py tests/test_tool_audit_sink_service.py tests/test_tool_apply_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-036 | active | V1.5 durable mutation audit backend skeleton | `./.venv/bin/python -m pytest -q tests/test_tool_audit_sink_service.py tests/test_mutation_executor_service.py tests/test_tool_trace_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-037 | pending | V1.5 reindex executor activation seam draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -1011,7 +1013,7 @@ closeout 메모 (2026-04-17):
 - 첫 live scope는 모든 write tool이 아니라 `reindex` 단일 tool부터 다시 판단하고, upload review execution은 별도 go/no-go로 남긴다.
 - 다음 active loop는 `LOOP-035`이며, 이 단계에서는 live adapter를 열지 않고 executor protocol/noop default/tool adapter seam만 정의한다.
 
-## 현재 Active Loop (LOOP-035)
+## 완료 Loop (LOOP-035)
 
 목표:
 - `LOOP-034`에서 고정한 go/no-go 기준을 바탕으로 실제 write adapter를 아직 열지 않는 executor interface 초안을 문서/테스트 기준으로 정리한다.
@@ -1033,6 +1035,34 @@ closeout 메모 (2026-04-17):
 - `LOOP-034` closeout으로 execution activation은 여전히 `No-Go`로 유지한다.
 - 이번 구현 단위는 durable backend나 live write가 아니라 `NoopMutationExecutor` 기본값과 tool별 adapter seam을 먼저 고정하는 것이다.
 
+closeout 메모 (2026-04-18):
+- `docs/reports/V1_5_MUTATION_EXECUTOR_INTERFACE_DRAFT_2026-04-18.md`를 추가해 `MutationExecutionRequest`, `MutationExecutor` protocol, `NoopMutationExecutor`, `ReindexMutationExecutorAdapter` stub 경계를 고정했다.
+- `services/mutation_executor_service.py`를 추가해 `reindex` 전용 stub binding과 default noop fallback을 분리했고, `DOC_RAG_AGENT_MUTATION_EXECUTION` env seam을 도입하되 live execution은 계속 닫아 뒀다.
+- `services/tool_middleware_service.py`는 preview-confirmed apply가 `MUTATION_APPLY_NOT_ENABLED`로 차단될 때 `mutation_executor` contract를 middleware metadata / execution trace / error payload에 함께 남기도록 확장했다.
+- `tests/test_mutation_executor_service.py`를 추가했고, 타깃 회귀 `43 passed`로 executor stub/noop fallback/runtime integration을 확인했다.
+- 다음 active loop는 `LOOP-036`이며, 이 단계에서는 default sink를 유지한 채 explicit local config로만 선택되는 durable append-only audit backend skeleton을 추가한다.
+
+## 현재 Active Loop (LOOP-036)
+
+목표:
+- `LOOP-034`에서 고정한 backend/retention 결정을 기준으로 local append-only audit backend skeleton과 stable `sequence_id` seam을 정리한다.
+
+범위:
+- 포함: local append-only audit sink, config/env selection seam, stable sequence id, rotation/prune metadata
+- 제외: mutation execution activation, live reindex executor, public `/agent/*` endpoint, prune job 자동화
+
+완료 기준:
+- local append-only audit backend skeleton이 문서와 테스트 기준으로 정리된다.
+- persisted audit receipt가 stable `sequence_id`와 backend metadata를 가질 수 있다.
+- default sink는 보수적으로 유지되고 explicit local config가 있을 때만 durable backend가 선택된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_tool_audit_sink_service.py tests/test_mutation_executor_service.py tests/test_tool_trace_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-18):
+- `LOOP-035` closeout으로 executor interface와 noop default 경계는 고정됐다.
+- 이번 단계는 live executor activation이 아니라 append-only file backend skeleton과 stable receipt metadata를 추가하는 것이다.
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
 목표:

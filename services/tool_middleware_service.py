@@ -7,6 +7,7 @@ from uuid import uuid4
 
 from services import (
     actor_policy_service,
+    mutation_executor_service,
     runtime_service,
     tool_apply_service,
     tool_audit_sink_service,
@@ -38,6 +39,7 @@ class ToolExecutionState:
     apply_envelope: dict[str, object] | None = None
     persisted_audit_record: dict[str, object] | None = None
     audit_sink_receipt: dict[str, object] | None = None
+    mutation_executor_contract: dict[str, object] | None = None
 
     @property
     def side_effect(self) -> str:
@@ -169,6 +171,29 @@ def _attach_middleware_metadata(
     audit_sink_receipt = state.audit_sink_receipt or tool_audit_sink_service.append_persisted_audit_record(
         persisted_audit_record
     )
+    mutation_executor_contract = state.mutation_executor_contract
+    if isinstance(enriched.get("error"), dict):
+        error = dict(enriched["error"])
+        if error.get("code") == tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED:
+            mutation_request = _build_mutation_execution_request(
+                state,
+                persisted_audit_record=persisted_audit_record,
+                audit_sink_receipt=audit_sink_receipt,
+            )
+            if mutation_request is not None:
+                executor_result = mutation_executor_service.execute_mutation_request(mutation_request)
+                executor_error = executor_result.get("error")
+                if isinstance(executor_error, dict):
+                    error = {
+                        **error,
+                        **dict(executor_error),
+                    }
+                executor_contract = executor_result.get("executor")
+                if isinstance(executor_contract, dict):
+                    mutation_executor_contract = dict(executor_contract)
+            if mutation_executor_contract is not None:
+                error["mutation_executor"] = mutation_executor_contract
+            enriched["error"] = error
     mutation_intent_summary = _resolve_mutation_intent(state)
     apply_envelope_draft = tool_apply_service.build_mutation_apply_envelope(
         preview_seed=preview_seed,
@@ -185,13 +210,17 @@ def _attach_middleware_metadata(
         contracts["preview_seed"] = preview_seed
     if apply_envelope_draft is not None:
         contracts["apply_envelope"] = apply_envelope_draft
+    if mutation_executor_contract is not None:
+        contracts["mutation_executor"] = mutation_executor_contract
     middleware_metadata["contracts"] = contracts
     execution_trace["contracts"] = contracts
-    if isinstance(enriched.get("error"), dict) and apply_envelope_draft is not None:
-        enriched["error"] = {
-            **dict(enriched["error"]),
-            "apply_envelope": apply_envelope_draft,
-        }
+    if isinstance(enriched.get("error"), dict):
+        updated_error = dict(enriched["error"])
+        if apply_envelope_draft is not None:
+            updated_error["apply_envelope"] = apply_envelope_draft
+        if mutation_executor_contract is not None:
+            updated_error["mutation_executor"] = mutation_executor_contract
+        enriched["error"] = updated_error
     enriched["middleware"] = middleware_metadata
     enriched["execution_trace"] = execution_trace
     return enriched
@@ -286,6 +315,28 @@ def _resolve_apply_envelope(state: ToolExecutionState) -> dict[str, object] | No
     if isinstance(payload_apply_envelope, dict):
         return dict(payload_apply_envelope)
     return None
+
+
+def _build_mutation_execution_request(
+    state: ToolExecutionState,
+    *,
+    persisted_audit_record: dict[str, object],
+    audit_sink_receipt: dict[str, object],
+) -> mutation_executor_service.MutationExecutionRequest | None:
+    actor_category = state.policy_decision.actor_category if state.policy_decision else None
+    return mutation_executor_service.build_mutation_execution_request(
+        request_id=state.context.request_id,
+        tool_name=state.tool_name,
+        payload=state.payload,
+        apply_envelope=state.apply_envelope,
+        preview_seed=state.preview_seed,
+        persisted_audit_record=persisted_audit_record,
+        audit_sink_receipt=audit_sink_receipt,
+        actor=state.context.actor,
+        actor_category=actor_category,
+        allow_mutation=state.context.allow_mutation,
+        timeout_seconds=state.timeout_seconds,
+    )
 
 
 def mutation_policy_guard_middleware(state: ToolExecutionState) -> None:

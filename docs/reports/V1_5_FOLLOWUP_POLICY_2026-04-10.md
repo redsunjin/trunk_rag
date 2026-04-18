@@ -81,7 +81,7 @@ write tool을 agent runtime에 열기 전 필요한 조건:
 1. Public API는 만들지 않는다.
 2. V1 기본 `/query` 경로는 유지한다.
 3. agent runtime은 내부 service + unit test + smoke script 기준으로만 유지한다.
-4. 다음 구현 후보는 `mutation executor interface draft`로 제한한다.
+4. 다음 구현 후보는 `durable mutation audit backend skeleton`으로 제한한다.
 
 ## Smoke Check
 
@@ -105,7 +105,7 @@ Trace 저장/노출 전 redaction 기준은 `docs/reports/V1_5_TRACE_REDACTION_P
 - raw input, retrieved context, document content, local path, admin code, credential은 저장/노출 기본 대상에서 제외한다.
 - 기본 저장 후보는 request id, tool name, side effect, runtime elapsed, route seed, outcome code, middleware blocked_by 같은 diagnostic seed로 제한한다.
 - `redact_execution_trace()` 순수 함수와 `internal/public/persisted` audience별 단위 테스트를 추가했다.
-- 이후 구현은 actor policy source, mutation gate, preview/audit contract, preview seed/audit sink, mutation apply guard, execution go/no-go review 순서로 진행됐고 현재 다음 후보는 `mutation executor interface draft`다.
+- 이후 구현은 actor policy source, mutation gate, preview/audit contract, preview seed/audit sink, mutation apply guard, execution go/no-go review, mutation executor interface draft 순서로 진행됐고 현재 다음 후보는 `durable mutation audit backend skeleton`이다.
 
 ## Deferred
 

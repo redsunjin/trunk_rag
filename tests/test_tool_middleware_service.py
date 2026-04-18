@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from services import actor_policy_service, tool_apply_service, tool_middleware_service, tool_trace_service
+from services import actor_policy_service, mutation_executor_service, tool_apply_service, tool_middleware_service, tool_trace_service
 from services.tool_registry_service import ToolContext
 
 
@@ -23,6 +23,7 @@ def test_tool_middleware_wraps_read_tool_with_request_id_budget_and_audit():
     assert result["middleware"]["policy"]["mutation_candidate_tools"] == []
     assert "preview" not in result["middleware"]["contracts"]
     assert "preview_seed" not in result["middleware"]["contracts"]
+    assert "mutation_executor" not in result["middleware"]["contracts"]
     assert result["middleware"]["contracts"]["persisted_audit"]["request_id"] == result["middleware"]["request_id"]
     assert result["middleware"]["contracts"]["audit_sink"] == {
         "accepted": True,
@@ -356,8 +357,29 @@ def test_mutation_apply_guard_blocks_valid_envelope_until_execution_is_enabled(m
 
     assert result["ok"] is False
     assert result["error"]["code"] == "MUTATION_APPLY_NOT_ENABLED"
+    assert result["error"]["mutation_executor"] == {
+        "schema_version": mutation_executor_service.MUTATION_EXECUTOR_CONTRACT_SCHEMA_VERSION,
+        "executor_name": "reindex_mutation_adapter_stub",
+        "binding_kind": "tool_adapter_stub",
+        "tool_name": "reindex",
+        "tool_registered": True,
+        "activation_requested": False,
+        "execution_enabled": False,
+        "delegate_executor_name": "noop_mutation_executor",
+        "request": {
+            "request_id": result["middleware"]["request_id"],
+            "actor_category": "maintenance_mutation",
+            "allow_mutation": True,
+            "timeout_seconds": 30.0,
+            "apply_schema_version": tool_apply_service.MUTATION_APPLY_ENVELOPE_SCHEMA_VERSION,
+            "preview_schema_version": "v1.5.mutation_preview_seed.v1",
+            "audit_record_schema_version": "v1.5.mutation_audit_record.v1",
+            "audit_sink_type": "null_append_only",
+        },
+    }
     assert result["middleware"]["trace"][-1]["middleware"] == "mutation_apply_guard"
     assert result["execution_trace"]["middleware"]["blocked_by"] == "mutation_apply_guard"
+    assert result["execution_trace"]["contracts"]["mutation_executor"] == result["error"]["mutation_executor"]
 
 
 def test_unsafe_action_guard_blocks_write_without_mutation_context(monkeypatch):

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from services import agent_runtime_service, tool_apply_service
+from services import agent_runtime_service, mutation_executor_service, tool_apply_service
 
 
 def test_agent_entry_defaults_single_input_to_search_docs(monkeypatch):
@@ -378,5 +378,26 @@ def test_agent_entry_blocks_preview_confirmed_apply_until_execution_is_enabled(m
     assert result["entry"]["apply_envelope_present"] is True
     assert result["error"]["code"] == "MUTATION_APPLY_NOT_ENABLED"
     assert result["error"]["submitted_apply_envelope"] == preview_result["error"]["apply_envelope"]
+    assert result["error"]["mutation_executor"] == {
+        "schema_version": mutation_executor_service.MUTATION_EXECUTOR_CONTRACT_SCHEMA_VERSION,
+        "executor_name": "reindex_mutation_adapter_stub",
+        "binding_kind": "tool_adapter_stub",
+        "tool_name": "reindex",
+        "tool_registered": True,
+        "activation_requested": False,
+        "execution_enabled": False,
+        "delegate_executor_name": "noop_mutation_executor",
+        "request": {
+            "request_id": "maintenance-apply-1",
+            "actor_category": "maintenance_mutation",
+            "allow_mutation": True,
+            "timeout_seconds": 30.0,
+            "apply_schema_version": tool_apply_service.MUTATION_APPLY_ENVELOPE_SCHEMA_VERSION,
+            "preview_schema_version": "v1.5.mutation_preview_seed.v1",
+            "audit_record_schema_version": "v1.5.mutation_audit_record.v1",
+            "audit_sink_type": "null_append_only",
+        },
+    }
     assert result["execution_trace"]["middleware"]["blocked_by"] == "mutation_apply_guard"
     assert result["execution_trace"]["contracts"]["apply_envelope"] == result["error"]["apply_envelope"]
+    assert result["execution_trace"]["contracts"]["mutation_executor"] == result["error"]["mutation_executor"]
