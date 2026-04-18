@@ -389,6 +389,20 @@ def test_mutation_apply_guard_blocks_valid_envelope_until_execution_is_enabled(m
             "audit_storage_path": None,
             "blocked_by": ["activation_not_requested", "durable_audit_not_ready"],
         },
+        "boundary": {
+            "family": "reindex",
+            "classification": "derivative_runtime_state",
+            "live_candidate_allowed": True,
+            "managed_state_write": False,
+            "approval_state_write": False,
+            "requires_durable_audit_receipt": True,
+            "requires_rollback_plan": False,
+            "requires_managed_state_snapshot": False,
+            "requires_document_version_binding": False,
+            "requires_decision_audit": False,
+            "required_preconditions": ["operator_activation", "durable_audit_ready"],
+            "blocked_by": [],
+        },
         "request": {
             "request_id": result["middleware"]["request_id"],
             "actor_category": "maintenance_mutation",
@@ -457,7 +471,107 @@ def test_mutation_apply_guard_exposes_reindex_candidate_stub_when_activation_and
     assert str(activation["audit_storage_path"]).startswith(str(tmp_path / "mutation_audit" / "audit-"))
     assert str(activation["audit_storage_path"]).endswith(".jsonl")
     assert activation["blocked_by"] == []
+    boundary = result["error"]["mutation_executor"]["boundary"]
+    assert boundary == {
+        "family": "reindex",
+        "classification": "derivative_runtime_state",
+        "live_candidate_allowed": True,
+        "managed_state_write": False,
+        "approval_state_write": False,
+        "requires_durable_audit_receipt": True,
+        "requires_rollback_plan": False,
+        "requires_managed_state_snapshot": False,
+        "requires_document_version_binding": False,
+        "requires_decision_audit": False,
+        "required_preconditions": ["operator_activation", "durable_audit_ready"],
+        "blocked_by": [],
+    }
     assert result["error"]["mutation_executor"]["delegate_executor_name"] == "noop_mutation_executor"
+    assert result["execution_trace"]["contracts"]["mutation_executor"] == result["error"]["mutation_executor"]
+
+
+def test_mutation_apply_guard_keeps_upload_review_in_boundary_noop_even_when_activation_and_durable_audit_are_ready(
+    monkeypatch,
+    tmp_path,
+):
+    monkeypatch.setattr(tool_middleware_service.runtime_service, "verify_admin_code", lambda code: None)
+    monkeypatch.setenv(mutation_executor_service.MUTATION_EXECUTION_ENV_KEY, "1")
+    monkeypatch.setenv(tool_audit_sink_service.AUDIT_SINK_BACKEND_ENV_KEY, "local_file")
+    monkeypatch.setenv(tool_audit_sink_service.AUDIT_SINK_DIR_ENV_KEY, str(tmp_path / "mutation_audit"))
+    monkeypatch.setattr(
+        tool_middleware_service.tool_preview_service.upload_service,
+        "get_upload_request_view",
+        lambda request_id: {
+            "id": request_id,
+            "status": "pending",
+            "request_type": "update",
+            "doc_key": "fr-summary",
+        },
+    )
+
+    preview_result = tool_middleware_service.invoke_tool_with_middlewares(
+        "approve_upload_request",
+        {"request_id": "upload-42"},
+        context=ToolContext(
+            actor="admin",
+            admin_code="admin1234",
+            mutation_intent="approve upload-42",
+            allow_mutation=True,
+        ),
+    )
+
+    result = tool_middleware_service.invoke_tool_with_middlewares(
+        "approve_upload_request",
+        {"request_id": "upload-42"},
+        context=ToolContext(
+            actor="admin",
+            admin_code="admin1234",
+            mutation_intent="approve upload-42",
+            apply_envelope=preview_result["error"]["apply_envelope"],
+            allow_mutation=True,
+        ),
+    )
+
+    assert result["ok"] is False
+    assert result["error"]["code"] == "MUTATION_APPLY_NOT_ENABLED"
+    assert result["error"]["mutation_executor"]["executor_name"] == "noop_mutation_executor"
+    assert result["error"]["mutation_executor"]["tool_name"] == "approve_upload_request"
+    assert result["error"]["mutation_executor"]["tool_registered"] is False
+    assert result["error"]["mutation_executor"]["selection_state"] == "boundary_noop"
+    assert result["error"]["mutation_executor"]["selection_reason"] == "upload_review_scope_deferred"
+    activation = result["error"]["mutation_executor"]["activation"]
+    assert activation["requested"] is True
+    assert activation["durable_audit_required"] is False
+    assert activation["audit_sink_type"] == "local_file_append_only"
+    assert activation["audit_sequence_id"] == 2
+    assert str(activation["audit_storage_path"]).startswith(str(tmp_path / "mutation_audit" / "audit-"))
+    assert str(activation["audit_storage_path"]).endswith(".jsonl")
+    assert activation["blocked_by"] == []
+    boundary = result["error"]["mutation_executor"]["boundary"]
+    assert boundary == {
+        "family": "upload_review",
+        "classification": "managed_doc_activation",
+        "live_candidate_allowed": False,
+        "managed_state_write": True,
+        "approval_state_write": True,
+        "requires_durable_audit_receipt": True,
+        "requires_rollback_plan": True,
+        "requires_managed_state_snapshot": True,
+        "requires_document_version_binding": True,
+        "requires_decision_audit": True,
+        "required_preconditions": [
+            "separate_upload_review_go_no_go",
+            "decision_audit_contract",
+            "managed_state_snapshot",
+            "document_version_binding",
+            "rollback_plan",
+        ],
+        "blocked_by": [
+            "upload_review_scope_deferred",
+            "managed_state_rollback_not_ready",
+            "document_version_binding_not_reviewed",
+        ],
+    }
     assert result["execution_trace"]["contracts"]["mutation_executor"] == result["error"]["mutation_executor"]
 
 

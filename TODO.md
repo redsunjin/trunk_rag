@@ -18,6 +18,7 @@
 - `docs/reports/V1_5_MUTATION_EXECUTOR_INTERFACE_DRAFT_2026-04-18.md`
 - `docs/reports/V1_5_DURABLE_MUTATION_AUDIT_BACKEND_SKELETON_2026-04-18.md`
 - `docs/reports/V1_5_REINDEX_EXECUTOR_ACTIVATION_SEAM_DRAFT_2026-04-18.md`
+- `docs/reports/V1_5_UPLOAD_REVIEW_EXECUTOR_BOUNDARY_REVIEW_2026-04-18.md`
 - `docs/PREPROCESSING_RULES.md`
 - `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md`
 - `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
@@ -77,8 +78,9 @@
 | LOOP-035 | done | V1.5 mutation executor interface draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_tool_preview_service.py tests/test_tool_audit_sink_service.py tests/test_tool_apply_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-036 | done | V1.5 durable mutation audit backend skeleton | `./.venv/bin/python -m pytest -q tests/test_tool_audit_sink_service.py tests/test_mutation_executor_service.py tests/test_tool_trace_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-037 | done | V1.5 reindex executor activation seam draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-038 | active | V1.5 upload review executor boundary review | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-039 | pending | V1.5 mutation audit retention ops draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-038 | done | V1.5 upload review executor boundary review | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-039 | active | V1.5 mutation audit retention ops draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-040 | pending | V1.5 reindex live readiness checklist draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -1105,7 +1107,7 @@ closeout 메모 (2026-04-18):
 - 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py -> 35 passed`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과로 마감했다.
 - 다음 active loop는 `LOOP-038`이며, upload review execution을 `reindex` activation seam과 섞지 않는 별도 boundary review를 진행한다. 다음 pending loop는 `LOOP-039 mutation audit retention ops draft`다.
 
-## 현재 Active Loop (LOOP-038)
+## 완료 Loop (LOOP-038)
 
 목표:
 - upload review execution을 `reindex` activation seam과 분리된 별도 위험 경계로 정리하고, live candidate 범위 밖이라는 점을 문서/테스트 기준으로 고정한다.
@@ -1126,6 +1128,36 @@ closeout 메모 (2026-04-18):
 진행 메모 (2026-04-18):
 - `LOOP-037` closeout으로 `reindex` activation request/durable audit readiness/noop fallback 전환 조건은 고정됐다.
 - 이번 단계는 upload review execution을 계속 범위 밖으로 두되, 왜 `reindex`와 다른 rollback/audit 경계를 가져야 하는지 문서와 테스트 기준으로 분리하는 것이다.
+
+closeout 메모 (2026-04-18):
+- `docs/reports/V1_5_UPLOAD_REVIEW_EXECUTOR_BOUNDARY_REVIEW_2026-04-18.md`를 추가해 upload review execution을 `reindex` activation seam과 분리된 별도 boundary로 고정했다.
+- `services/mutation_executor_service.py`는 `approve_upload_request`, `reject_upload_request`를 generic unregistered noop가 아니라 `selection_state=boundary_noop`, `selection_reason=upload_review_scope_deferred`로 노출하고, nested `boundary` 계약에 rollback/audit/document binding precondition을 남기도록 확장했다.
+- `approve_upload_request`는 `managed_doc_activation`, `reject_upload_request`는 `request_decision_only`로 분리해 managed markdown active 상태 변경과 decision-only write를 같은 live candidate로 취급하지 않도록 고정했다.
+- `tests/test_mutation_executor_service.py`, `tests/test_tool_middleware_service.py`, `tests/test_agent_runtime_service.py`는 activation on + durable local audit ready 조건에서도 upload review가 계속 `boundary_noop`로 남는지 검증하도록 확장했다.
+- 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py -> 38 passed`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과로 마감했다.
+- 다음 active loop는 `LOOP-039`이며, `90일 rolling_window` retention과 explicit prune ownership을 operator-facing 기준으로 정리한다. 다음 pending loop는 `LOOP-040 reindex live readiness checklist draft`다.
+
+## 현재 Active Loop (LOOP-039)
+
+목표:
+- mutation audit retention/prune 운영 경계를 문서 기준으로 정리하고, staged activation 판단과 충돌하지 않는 operator ownership 문구를 고정한다.
+
+범위:
+- 포함: `90일 rolling_window` retention, explicit prune ownership, operator-facing audit ops precondition
+- 제외: 자동 prune job 구현, 실제 live execution 개방, public `/agent/*` endpoint, upload review live executor
+
+완료 기준:
+- mutation audit retention/prune 운영 경계가 문서와 테스트 기준으로 정리된다.
+- local operator activation ownership과 retention 책임 문구가 충돌 없이 고정된다.
+- 자동 prune job 없이도 current `No-Go`/staged activation 판단이 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-18):
+- `LOOP-038` closeout으로 upload review execution은 `reindex` activation seam과 분리된 별도 boundary로 고정됐다.
+- 이번 단계는 live execution을 열지 않고, `90일 rolling_window` retention과 explicit prune ownership 문구를 operator-facing 기준으로 정리하는 것이다.
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
 목표:

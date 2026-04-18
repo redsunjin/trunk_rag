@@ -11,6 +11,9 @@ REINDEX_MUTATION_EXECUTOR_NAME = "reindex_mutation_adapter_stub"
 NOOP_MUTATION_EXECUTOR_NAME = "noop_mutation_executor"
 REINDEX_FIRST_LIVE_SCOPE = "reindex"
 LOCAL_FILE_APPEND_ONLY_SINK_TYPE = "local_file_append_only"
+APPROVE_UPLOAD_REQUEST_TOOL = "approve_upload_request"
+REJECT_UPLOAD_REQUEST_TOOL = "reject_upload_request"
+UPLOAD_REVIEW_MUTATION_TOOLS = frozenset({APPROVE_UPLOAD_REQUEST_TOOL, REJECT_UPLOAD_REQUEST_TOOL})
 
 
 @dataclass(frozen=True)
@@ -95,6 +98,84 @@ def _build_activation_contract(request: MutationExecutionRequest) -> dict[str, o
     }
 
 
+def _build_boundary_contract(request: MutationExecutionRequest) -> dict[str, object]:
+    if request.tool_name == REINDEX_FIRST_LIVE_SCOPE:
+        return {
+            "family": "reindex",
+            "classification": "derivative_runtime_state",
+            "live_candidate_allowed": True,
+            "managed_state_write": False,
+            "approval_state_write": False,
+            "requires_durable_audit_receipt": True,
+            "requires_rollback_plan": False,
+            "requires_managed_state_snapshot": False,
+            "requires_document_version_binding": False,
+            "requires_decision_audit": False,
+            "required_preconditions": ["operator_activation", "durable_audit_ready"],
+            "blocked_by": [],
+        }
+    if request.tool_name == APPROVE_UPLOAD_REQUEST_TOOL:
+        return {
+            "family": "upload_review",
+            "classification": "managed_doc_activation",
+            "live_candidate_allowed": False,
+            "managed_state_write": True,
+            "approval_state_write": True,
+            "requires_durable_audit_receipt": True,
+            "requires_rollback_plan": True,
+            "requires_managed_state_snapshot": True,
+            "requires_document_version_binding": True,
+            "requires_decision_audit": True,
+            "required_preconditions": [
+                "separate_upload_review_go_no_go",
+                "decision_audit_contract",
+                "managed_state_snapshot",
+                "document_version_binding",
+                "rollback_plan",
+            ],
+            "blocked_by": [
+                "upload_review_scope_deferred",
+                "managed_state_rollback_not_ready",
+                "document_version_binding_not_reviewed",
+            ],
+        }
+    if request.tool_name == REJECT_UPLOAD_REQUEST_TOOL:
+        return {
+            "family": "upload_review",
+            "classification": "request_decision_only",
+            "live_candidate_allowed": False,
+            "managed_state_write": False,
+            "approval_state_write": True,
+            "requires_durable_audit_receipt": True,
+            "requires_rollback_plan": False,
+            "requires_managed_state_snapshot": False,
+            "requires_document_version_binding": False,
+            "requires_decision_audit": True,
+            "required_preconditions": [
+                "separate_upload_review_go_no_go",
+                "decision_audit_contract",
+            ],
+            "blocked_by": [
+                "upload_review_scope_deferred",
+                "decision_audit_contract_not_reviewed",
+            ],
+        }
+    return {
+        "family": "unregistered_mutation",
+        "classification": "no_registered_boundary",
+        "live_candidate_allowed": False,
+        "managed_state_write": False,
+        "approval_state_write": False,
+        "requires_durable_audit_receipt": False,
+        "requires_rollback_plan": False,
+        "requires_managed_state_snapshot": False,
+        "requires_document_version_binding": False,
+        "requires_decision_audit": False,
+        "required_preconditions": [],
+        "blocked_by": ["tool_not_registered"],
+    }
+
+
 def _build_executor_contract(
     *,
     request: MutationExecutionRequest,
@@ -103,6 +184,7 @@ def _build_executor_contract(
     tool_registered: bool,
     execution_enabled: bool,
     activation_contract: dict[str, object],
+    boundary_contract: dict[str, object],
     selection_state: str,
     selection_reason: str,
     registered_executor_name: str | None = None,
@@ -119,6 +201,7 @@ def _build_executor_contract(
         "selection_state": selection_state,
         "selection_reason": selection_reason,
         "activation": dict(activation_contract),
+        "boundary": dict(boundary_contract),
         "request": {
             "request_id": request.request_id,
             "actor_category": request.actor_category,
@@ -186,6 +269,7 @@ class NoopMutationExecutor:
     selection_state: str = "default_noop"
     selection_reason: str = "tool_not_registered"
     activation_contract: dict[str, object] | None = None
+    boundary_contract: dict[str, object] | None = None
     registered_executor_name: str | None = None
 
     def supports(self, tool_name: str) -> bool:
@@ -193,6 +277,7 @@ class NoopMutationExecutor:
 
     def execute(self, request: MutationExecutionRequest) -> dict[str, object]:
         activation_contract = dict(self.activation_contract) if isinstance(self.activation_contract, dict) else _build_activation_contract(request)
+        boundary_contract = dict(self.boundary_contract) if isinstance(self.boundary_contract, dict) else _build_boundary_contract(request)
         return {
             "ok": False,
             "error": {
@@ -206,6 +291,7 @@ class NoopMutationExecutor:
                 tool_registered=self.tool_registered,
                 execution_enabled=False,
                 activation_contract=activation_contract,
+                boundary_contract=boundary_contract,
                 selection_state=self.selection_state,
                 selection_reason=self.selection_reason,
                 registered_executor_name=self.registered_executor_name,
@@ -220,12 +306,14 @@ class ReindexMutationExecutorAdapter:
     selection_state: str = "candidate_stub"
     selection_reason: str = "activation_guard_satisfied"
     activation_contract: dict[str, object] | None = None
+    boundary_contract: dict[str, object] | None = None
 
     def supports(self, tool_name: str) -> bool:
         return tool_name == "reindex"
 
     def execute(self, request: MutationExecutionRequest) -> dict[str, object]:
         activation_contract = dict(self.activation_contract) if isinstance(self.activation_contract, dict) else _build_activation_contract(request)
+        boundary_contract = dict(self.boundary_contract) if isinstance(self.boundary_contract, dict) else _build_boundary_contract(request)
         return {
             "ok": False,
             "error": {
@@ -239,6 +327,7 @@ class ReindexMutationExecutorAdapter:
                 tool_registered=True,
                 execution_enabled=False,
                 activation_contract=activation_contract,
+                boundary_contract=boundary_contract,
                 selection_state=self.selection_state,
                 selection_reason=self.selection_reason,
                 delegate_executor_name=NOOP_MUTATION_EXECUTOR_NAME,
@@ -254,17 +343,32 @@ def list_registered_mutation_executor_bindings() -> dict[str, str]:
 
 def resolve_mutation_executor(request: MutationExecutionRequest) -> MutationExecutor:
     activation_contract = _build_activation_contract(request)
+    boundary_contract = _build_boundary_contract(request)
+    if request.tool_name in UPLOAD_REVIEW_MUTATION_TOOLS:
+        return NoopMutationExecutor(
+            selection_state="boundary_noop",
+            selection_reason="upload_review_scope_deferred",
+            activation_contract=activation_contract,
+            boundary_contract=boundary_contract,
+        )
     if request.tool_name != REINDEX_FIRST_LIVE_SCOPE:
-        return NoopMutationExecutor(activation_contract=activation_contract)
+        return NoopMutationExecutor(
+            activation_contract=activation_contract,
+            boundary_contract=boundary_contract,
+        )
     if list(activation_contract.get("blocked_by") or []):
         return NoopMutationExecutor(
             tool_registered=True,
             selection_state="noop_fallback",
             selection_reason="activation_guard_blocked",
             activation_contract=activation_contract,
+            boundary_contract=boundary_contract,
             registered_executor_name=REINDEX_MUTATION_EXECUTOR_NAME,
         )
-    return ReindexMutationExecutorAdapter(activation_contract=activation_contract)
+    return ReindexMutationExecutorAdapter(
+        activation_contract=activation_contract,
+        boundary_contract=boundary_contract,
+    )
 
 
 def execute_mutation_request(request: MutationExecutionRequest) -> dict[str, object]:
