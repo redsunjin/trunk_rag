@@ -31,6 +31,7 @@
 - `docs/reports/V1_5_MUTATION_EXECUTION_GO_NO_GO_REVIEW_2026-04-17.md`
 - `docs/reports/V1_5_MUTATION_EXECUTOR_INTERFACE_DRAFT_2026-04-18.md`
 - `docs/reports/V1_5_DURABLE_MUTATION_AUDIT_BACKEND_SKELETON_2026-04-18.md`
+- `docs/reports/V1_5_REINDEX_EXECUTOR_ACTIVATION_SEAM_DRAFT_2026-04-18.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -38,8 +39,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-037`
-- current_active_title: `V1.5 reindex executor activation seam draft`
+- current_active_id: `LOOP-038`
+- current_active_title: `V1.5 upload review executor boundary review`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -940,7 +941,7 @@ closeout 메모 (2026-04-18):
 - `.env.example`에는 `DOC_RAG_MUTATION_AUDIT_BACKEND`, `DOC_RAG_MUTATION_AUDIT_DIR`를 추가해 explicit local config seam을 드러냈다.
 - `tests/test_tool_audit_sink_service.py`는 local file sink receipt/entry/config selection을 검증하도록 확장했고, 타깃 회귀 `40 passed`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과 기준으로 마감한다.
 
-### A-Next30. V1.5 reindex executor activation seam draft (현재 active)
+### A-Next30. V1.5 reindex executor activation seam draft (완료: 2026-04-18)
 1. `LOOP-035`, `LOOP-036` 결과를 바탕으로 `reindex` 전용 live executor activation seam을 문서/코드 기준으로 정리한다.
 2. operator explicit activation, durable audit backend readiness, noop fallback 전환 조건을 한 군데로 모은다.
 3. 실제 live reindex 실행은 아직 열지 않고 activation guard와 selection 규칙만 고정한다.
@@ -958,7 +959,13 @@ closeout 메모 (2026-04-18):
 - `LOOP-036` closeout으로 durable audit backend skeleton은 준비됐다.
 - 이번 단계는 `reindex`에 한해서 activation request, durable backend readiness, noop fallback 전환 조건을 먼저 고정하는 것이다.
 
-### A-Next31. V1.5 upload review executor boundary review (pending)
+closeout 메모 (2026-04-18):
+- `docs/reports/V1_5_REINDEX_EXECUTOR_ACTIVATION_SEAM_DRAFT_2026-04-18.md`를 추가해 `reindex` activation guard, durable audit readiness, noop fallback/candidate stub selection 규칙을 고정했다.
+- `services/mutation_executor_service.py`는 `resolve_mutation_executor(request)` 기준 selection seam을 중앙화하고, `selection_state`, `selection_reason`, `registered_executor_name`, nested `activation` contract를 추가했다.
+- `tests/test_mutation_executor_service.py`, `tests/test_tool_middleware_service.py`, `tests/test_agent_runtime_service.py`는 activation off/null sink/local file ready 경로를 각각 검증하도록 확장했다.
+- 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py -> 35 passed`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과로 마감했다.
+
+### A-Next31. V1.5 upload review executor boundary review (현재 active)
 1. `reindex` activation seam 이후에도 upload review execution은 별도 위험도로 유지하도록 boundary를 정리한다.
 2. managed markdown active 상태 변경에 필요한 추가 rollback/audit 조건을 분리한다.
 3. upload review live execution을 아직 열지 않고 required precondition만 고정한다.
@@ -967,6 +974,24 @@ closeout 메모 (2026-04-18):
 - upload review execution의 별도 위험 경계가 문서와 테스트 기준으로 정리된다.
 - `reindex` activation seam과 upload review boundary가 섞이지 않는다.
 - write tool별 단계적 activation 원칙이 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-18):
+- `LOOP-037` closeout으로 `reindex` activation request/durable audit readiness/noop fallback 전환 조건은 고정됐다.
+- 이번 단계는 upload review execution을 `reindex` candidate seam과 섞지 않고 별도 rollback/audit boundary로 분리하는 것이다.
+
+### A-Next32. V1.5 mutation audit retention ops draft (pending)
+1. `90일 rolling_window` retention과 explicit prune 책임을 operator-facing 문서 기준으로 정리한다.
+2. `reindex` activation seam과 upload review boundary를 깨지 않도록 audit ops precondition을 별도 축으로 분리한다.
+3. live execution 이전에 필요한 retention/prune 문구만 고정하고 자동 prune job은 계속 범위 밖으로 둔다.
+
+완료 기준:
+- mutation audit retention/prune 운영 경계가 문서와 테스트 기준으로 정리된다.
+- local operator activation ownership과 retention 책임 문구가 충돌 없이 고정된다.
+- 자동 prune job 없이도 current `No-Go`/staged activation 판단이 유지된다.
 
 검증:
 - `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`

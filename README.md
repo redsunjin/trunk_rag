@@ -61,11 +61,11 @@
 - 현재: `services/tool_trace_service.py`는 tool/middleware 실행 결과를 `v1.5.tool_execution_trace.v1` schema로 고정하고 `actor_category`, `mutation_candidate_tools`, policy flag seed와 `internal/public/persisted` audience별 redaction 함수를 제공한다
 - 현재: `PREVIEW_REQUIRED` 응답은 `v1.5.mutation_preview_contract.v1` 기준 `preview_contract`, `v1.5.mutation_preview_seed.v1` 기준 `preview_seed`, `v1.5.mutation_apply_envelope.v1` 기준 draft `apply_envelope`를 함께 반환하고, execution trace는 `v1.5.mutation_audit_record.v1` persisted audit contract와 append-only sink receipt를 함께 남긴다
 - 현재: `services/agent_runtime_service.py`는 단일 입력을 actor policy source 기반 allowlist/middleware/trace가 붙은 내부 single-tool runtime 흐름으로 실행하고, mutation candidate에 대해서는 `admin_code`/`mutation_intent`/`apply_envelope` 신호를 middleware gate에 전달한다
-- 현재: `services/mutation_executor_service.py`는 preview-confirmed apply 이후에 붙는 executor interface draft를 제공하고, `reindex`용 stub adapter와 default noop executor를 분리한다
+- 현재: `services/mutation_executor_service.py`는 preview-confirmed apply 이후에 붙는 executor activation seam을 제공하고, `reindex`는 operator activation request + durable local audit receipt가 함께 맞을 때만 candidate stub를 선택하며 그 외에는 registered noop fallback으로 남긴다
 - 현재: actor별 allowlist/mutation 정책 초안은 `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`에 고정했고, resolver skeleton과 admin auth + mutation intent gate, preview/audit contract, preview seed + audit sink skeleton, mutation apply draft/guard까지 반영됐다
 - 현재: `mutation_apply_guard`는 preview-confirmed envelope를 검증하고 `PREVIEW_REFERENCE_MISMATCH`, `AUDIT_SINK_RECEIPT_REQUIRED`, `AUDIT_SINK_RECEIPT_INVALID`, `MUTATION_INTENT_SUMMARY_REQUIRED`, `MUTATION_APPLY_NOT_ENABLED`를 분리해 차단한다
 - 현재: `services/tool_audit_sink_service.py`는 default `null_append_only`를 유지한 채 `DOC_RAG_MUTATION_AUDIT_BACKEND=local_file`일 때만 local append-only file backend와 stable `sequence_id` receipt를 제공한다
-- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 `reindex` executor activation seam을 정리하고, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
+- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 upload review executor boundary를 `reindex` activation seam과 분리해 정리하고, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
 
 비목표(현재 단계):
 - 원본 수집/크롤링
@@ -85,7 +85,7 @@
 - `services/tool_trace_service.py`: V1.5 internal tool execution trace contract
 - `services/tool_preview_service.py`: V1.5 preview seed helper
 - `services/tool_audit_sink_service.py`: V1.5 append-only audit sink protocol/null-memory sink
-- `services/mutation_executor_service.py`: V1.5 mutation executor protocol/noop default/reindex stub adapter
+- `services/mutation_executor_service.py`: V1.5 mutation executor selection seam/noop fallback/reindex candidate stub
 - `services/agent_runtime_service.py`: V1.5 internal agent runtime entry draft
 - `core/actor_policy_manifest.py`: V1.5 actor policy manifest loader/normalizer
 - `core/*.py`: 설정/에러/HTTP 유틸
@@ -116,6 +116,7 @@
 - `docs/reports/V1_5_MUTATION_EXECUTION_GO_NO_GO_REVIEW_2026-04-17.md`: V1.5 mutation execution activation go/no-go와 executor follow-up 기준
 - `docs/reports/V1_5_MUTATION_EXECUTOR_INTERFACE_DRAFT_2026-04-18.md`: V1.5 mutation executor request/contract/noop default/reindex stub 기준
 - `docs/reports/V1_5_DURABLE_MUTATION_AUDIT_BACKEND_SKELETON_2026-04-18.md`: V1.5 local append-only audit backend/stable sequence id 기준
+- `docs/reports/V1_5_REINDEX_EXECUTOR_ACTIVATION_SEAM_DRAFT_2026-04-18.md`: V1.5 reindex activation guard/noop fallback/candidate stub 기준
 - `scripts/diagnose_ollama_runtime.py`: Ollama 직접 호출 기준 `eval_tokens_per_second`/wall time 진단 스크립트
 - `chroma_db/embedding_fingerprints.json`: 컬렉션별 임베딩 fingerprint 메타데이터
 - `run_doc_rag.bat`: 배포형 웹 MVP 기준 단일 부트스트랩/실행 엔트리포인트

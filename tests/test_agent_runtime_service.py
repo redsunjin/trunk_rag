@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from services import agent_runtime_service, mutation_executor_service, tool_apply_service
+from services import agent_runtime_service, mutation_executor_service, tool_apply_service, tool_audit_sink_service
 
 
 def test_agent_entry_defaults_single_input_to_search_docs(monkeypatch):
@@ -380,13 +380,29 @@ def test_agent_entry_blocks_preview_confirmed_apply_until_execution_is_enabled(m
     assert result["error"]["submitted_apply_envelope"] == preview_result["error"]["apply_envelope"]
     assert result["error"]["mutation_executor"] == {
         "schema_version": mutation_executor_service.MUTATION_EXECUTOR_CONTRACT_SCHEMA_VERSION,
-        "executor_name": "reindex_mutation_adapter_stub",
-        "binding_kind": "tool_adapter_stub",
+        "executor_name": "noop_mutation_executor",
+        "binding_kind": "default_noop",
         "tool_name": "reindex",
         "tool_registered": True,
         "activation_requested": False,
         "execution_enabled": False,
-        "delegate_executor_name": "noop_mutation_executor",
+        "selection_state": "noop_fallback",
+        "selection_reason": "activation_guard_blocked",
+        "registered_executor_name": "reindex_mutation_adapter_stub",
+        "activation": {
+            "surface_scope": "internal_service_only",
+            "activation_source": "local_env_flag",
+            "ownership": "operator_local_config",
+            "env_key": mutation_executor_service.MUTATION_EXECUTION_ENV_KEY,
+            "requested": False,
+            "first_live_tool_scope": "reindex",
+            "durable_audit_required": True,
+            "durable_audit_ready": False,
+            "audit_sink_type": "null_append_only",
+            "audit_sequence_id": None,
+            "audit_storage_path": None,
+            "blocked_by": ["activation_not_requested", "durable_audit_not_ready"],
+        },
         "request": {
             "request_id": "maintenance-apply-1",
             "actor_category": "maintenance_mutation",
@@ -400,4 +416,71 @@ def test_agent_entry_blocks_preview_confirmed_apply_until_execution_is_enabled(m
     }
     assert result["execution_trace"]["middleware"]["blocked_by"] == "mutation_apply_guard"
     assert result["execution_trace"]["contracts"]["apply_envelope"] == result["error"]["apply_envelope"]
+    assert result["execution_trace"]["contracts"]["mutation_executor"] == result["error"]["mutation_executor"]
+
+
+def test_agent_entry_exposes_reindex_candidate_stub_when_activation_and_durable_audit_are_ready(
+    monkeypatch,
+    tmp_path,
+):
+    monkeypatch.setattr(
+        agent_runtime_service.tool_middleware_service.runtime_service,
+        "verify_admin_code",
+        lambda code: None,
+    )
+    monkeypatch.setenv(mutation_executor_service.MUTATION_EXECUTION_ENV_KEY, "1")
+    monkeypatch.setenv(tool_audit_sink_service.AUDIT_SINK_BACKEND_ENV_KEY, "local_file")
+    monkeypatch.setenv(
+        tool_audit_sink_service.AUDIT_SINK_DIR_ENV_KEY,
+        str(tmp_path / "mutation_audit"),
+    )
+
+    preview_result = agent_runtime_service.run_agent_entry(
+        agent_runtime_service.AgentRuntimeRequest(
+            input="Reindex the core collection.",
+            tool_name="reindex",
+            tool_payload={"collection": "all"},
+            actor="maintenance",
+            admin_code="admin1234",
+            mutation_intent="reindex all",
+            allow_mutation=True,
+            request_id="maintenance-preview-3",
+        )
+    )
+
+    result = agent_runtime_service.run_agent_entry(
+        agent_runtime_service.AgentRuntimeRequest(
+            input="Apply the confirmed reindex plan.",
+            tool_name="reindex",
+            tool_payload={"collection": "all"},
+            actor="maintenance",
+            admin_code="admin1234",
+            mutation_intent="reindex all",
+            apply_envelope=preview_result["error"]["apply_envelope"],
+            allow_mutation=True,
+            request_id="maintenance-apply-2",
+        )
+    )
+
+    assert result["ok"] is False
+    assert result["error"]["code"] == "MUTATION_APPLY_NOT_ENABLED"
+    assert result["error"]["mutation_executor"]["executor_name"] == "reindex_mutation_adapter_stub"
+    assert result["error"]["mutation_executor"]["selection_state"] == "candidate_stub"
+    assert result["error"]["mutation_executor"]["selection_reason"] == "activation_guard_satisfied"
+    assert result["error"]["mutation_executor"]["activation_requested"] is True
+    activation = result["error"]["mutation_executor"]["activation"]
+    assert activation["surface_scope"] == "internal_service_only"
+    assert activation["activation_source"] == "local_env_flag"
+    assert activation["ownership"] == "operator_local_config"
+    assert activation["env_key"] == mutation_executor_service.MUTATION_EXECUTION_ENV_KEY
+    assert activation["requested"] is True
+    assert activation["first_live_tool_scope"] == "reindex"
+    assert activation["durable_audit_required"] is True
+    assert activation["durable_audit_ready"] is True
+    assert activation["audit_sink_type"] == "local_file_append_only"
+    assert activation["audit_sequence_id"] == 2
+    assert str(activation["audit_storage_path"]).startswith(str(tmp_path / "mutation_audit" / "audit-"))
+    assert str(activation["audit_storage_path"]).endswith(".jsonl")
+    assert activation["blocked_by"] == []
+    assert result["error"]["mutation_executor"]["delegate_executor_name"] == "noop_mutation_executor"
     assert result["execution_trace"]["contracts"]["mutation_executor"] == result["error"]["mutation_executor"]
