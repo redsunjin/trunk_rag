@@ -20,6 +20,7 @@
 - `docs/reports/V1_5_REINDEX_EXECUTOR_ACTIVATION_SEAM_DRAFT_2026-04-18.md`
 - `docs/reports/V1_5_UPLOAD_REVIEW_EXECUTOR_BOUNDARY_REVIEW_2026-04-18.md`
 - `docs/reports/V1_5_MUTATION_AUDIT_RETENTION_OPS_DRAFT_2026-04-18.md`
+- `docs/reports/V1_5_REINDEX_LIVE_READINESS_CHECKLIST_DRAFT_2026-04-19.md`
 - `docs/PREPROCESSING_RULES.md`
 - `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md`
 - `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
@@ -81,8 +82,9 @@
 | LOOP-037 | done | V1.5 reindex executor activation seam draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-038 | done | V1.5 upload review executor boundary review | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-039 | done | V1.5 mutation audit retention ops draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-040 | active | V1.5 reindex live readiness checklist draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-041 | pending | V1.5 mutation activation smoke evidence draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-040 | done | V1.5 reindex live readiness checklist draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-041 | active | V1.5 mutation activation smoke evidence draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-042 | pending | V1.5 reindex activation checkpoint review | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -1169,7 +1171,7 @@ closeout 메모 (2026-04-18):
 - 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py -> 38 passed`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과로 마감했다.
 - 다음 active loop는 `LOOP-040`이며, `reindex` activation seam, upload review boundary, retention ops를 합친 live readiness checklist를 정리한다. 다음 pending loop는 `LOOP-041 mutation activation smoke evidence draft`다.
 
-## 현재 Active Loop (LOOP-040)
+## 완료 Loop (LOOP-040)
 
 목표:
 - `reindex` live enablement readiness checklist를 정리하고, activation seam, upload review boundary, retention ops 문구를 한 체크리스트로 고정한다.
@@ -1190,6 +1192,33 @@ closeout 메모 (2026-04-18):
 진행 메모 (2026-04-18):
 - `LOOP-039` closeout으로 retention/prune operator ownership과 staged activation dependency 문구는 고정됐다.
 - 이번 단계는 실제 live execution을 열지 않고, `reindex` live enablement에 필요한 checklist와 evidence 항목을 한 문서로 정리하는 것이다.
+
+closeout 메모 (2026-04-19):
+- `docs/reports/V1_5_REINDEX_LIVE_READINESS_CHECKLIST_DRAFT_2026-04-19.md`를 추가해 activation seam, upload review boundary, retention ops, required smoke evidence를 한 체크리스트로 고정했다.
+- 체크리스트는 internal-only surface, operator explicit activation 기본값 `off`, durable local audit receipt, retention/prune ownership, upload review separate boundary, `MUTATION_APPLY_NOT_ENABLED` 유지 여부를 모두 같은 readiness 표에서 추적하도록 정리했다.
+- smoke evidence 자체는 아직 별도 문서로 패키징하지 않았고, 그 항목은 다음 active loop `LOOP-041`에서 닫는다.
+
+## 현재 Active Loop (LOOP-041)
+
+목표:
+- mutation activation blocked flow smoke 결과를 readiness evidence 형태로 정리하고, checklist 항목과 실행 증빙의 연결을 고정한다.
+
+범위:
+- 포함: smoke evidence 문서화, blocked flow 요약, readiness checklist와의 증빙 연결
+- 제외: 실제 live execution 개방, upload review live executor, public `/agent/*` endpoint, prune 자동화 구현
+
+완료 기준:
+- mutation activation smoke evidence 항목이 문서와 테스트 기준으로 정리된다.
+- blocked apply flow와 readiness checklist 사이의 증빙 관계가 명확해진다.
+- live execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-19):
+- `LOOP-040` closeout으로 `reindex` live readiness checklist와 required smoke evidence 항목은 문서화됐다.
+- 이번 단계는 existing `scripts/smoke_agent_runtime.py` 결과를 readiness evidence 형태로 고정하는 것이다.
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
 목표:

@@ -34,6 +34,7 @@
 - `docs/reports/V1_5_REINDEX_EXECUTOR_ACTIVATION_SEAM_DRAFT_2026-04-18.md`
 - `docs/reports/V1_5_UPLOAD_REVIEW_EXECUTOR_BOUNDARY_REVIEW_2026-04-18.md`
 - `docs/reports/V1_5_MUTATION_AUDIT_RETENTION_OPS_DRAFT_2026-04-18.md`
+- `docs/reports/V1_5_REINDEX_LIVE_READINESS_CHECKLIST_DRAFT_2026-04-19.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -41,8 +42,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-040`
-- current_active_title: `V1.5 reindex live readiness checklist draft`
+- current_active_id: `LOOP-041`
+- current_active_title: `V1.5 mutation activation smoke evidence draft`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1016,7 +1017,7 @@ closeout 메모 (2026-04-18):
 - `tests/test_tool_audit_sink_service.py`는 local file receipt/entry가 operator prune ownership과 retention ops contract를 함께 노출하는지 검증하도록 확장했다.
 - 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py -> 38 passed`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과로 마감했다.
 
-### A-Next33. V1.5 reindex live readiness checklist draft (현재 active)
+### A-Next33. V1.5 reindex live readiness checklist draft (완료: 2026-04-19)
 1. `reindex` activation seam, upload review boundary, retention ops 문구를 합쳐 live enablement readiness checklist를 정리한다.
 2. 실제 live execution을 열지 않고 required smoke/runbook evidence만 정리한다.
 3. staged activation 원칙이 write tool별로 어떻게 유지되는지 final checklist로 고정한다.
@@ -1034,7 +1035,12 @@ closeout 메모 (2026-04-18):
 - `LOOP-039` closeout으로 retention/prune operator ownership과 staged activation dependency 문구는 고정됐다.
 - 이번 단계는 실제 live execution을 열지 않고, `reindex` live enablement에 필요한 checklist와 evidence 항목을 한 문서로 정리하는 것이다.
 
-### A-Next34. V1.5 mutation activation smoke evidence draft (pending)
+closeout 메모 (2026-04-19):
+- `docs/reports/V1_5_REINDEX_LIVE_READINESS_CHECKLIST_DRAFT_2026-04-19.md`를 추가해 activation seam, upload review boundary, retention ops, required smoke evidence를 한 체크리스트로 고정했다.
+- 체크리스트는 internal-only surface, operator explicit activation 기본값 `off`, durable local audit receipt, retention/prune ownership, upload review separate boundary, `MUTATION_APPLY_NOT_ENABLED` 유지 여부를 모두 같은 readiness 표에서 추적하도록 정리했다.
+- smoke evidence 자체는 아직 별도 문서로 패키징하지 않았고, 그 항목은 다음 active loop `LOOP-041`에서 닫는다.
+
+### A-Next34. V1.5 mutation activation smoke evidence draft (현재 active)
 1. `reindex` live readiness checklist에서 요구하는 smoke evidence 항목을 문서/스크립트 기준으로 정리한다.
 2. 실제 live execution을 열지 않고 existing blocked flow/smoke 결과를 activation evidence 형태로 묶는다.
 3. staged activation 원칙을 깨지 않는 최소 smoke/runbook evidence만 남긴다.
@@ -1042,6 +1048,24 @@ closeout 메모 (2026-04-18):
 완료 기준:
 - mutation activation smoke evidence 항목이 문서와 테스트 기준으로 정리된다.
 - blocked apply flow와 readiness checklist 사이의 증빙 관계가 명확해진다.
+- live execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-19):
+- `LOOP-040` closeout으로 `reindex` live readiness checklist와 required smoke evidence 항목은 문서화됐다.
+- 이번 단계는 existing `scripts/smoke_agent_runtime.py` 결과를 readiness evidence 형태로 고정하는 것이다.
+
+### A-Next35. V1.5 reindex activation checkpoint review (pending)
+1. readiness checklist와 smoke evidence를 바탕으로 `reindex` activation checkpoint 판단 기준을 정리한다.
+2. 실제 live execution 개방 여부는 아직 결정하지 않고, 추가로 남은 blocker와 go/no-go 질문만 고정한다.
+3. upload review boundary가 checkpoint 판단에 섞이지 않도록 별도 보류 항목으로 유지한다.
+
+완료 기준:
+- `reindex` activation checkpoint 판단 기준이 문서와 테스트 기준으로 정리된다.
+- staged activation 원칙과 upload review separate boundary가 다시 흐려지지 않는다.
 - live execution off-by-default 정책이 계속 유지된다.
 
 검증:
