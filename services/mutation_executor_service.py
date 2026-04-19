@@ -9,6 +9,7 @@ MUTATION_EXECUTOR_CONTRACT_SCHEMA_VERSION = "v1.5.mutation_executor_contract.v1"
 REINDEX_LIVE_ADAPTER_OUTLINE_SCHEMA_VERSION = "v1.5.reindex_live_adapter_outline.v1"
 REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION = "v1.5.reindex_live_adapter_result.v1"
 REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION = "v1.5.reindex_live_adapter_error.v1"
+REINDEX_LIVE_ADAPTER_BINDING_SCHEMA_VERSION = "v1.5.reindex_live_adapter_binding.v1"
 MUTATION_EXECUTION_ENV_KEY = "DOC_RAG_AGENT_MUTATION_EXECUTION"
 REINDEX_MUTATION_EXECUTOR_NAME = "reindex_mutation_adapter_stub"
 REINDEX_LIVE_ADAPTER_EXECUTOR_NAME = "reindex_mutation_adapter_live"
@@ -187,6 +188,27 @@ def _build_boundary_contract(request: MutationExecutionRequest) -> dict[str, obj
                             "retryable": True,
                         },
                     ],
+                },
+                "opt_in_binding": {
+                    "schema_version": REINDEX_LIVE_ADAPTER_BINDING_SCHEMA_VERSION,
+                    "mode": "explicit_local_only",
+                    "binding_source": "runtime_injected_executor_binding",
+                    "binding_owner": "local_operator_or_test_harness",
+                    "default_executor_name": REINDEX_MUTATION_EXECUTOR_NAME,
+                    "opt_in_executor_name": REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+                    "selection_precedence": [
+                        "tool_registration_boundary",
+                        "activation_guard",
+                        "candidate_stub_default",
+                        "explicit_live_binding_override",
+                    ],
+                    "required_signals": [
+                        "activation_requested",
+                        "durable_audit_ready",
+                        "explicit_live_adapter_binding",
+                    ],
+                    "public_surface_allowed": False,
+                    "shared_with_upload_review": False,
                 },
                 "rollback_awareness": {
                     "mode": "rebuild_from_source_documents",

@@ -96,6 +96,27 @@ def _expected_reindex_boundary() -> dict[str, object]:
                     },
                 ],
             },
+            "opt_in_binding": {
+                "schema_version": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_SCHEMA_VERSION,
+                "mode": "explicit_local_only",
+                "binding_source": "runtime_injected_executor_binding",
+                "binding_owner": "local_operator_or_test_harness",
+                "default_executor_name": mutation_executor_service.REINDEX_MUTATION_EXECUTOR_NAME,
+                "opt_in_executor_name": mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+                "selection_precedence": [
+                    "tool_registration_boundary",
+                    "activation_guard",
+                    "candidate_stub_default",
+                    "explicit_live_binding_override",
+                ],
+                "required_signals": [
+                    "activation_requested",
+                    "durable_audit_ready",
+                    "explicit_live_adapter_binding",
+                ],
+                "public_surface_allowed": False,
+                "shared_with_upload_review": False,
+            },
             "rollback_awareness": {
                 "mode": "rebuild_from_source_documents",
                 "managed_state_rollback_required": False,
