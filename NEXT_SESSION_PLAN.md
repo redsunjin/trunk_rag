@@ -37,6 +37,7 @@
 - `docs/reports/V1_5_REINDEX_LIVE_READINESS_CHECKLIST_DRAFT_2026-04-19.md`
 - `docs/reports/V1_5_MUTATION_ACTIVATION_SMOKE_EVIDENCE_2026-04-19.md`
 - `docs/reports/V1_5_REINDEX_ACTIVATION_CHECKPOINT_REVIEW_2026-04-19.md`
+- `docs/reports/V1_5_REINDEX_ACTIVATION_OPERATOR_RUNBOOK_DRAFT_2026-04-19.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -44,8 +45,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-043`
-- current_active_title: `V1.5 reindex activation operator runbook draft`
+- current_active_id: `LOOP-044`
+- current_active_title: `V1.5 reindex live adapter outline draft`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1088,7 +1089,7 @@ closeout 메모 (2026-04-19):
 - checkpoint review는 `reindex`가 `candidate_stub`까지는 승격되더라도 실제 live adapter/operator runbook 부재 때문에 live enablement verdict는 여전히 `No-Go`라고 고정했다.
 - 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`, `./.venv/bin/python scripts/smoke_agent_runtime.py`, `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag_mutation_audit_checkpoint ./.venv/bin/python scripts/smoke_agent_runtime.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 통과로 마감한다.
 
-### A-Next36. V1.5 reindex activation operator runbook draft (현재 active)
+### A-Next36. V1.5 reindex activation operator runbook draft (완료: 2026-04-19)
 1. checkpoint review에서 남긴 `reindex` staged activation precondition을 operator runbook 형태로 정리한다.
 2. 실제 live enablement를 열지 않고, local activation/audit/rollback awareness만 단계별로 문서화한다.
 3. upload review boundary와 별도 보류 원칙을 runbook에도 그대로 유지한다.
@@ -1106,7 +1107,12 @@ closeout 메모 (2026-04-19):
 - `LOOP-042` closeout으로 `reindex` staged activation checkpoint verdict와 remaining blockers는 고정됐다.
 - 이번 단계는 enablement를 여는 문서가 아니라 local operator 관점의 staged activation runbook 초안을 정리하는 것이다.
 
-### A-Next37. V1.5 reindex live adapter outline draft (pending)
+closeout 메모 (2026-04-19):
+- `docs/reports/V1_5_REINDEX_ACTIVATION_OPERATOR_RUNBOOK_DRAFT_2026-04-19.md`를 추가해 baseline default smoke, activation-on local-file smoke, audit receipt 확인, deactivation, abort condition을 local operator 절차로 고정했다.
+- runbook은 `reindex` 단일 tool만 다루고, apply가 끝까지 `MUTATION_APPLY_NOT_ENABLED`로 남아야 한다는 guardrail을 명시했다.
+- 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`, `./.venv/bin/python scripts/smoke_agent_runtime.py`, `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag_mutation_audit_checkpoint ./.venv/bin/python scripts/smoke_agent_runtime.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 통과로 마감한다.
+
+### A-Next37. V1.5 reindex live adapter outline draft (현재 active)
 1. operator runbook 이후에도 live execution은 열지 않고, 필요한 `reindex` live adapter 책임과 경계만 outline으로 정리한다.
 2. noop fallback/candidate stub에서 실제 adapter로 넘어갈 때 필요한 입력/출력/rollback awareness를 문서화한다.
 3. upload review boundary와 public surface 비목표를 다시 고정한다.
@@ -1114,6 +1120,24 @@ closeout 메모 (2026-04-19):
 완료 기준:
 - `reindex` live adapter outline 초안이 문서와 테스트 기준으로 정리된다.
 - current noop fallback/candidate stub contract와 future live adapter 책임 경계가 충돌 없이 이어진다.
+- live execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-19):
+- `LOOP-043` closeout으로 local operator runbook은 고정됐다.
+- 이번 단계는 future live adapter 책임을 outline 수준으로만 정리하고, actual enablement/implementation은 계속 deferred 상태로 둔다.
+
+### A-Next38. V1.5 reindex live adapter test plan draft (pending)
+1. live adapter outline 다음 단계로 필요한 test plan과 smoke 범위를 문서화한다.
+2. actual live execution을 열지 않고, noop fallback/candidate stub/live adapter 경계별 검증 항목만 정리한다.
+3. upload review boundary와 public surface 비목표를 test plan에도 그대로 유지한다.
+
+완료 기준:
+- `reindex` live adapter test plan 초안이 문서와 테스트 기준으로 정리된다.
+- current smoke/test contract와 future live adapter verification 범위가 충돌 없이 이어진다.
 - live execution off-by-default 정책이 계속 유지된다.
 
 검증:

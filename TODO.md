@@ -23,6 +23,7 @@
 - `docs/reports/V1_5_REINDEX_LIVE_READINESS_CHECKLIST_DRAFT_2026-04-19.md`
 - `docs/reports/V1_5_MUTATION_ACTIVATION_SMOKE_EVIDENCE_2026-04-19.md`
 - `docs/reports/V1_5_REINDEX_ACTIVATION_CHECKPOINT_REVIEW_2026-04-19.md`
+- `docs/reports/V1_5_REINDEX_ACTIVATION_OPERATOR_RUNBOOK_DRAFT_2026-04-19.md`
 - `docs/PREPROCESSING_RULES.md`
 - `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md`
 - `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
@@ -87,8 +88,9 @@
 | LOOP-040 | done | V1.5 reindex live readiness checklist draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-041 | done | V1.5 mutation activation smoke evidence draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-042 | done | V1.5 reindex activation checkpoint review | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-043 | active | V1.5 reindex activation operator runbook draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-044 | pending | V1.5 reindex live adapter outline draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-043 | done | V1.5 reindex activation operator runbook draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-044 | active | V1.5 reindex live adapter outline draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-045 | pending | V1.5 reindex live adapter test plan draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -1256,7 +1258,7 @@ closeout 메모 (2026-04-19):
 - checkpoint review는 `reindex`가 activation request + durable local audit receipt 조건에서 `candidate_stub`까지는 승격되지만, 실제 live adapter와 operator runbook이 없으므로 live enablement verdict는 여전히 `No-Go`라고 고정했다.
 - 다음 active loop는 `LOOP-043`이며, 이번 checkpoint에서 남긴 operator ownership/local config/audit 확인 절차를 runbook 형태로 정리한다.
 
-## 현재 Active Loop (LOOP-043)
+## 완료 Loop (LOOP-043)
 
 목표:
 - `reindex` staged activation을 local operator 관점에서 다루는 runbook 초안을 정리하고, checkpoint precondition을 실제 운영 절차로 번역한다.
@@ -1277,6 +1279,33 @@ closeout 메모 (2026-04-19):
 진행 메모 (2026-04-19):
 - `LOOP-042` closeout으로 `reindex` staged activation checkpoint와 남은 blocker는 고정됐다.
 - 이번 단계는 enablement를 여는 것이 아니라 local operator가 무엇을 확인해야 하는지 runbook으로 정리하는 것이다.
+
+closeout 메모 (2026-04-19):
+- `docs/reports/V1_5_REINDEX_ACTIVATION_OPERATOR_RUNBOOK_DRAFT_2026-04-19.md`를 추가해 baseline default smoke, activation-on local-file smoke, audit receipt 확인, deactivation, abort condition을 local operator 절차로 정리했다.
+- runbook은 `reindex` 단일 tool만 다루고, apply가 끝까지 `MUTATION_APPLY_NOT_ENABLED`여야 한다는 guardrail을 명시했다.
+- 다음 active loop는 `LOOP-044`이며, current noop fallback/candidate stub 계약 뒤에 붙을 future live adapter 책임 경계를 outline 수준으로 정리한다.
+
+## 현재 Active Loop (LOOP-044)
+
+목표:
+- `reindex` live adapter가 미래에 붙는다면 어떤 책임과 경계를 가져야 하는지 outline 초안을 정리하고, current noop/candidate stub contract와의 연결을 고정한다.
+
+범위:
+- 포함: live adapter 책임 outline, input/output boundary, rollback awareness/test seam 메모
+- 제외: 실제 live adapter 구현, actual live execution 개방, upload review adapter, public `/agent/*` endpoint
+
+완료 기준:
+- `reindex` live adapter outline 초안이 문서와 테스트 기준으로 정리된다.
+- current noop fallback/candidate stub 계약과 future live adapter 책임 경계가 충돌 없이 이어진다.
+- live execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-19):
+- `LOOP-043` closeout으로 local operator runbook은 고정됐다.
+- 이번 단계는 실제 adapter를 구현하지 않고, future live adapter가 current contract 위에서 어떤 책임을 져야 하는지 outline만 정리하는 것이다.
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
 목표:
