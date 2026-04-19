@@ -145,7 +145,8 @@
 - `docs/reports/V1_5_MUTATION_AUDIT_RETENTION_OPS_DRAFT_2026-04-18.md`는 `90일 rolling_window`, explicit local-operator prune ownership, nested `ops` receipt contract를 고정했다.
 - `docs/reports/V1_5_REINDEX_LIVE_READINESS_CHECKLIST_DRAFT_2026-04-19.md`는 `reindex` live enablement 전 필요한 checklist/evidence 항목을 고정했다.
 - `docs/reports/V1_5_MUTATION_ACTIVATION_SMOKE_EVIDENCE_2026-04-19.md`는 blocked flow smoke output을 readiness evidence와 `mutation_executor` summary 기준으로 고정했다.
-- 다음 구현은 `LOOP-042 reindex activation checkpoint review`이며, 이 단계에서는 checklist + smoke evidence를 바탕으로 남은 checkpoint 질문만 정리한다.
+- `docs/reports/V1_5_REINDEX_ACTIVATION_CHECKPOINT_REVIEW_2026-04-19.md`는 default blocked path와 activation-on local-file candidate stub path를 함께 점검해 live enablement verdict를 다시 `No-Go`로 고정했다.
+- 다음 구현은 `LOOP-043 reindex activation operator runbook draft`이며, 이 단계에서는 local operator 관점의 staged activation 절차를 문서화한다.
 - raw input, retrieved context, document content, local path, admin code, credential은 저장/노출 기본 대상에서 제외한다.
 - `services/tool_trace_service.py`는 `redact_execution_trace()`로 `internal`, `public`, `persisted` audience별 trace 정규화를 제공한다.
 
