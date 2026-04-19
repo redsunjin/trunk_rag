@@ -26,6 +26,7 @@
 - `docs/reports/V1_5_REINDEX_ACTIVATION_OPERATOR_RUNBOOK_DRAFT_2026-04-19.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OUTLINE_DRAFT_2026-04-20.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TEST_PLAN_DRAFT_2026-04-20.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_SUCCESS_CONTRACT_DRAFT_2026-04-20.md`
 - `docs/PREPROCESSING_RULES.md`
 - `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md`
 - `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
@@ -93,7 +94,8 @@
 | LOOP-043 | done | V1.5 reindex activation operator runbook draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-044 | done | V1.5 reindex live adapter outline draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-045 | done | V1.5 reindex live adapter test plan draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-046 | active | V1.5 reindex live adapter success contract draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-046 | done | V1.5 reindex live adapter success contract draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-047 | active | V1.5 reindex live adapter opt-in binding seam draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -1345,7 +1347,7 @@ closeout 메모 (2026-04-20):
 - 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 통과로 마감한다.
 - 다음 active loop는 `LOOP-046`이며, future live adapter success/failure result shape와 error taxonomy를 contract draft로 정리한다.
 
-## 현재 Active Loop (LOOP-046)
+## 완료 Loop (LOOP-046)
 
 목표:
 - future `reindex` live adapter가 실제 enablement 전에도 따를 success/failure result contract와 error taxonomy 초안을 정리한다.
@@ -1366,6 +1368,35 @@ closeout 메모 (2026-04-20):
 진행 메모 (2026-04-20):
 - `LOOP-045` closeout으로 future live adapter의 verification matrix와 smoke 분리 원칙은 고정됐다.
 - 이번 단계는 actual execution을 열지 않고, future success path가 반환해야 할 result/error contract를 draft 수준으로 정리하는 것이다.
+
+closeout 메모 (2026-04-20):
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_SUCCESS_CONTRACT_DRAFT_2026-04-20.md`를 추가해 future `reindex` live adapter의 success result shape, failure taxonomy, boundary invariants를 draft 수준으로 고정했다.
+- `services/mutation_executor_service.py`의 `boundary.live_adapter_outline`에 `success_contract`, `failure_taxonomy` metadata를 추가해 future opt-in smoke와 adapter-specific test가 기대할 result/error shape를 코드 계약에도 심었다.
+- `tests/test_mutation_executor_service.py`, `tests/test_tool_middleware_service.py`, `tests/test_agent_runtime_service.py`는 expanded boundary contract가 추가돼도 current blocked/candidate path가 유지되는지 검증하도록 갱신했다.
+- 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 통과로 마감한다.
+- 다음 active loop는 `LOOP-047`이며, future live adapter를 default path에 섞지 않고 explicit local-only binding으로만 주입하는 selection seam을 정리한다.
+
+## 현재 Active Loop (LOOP-047)
+
+목표:
+- future `reindex` live adapter를 default path를 바꾸지 않은 채 explicit local-only binding으로만 주입하는 selection seam 초안을 정리한다.
+
+범위:
+- 포함: opt-in binding source, selection precedence, default path guardrail, local-only activation 메모
+- 제외: 실제 live adapter 구현, actual live execution 개방, upload review binding, public `/agent/*` endpoint
+
+완료 기준:
+- `reindex` live adapter opt-in binding seam 초안이 문서와 테스트 기준으로 정리된다.
+- current noop fallback/candidate stub/success contract와 future opt-in binding 경계가 충돌 없이 이어진다.
+- live execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-20):
+- `LOOP-046` closeout으로 future live adapter의 success/failure result contract와 error taxonomy는 고정됐다.
+- 이번 단계는 actual execution을 열지 않고, future adapter binding이 default blocked/candidate path를 깨지 않도록 explicit local-only seam을 정리하는 것이다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

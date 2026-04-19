@@ -147,7 +147,7 @@
 - `docs/reports/V1_5_MUTATION_ACTIVATION_SMOKE_EVIDENCE_2026-04-19.md`는 blocked flow smoke output을 readiness evidence와 `mutation_executor` summary 기준으로 고정했다.
 - `docs/reports/V1_5_REINDEX_ACTIVATION_CHECKPOINT_REVIEW_2026-04-19.md`는 default blocked path와 activation-on local-file candidate stub path를 함께 점검해 live enablement verdict를 다시 `No-Go`로 고정했다.
 - `docs/reports/V1_5_REINDEX_ACTIVATION_OPERATOR_RUNBOOK_DRAFT_2026-04-19.md`는 baseline smoke, activation-on local-file smoke, audit receipt 확인, deactivation, abort condition을 local operator 절차로 고정했다.
-- 다음 구현은 `LOOP-046 reindex live adapter success contract draft`이며, 이 단계에서는 `LOOP-045`에서 고정한 verification matrix를 기준으로 future success/failure result shape와 error taxonomy를 draft 수준으로 정리한다.
+- 다음 구현은 `LOOP-047 reindex live adapter opt-in binding seam draft`이며, 이 단계에서는 `LOOP-046`에서 고정한 success/failure contract를 default path와 분리된 explicit local-only binding seam으로 어떻게 연결할지 정리한다.
 - raw input, retrieved context, document content, local path, admin code, credential은 저장/노출 기본 대상에서 제외한다.
 - `services/tool_trace_service.py`는 `redact_execution_trace()`로 `internal`, `public`, `persisted` audience별 trace 정규화를 제공한다.
 

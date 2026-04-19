@@ -7,6 +7,8 @@ from services import runtime_service, tool_apply_service
 
 MUTATION_EXECUTOR_CONTRACT_SCHEMA_VERSION = "v1.5.mutation_executor_contract.v1"
 REINDEX_LIVE_ADAPTER_OUTLINE_SCHEMA_VERSION = "v1.5.reindex_live_adapter_outline.v1"
+REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION = "v1.5.reindex_live_adapter_result.v1"
+REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION = "v1.5.reindex_live_adapter_error.v1"
 MUTATION_EXECUTION_ENV_KEY = "DOC_RAG_AGENT_MUTATION_EXECUTION"
 REINDEX_MUTATION_EXECUTOR_NAME = "reindex_mutation_adapter_stub"
 REINDEX_LIVE_ADAPTER_EXECUTOR_NAME = "reindex_mutation_adapter_live"
@@ -135,6 +137,57 @@ def _build_boundary_contract(request: MutationExecutionRequest) -> dict[str, obj
                     "result.audit_receipt_ref",
                     "result.rollback_hint",
                 ],
+                "success_contract": {
+                    "schema_version": REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION,
+                    "status": "succeeded",
+                    "required_fields": [
+                        "result.reindex_summary.collection_key",
+                        "result.reindex_summary.operation",
+                        "result.reindex_summary.source_basis",
+                        "result.audit_receipt_ref.sequence_id",
+                        "result.rollback_hint.mode",
+                    ],
+                    "reindex_summary": {
+                        "operation": "rebuild_vector_index",
+                        "source_basis": "source_documents_snapshot",
+                        "reset_allowed": True,
+                        "compatibility_bundle_optional": True,
+                    },
+                    "audit_receipt_ref": {
+                        "source": "append_only_receipt",
+                        "sequence_id_required": True,
+                        "storage_path_required": True,
+                    },
+                    "rollback_hint": {
+                        "mode": "rebuild_from_source_documents",
+                        "operator_action_required": True,
+                    },
+                },
+                "failure_taxonomy": {
+                    "schema_version": REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION,
+                    "codes": [
+                        {
+                            "code": "REINDEX_TARGET_MISMATCH",
+                            "stage": "contract_validation",
+                            "retryable": False,
+                        },
+                        {
+                            "code": "REINDEX_AUDIT_LINKAGE_INVALID",
+                            "stage": "audit_linkage",
+                            "retryable": False,
+                        },
+                        {
+                            "code": "REINDEX_RUNTIME_EXECUTION_FAILED",
+                            "stage": "executor_runtime",
+                            "retryable": True,
+                        },
+                        {
+                            "code": "REINDEX_ROLLBACK_HINT_UNAVAILABLE",
+                            "stage": "post_execution",
+                            "retryable": True,
+                        },
+                    ],
+                },
                 "rollback_awareness": {
                     "mode": "rebuild_from_source_documents",
                     "managed_state_rollback_required": False,

@@ -40,6 +40,7 @@
 - `docs/reports/V1_5_REINDEX_ACTIVATION_OPERATOR_RUNBOOK_DRAFT_2026-04-19.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OUTLINE_DRAFT_2026-04-20.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TEST_PLAN_DRAFT_2026-04-20.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_SUCCESS_CONTRACT_DRAFT_2026-04-20.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -47,8 +48,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-046`
-- current_active_title: `V1.5 reindex live adapter success contract draft`
+- current_active_id: `LOOP-047`
+- current_active_title: `V1.5 reindex live adapter opt-in binding seam draft`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1161,7 +1162,7 @@ closeout 메모 (2026-04-20):
 - test plan은 `future_live_adapter_opt_in_smoke`를 default smoke 세트와 분리하고, success path 검증을 explicit local-only seam으로만 다루도록 정리했다.
 - 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 통과로 마감한다.
 
-### A-Next39. V1.5 reindex live adapter success contract draft (현재 active)
+### A-Next39. V1.5 reindex live adapter success contract draft (완료: 2026-04-20)
 1. future `reindex` live adapter success/failure result shape를 draft 수준으로 정리한다.
 2. actual live execution을 열지 않고, audit receipt linkage와 rollback hint contract만 고정한다.
 3. upload review separate boundary와 public surface 비목표를 그대로 유지한다.
@@ -1178,6 +1179,30 @@ closeout 메모 (2026-04-20):
 진행 메모 (2026-04-20):
 - `LOOP-045` closeout으로 future live adapter의 verification matrix와 smoke 분리 원칙은 고정됐다.
 - 이번 단계는 actual execution을 열지 않고, future success path가 반환해야 할 result/error contract를 draft 수준으로 정리하는 것이다.
+
+closeout 메모 (2026-04-20):
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_SUCCESS_CONTRACT_DRAFT_2026-04-20.md`를 추가해 future `reindex` live adapter의 success result shape, failure taxonomy, boundary invariants를 draft 수준으로 고정했다.
+- `services/mutation_executor_service.py`는 `boundary.live_adapter_outline`에 `success_contract`, `failure_taxonomy` metadata를 추가해 future opt-in smoke와 adapter-specific test가 기대할 result/error shape를 코드 계약에도 심었다.
+- `tests/test_mutation_executor_service.py`, `tests/test_tool_middleware_service.py`, `tests/test_agent_runtime_service.py`는 expanded boundary contract가 추가돼도 current blocked/candidate path가 유지되는지 검증하도록 갱신됐다.
+- 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 통과로 마감한다.
+
+### A-Next40. V1.5 reindex live adapter opt-in binding seam draft (현재 active)
+1. future `reindex` live adapter를 default path를 바꾸지 않은 채 explicit local-only binding으로만 주입하는 selection seam을 정리한다.
+2. actual live execution을 열지 않고, binding source와 selection precedence만 고정한다.
+3. upload review separate boundary와 public surface 비목표를 그대로 유지한다.
+
+완료 기준:
+- `reindex` live adapter opt-in binding seam 초안이 문서와 테스트 기준으로 정리된다.
+- current noop fallback/candidate stub/success contract와 future opt-in binding 경계가 충돌 없이 이어진다.
+- live execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-20):
+- `LOOP-046` closeout으로 future live adapter의 success/failure result contract와 error taxonomy는 고정됐다.
+- 이번 단계는 actual execution을 열지 않고, future adapter binding이 default blocked/candidate path를 깨지 않도록 explicit local-only seam을 정리하는 것이다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
