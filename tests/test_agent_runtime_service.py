@@ -3,6 +3,59 @@ from __future__ import annotations
 from services import agent_runtime_service, mutation_executor_service, tool_apply_service, tool_audit_sink_service
 
 
+def _expected_reindex_boundary() -> dict[str, object]:
+    return {
+        "family": "reindex",
+        "classification": "derivative_runtime_state",
+        "live_candidate_allowed": True,
+        "managed_state_write": False,
+        "approval_state_write": False,
+        "requires_durable_audit_receipt": True,
+        "requires_rollback_plan": False,
+        "requires_managed_state_snapshot": False,
+        "requires_document_version_binding": False,
+        "requires_decision_audit": False,
+        "required_preconditions": ["operator_activation", "durable_audit_ready"],
+        "blocked_by": [],
+        "live_adapter_outline": {
+            "schema_version": mutation_executor_service.REINDEX_LIVE_ADAPTER_OUTLINE_SCHEMA_VERSION,
+            "status": "outline_only_deferred",
+            "target_executor_name": mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+            "current_executor_name": mutation_executor_service.REINDEX_MUTATION_EXECUTOR_NAME,
+            "handoff_from_selection_state": "candidate_stub",
+            "execution_mode": "off_by_default",
+            "required_inputs": [
+                "payload.collection",
+                "preview_seed.target.collection_key",
+                "apply_envelope.preview_ref",
+                "apply_envelope.intent.summary",
+                "persisted_audit_record.request_id",
+                "audit_sink_receipt.sequence_id",
+            ],
+            "expected_outputs": [
+                "result.reindex_summary",
+                "result.audit_receipt_ref",
+                "result.rollback_hint",
+            ],
+            "rollback_awareness": {
+                "mode": "rebuild_from_source_documents",
+                "managed_state_rollback_required": False,
+                "operator_restore_hint_required": True,
+            },
+            "test_seams": [
+                "noop_fallback_contract",
+                "candidate_stub_contract",
+                "future_live_adapter_opt_in_smoke",
+            ],
+            "non_goals": [
+                "managed_state_write_rollback",
+                "upload_review_execution",
+                "public_agent_endpoint",
+            ],
+        },
+    }
+
+
 def test_agent_entry_defaults_single_input_to_search_docs(monkeypatch):
     captured = {}
 
@@ -403,20 +456,7 @@ def test_agent_entry_blocks_preview_confirmed_apply_until_execution_is_enabled(m
             "audit_storage_path": None,
             "blocked_by": ["activation_not_requested", "durable_audit_not_ready"],
         },
-        "boundary": {
-            "family": "reindex",
-            "classification": "derivative_runtime_state",
-            "live_candidate_allowed": True,
-            "managed_state_write": False,
-            "approval_state_write": False,
-            "requires_durable_audit_receipt": True,
-            "requires_rollback_plan": False,
-            "requires_managed_state_snapshot": False,
-            "requires_document_version_binding": False,
-            "requires_decision_audit": False,
-            "required_preconditions": ["operator_activation", "durable_audit_ready"],
-            "blocked_by": [],
-        },
+        "boundary": _expected_reindex_boundary(),
         "request": {
             "request_id": "maintenance-apply-1",
             "actor_category": "maintenance_mutation",
@@ -497,20 +537,7 @@ def test_agent_entry_exposes_reindex_candidate_stub_when_activation_and_durable_
     assert str(activation["audit_storage_path"]).endswith(".jsonl")
     assert activation["blocked_by"] == []
     boundary = result["error"]["mutation_executor"]["boundary"]
-    assert boundary == {
-        "family": "reindex",
-        "classification": "derivative_runtime_state",
-        "live_candidate_allowed": True,
-        "managed_state_write": False,
-        "approval_state_write": False,
-        "requires_durable_audit_receipt": True,
-        "requires_rollback_plan": False,
-        "requires_managed_state_snapshot": False,
-        "requires_document_version_binding": False,
-        "requires_decision_audit": False,
-        "required_preconditions": ["operator_activation", "durable_audit_ready"],
-        "blocked_by": [],
-    }
+    assert boundary == _expected_reindex_boundary()
     assert result["error"]["mutation_executor"]["delegate_executor_name"] == "noop_mutation_executor"
     assert result["execution_trace"]["contracts"]["mutation_executor"] == result["error"]["mutation_executor"]
 

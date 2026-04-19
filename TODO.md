@@ -24,6 +24,7 @@
 - `docs/reports/V1_5_MUTATION_ACTIVATION_SMOKE_EVIDENCE_2026-04-19.md`
 - `docs/reports/V1_5_REINDEX_ACTIVATION_CHECKPOINT_REVIEW_2026-04-19.md`
 - `docs/reports/V1_5_REINDEX_ACTIVATION_OPERATOR_RUNBOOK_DRAFT_2026-04-19.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OUTLINE_DRAFT_2026-04-20.md`
 - `docs/PREPROCESSING_RULES.md`
 - `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md`
 - `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
@@ -89,8 +90,8 @@
 | LOOP-041 | done | V1.5 mutation activation smoke evidence draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-042 | done | V1.5 reindex activation checkpoint review | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-043 | done | V1.5 reindex activation operator runbook draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-044 | active | V1.5 reindex live adapter outline draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-045 | pending | V1.5 reindex live adapter test plan draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-044 | done | V1.5 reindex live adapter outline draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-045 | active | V1.5 reindex live adapter test plan draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -1285,7 +1286,7 @@ closeout 메모 (2026-04-19):
 - runbook은 `reindex` 단일 tool만 다루고, apply가 끝까지 `MUTATION_APPLY_NOT_ENABLED`여야 한다는 guardrail을 명시했다.
 - 다음 active loop는 `LOOP-044`이며, current noop fallback/candidate stub 계약 뒤에 붙을 future live adapter 책임 경계를 outline 수준으로 정리한다.
 
-## 현재 Active Loop (LOOP-044)
+## 완료 Loop (LOOP-044)
 
 목표:
 - `reindex` live adapter가 미래에 붙는다면 어떤 책임과 경계를 가져야 하는지 outline 초안을 정리하고, current noop/candidate stub contract와의 연결을 고정한다.
@@ -1306,6 +1307,36 @@ closeout 메모 (2026-04-19):
 진행 메모 (2026-04-19):
 - `LOOP-043` closeout으로 local operator runbook은 고정됐다.
 - 이번 단계는 실제 adapter를 구현하지 않고, future live adapter가 current contract 위에서 어떤 책임을 져야 하는지 outline만 정리하는 것이다.
+
+closeout 메모 (2026-04-20):
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OUTLINE_DRAFT_2026-04-20.md`를 추가해 `reindex` future live adapter의 target executor identity, required inputs, expected outputs, rollback awareness, non-goals를 outline 수준으로 고정했다.
+- `services/mutation_executor_service.py`의 `boundary.live_adapter_outline` contract에 같은 outline을 반영해 current noop fallback/candidate stub 경계와 future live adapter handoff 지점을 테스트 가능한 shape로 남겼다.
+- `tests/test_mutation_executor_service.py`, `tests/test_tool_middleware_service.py`, `tests/test_agent_runtime_service.py`는 reindex boundary contract에 `live_adapter_outline`가 포함돼도 기존 blocked/candidate path가 유지되는지 검증하도록 갱신했다.
+- 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 통과로 마감한다.
+- 다음 active loop는 `LOOP-045`이며, 이번 outline contract를 기준으로 noop fallback/candidate stub/future live adapter smoke 범위를 test plan으로 정리한다.
+
+## 현재 Active Loop (LOOP-045)
+
+목표:
+- `reindex` live adapter outline 뒤에 필요한 test plan과 smoke 범위를 문서화하고, current noop fallback/candidate stub contract와 future live adapter verification 경계를 고정한다.
+
+범위:
+- 포함: live adapter test plan 문서화, noop fallback/candidate stub/future live adapter 검증 축 정리, smoke/test ownership 메모
+- 제외: 실제 live adapter 구현, actual live execution 개방, upload review adapter, public `/agent/*` endpoint
+
+완료 기준:
+- `reindex` live adapter test plan 초안이 문서와 테스트 기준으로 정리된다.
+- current smoke/test contract와 future live adapter verification 범위가 충돌 없이 이어진다.
+- live execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-20):
+- `LOOP-044` closeout으로 future live adapter outline은 문서와 executor boundary contract에 함께 고정됐다.
+- 이번 단계는 actual execution을 열지 않고, outline contract가 요구하는 noop fallback/candidate stub/future live adapter smoke 범위를 test plan 형태로 정리하는 것이다.
+
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
 목표:

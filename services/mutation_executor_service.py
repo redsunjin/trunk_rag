@@ -6,8 +6,10 @@ from typing import Protocol
 from services import runtime_service, tool_apply_service
 
 MUTATION_EXECUTOR_CONTRACT_SCHEMA_VERSION = "v1.5.mutation_executor_contract.v1"
+REINDEX_LIVE_ADAPTER_OUTLINE_SCHEMA_VERSION = "v1.5.reindex_live_adapter_outline.v1"
 MUTATION_EXECUTION_ENV_KEY = "DOC_RAG_AGENT_MUTATION_EXECUTION"
 REINDEX_MUTATION_EXECUTOR_NAME = "reindex_mutation_adapter_stub"
+REINDEX_LIVE_ADAPTER_EXECUTOR_NAME = "reindex_mutation_adapter_live"
 NOOP_MUTATION_EXECUTOR_NAME = "noop_mutation_executor"
 REINDEX_FIRST_LIVE_SCOPE = "reindex"
 LOCAL_FILE_APPEND_ONLY_SINK_TYPE = "local_file_append_only"
@@ -113,6 +115,42 @@ def _build_boundary_contract(request: MutationExecutionRequest) -> dict[str, obj
             "requires_decision_audit": False,
             "required_preconditions": ["operator_activation", "durable_audit_ready"],
             "blocked_by": [],
+            "live_adapter_outline": {
+                "schema_version": REINDEX_LIVE_ADAPTER_OUTLINE_SCHEMA_VERSION,
+                "status": "outline_only_deferred",
+                "target_executor_name": REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+                "current_executor_name": REINDEX_MUTATION_EXECUTOR_NAME,
+                "handoff_from_selection_state": "candidate_stub",
+                "execution_mode": "off_by_default",
+                "required_inputs": [
+                    "payload.collection",
+                    "preview_seed.target.collection_key",
+                    "apply_envelope.preview_ref",
+                    "apply_envelope.intent.summary",
+                    "persisted_audit_record.request_id",
+                    "audit_sink_receipt.sequence_id",
+                ],
+                "expected_outputs": [
+                    "result.reindex_summary",
+                    "result.audit_receipt_ref",
+                    "result.rollback_hint",
+                ],
+                "rollback_awareness": {
+                    "mode": "rebuild_from_source_documents",
+                    "managed_state_rollback_required": False,
+                    "operator_restore_hint_required": True,
+                },
+                "test_seams": [
+                    "noop_fallback_contract",
+                    "candidate_stub_contract",
+                    "future_live_adapter_opt_in_smoke",
+                ],
+                "non_goals": [
+                    "managed_state_write_rollback",
+                    "upload_review_execution",
+                    "public_agent_endpoint",
+                ],
+            },
         }
     if request.tool_name == APPROVE_UPLOAD_REQUEST_TOOL:
         return {

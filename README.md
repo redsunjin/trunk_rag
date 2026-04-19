@@ -61,11 +61,11 @@
 - 현재: `services/tool_trace_service.py`는 tool/middleware 실행 결과를 `v1.5.tool_execution_trace.v1` schema로 고정하고 `actor_category`, `mutation_candidate_tools`, policy flag seed와 `internal/public/persisted` audience별 redaction 함수를 제공한다
 - 현재: `PREVIEW_REQUIRED` 응답은 `v1.5.mutation_preview_contract.v1` 기준 `preview_contract`, `v1.5.mutation_preview_seed.v1` 기준 `preview_seed`, `v1.5.mutation_apply_envelope.v1` 기준 draft `apply_envelope`를 함께 반환하고, execution trace는 `v1.5.mutation_audit_record.v1` persisted audit contract와 append-only sink receipt를 함께 남긴다
 - 현재: `services/agent_runtime_service.py`는 단일 입력을 actor policy source 기반 allowlist/middleware/trace가 붙은 내부 single-tool runtime 흐름으로 실행하고, mutation candidate에 대해서는 `admin_code`/`mutation_intent`/`apply_envelope` 신호를 middleware gate에 전달한다
-- 현재: `services/mutation_executor_service.py`는 preview-confirmed apply 이후에 붙는 executor activation/boundary seam을 제공하고, `reindex`는 operator activation request + durable local audit receipt가 함께 맞을 때만 candidate stub를 선택하며, upload review는 별도 `boundary_noop`로 유지한다
+- 현재: `services/mutation_executor_service.py`는 preview-confirmed apply 이후에 붙는 executor activation/boundary seam을 제공하고, `reindex`는 operator activation request + durable local audit receipt가 함께 맞을 때만 candidate stub를 선택하며, `boundary.live_adapter_outline`로 future live adapter 입력/출력/rollback awareness를 고정한다. upload review는 별도 `boundary_noop`로 유지한다
 - 현재: actor별 allowlist/mutation 정책 초안은 `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`에 고정했고, resolver skeleton과 admin auth + mutation intent gate, preview/audit contract, preview seed + audit sink skeleton, mutation apply draft/guard까지 반영됐다
 - 현재: `mutation_apply_guard`는 preview-confirmed envelope를 검증하고 `PREVIEW_REFERENCE_MISMATCH`, `AUDIT_SINK_RECEIPT_REQUIRED`, `AUDIT_SINK_RECEIPT_INVALID`, `MUTATION_INTENT_SUMMARY_REQUIRED`, `MUTATION_APPLY_NOT_ENABLED`를 분리해 차단한다
 - 현재: `services/tool_audit_sink_service.py`는 default `null_append_only`를 유지한 채 `DOC_RAG_MUTATION_AUDIT_BACKEND=local_file`일 때만 local append-only file backend와 stable `sequence_id` receipt를 제공하고, receipt/entry에 `90일` rolling retention과 explicit local-operator prune를 드러내는 nested `ops` contract를 남긴다
-- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 `reindex` live adapter outline을 정리하고, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
+- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 `reindex` live adapter test plan을 정리하고, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
 
 비목표(현재 단계):
 - 원본 수집/크롤링

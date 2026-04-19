@@ -1,4 +1,4 @@
-# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-04-19 기준)
+# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-04-20 기준)
 
 기준 문서:
 - `SPEC.md`
@@ -38,6 +38,7 @@
 - `docs/reports/V1_5_MUTATION_ACTIVATION_SMOKE_EVIDENCE_2026-04-19.md`
 - `docs/reports/V1_5_REINDEX_ACTIVATION_CHECKPOINT_REVIEW_2026-04-19.md`
 - `docs/reports/V1_5_REINDEX_ACTIVATION_OPERATOR_RUNBOOK_DRAFT_2026-04-19.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OUTLINE_DRAFT_2026-04-20.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -45,8 +46,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-044`
-- current_active_title: `V1.5 reindex live adapter outline draft`
+- current_active_id: `LOOP-045`
+- current_active_title: `V1.5 reindex live adapter test plan draft`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1112,7 +1113,7 @@ closeout 메모 (2026-04-19):
 - runbook은 `reindex` 단일 tool만 다루고, apply가 끝까지 `MUTATION_APPLY_NOT_ENABLED`로 남아야 한다는 guardrail을 명시했다.
 - 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`, `./.venv/bin/python scripts/smoke_agent_runtime.py`, `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag_mutation_audit_checkpoint ./.venv/bin/python scripts/smoke_agent_runtime.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 통과로 마감한다.
 
-### A-Next37. V1.5 reindex live adapter outline draft (현재 active)
+### A-Next37. V1.5 reindex live adapter outline draft (완료: 2026-04-20)
 1. operator runbook 이후에도 live execution은 열지 않고, 필요한 `reindex` live adapter 책임과 경계만 outline으로 정리한다.
 2. noop fallback/candidate stub에서 실제 adapter로 넘어갈 때 필요한 입력/출력/rollback awareness를 문서화한다.
 3. upload review boundary와 public surface 비목표를 다시 고정한다.
@@ -1130,7 +1131,13 @@ closeout 메모 (2026-04-19):
 - `LOOP-043` closeout으로 local operator runbook은 고정됐다.
 - 이번 단계는 future live adapter 책임을 outline 수준으로만 정리하고, actual enablement/implementation은 계속 deferred 상태로 둔다.
 
-### A-Next38. V1.5 reindex live adapter test plan draft (pending)
+closeout 메모 (2026-04-20):
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OUTLINE_DRAFT_2026-04-20.md`를 추가해 `reindex` future live adapter의 target executor identity, required inputs, expected outputs, rollback awareness, non-goals를 outline 수준으로 고정했다.
+- `services/mutation_executor_service.py`는 `reindex` boundary contract에 `live_adapter_outline`를 추가해 current noop fallback/candidate stub seam 뒤에 붙을 future live adapter handoff를 execution shape 수준으로 남겼다.
+- `tests/test_mutation_executor_service.py`, `tests/test_tool_middleware_service.py`, `tests/test_agent_runtime_service.py`는 reindex boundary contract에 `live_adapter_outline`가 포함된 상태에서도 blocked/candidate path가 유지되는지 검증하도록 갱신됐다.
+- 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 통과로 마감한다.
+
+### A-Next38. V1.5 reindex live adapter test plan draft (현재 active)
 1. live adapter outline 다음 단계로 필요한 test plan과 smoke 범위를 문서화한다.
 2. actual live execution을 열지 않고, noop fallback/candidate stub/live adapter 경계별 검증 항목만 정리한다.
 3. upload review boundary와 public surface 비목표를 test plan에도 그대로 유지한다.
@@ -1143,6 +1150,10 @@ closeout 메모 (2026-04-19):
 검증:
 - `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-20):
+- `LOOP-044` closeout으로 future live adapter outline은 문서와 executor boundary contract에 함께 고정됐다.
+- 이번 단계는 actual execution을 열지 않고, outline contract가 요구하는 noop fallback/candidate stub/future live adapter smoke 범위를 test plan으로 정리하는 것이다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

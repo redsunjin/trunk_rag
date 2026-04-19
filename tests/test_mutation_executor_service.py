@@ -3,6 +3,59 @@ from __future__ import annotations
 from services import mutation_executor_service, tool_apply_service
 
 
+def _expected_reindex_boundary() -> dict[str, object]:
+    return {
+        "family": "reindex",
+        "classification": "derivative_runtime_state",
+        "live_candidate_allowed": True,
+        "managed_state_write": False,
+        "approval_state_write": False,
+        "requires_durable_audit_receipt": True,
+        "requires_rollback_plan": False,
+        "requires_managed_state_snapshot": False,
+        "requires_document_version_binding": False,
+        "requires_decision_audit": False,
+        "required_preconditions": ["operator_activation", "durable_audit_ready"],
+        "blocked_by": [],
+        "live_adapter_outline": {
+            "schema_version": mutation_executor_service.REINDEX_LIVE_ADAPTER_OUTLINE_SCHEMA_VERSION,
+            "status": "outline_only_deferred",
+            "target_executor_name": mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+            "current_executor_name": mutation_executor_service.REINDEX_MUTATION_EXECUTOR_NAME,
+            "handoff_from_selection_state": "candidate_stub",
+            "execution_mode": "off_by_default",
+            "required_inputs": [
+                "payload.collection",
+                "preview_seed.target.collection_key",
+                "apply_envelope.preview_ref",
+                "apply_envelope.intent.summary",
+                "persisted_audit_record.request_id",
+                "audit_sink_receipt.sequence_id",
+            ],
+            "expected_outputs": [
+                "result.reindex_summary",
+                "result.audit_receipt_ref",
+                "result.rollback_hint",
+            ],
+            "rollback_awareness": {
+                "mode": "rebuild_from_source_documents",
+                "managed_state_rollback_required": False,
+                "operator_restore_hint_required": True,
+            },
+            "test_seams": [
+                "noop_fallback_contract",
+                "candidate_stub_contract",
+                "future_live_adapter_opt_in_smoke",
+            ],
+            "non_goals": [
+                "managed_state_write_rollback",
+                "upload_review_execution",
+                "public_agent_endpoint",
+            ],
+        },
+    }
+
+
 def _sample_request(
     tool_name: str = "reindex",
     *,
@@ -84,20 +137,7 @@ def test_execute_mutation_request_uses_noop_fallback_for_reindex_when_activation
             "audit_storage_path": None,
             "blocked_by": ["activation_not_requested", "durable_audit_not_ready"],
         },
-        "boundary": {
-            "family": "reindex",
-            "classification": "derivative_runtime_state",
-            "live_candidate_allowed": True,
-            "managed_state_write": False,
-            "approval_state_write": False,
-            "requires_durable_audit_receipt": True,
-            "requires_rollback_plan": False,
-            "requires_managed_state_snapshot": False,
-            "requires_document_version_binding": False,
-            "requires_decision_audit": False,
-            "required_preconditions": ["operator_activation", "durable_audit_ready"],
-            "blocked_by": [],
-        },
+        "boundary": _expected_reindex_boundary(),
         "request": {
             "request_id": "req-exec-1",
             "actor_category": "maintenance_mutation",
@@ -143,20 +183,7 @@ def test_execute_mutation_request_keeps_reindex_in_noop_fallback_without_durable
             "audit_storage_path": None,
             "blocked_by": ["durable_audit_not_ready"],
         },
-        "boundary": {
-            "family": "reindex",
-            "classification": "derivative_runtime_state",
-            "live_candidate_allowed": True,
-            "managed_state_write": False,
-            "approval_state_write": False,
-            "requires_durable_audit_receipt": True,
-            "requires_rollback_plan": False,
-            "requires_managed_state_snapshot": False,
-            "requires_document_version_binding": False,
-            "requires_decision_audit": False,
-            "required_preconditions": ["operator_activation", "durable_audit_ready"],
-            "blocked_by": [],
-        },
+        "boundary": _expected_reindex_boundary(),
         "request": {
             "request_id": "req-exec-1",
             "actor_category": "maintenance_mutation",
@@ -213,20 +240,7 @@ def test_execute_mutation_request_selects_reindex_candidate_stub_when_activation
             "audit_storage_path": "/tmp/mutation-audit/audit-20260418.jsonl",
             "blocked_by": [],
         },
-        "boundary": {
-            "family": "reindex",
-            "classification": "derivative_runtime_state",
-            "live_candidate_allowed": True,
-            "managed_state_write": False,
-            "approval_state_write": False,
-            "requires_durable_audit_receipt": True,
-            "requires_rollback_plan": False,
-            "requires_managed_state_snapshot": False,
-            "requires_document_version_binding": False,
-            "requires_decision_audit": False,
-            "required_preconditions": ["operator_activation", "durable_audit_ready"],
-            "blocked_by": [],
-        },
+        "boundary": _expected_reindex_boundary(),
         "delegate_executor_name": "noop_mutation_executor",
         "request": {
             "request_id": "req-exec-1",
