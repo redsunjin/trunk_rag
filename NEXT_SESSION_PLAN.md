@@ -1,4 +1,4 @@
-# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-04-17 기준)
+# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-04-19 기준)
 
 기준 문서:
 - `SPEC.md`
@@ -35,6 +35,7 @@
 - `docs/reports/V1_5_UPLOAD_REVIEW_EXECUTOR_BOUNDARY_REVIEW_2026-04-18.md`
 - `docs/reports/V1_5_MUTATION_AUDIT_RETENTION_OPS_DRAFT_2026-04-18.md`
 - `docs/reports/V1_5_REINDEX_LIVE_READINESS_CHECKLIST_DRAFT_2026-04-19.md`
+- `docs/reports/V1_5_MUTATION_ACTIVATION_SMOKE_EVIDENCE_2026-04-19.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -42,8 +43,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-041`
-- current_active_title: `V1.5 mutation activation smoke evidence draft`
+- current_active_id: `LOOP-042`
+- current_active_title: `V1.5 reindex activation checkpoint review`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1040,7 +1041,7 @@ closeout 메모 (2026-04-19):
 - 체크리스트는 internal-only surface, operator explicit activation 기본값 `off`, durable local audit receipt, retention/prune ownership, upload review separate boundary, `MUTATION_APPLY_NOT_ENABLED` 유지 여부를 모두 같은 readiness 표에서 추적하도록 정리했다.
 - smoke evidence 자체는 아직 별도 문서로 패키징하지 않았고, 그 항목은 다음 active loop `LOOP-041`에서 닫는다.
 
-### A-Next34. V1.5 mutation activation smoke evidence draft (현재 active)
+### A-Next34. V1.5 mutation activation smoke evidence draft (완료: 2026-04-19)
 1. `reindex` live readiness checklist에서 요구하는 smoke evidence 항목을 문서/스크립트 기준으로 정리한다.
 2. 실제 live execution을 열지 않고 existing blocked flow/smoke 결과를 activation evidence 형태로 묶는다.
 3. staged activation 원칙을 깨지 않는 최소 smoke/runbook evidence만 남긴다.
@@ -1058,7 +1059,12 @@ closeout 메모 (2026-04-19):
 - `LOOP-040` closeout으로 `reindex` live readiness checklist와 required smoke evidence 항목은 문서화됐다.
 - 이번 단계는 existing `scripts/smoke_agent_runtime.py` 결과를 readiness evidence 형태로 고정하는 것이다.
 
-### A-Next35. V1.5 reindex activation checkpoint review (pending)
+closeout 메모 (2026-04-19):
+- `scripts/smoke_agent_runtime.py`에 `v1.5.mutation_activation_smoke.v1` schema와 `apply_envelope`, `audit_sink`, `mutation_executor` summary가 추가돼 smoke 결과가 readiness evidence로 재사용 가능해졌다.
+- `docs/reports/V1_5_MUTATION_ACTIVATION_SMOKE_EVIDENCE_2026-04-19.md`를 통해 blocked apply flow와 checklist 항목의 연결, default `null_append_only`/`activation_not_requested` 상태가 공식화됐다.
+- 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`, `./.venv/bin/python scripts/smoke_agent_runtime.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 통과로 마감한다.
+
+### A-Next35. V1.5 reindex activation checkpoint review (현재 active)
 1. readiness checklist와 smoke evidence를 바탕으로 `reindex` activation checkpoint 판단 기준을 정리한다.
 2. 실제 live execution 개방 여부는 아직 결정하지 않고, 추가로 남은 blocker와 go/no-go 질문만 고정한다.
 3. upload review boundary가 checkpoint 판단에 섞이지 않도록 별도 보류 항목으로 유지한다.
@@ -1066,6 +1072,24 @@ closeout 메모 (2026-04-19):
 완료 기준:
 - `reindex` activation checkpoint 판단 기준이 문서와 테스트 기준으로 정리된다.
 - staged activation 원칙과 upload review separate boundary가 다시 흐려지지 않는다.
+- live execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-19):
+- `LOOP-041` closeout으로 smoke evidence 문서와 script output schema는 고정됐다.
+- 이번 단계는 실제 enablement가 아니라 `reindex` activation에 남은 checkpoint 질문과 blocker를 정리하는 review loop다.
+
+### A-Next36. V1.5 reindex activation operator runbook draft (pending)
+1. checkpoint review에서 남긴 `reindex` staged activation precondition을 operator runbook 형태로 정리한다.
+2. 실제 live enablement를 열지 않고, local activation/audit/rollback awareness만 단계별로 문서화한다.
+3. upload review boundary와 별도 보류 원칙을 runbook에도 그대로 유지한다.
+
+완료 기준:
+- `reindex` activation operator runbook 초안이 문서와 테스트 기준으로 정리된다.
+- staged activation precondition과 local operator ownership 문구가 실제 실행 절차 관점에서 모순 없이 이어진다.
 - live execution off-by-default 정책이 계속 유지된다.
 
 검증:

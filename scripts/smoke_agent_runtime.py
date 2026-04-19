@@ -12,24 +12,96 @@ if str(ROOT_DIR) not in sys.path:
 from common import load_project_env
 from services import agent_runtime_service
 
+MUTATION_ACTIVATION_SMOKE_SCHEMA_VERSION = "v1.5.mutation_activation_smoke.v1"
+
+
+def _safe_dict(value: object) -> dict[str, object]:
+    return dict(value) if isinstance(value, dict) else {}
+
 
 def _error_code(result: dict[str, object]) -> str | None:
-    error = result.get("error")
-    if not isinstance(error, dict):
-        return None
+    error = _safe_dict(result.get("error"))
     code = error.get("code")
     return str(code) if code is not None else None
 
 
-def _summarize_result(result: dict[str, object]) -> dict[str, object]:
-    trace = result.get("execution_trace") if isinstance(result.get("execution_trace"), dict) else {}
+def _summarize_apply_envelope(result: dict[str, object]) -> dict[str, object] | None:
+    error = _safe_dict(result.get("error"))
+    execution_trace = _safe_dict(result.get("execution_trace"))
+    contracts = _safe_dict(execution_trace.get("contracts"))
+    envelope = _safe_dict(error.get("apply_envelope")) or _safe_dict(contracts.get("apply_envelope"))
+    if not envelope:
+        return None
+    preview_ref = _safe_dict(envelope.get("preview_ref"))
+    audit_ref = _safe_dict(envelope.get("audit_ref"))
+    apply_control = _safe_dict(envelope.get("apply_control"))
     return {
+        "schema_version": envelope.get("schema_version"),
+        "preview_tool_name": preview_ref.get("tool_name"),
+        "preview_target": preview_ref.get("target"),
+        "audit_sink_type": audit_ref.get("sink_type"),
+        "audit_sequence_id": audit_ref.get("sequence_id"),
+        "execution_enabled": apply_control.get("execution_enabled"),
+    }
+
+
+def _summarize_audit_sink(result: dict[str, object]) -> dict[str, object] | None:
+    execution_trace = _safe_dict(result.get("execution_trace"))
+    contracts = _safe_dict(execution_trace.get("contracts"))
+    audit_sink = _safe_dict(contracts.get("audit_sink"))
+    if not audit_sink:
+        return None
+    return {
+        "sink_type": audit_sink.get("sink_type"),
+        "sequence_id": audit_sink.get("sequence_id"),
+        "storage_path": audit_sink.get("storage_path"),
+        "retention_days": audit_sink.get("retention_days"),
+        "prune_policy": audit_sink.get("prune_policy"),
+    }
+
+
+def _summarize_mutation_executor(result: dict[str, object]) -> dict[str, object] | None:
+    error = _safe_dict(result.get("error"))
+    execution_trace = _safe_dict(result.get("execution_trace"))
+    contracts = _safe_dict(execution_trace.get("contracts"))
+    executor = _safe_dict(error.get("mutation_executor")) or _safe_dict(contracts.get("mutation_executor"))
+    if not executor:
+        return None
+    activation = _safe_dict(executor.get("activation"))
+    boundary = _safe_dict(executor.get("boundary"))
+    return {
+        "executor_name": executor.get("executor_name"),
+        "selection_state": executor.get("selection_state"),
+        "selection_reason": executor.get("selection_reason"),
+        "activation_requested": executor.get("activation_requested"),
+        "execution_enabled": executor.get("execution_enabled"),
+        "activation_blocked_by": activation.get("blocked_by"),
+        "audit_sink_type": activation.get("audit_sink_type"),
+        "audit_sequence_id": activation.get("audit_sequence_id"),
+        "boundary_family": boundary.get("family"),
+        "boundary_classification": boundary.get("classification"),
+    }
+
+
+def _summarize_result(result: dict[str, object]) -> dict[str, object]:
+    trace = _safe_dict(result.get("execution_trace"))
+    summary = {
         "ok": result.get("ok") is True,
         "error_code": _error_code(result),
         "request_id": trace.get("request_id"),
-        "selected_tool": result.get("entry", {}).get("selected_tool") if isinstance(result.get("entry"), dict) else None,
-        "blocked_by": trace.get("middleware", {}).get("blocked_by") if isinstance(trace.get("middleware"), dict) else None,
+        "selected_tool": _safe_dict(result.get("entry")).get("selected_tool"),
+        "blocked_by": _safe_dict(trace.get("middleware")).get("blocked_by"),
     }
+    apply_envelope = _summarize_apply_envelope(result)
+    if apply_envelope is not None:
+        summary["apply_envelope"] = apply_envelope
+    audit_sink = _summarize_audit_sink(result)
+    if audit_sink is not None:
+        summary["audit_sink"] = audit_sink
+    mutation_executor = _summarize_mutation_executor(result)
+    if mutation_executor is not None:
+        summary["mutation_executor"] = mutation_executor
+    return summary
 
 
 def run_smoke() -> dict[str, object]:
@@ -136,6 +208,7 @@ def run_smoke() -> dict[str, object]:
         },
     ]
     return {
+        "schema_version": MUTATION_ACTIVATION_SMOKE_SCHEMA_VERSION,
         "ok": all(check["ok"] for check in checks),
         "checks": checks,
     }

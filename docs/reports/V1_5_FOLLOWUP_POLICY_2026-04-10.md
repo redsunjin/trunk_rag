@@ -71,6 +71,7 @@ write tool을 agent runtime에 열기 전 필요한 조건:
 - `docs/reports/V1_5_UPLOAD_REVIEW_EXECUTOR_BOUNDARY_REVIEW_2026-04-18.md`에서 upload review execution을 `reindex`와 분리된 `boundary_noop`/rollback-audit precondition 기준으로 고정했다.
 - `docs/reports/V1_5_MUTATION_AUDIT_RETENTION_OPS_DRAFT_2026-04-18.md`에서 `90일 rolling_window`, explicit local-operator prune ownership, nested `ops` receipt contract를 고정했다.
 - `docs/reports/V1_5_REINDEX_LIVE_READINESS_CHECKLIST_DRAFT_2026-04-19.md`에서 `reindex` live enablement 전 필요한 checklist/evidence 항목을 고정했다.
+- `docs/reports/V1_5_MUTATION_ACTIVATION_SMOKE_EVIDENCE_2026-04-19.md`에서 blocked flow smoke output과 `mutation_executor`/`audit_sink` evidence mapping을 고정했다.
 
 ### 4. Branch Cleanup and Publish
 
@@ -85,7 +86,7 @@ write tool을 agent runtime에 열기 전 필요한 조건:
 1. Public API는 만들지 않는다.
 2. V1 기본 `/query` 경로는 유지한다.
 3. agent runtime은 내부 service + unit test + smoke script 기준으로만 유지한다.
-4. 다음 구현 후보는 `mutation activation smoke evidence draft`로 제한한다.
+4. 다음 구현 후보는 `reindex activation checkpoint review`로 제한한다.
 
 ## Smoke Check
 
@@ -109,7 +110,7 @@ Trace 저장/노출 전 redaction 기준은 `docs/reports/V1_5_TRACE_REDACTION_P
 - raw input, retrieved context, document content, local path, admin code, credential은 저장/노출 기본 대상에서 제외한다.
 - 기본 저장 후보는 request id, tool name, side effect, runtime elapsed, route seed, outcome code, middleware blocked_by 같은 diagnostic seed로 제한한다.
 - `redact_execution_trace()` 순수 함수와 `internal/public/persisted` audience별 단위 테스트를 추가했다.
-- 이후 구현은 actor policy source, mutation gate, preview/audit contract, preview seed/audit sink, mutation apply guard, execution go/no-go review, mutation executor interface draft, durable mutation audit backend skeleton, reindex executor activation seam, upload review executor boundary review, mutation audit retention ops draft, reindex live readiness checklist draft 순서로 진행됐고 현재 다음 후보는 `mutation activation smoke evidence draft`다.
+- 이후 구현은 actor policy source, mutation gate, preview/audit contract, preview seed/audit sink, mutation apply guard, execution go/no-go review, mutation executor interface draft, durable mutation audit backend skeleton, reindex executor activation seam, upload review executor boundary review, mutation audit retention ops draft, reindex live readiness checklist draft, mutation activation smoke evidence draft 순서로 진행됐고 현재 다음 후보는 `reindex activation checkpoint review`다.
 
 ## Deferred
 

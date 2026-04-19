@@ -21,6 +21,7 @@
 - `docs/reports/V1_5_UPLOAD_REVIEW_EXECUTOR_BOUNDARY_REVIEW_2026-04-18.md`
 - `docs/reports/V1_5_MUTATION_AUDIT_RETENTION_OPS_DRAFT_2026-04-18.md`
 - `docs/reports/V1_5_REINDEX_LIVE_READINESS_CHECKLIST_DRAFT_2026-04-19.md`
+- `docs/reports/V1_5_MUTATION_ACTIVATION_SMOKE_EVIDENCE_2026-04-19.md`
 - `docs/PREPROCESSING_RULES.md`
 - `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md`
 - `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
@@ -83,8 +84,9 @@
 | LOOP-038 | done | V1.5 upload review executor boundary review | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-039 | done | V1.5 mutation audit retention ops draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-040 | done | V1.5 reindex live readiness checklist draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-041 | active | V1.5 mutation activation smoke evidence draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-042 | pending | V1.5 reindex activation checkpoint review | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-041 | done | V1.5 mutation activation smoke evidence draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-042 | active | V1.5 reindex activation checkpoint review | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-043 | pending | V1.5 reindex activation operator runbook draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -1198,7 +1200,7 @@ closeout 메모 (2026-04-19):
 - 체크리스트는 internal-only surface, operator explicit activation 기본값 `off`, durable local audit receipt, retention/prune ownership, upload review separate boundary, `MUTATION_APPLY_NOT_ENABLED` 유지 여부를 모두 같은 readiness 표에서 추적하도록 정리했다.
 - smoke evidence 자체는 아직 별도 문서로 패키징하지 않았고, 그 항목은 다음 active loop `LOOP-041`에서 닫는다.
 
-## 현재 Active Loop (LOOP-041)
+## 완료 Loop (LOOP-041)
 
 목표:
 - mutation activation blocked flow smoke 결과를 readiness evidence 형태로 정리하고, checklist 항목과 실행 증빙의 연결을 고정한다.
@@ -1219,6 +1221,33 @@ closeout 메모 (2026-04-19):
 진행 메모 (2026-04-19):
 - `LOOP-040` closeout으로 `reindex` live readiness checklist와 required smoke evidence 항목은 문서화됐다.
 - 이번 단계는 existing `scripts/smoke_agent_runtime.py` 결과를 readiness evidence 형태로 고정하는 것이다.
+
+closeout 메모 (2026-04-19):
+- `scripts/smoke_agent_runtime.py`에 `v1.5.mutation_activation_smoke.v1` schema와 `apply_envelope`, `audit_sink`, `mutation_executor` summary를 추가해 blocked flow smoke를 readiness evidence로 직접 재사용할 수 있게 했다.
+- `tests/test_smoke_agent_runtime.py`는 preview/apply evidence와 `mutation_executor` noop fallback summary를 함께 검증하도록 갱신했다.
+- `docs/reports/V1_5_MUTATION_ACTIVATION_SMOKE_EVIDENCE_2026-04-19.md`를 추가해 실제 smoke 결과가 `TOOL_NOT_ALLOWED -> ADMIN_AUTH_REQUIRED -> MUTATION_INTENT_REQUIRED -> PREVIEW_REQUIRED -> MUTATION_APPLY_NOT_ENABLED` 순서로 차단되고, default path가 `activation_not_requested + durable_audit_not_ready` 상태임을 고정했다.
+
+## 현재 Active Loop (LOOP-042)
+
+목표:
+- readiness checklist와 smoke evidence를 바탕으로 `reindex` activation checkpoint 판단 기준을 정리하고, 남은 blocker와 go/no-go 질문을 고정한다.
+
+범위:
+- 포함: checkpoint review 문서화, staged activation blocker 정리, upload review separate boundary 재확인
+- 제외: 실제 live execution 개방, upload review live executor, public `/agent/*` endpoint, operator runbook 본문 작성
+
+완료 기준:
+- `reindex` activation checkpoint 판단 기준이 문서와 테스트 기준으로 정리된다.
+- staged activation 원칙과 upload review separate boundary가 다시 흐려지지 않는다.
+- live execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-19):
+- `LOOP-041` closeout으로 smoke evidence schema와 blocked apply 결과 문서는 고정됐다.
+- 이번 단계는 그 evidence를 기준으로 `reindex` staged activation에 남은 checkpoint 질문과 blocker만 정리하는 것이다.
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
 목표:
