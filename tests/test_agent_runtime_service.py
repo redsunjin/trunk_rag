@@ -100,7 +100,11 @@ def _expected_reindex_boundary() -> dict[str, object]:
                     "binding_kind",
                     "binding_source",
                     "executor_name",
+                    mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD,
                 ],
+                "binding_stage_field": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD,
+                "default_binding_stage": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_SELECTION_STUB,
+                "concrete_executor_stage": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_CONCRETE_SKELETON,
                 "selection_precedence": [
                     "tool_registration_boundary",
                     "activation_guard",
@@ -645,6 +649,7 @@ def test_agent_entry_blocks_preview_confirmed_apply_until_execution_is_enabled(m
             "executor_binding_kind": None,
             "executor_binding_source": None,
             "executor_binding_executor_name": None,
+            "executor_binding_stage": None,
         },
     }
     assert result["execution_trace"]["middleware"]["blocked_by"] == "mutation_apply_guard"
@@ -778,6 +783,68 @@ def test_agent_entry_selects_live_binding_stub_when_executor_binding_is_injected
     assert mutation_executor["selection_reason"] == "explicit_live_binding_requested"
     assert mutation_executor["request"]["executor_binding_present"] is True
     assert mutation_executor["request"]["executor_binding_source"] == "test_harness"
+    assert mutation_executor["request"]["executor_binding_stage"] is None
+
+
+def test_agent_entry_exposes_live_result_skeleton_sidecar_when_binding_stage_requests_it(
+    monkeypatch,
+    tmp_path,
+):
+    monkeypatch.setattr(
+        agent_runtime_service.tool_middleware_service.runtime_service,
+        "verify_admin_code",
+        lambda code: None,
+    )
+    monkeypatch.setenv(mutation_executor_service.MUTATION_EXECUTION_ENV_KEY, "1")
+    monkeypatch.setenv(tool_audit_sink_service.AUDIT_SINK_BACKEND_ENV_KEY, "local_file")
+    monkeypatch.setenv(
+        tool_audit_sink_service.AUDIT_SINK_DIR_ENV_KEY,
+        str(tmp_path / "mutation_audit"),
+    )
+
+    preview_result = agent_runtime_service.run_agent_entry(
+        agent_runtime_service.AgentRuntimeRequest(
+            input="Reindex the core collection.",
+            tool_name="reindex",
+            tool_payload={"collection": "all", "include_compatibility_bundle": True},
+            actor="maintenance",
+            admin_code="admin1234",
+            mutation_intent="reindex all",
+            allow_mutation=True,
+            request_id="maintenance-preview-live-2",
+        )
+    )
+
+    result = agent_runtime_service.run_agent_entry(
+        agent_runtime_service.AgentRuntimeRequest(
+            input="Apply the confirmed reindex plan.",
+            tool_name="reindex",
+            tool_payload={"collection": "all", "include_compatibility_bundle": True},
+            actor="maintenance",
+            admin_code="admin1234",
+            mutation_intent="reindex all",
+            apply_envelope=preview_result["error"]["apply_envelope"],
+            executor_binding={
+                "binding_kind": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_KIND,
+                "binding_source": "test_harness",
+                "executor_name": mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+                mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD: mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_CONCRETE_SKELETON,
+            },
+            allow_mutation=True,
+            request_id="maintenance-apply-live-2",
+        )
+    )
+
+    assert result["ok"] is False
+    assert result["entry"]["executor_binding_present"] is True
+    assert result["error"]["code"] == "MUTATION_APPLY_NOT_ENABLED"
+    mutation_executor = result["error"]["mutation_executor"]
+    assert mutation_executor["selection_state"] == "live_result_skeleton"
+    assert mutation_executor["execution_enabled"] is True
+    mutation_executor_result = result["error"]["mutation_executor_result"]
+    assert mutation_executor_result["schema_version"] == mutation_executor_service.REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION
+    assert mutation_executor_result["rollback_hint"]["collection_key"] == "all"
+    assert result["execution_trace"]["contracts"]["mutation_executor_result"] == mutation_executor_result
 
 
 def test_agent_entry_keeps_upload_review_in_boundary_noop_even_when_activation_and_durable_audit_are_ready(

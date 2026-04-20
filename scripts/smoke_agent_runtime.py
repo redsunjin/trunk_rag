@@ -15,6 +15,7 @@ from services import agent_runtime_service, mutation_executor_service
 
 MUTATION_ACTIVATION_SMOKE_SCHEMA_VERSION = "v1.5.mutation_activation_smoke.v1"
 MUTATION_ACTIVATION_SMOKE_LIVE_BINDING_ENV_KEY = "DOC_RAG_MUTATION_SMOKE_LIVE_BINDING"
+MUTATION_ACTIVATION_SMOKE_LIVE_BINDING_STAGE_ENV_KEY = "DOC_RAG_MUTATION_SMOKE_LIVE_BINDING_STAGE"
 MUTATION_ACTIVATION_SMOKE_LIVE_BINDING_SOURCE = "smoke_harness"
 
 
@@ -86,6 +87,29 @@ def _summarize_mutation_executor(result: dict[str, object]) -> dict[str, object]
     }
 
 
+def _summarize_mutation_executor_result(result: dict[str, object]) -> dict[str, object] | None:
+    error = _safe_dict(result.get("error"))
+    execution_trace = _safe_dict(result.get("execution_trace"))
+    contracts = _safe_dict(execution_trace.get("contracts"))
+    executor_result = _safe_dict(error.get("mutation_executor_result")) or _safe_dict(contracts.get("mutation_executor_result"))
+    if not executor_result:
+        return None
+    reindex_summary = _safe_dict(executor_result.get("reindex_summary"))
+    audit_receipt_ref = _safe_dict(executor_result.get("audit_receipt_ref"))
+    rollback_hint = _safe_dict(executor_result.get("rollback_hint"))
+    return {
+        "schema_version": executor_result.get("schema_version"),
+        "collection_key": reindex_summary.get("collection_key"),
+        "operation": reindex_summary.get("operation"),
+        "requested_reset": reindex_summary.get("requested_reset"),
+        "requested_compatibility_bundle": reindex_summary.get("requested_compatibility_bundle"),
+        "audit_sequence_id": audit_receipt_ref.get("sequence_id"),
+        "audit_storage_path": audit_receipt_ref.get("storage_path"),
+        "rollback_mode": rollback_hint.get("mode"),
+        "rollback_collection_key": rollback_hint.get("collection_key"),
+    }
+
+
 def _summarize_result(result: dict[str, object]) -> dict[str, object]:
     trace = _safe_dict(result.get("execution_trace"))
     summary = {
@@ -104,6 +128,9 @@ def _summarize_result(result: dict[str, object]) -> dict[str, object]:
     mutation_executor = _summarize_mutation_executor(result)
     if mutation_executor is not None:
         summary["mutation_executor"] = mutation_executor
+    mutation_executor_result = _summarize_mutation_executor_result(result)
+    if mutation_executor_result is not None:
+        summary["mutation_executor_result"] = mutation_executor_result
     return summary
 
 
@@ -113,24 +140,46 @@ def _parse_bool_env(value: str | None) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
-def _build_live_binding(opt_in_live_binding: bool) -> dict[str, object] | None:
+def _resolve_live_binding_stage(opt_in_live_binding_stage_concrete: bool) -> str | None:
+    if opt_in_live_binding_stage_concrete:
+        return mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_CONCRETE_SKELETON
+    raw_stage = os.getenv(MUTATION_ACTIVATION_SMOKE_LIVE_BINDING_STAGE_ENV_KEY)
+    normalized_stage = raw_stage.strip() if isinstance(raw_stage, str) else ""
+    return normalized_stage or None
+
+
+def _build_live_binding(opt_in_live_binding: bool, live_binding_stage: str | None) -> dict[str, object] | None:
     if not opt_in_live_binding:
         return None
-    return {
+    binding = {
         "binding_kind": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_KIND,
         "binding_source": MUTATION_ACTIVATION_SMOKE_LIVE_BINDING_SOURCE,
         "executor_name": mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
     }
+    if live_binding_stage:
+        binding[mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD] = live_binding_stage
+    return binding
 
 
-def run_smoke(*, opt_in_live_binding: bool | None = None) -> dict[str, object]:
+def run_smoke(
+    *,
+    opt_in_live_binding: bool | None = None,
+    opt_in_live_binding_stage_concrete: bool = False,
+) -> dict[str, object]:
     load_project_env()
     resolved_opt_in_live_binding = (
         _parse_bool_env(os.getenv(MUTATION_ACTIVATION_SMOKE_LIVE_BINDING_ENV_KEY))
         if opt_in_live_binding is None
         else bool(opt_in_live_binding)
     )
-    executor_binding = _build_live_binding(resolved_opt_in_live_binding)
+    resolved_live_binding_stage = _resolve_live_binding_stage(opt_in_live_binding_stage_concrete)
+    executor_binding = _build_live_binding(resolved_opt_in_live_binding, resolved_live_binding_stage)
+    reindex_apply_payload: dict[str, object] = {"collection": "all"}
+    if (
+        resolved_live_binding_stage
+        == mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_CONCRETE_SKELETON
+    ):
+        reindex_apply_payload["include_compatibility_bundle"] = True
     read_result = agent_runtime_service.run_agent_entry(
         agent_runtime_service.AgentRuntimeRequest(
             input="Check internal runtime health.",
@@ -175,7 +224,7 @@ def run_smoke(*, opt_in_live_binding: bool | None = None) -> dict[str, object]:
         agent_runtime_service.AgentRuntimeRequest(
             input="Run maintenance reindex.",
             tool_name="reindex",
-            tool_payload={"collection": "all"},
+            tool_payload=dict(reindex_apply_payload),
             actor="maintenance",
             admin_code="admin1234",
             mutation_intent="reindex core all collection",
@@ -190,7 +239,7 @@ def run_smoke(*, opt_in_live_binding: bool | None = None) -> dict[str, object]:
         agent_runtime_service.AgentRuntimeRequest(
             input="Apply the confirmed maintenance reindex.",
             tool_name="reindex",
-            tool_payload={"collection": "all"},
+            tool_payload=dict(reindex_apply_payload),
             actor="maintenance",
             admin_code="admin1234",
             mutation_intent="reindex core all collection",
@@ -236,6 +285,7 @@ def run_smoke(*, opt_in_live_binding: bool | None = None) -> dict[str, object]:
     return {
         "schema_version": MUTATION_ACTIVATION_SMOKE_SCHEMA_VERSION,
         "requested_live_binding": resolved_opt_in_live_binding,
+        "requested_live_binding_stage": resolved_live_binding_stage,
         "ok": all(check["ok"] for check in checks),
         "checks": checks,
     }
@@ -243,7 +293,11 @@ def run_smoke(*, opt_in_live_binding: bool | None = None) -> dict[str, object]:
 
 def main() -> int:
     opt_in_live_binding = "--opt-in-live-binding" in sys.argv[1:]
-    result = run_smoke(opt_in_live_binding=opt_in_live_binding)
+    opt_in_live_binding_stage_concrete = "--opt-in-live-binding-stage-concrete" in sys.argv[1:]
+    result = run_smoke(
+        opt_in_live_binding=opt_in_live_binding,
+        opt_in_live_binding_stage_concrete=opt_in_live_binding_stage_concrete,
+    )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
     return 0 if result["ok"] is True else 1
 

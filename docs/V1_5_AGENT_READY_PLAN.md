@@ -151,7 +151,9 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BINDING_SELECTION_STUB_DRAFT_2026-04-20.md`는 valid explicit binding일 때만 `reindex_mutation_adapter_live` `live_binding_stub` selection으로 승격되는 안전 stub를 고정했다.
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_COMMAND_DRAFT_2026-04-20.md`는 `scripts/smoke_agent_runtime.py --opt-in-live-binding`와 `DOC_RAG_MUTATION_SMOKE_LIVE_BINDING=1` opt-in command surface를 고정했다.
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_EVIDENCE_DRAFT_2026-04-20.md`는 activation/local-file/live-binding 조합에서 `reindex_mutation_adapter_live`, `live_binding_stub` evidence를 실제 smoke output으로 고정했다.
-- 다음 구현은 `LOOP-053 reindex live adapter concrete executor skeleton draft`이며, 이 단계에서는 current live binding stub 다음에 오는 concrete executor/result skeleton을 정리한다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_CONCRETE_EXECUTOR_SKELETON_DRAFT_2026-04-21.md`는 `concrete_executor_skeleton` stage, `live_result_skeleton` selection, `mutation_executor_result` sidecar contract를 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_CONCRETE_SMOKE_EVIDENCE_DRAFT_2026-04-21.md`는 `--opt-in-live-binding-stage-concrete`와 `DOC_RAG_MUTATION_SMOKE_LIVE_BINDING_STAGE` command/env surface, `live_result_skeleton` smoke evidence를 고정했다.
+- 다음 구현은 `LOOP-055 reindex live adapter top-level success promotion draft`이며, 이 단계에서는 blocked-success sidecar를 future top-level apply success surface로 어떻게 승격할지 정리한다.
 - raw input, retrieved context, document content, local path, admin code, credential은 저장/노출 기본 대상에서 제외한다.
 - `services/tool_trace_service.py`는 `redact_execution_trace()`로 `internal`, `public`, `persisted` audience별 trace 정규화를 제공한다.
 

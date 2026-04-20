@@ -107,6 +107,7 @@ def test_smoke_agent_runtime_checks_read_success_and_write_block(monkeypatch):
     assert result["ok"] is True
     assert result["schema_version"] == smoke_agent_runtime.MUTATION_ACTIVATION_SMOKE_SCHEMA_VERSION
     assert result["requested_live_binding"] is False
+    assert result["requested_live_binding_stage"] is None
     assert [call.tool_name for call in calls] == [
         "health_check",
         "reindex",
@@ -222,12 +223,151 @@ def test_smoke_agent_runtime_opt_in_live_binding_injects_executor_binding(monkey
     result = smoke_agent_runtime.run_smoke(opt_in_live_binding=True)
 
     assert result["requested_live_binding"] is True
+    assert result["requested_live_binding_stage"] is None
     apply_request = calls[-1]
     assert apply_request.request_id == "agent-smoke-apply"
     assert apply_request.executor_binding == {
         "binding_kind": smoke_agent_runtime.mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_KIND,
         "binding_source": smoke_agent_runtime.MUTATION_ACTIVATION_SMOKE_LIVE_BINDING_SOURCE,
         "executor_name": smoke_agent_runtime.mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+    }
+
+
+def test_smoke_agent_runtime_opt_in_live_binding_concrete_stage_injects_executor_result_binding(monkeypatch):
+    calls = []
+
+    def fake_run_agent_entry(request):
+        calls.append(request)
+        if request.tool_name == "health_check":
+            return {
+                "ok": True,
+                "entry": {"selected_tool": "health_check"},
+                "error": None,
+                "execution_trace": {
+                    "request_id": request.request_id,
+                    "middleware": {"blocked_by": None},
+                    "contracts": {},
+                },
+            }
+        if request.request_id == "agent-smoke-preview":
+            return {
+                "ok": False,
+                "entry": {"selected_tool": "reindex"},
+                "error": {
+                    "code": "PREVIEW_REQUIRED",
+                    "apply_envelope": {
+                        "schema_version": "v1.5.mutation_apply_envelope.v1",
+                        "preview_ref": {
+                            "tool_name": "reindex",
+                            "target": {"collection_key": "all", "include_compatibility_bundle": True},
+                        },
+                        "audit_ref": {
+                            "sink_type": "local_file_append_only",
+                            "sequence_id": 7,
+                        },
+                        "apply_control": {
+                            "execution_enabled": False,
+                        },
+                    },
+                },
+                "execution_trace": {
+                    "request_id": request.request_id,
+                    "middleware": {"blocked_by": "mutation_policy_guard"},
+                    "contracts": {},
+                },
+            }
+        error = {"code": "MUTATION_APPLY_NOT_ENABLED"}
+        contracts = {}
+        if request.request_id == "agent-smoke-apply":
+            mutation_executor = {
+                "executor_name": "reindex_mutation_adapter_live",
+                "selection_state": "live_result_skeleton",
+                "selection_reason": "explicit_live_result_contract_requested",
+                "activation_requested": True,
+                "execution_enabled": True,
+                "activation": {
+                    "blocked_by": [],
+                    "audit_sink_type": "local_file_append_only",
+                    "audit_sequence_id": 7,
+                },
+                "boundary": {
+                    "family": "reindex",
+                    "classification": "derivative_runtime_state",
+                },
+            }
+            mutation_executor_result = {
+                "schema_version": "v1.5.reindex_live_adapter_result.v1",
+                "reindex_summary": {
+                    "collection_key": "all",
+                    "operation": "rebuild_vector_index",
+                    "requested_reset": True,
+                    "requested_compatibility_bundle": True,
+                },
+                "audit_receipt_ref": {
+                    "sequence_id": 7,
+                    "storage_path": "/tmp/mutation-audit/audit-20260421.jsonl",
+                },
+                "rollback_hint": {
+                    "mode": "rebuild_from_source_documents",
+                    "collection_key": "all",
+                },
+            }
+            error["mutation_executor"] = mutation_executor
+            error["mutation_executor_result"] = mutation_executor_result
+            contracts["mutation_executor"] = mutation_executor
+            contracts["mutation_executor_result"] = mutation_executor_result
+        return {
+            "ok": False,
+            "entry": {"selected_tool": "reindex"},
+            "error": error,
+            "execution_trace": {
+                "request_id": request.request_id,
+                "middleware": {
+                    "blocked_by": (
+                        "tool_allowlist"
+                        if request.request_id == "agent-smoke-write-read-only"
+                        else "mutation_apply_guard"
+                        if request.request_id == "agent-smoke-apply"
+                        else "mutation_policy_guard"
+                    )
+                },
+                "contracts": contracts,
+            },
+        }
+
+    monkeypatch.setattr(smoke_agent_runtime, "load_project_env", lambda: None)
+    monkeypatch.setattr(smoke_agent_runtime.agent_runtime_service, "run_agent_entry", fake_run_agent_entry)
+
+    result = smoke_agent_runtime.run_smoke(
+        opt_in_live_binding=True,
+        opt_in_live_binding_stage_concrete=True,
+    )
+
+    assert result["requested_live_binding"] is True
+    assert (
+        result["requested_live_binding_stage"]
+        == smoke_agent_runtime.mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_CONCRETE_SKELETON
+    )
+    apply_request = calls[-1]
+    assert apply_request.request_id == "agent-smoke-apply"
+    assert apply_request.executor_binding == {
+        "binding_kind": smoke_agent_runtime.mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_KIND,
+        "binding_source": smoke_agent_runtime.MUTATION_ACTIVATION_SMOKE_LIVE_BINDING_SOURCE,
+        "executor_name": smoke_agent_runtime.mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+        smoke_agent_runtime.mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD: (
+            smoke_agent_runtime.mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_CONCRETE_SKELETON
+        ),
+    }
+    assert result["checks"][5]["summary"]["mutation_executor_result"] == {
+        "schema_version": "v1.5.reindex_live_adapter_result.v1",
+        "collection_key": "all",
+        "operation": "rebuild_vector_index",
+        "requested_reset": True,
+        "requested_compatibility_bundle": True,
+        "audit_sequence_id": 7,
+        "audit_storage_path": "/tmp/mutation-audit/audit-20260421.jsonl",
+        "rollback_mode": "rebuild_from_source_documents",
+        "rollback_collection_key": "all",
     }
 
 

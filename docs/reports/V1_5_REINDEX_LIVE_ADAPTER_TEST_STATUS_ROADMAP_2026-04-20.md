@@ -22,6 +22,10 @@
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_BINDING_SEAM_DRAFT_2026-04-20.md`
 7. opt-in smoke harness separation draft
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_HARNESS_DRAFT_2026-04-20.md`
+8. concrete executor skeleton
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_CONCRETE_EXECUTOR_SKELETON_DRAFT_2026-04-21.md`
+9. concrete smoke evidence
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_CONCRETE_SMOKE_EVIDENCE_DRAFT_2026-04-21.md`
 
 ### Verified Repeatedly
 
@@ -31,7 +35,7 @@
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 - `git diff --check`
 
-최근 루프들(`LOOP-045` ~ `LOOP-048`)은 위 타깃 pytest에서 `38 passed` 기준으로 닫혔다.
+최근 루프들(`LOOP-045` ~ `LOOP-054`)은 같은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐고, 최신 closeout 기준 `49 passed`다.
 
 ## Test Matrix
 
@@ -45,14 +49,18 @@
    - 기대 에러: `MUTATION_APPLY_NOT_ENABLED`
 3. upload review path
    - 기대: `boundary_noop`
+4. explicit live binding concrete skeleton path
+   - 기대: `live_result_skeleton`
+   - 기대 에러: `MUTATION_APPLY_NOT_ENABLED`
+   - 기대 sidecar: `mutation_executor_result`
 
 ### Future Paths
 
-1. explicit local-only opt-in smoke
-   - 기대: `reindex_mutation_adapter_live`
-   - 상태: draft only
-2. adapter-specific success/failure tests
-   - 기대: `reindex_summary`, `audit_receipt_ref`, `rollback_hint`
+1. top-level success promotion
+   - 기대: blocked-success sidecar와 future apply success surface 사이의 mapping 고정
+   - 상태: next draft
+2. executor runtime failure taxonomy deep cases
+   - 기대: adapter-specific failure contract 재현
    - 상태: draft only
 
 ## Recommended Testing Order
@@ -62,17 +70,18 @@
 1. default blocked-flow smoke 유지 확인
 2. activation-on local-file candidate stub 유지 확인
 3. explicit local-only opt-in smoke harness 정의
-4. live adapter success-path contract 검증
-5. adapter-specific runtime failure taxonomy 검증
+4. concrete executor skeleton smoke evidence 검증
+5. top-level success promotion 규칙 정리
+6. adapter-specific runtime failure taxonomy 검증
 
 ## Open Testing Gaps
 
 아직 남아 있는 테스트 갭:
 
-1. explicit live adapter binding이 실제로 주입되는 harness/command 정의
-2. success-path result payload 검증
-3. executor runtime failure 재현 케이스
-4. rollback hint unavailable 경로 검증
+1. top-level success 응답으로 승격될 필드와 sidecar로 남을 필드의 경계 고정
+2. executor runtime failure 재현 케이스
+3. rollback hint unavailable 경로 검증
+4. actual execution enablement 이후 smoke 업데이트 기준
 
 ## Notes
 
@@ -81,4 +90,4 @@
 
 ## Next Step
 
-다음 구현은 `LOOP-049 V1.5 reindex live adapter executor injection protocol draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 구현은 `LOOP-055 V1.5 reindex live adapter top-level success promotion draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.

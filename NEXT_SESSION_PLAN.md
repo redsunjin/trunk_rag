@@ -1,4 +1,4 @@
-# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-04-20 기준)
+# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-04-21 기준)
 
 기준 문서:
 - `SPEC.md`
@@ -48,6 +48,8 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BINDING_SELECTION_STUB_DRAFT_2026-04-20.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_COMMAND_DRAFT_2026-04-20.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_EVIDENCE_DRAFT_2026-04-20.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_CONCRETE_EXECUTOR_SKELETON_DRAFT_2026-04-21.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_CONCRETE_SMOKE_EVIDENCE_DRAFT_2026-04-21.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -55,8 +57,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-053`
-- current_active_title: `V1.5 reindex live adapter concrete executor skeleton draft`
+- current_active_id: `LOOP-055`
+- current_active_title: `V1.5 reindex live adapter top-level success promotion draft`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1311,7 +1313,7 @@ closeout 메모 (2026-04-20):
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_EVIDENCE_DRAFT_2026-04-20.md`를 추가했다.
 - 실측에서는 `requested_live_binding=true`, `mutation_executor.executor_name=reindex_mutation_adapter_live`, `selection_state=live_binding_stub`가 확인됐다.
 
-### A-Next46. V1.5 reindex live adapter concrete executor skeleton draft (현재 active)
+### A-Next46. V1.5 reindex live adapter concrete executor skeleton draft (완료: 2026-04-21)
 1. future `reindex` live adapter의 concrete executor skeleton을 actual result shape draft 수준까지 정리한다.
 2. current live binding stub 다음에 오는 success payload assembly와 rollback hint 연결 지점을 정리한다.
 3. actual side effect와 public surface는 계속 열지 않는다.
@@ -1328,6 +1330,43 @@ closeout 메모 (2026-04-20):
 진행 메모 (2026-04-20):
 - `LOOP-052` closeout으로 opt-in live binding smoke evidence까지 확보됐다.
 - 다음 단계는 live binding stub 이후의 concrete executor/result skeleton이다.
+
+진행 메모 (2026-04-21 closeout):
+- `services/mutation_executor_service.py`에 `concrete_executor_skeleton` stage와 `ReindexLiveMutationExecutorSkeleton`을 추가했다.
+- `services/tool_middleware_service.py`, `services/agent_runtime_service.py`는 `mutation_executor_result` sidecar를 blocked-success path에서도 함께 전달하도록 확장했다.
+- closeout 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py -> 49 passed`로 마감했다.
+
+### A-Next47. V1.5 reindex live adapter concrete executor smoke evidence draft (완료: 2026-04-21)
+1. `live_result_skeleton` stage를 별도 smoke opt-in path로 노출한다.
+2. smoke summary가 `mutation_executor_result` evidence를 함께 남기도록 확장한다.
+3. blocked-success smoke 성격은 유지한다.
+
+완료 기준:
+- concrete executor skeleton stage가 smoke command/env 기준으로 재현된다.
+- `mutation_executor_result` evidence가 smoke output 기준으로 남는다.
+- default/live-binding-stub path와 concrete stage path가 분리된다.
+
+검증:
+- `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag-live-binding-concrete-smoke ./.venv/bin/python scripts/smoke_agent_runtime.py --opt-in-live-binding --opt-in-live-binding-stage-concrete`
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+
+진행 메모 (2026-04-21 closeout):
+- `scripts/smoke_agent_runtime.py`는 `--opt-in-live-binding-stage-concrete`와 `DOC_RAG_MUTATION_SMOKE_LIVE_BINDING_STAGE`를 지원한다.
+- 실측에서는 `requested_live_binding_stage=concrete_executor_skeleton`, `selection_state=live_result_skeleton`, `mutation_executor_result.schema_version=v1.5.reindex_live_adapter_result.v1`가 확인됐다.
+
+### A-Next48. V1.5 reindex live adapter top-level success promotion draft (현재 active)
+1. current `mutation_executor_result` sidecar와 future top-level apply success 응답 사이의 승격 규칙을 정리한다.
+2. blocked-success smoke/runtime evidence와 actual success surface의 경계를 문서/contract로 고정한다.
+3. actual side effect enablement는 계속 별도 단계로 남긴다.
+
+완료 기준:
+- success promotion rule이 current sidecar contract와 충돌 없이 정리된다.
+- future apply success 응답에서 무엇이 top-level로 승격되고 무엇이 trace/contracts에 남는지 고정된다.
+- actual execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

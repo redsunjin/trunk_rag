@@ -108,7 +108,11 @@ def _expected_reindex_boundary() -> dict[str, object]:
                     "binding_kind",
                     "binding_source",
                     "executor_name",
+                    mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD,
                 ],
+                "binding_stage_field": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD,
+                "default_binding_stage": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_SELECTION_STUB,
+                "concrete_executor_stage": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_CONCRETE_SKELETON,
                 "selection_precedence": [
                     "tool_registration_boundary",
                     "activation_guard",
@@ -588,6 +592,7 @@ def test_mutation_apply_guard_blocks_valid_envelope_until_execution_is_enabled(m
             "executor_binding_kind": None,
             "executor_binding_source": None,
             "executor_binding_executor_name": None,
+            "executor_binding_stage": None,
         },
     }
     assert result["middleware"]["trace"][-1]["middleware"] == "mutation_apply_guard"
@@ -701,6 +706,57 @@ def test_mutation_apply_guard_forwards_executor_binding_into_mutation_executor_c
     assert request_contract["executor_binding_kind"] == mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_KIND
     assert request_contract["executor_binding_source"] == "test_harness"
     assert request_contract["executor_binding_executor_name"] == mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME
+    assert request_contract["executor_binding_stage"] is None
+
+
+def test_mutation_apply_guard_exposes_live_result_skeleton_sidecar_when_binding_stage_requests_it(
+    monkeypatch,
+    tmp_path,
+):
+    monkeypatch.setattr(tool_middleware_service.runtime_service, "verify_admin_code", lambda code: None)
+    monkeypatch.setenv(mutation_executor_service.MUTATION_EXECUTION_ENV_KEY, "1")
+    monkeypatch.setenv(tool_audit_sink_service.AUDIT_SINK_BACKEND_ENV_KEY, "local_file")
+    monkeypatch.setenv(tool_audit_sink_service.AUDIT_SINK_DIR_ENV_KEY, str(tmp_path / "mutation_audit"))
+
+    preview_result = tool_middleware_service.invoke_tool_with_middlewares(
+        "reindex",
+        {"collection": "all", "include_compatibility_bundle": True},
+        context=ToolContext(
+            actor="maintenance",
+            admin_code="admin1234",
+            mutation_intent="reindex all",
+            allow_mutation=True,
+        ),
+    )
+
+    result = tool_middleware_service.invoke_tool_with_middlewares(
+        "reindex",
+        {"collection": "all", "include_compatibility_bundle": True},
+        context=ToolContext(
+            actor="maintenance",
+            admin_code="admin1234",
+            mutation_intent="reindex all",
+            apply_envelope=preview_result["error"]["apply_envelope"],
+            executor_binding={
+                "binding_kind": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_KIND,
+                "binding_source": "test_harness",
+                "executor_name": mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+                mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD: mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_CONCRETE_SKELETON,
+            },
+            allow_mutation=True,
+        ),
+    )
+
+    assert result["ok"] is False
+    assert result["error"]["code"] == "MUTATION_APPLY_NOT_ENABLED"
+    mutation_executor = result["error"]["mutation_executor"]
+    assert mutation_executor["selection_state"] == "live_result_skeleton"
+    assert mutation_executor["execution_enabled"] is True
+    mutation_executor_result = result["error"]["mutation_executor_result"]
+    assert mutation_executor_result["schema_version"] == mutation_executor_service.REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION
+    assert mutation_executor_result["reindex_summary"]["collection_key"] == "all"
+    assert mutation_executor_result["reindex_summary"]["requested_compatibility_bundle"] is True
+    assert result["execution_trace"]["contracts"]["mutation_executor_result"] == mutation_executor_result
 
 
 def test_mutation_apply_guard_keeps_upload_review_in_boundary_noop_even_when_activation_and_durable_audit_are_ready(

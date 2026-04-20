@@ -172,6 +172,7 @@ def _attach_middleware_metadata(
         persisted_audit_record
     )
     mutation_executor_contract = state.mutation_executor_contract
+    mutation_executor_result: dict[str, object] | None = None
     if isinstance(enriched.get("error"), dict):
         error = dict(enriched["error"])
         if error.get("code") == tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED:
@@ -191,8 +192,13 @@ def _attach_middleware_metadata(
                 executor_contract = executor_result.get("executor")
                 if isinstance(executor_contract, dict):
                     mutation_executor_contract = dict(executor_contract)
+                executor_payload = executor_result.get("result")
+                if isinstance(executor_payload, dict):
+                    mutation_executor_result = dict(executor_payload)
             if mutation_executor_contract is not None:
                 error["mutation_executor"] = mutation_executor_contract
+            if mutation_executor_result is not None:
+                error["mutation_executor_result"] = mutation_executor_result
             enriched["error"] = error
     mutation_intent_summary = _resolve_mutation_intent(state)
     apply_envelope_draft = tool_apply_service.build_mutation_apply_envelope(
@@ -212,6 +218,8 @@ def _attach_middleware_metadata(
         contracts["apply_envelope"] = apply_envelope_draft
     if mutation_executor_contract is not None:
         contracts["mutation_executor"] = mutation_executor_contract
+    if mutation_executor_result is not None:
+        contracts["mutation_executor_result"] = mutation_executor_result
     middleware_metadata["contracts"] = contracts
     execution_trace["contracts"] = contracts
     if isinstance(enriched.get("error"), dict):
@@ -220,6 +228,8 @@ def _attach_middleware_metadata(
             updated_error["apply_envelope"] = apply_envelope_draft
         if mutation_executor_contract is not None:
             updated_error["mutation_executor"] = mutation_executor_contract
+        if mutation_executor_result is not None:
+            updated_error["mutation_executor_result"] = mutation_executor_result
         enriched["error"] = updated_error
     enriched["middleware"] = middleware_metadata
     enriched["execution_trace"] = execution_trace
