@@ -106,6 +106,7 @@ def test_smoke_agent_runtime_checks_read_success_and_write_block(monkeypatch):
 
     assert result["ok"] is True
     assert result["schema_version"] == smoke_agent_runtime.MUTATION_ACTIVATION_SMOKE_SCHEMA_VERSION
+    assert result["requested_live_binding"] is False
     assert [call.tool_name for call in calls] == [
         "health_check",
         "reindex",
@@ -148,6 +149,85 @@ def test_smoke_agent_runtime_checks_read_success_and_write_block(monkeypatch):
         "audit_sequence_id": None,
         "boundary_family": "reindex",
         "boundary_classification": "derivative_runtime_state",
+    }
+
+
+def test_smoke_agent_runtime_opt_in_live_binding_injects_executor_binding(monkeypatch):
+    calls = []
+
+    def fake_run_agent_entry(request):
+        calls.append(request)
+        if request.tool_name == "health_check":
+            return {
+                "ok": True,
+                "entry": {"selected_tool": "health_check"},
+                "error": None,
+                "execution_trace": {
+                    "request_id": request.request_id,
+                    "middleware": {"blocked_by": None},
+                    "contracts": {},
+                },
+            }
+        if request.request_id == "agent-smoke-preview":
+            return {
+                "ok": False,
+                "entry": {"selected_tool": "reindex"},
+                "error": {
+                    "code": "PREVIEW_REQUIRED",
+                    "apply_envelope": {
+                        "schema_version": "v1.5.mutation_apply_envelope.v1",
+                        "preview_ref": {
+                            "tool_name": "reindex",
+                            "target": {"collection_key": "all"},
+                        },
+                        "audit_ref": {
+                            "sink_type": "null_append_only",
+                            "sequence_id": None,
+                        },
+                        "apply_control": {
+                            "execution_enabled": False,
+                        },
+                    },
+                },
+                "execution_trace": {
+                    "request_id": request.request_id,
+                    "middleware": {"blocked_by": "mutation_policy_guard"},
+                    "contracts": {},
+                },
+            }
+        error_codes = {
+            "agent-smoke-write-read-only": "TOOL_NOT_ALLOWED",
+            "agent-smoke-auth": "ADMIN_AUTH_REQUIRED",
+            "agent-smoke-intent": "MUTATION_INTENT_REQUIRED",
+            "agent-smoke-apply": "MUTATION_APPLY_NOT_ENABLED",
+        }
+        error_code = error_codes[request.request_id]
+        blocked_by = "mutation_apply_guard" if error_code == "MUTATION_APPLY_NOT_ENABLED" else "mutation_policy_guard"
+        if error_code == "TOOL_NOT_ALLOWED":
+            blocked_by = "tool_allowlist"
+        return {
+            "ok": False,
+            "entry": {"selected_tool": "reindex"},
+            "error": {"code": error_code},
+            "execution_trace": {
+                "request_id": request.request_id,
+                "middleware": {"blocked_by": blocked_by},
+                "contracts": {},
+            },
+        }
+
+    monkeypatch.setattr(smoke_agent_runtime, "load_project_env", lambda: None)
+    monkeypatch.setattr(smoke_agent_runtime.agent_runtime_service, "run_agent_entry", fake_run_agent_entry)
+
+    result = smoke_agent_runtime.run_smoke(opt_in_live_binding=True)
+
+    assert result["requested_live_binding"] is True
+    apply_request = calls[-1]
+    assert apply_request.request_id == "agent-smoke-apply"
+    assert apply_request.executor_binding == {
+        "binding_kind": smoke_agent_runtime.mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_KIND,
+        "binding_source": smoke_agent_runtime.MUTATION_ACTIVATION_SMOKE_LIVE_BINDING_SOURCE,
+        "executor_name": smoke_agent_runtime.mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
     }
 
 

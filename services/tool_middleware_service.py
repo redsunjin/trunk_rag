@@ -317,6 +317,12 @@ def _resolve_apply_envelope(state: ToolExecutionState) -> dict[str, object] | No
     return None
 
 
+def _resolve_executor_binding(state: ToolExecutionState) -> dict[str, object] | None:
+    if isinstance(state.context.executor_binding, dict):
+        return dict(state.context.executor_binding)
+    return None
+
+
 def _build_mutation_execution_request(
     state: ToolExecutionState,
     *,
@@ -336,6 +342,7 @@ def _build_mutation_execution_request(
         actor_category=actor_category,
         allow_mutation=state.context.allow_mutation,
         timeout_seconds=state.timeout_seconds,
+        executor_binding=_resolve_executor_binding(state),
     )
 
 

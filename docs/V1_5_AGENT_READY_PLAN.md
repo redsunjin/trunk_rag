@@ -147,7 +147,11 @@
 - `docs/reports/V1_5_MUTATION_ACTIVATION_SMOKE_EVIDENCE_2026-04-19.md`는 blocked flow smoke output을 readiness evidence와 `mutation_executor` summary 기준으로 고정했다.
 - `docs/reports/V1_5_REINDEX_ACTIVATION_CHECKPOINT_REVIEW_2026-04-19.md`는 default blocked path와 activation-on local-file candidate stub path를 함께 점검해 live enablement verdict를 다시 `No-Go`로 고정했다.
 - `docs/reports/V1_5_REINDEX_ACTIVATION_OPERATOR_RUNBOOK_DRAFT_2026-04-19.md`는 baseline smoke, activation-on local-file smoke, audit receipt 확인, deactivation, abort condition을 local operator 절차로 고정했다.
-- 다음 구현은 `LOOP-049 reindex live adapter executor injection protocol draft`이며, 이 단계에서는 `LOOP-048`에서 고정한 opt-in smoke harness와 binding seam을 runtime/test harness 주입 protocol 관점으로 연결한다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_EXECUTOR_INJECTION_PROTOCOL_DRAFT_2026-04-20.md`는 `AgentRuntimeRequest -> ToolContext -> MutationExecutionRequest` binding carrier chain과 request contract signal을 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BINDING_SELECTION_STUB_DRAFT_2026-04-20.md`는 valid explicit binding일 때만 `reindex_mutation_adapter_live` `live_binding_stub` selection으로 승격되는 안전 stub를 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_COMMAND_DRAFT_2026-04-20.md`는 `scripts/smoke_agent_runtime.py --opt-in-live-binding`와 `DOC_RAG_MUTATION_SMOKE_LIVE_BINDING=1` opt-in command surface를 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_EVIDENCE_DRAFT_2026-04-20.md`는 activation/local-file/live-binding 조합에서 `reindex_mutation_adapter_live`, `live_binding_stub` evidence를 실제 smoke output으로 고정했다.
+- 다음 구현은 `LOOP-053 reindex live adapter concrete executor skeleton draft`이며, 이 단계에서는 current live binding stub 다음에 오는 concrete executor/result skeleton을 정리한다.
 - raw input, retrieved context, document content, local path, admin code, credential은 저장/노출 기본 대상에서 제외한다.
 - `services/tool_trace_service.py`는 `redact_execution_trace()`로 `internal`, `public`, `persisted` audience별 trace 정규화를 제공한다.
 

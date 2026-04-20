@@ -30,6 +30,10 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_BINDING_SEAM_DRAFT_2026-04-20.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_HARNESS_DRAFT_2026-04-20.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TEST_STATUS_ROADMAP_2026-04-20.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_EXECUTOR_INJECTION_PROTOCOL_DRAFT_2026-04-20.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BINDING_SELECTION_STUB_DRAFT_2026-04-20.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_COMMAND_DRAFT_2026-04-20.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_EVIDENCE_DRAFT_2026-04-20.md`
 - `docs/PREPROCESSING_RULES.md`
 - `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md`
 - `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
@@ -100,7 +104,11 @@
 | LOOP-046 | done | V1.5 reindex live adapter success contract draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-047 | done | V1.5 reindex live adapter opt-in binding seam draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-048 | done | V1.5 reindex live adapter opt-in smoke harness draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-049 | active | V1.5 reindex live adapter executor injection protocol draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-049 | done | V1.5 reindex live adapter executor injection protocol draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-050 | done | V1.5 reindex live adapter binding selection stub draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-051 | done | V1.5 reindex live adapter opt-in smoke command draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-052 | done | V1.5 reindex live adapter opt-in smoke evidence draft | `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag-live-binding-smoke ./.venv/bin/python scripts/smoke_agent_runtime.py --opt-in-live-binding` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-053 | active | V1.5 reindex live adapter concrete executor skeleton draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -1438,29 +1446,68 @@ closeout 메모 (2026-04-20):
 - `services/mutation_executor_service.py`의 `boundary.live_adapter_outline`에 `opt_in_smoke_harness` metadata를 추가해 prerequisites, expected evidence, isolation rule을 코드 계약에도 반영했다.
 - `tests/test_mutation_executor_service.py`, `tests/test_tool_middleware_service.py`, `tests/test_agent_runtime_service.py`는 smoke harness metadata가 추가돼도 current blocked/candidate path가 유지되는지 검증하도록 갱신했다.
 - 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 통과로 마감한다.
-- 다음 active loop는 `LOOP-049`이며, explicit local-only binding이 runtime/test harness에 어떻게 주입되는지 executor injection protocol 수준으로 정리한다.
+- `LOOP-049` closeout으로 explicit local-only binding carrier가 `AgentRuntimeRequest -> ToolContext -> MutationExecutionRequest` chain으로 고정됐고, request contract는 `executor_binding_present/kind/source/executor_name` signal을 남기게 됐다.
 
-## 현재 Active Loop (LOOP-049)
+## 완료 Loop (LOOP-049)
 
 목표:
 - future `reindex` live adapter의 explicit local-only binding이 runtime/test harness에 어떻게 주입되는지 executor injection protocol 초안을 정리한다.
 
+완료 메모 (2026-04-20):
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_EXECUTOR_INJECTION_PROTOCOL_DRAFT_2026-04-20.md`를 추가해 local-only carrier chain, direct entrypoint, payload 차단 규칙을 문서화했다.
+- `services/agent_runtime_service.py`, `services/tool_registry_service.py`, `services/tool_middleware_service.py`, `services/mutation_executor_service.py`에 `executor_binding` carrier를 추가했다.
+- executor contract request metadata에 binding presence/source/kind/executor name signal을 반영했다.
+
+## 완료 Loop (LOOP-050)
+
+목표:
+- valid explicit live binding이 주입된 경우 `reindex_mutation_adapter_live` selection stub로 안전하게 전환되는 skeleton을 정리한다.
+
+완료 메모 (2026-04-20):
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BINDING_SELECTION_STUB_DRAFT_2026-04-20.md`를 추가해 binding contract와 invalid fallback rule을 고정했다.
+- `services/mutation_executor_service.py`에 `REINDEX_LIVE_ADAPTER_BINDING_KIND`, `_resolve_reindex_live_binding()`, `ReindexLiveMutationExecutorBindingStub`를 추가했다.
+- activation guard를 통과하고 valid binding이 있을 때만 `selection_state=live_binding_stub`, `selection_reason=explicit_live_binding_requested`로 전환되게 했다.
+
+## 완료 Loop (LOOP-051)
+
+목표:
+- opt-in live binding smoke를 default smoke와 분리된 concrete command surface로 고정한다.
+
+완료 메모 (2026-04-20):
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_COMMAND_DRAFT_2026-04-20.md`를 추가했다.
+- `scripts/smoke_agent_runtime.py`는 `--opt-in-live-binding`과 `DOC_RAG_MUTATION_SMOKE_LIVE_BINDING=1`을 지원하고, opt-in일 때만 apply request에 live binding을 주입한다.
+- `tests/test_smoke_agent_runtime.py`는 default path의 `requested_live_binding=false`와 opt-in binding injection을 검증하도록 갱신됐다.
+
+## 완료 Loop (LOOP-052)
+
+목표:
+- opt-in live binding smoke evidence를 실제 command output 기준으로 고정한다.
+
+완료 메모 (2026-04-20):
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_EVIDENCE_DRAFT_2026-04-20.md`를 추가했다.
+- `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag-live-binding-smoke ./.venv/bin/python scripts/smoke_agent_runtime.py --opt-in-live-binding` 실측에서 `ok=true`, `requested_live_binding=true`, `mutation_executor.executor_name=reindex_mutation_adapter_live`, `selection_state=live_binding_stub`를 확인했다.
+
+## 현재 Active Loop (LOOP-053)
+
+목표:
+- future `reindex` live adapter의 concrete executor skeleton을 actual result shape draft 수준까지 정리한다.
+
 범위:
-- 포함: binding injection source 초안, runtime/test harness 주입 지점, protocol guardrail 메모
-- 제외: 실제 live adapter 구현, actual live execution 개방, upload review injection, public `/agent/*` endpoint
+- 포함: dedicated live executor skeleton 범위 정리, success payload assembly stub 설계, rollback hint 연결 포인트 메모
+- 제외: 실제 reindex side effect 개방, managed state write, upload review live execution, public `/agent/*` endpoint
 
 완료 기준:
-- `reindex` live adapter executor injection protocol 초안이 문서와 테스트 기준으로 정리된다.
-- current opt-in binding seam/opt-in smoke harness와 future injection protocol 경계가 충돌 없이 이어진다.
-- live execution off-by-default 정책이 계속 유지된다.
+- `reindex` live adapter concrete executor skeleton 초안이 문서와 테스트 기준으로 정리된다.
+- current live binding stub/smoke evidence와 future success contract가 충돌 없이 이어진다.
+- actual execution off-by-default 정책이 계속 유지된다.
 
 검증:
 - `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 진행 메모 (2026-04-20):
-- `LOOP-048` closeout으로 opt-in smoke harness와 테스트 현황/로드맵 요약은 문서로 고정됐다.
-- 이번 단계는 actual execution을 열지 않고, explicit local-only binding이 runtime/test harness에 어떻게 들어오는지 protocol 관점으로 정리하는 것이다.
+- `LOOP-052` closeout으로 opt-in live binding smoke evidence까지 확보됐다.
+- 다음 단계는 live selection stub 다음에 오는 concrete executor/result skeleton을 설계하는 것이다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -10,9 +11,11 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from common import load_project_env
-from services import agent_runtime_service
+from services import agent_runtime_service, mutation_executor_service
 
 MUTATION_ACTIVATION_SMOKE_SCHEMA_VERSION = "v1.5.mutation_activation_smoke.v1"
+MUTATION_ACTIVATION_SMOKE_LIVE_BINDING_ENV_KEY = "DOC_RAG_MUTATION_SMOKE_LIVE_BINDING"
+MUTATION_ACTIVATION_SMOKE_LIVE_BINDING_SOURCE = "smoke_harness"
 
 
 def _safe_dict(value: object) -> dict[str, object]:
@@ -104,8 +107,30 @@ def _summarize_result(result: dict[str, object]) -> dict[str, object]:
     return summary
 
 
-def run_smoke() -> dict[str, object]:
+def _parse_bool_env(value: str | None) -> bool:
+    if value is None:
+        return False
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _build_live_binding(opt_in_live_binding: bool) -> dict[str, object] | None:
+    if not opt_in_live_binding:
+        return None
+    return {
+        "binding_kind": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_KIND,
+        "binding_source": MUTATION_ACTIVATION_SMOKE_LIVE_BINDING_SOURCE,
+        "executor_name": mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+    }
+
+
+def run_smoke(*, opt_in_live_binding: bool | None = None) -> dict[str, object]:
     load_project_env()
+    resolved_opt_in_live_binding = (
+        _parse_bool_env(os.getenv(MUTATION_ACTIVATION_SMOKE_LIVE_BINDING_ENV_KEY))
+        if opt_in_live_binding is None
+        else bool(opt_in_live_binding)
+    )
+    executor_binding = _build_live_binding(resolved_opt_in_live_binding)
     read_result = agent_runtime_service.run_agent_entry(
         agent_runtime_service.AgentRuntimeRequest(
             input="Check internal runtime health.",
@@ -170,6 +195,7 @@ def run_smoke() -> dict[str, object]:
             admin_code="admin1234",
             mutation_intent="reindex core all collection",
             apply_envelope=apply_envelope,
+            executor_binding=executor_binding,
             request_id="agent-smoke-apply",
             allow_mutation=True,
             timeout_seconds=5,
@@ -209,13 +235,15 @@ def run_smoke() -> dict[str, object]:
     ]
     return {
         "schema_version": MUTATION_ACTIVATION_SMOKE_SCHEMA_VERSION,
+        "requested_live_binding": resolved_opt_in_live_binding,
         "ok": all(check["ok"] for check in checks),
         "checks": checks,
     }
 
 
 def main() -> int:
-    result = run_smoke()
+    opt_in_live_binding = "--opt-in-live-binding" in sys.argv[1:]
+    result = run_smoke(opt_in_live_binding=opt_in_live_binding)
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
     return 0 if result["ok"] is True else 1
 

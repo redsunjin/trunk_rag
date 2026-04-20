@@ -10,10 +10,12 @@ REINDEX_LIVE_ADAPTER_OUTLINE_SCHEMA_VERSION = "v1.5.reindex_live_adapter_outline
 REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION = "v1.5.reindex_live_adapter_result.v1"
 REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION = "v1.5.reindex_live_adapter_error.v1"
 REINDEX_LIVE_ADAPTER_BINDING_SCHEMA_VERSION = "v1.5.reindex_live_adapter_binding.v1"
+REINDEX_LIVE_ADAPTER_INJECTION_PROTOCOL_SCHEMA_VERSION = "v1.5.reindex_live_adapter_injection_protocol.v1"
 REINDEX_LIVE_ADAPTER_SMOKE_HARNESS_SCHEMA_VERSION = "v1.5.reindex_live_adapter_smoke_harness.v1"
 MUTATION_EXECUTION_ENV_KEY = "DOC_RAG_AGENT_MUTATION_EXECUTION"
 REINDEX_MUTATION_EXECUTOR_NAME = "reindex_mutation_adapter_stub"
 REINDEX_LIVE_ADAPTER_EXECUTOR_NAME = "reindex_mutation_adapter_live"
+REINDEX_LIVE_ADAPTER_BINDING_KIND = "explicit_live_adapter"
 NOOP_MUTATION_EXECUTOR_NAME = "noop_mutation_executor"
 REINDEX_FIRST_LIVE_SCOPE = "reindex"
 LOCAL_FILE_APPEND_ONLY_SINK_TYPE = "local_file_append_only"
@@ -35,6 +37,7 @@ class MutationExecutionRequest:
     actor_category: str | None
     allow_mutation: bool
     timeout_seconds: float | None
+    executor_binding: dict[str, object] | None = None
 
 
 class MutationExecutor(Protocol):
@@ -197,12 +200,20 @@ def _build_boundary_contract(request: MutationExecutionRequest) -> dict[str, obj
                     "binding_owner": "local_operator_or_test_harness",
                     "default_executor_name": REINDEX_MUTATION_EXECUTOR_NAME,
                     "opt_in_executor_name": REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+                    "binding_kind": REINDEX_LIVE_ADAPTER_BINDING_KIND,
+                    "binding_contract_fields": [
+                        "binding_kind",
+                        "binding_source",
+                        "executor_name",
+                    ],
                     "selection_precedence": [
                         "tool_registration_boundary",
                         "activation_guard",
                         "candidate_stub_default",
                         "explicit_live_binding_override",
                     ],
+                    "invalid_binding_behavior": "candidate_stub_fallback",
+                    "live_selection_state": "live_binding_stub",
                     "required_signals": [
                         "activation_requested",
                         "durable_audit_ready",
@@ -210,6 +221,34 @@ def _build_boundary_contract(request: MutationExecutionRequest) -> dict[str, obj
                     ],
                     "public_surface_allowed": False,
                     "shared_with_upload_review": False,
+                },
+                "executor_injection_protocol": {
+                    "schema_version": REINDEX_LIVE_ADAPTER_INJECTION_PROTOCOL_SCHEMA_VERSION,
+                    "mode": "request_scoped_local_only",
+                    "carrier_chain": [
+                        "agent_runtime_request.executor_binding",
+                        "tool_context.executor_binding",
+                        "mutation_execution_request.executor_binding",
+                    ],
+                    "direct_entrypoints": [
+                        "agent_runtime_service.run_agent_entry",
+                        "tool_middleware_service.invoke_tool_with_middlewares",
+                        "mutation_executor_service.build_mutation_execution_request",
+                    ],
+                    "payload_channel_allowed": False,
+                    "binding_owner": "local_runtime_or_test_harness",
+                    "default_behavior": "absent_binding_keeps_candidate_stub",
+                    "contract_signal_fields": [
+                        "request.executor_binding_present",
+                        "request.executor_binding_kind",
+                        "request.executor_binding_source",
+                        "request.executor_binding_executor_name",
+                    ],
+                    "required_guards": [
+                        "activation_requested",
+                        "durable_audit_ready",
+                        "explicit_live_adapter_binding",
+                    ],
                 },
                 "opt_in_smoke_harness": {
                     "schema_version": REINDEX_LIVE_ADAPTER_SMOKE_HARNESS_SCHEMA_VERSION,
@@ -328,6 +367,7 @@ def _build_executor_contract(
     registered_executor_name: str | None = None,
     delegate_executor_name: str | None = None,
 ) -> dict[str, object]:
+    executor_binding = _safe_dict(request.executor_binding)
     contract = {
         "schema_version": MUTATION_EXECUTOR_CONTRACT_SCHEMA_VERSION,
         "executor_name": executor_name,
@@ -349,6 +389,10 @@ def _build_executor_contract(
             "preview_schema_version": _safe_dict(request.preview_seed).get("schema_version"),
             "audit_record_schema_version": _safe_dict(request.persisted_audit_record).get("schema_version"),
             "audit_sink_type": _safe_dict(request.audit_sink_receipt).get("sink_type"),
+            "executor_binding_present": bool(executor_binding),
+            "executor_binding_kind": _normalize_optional_text(executor_binding.get("binding_kind")),
+            "executor_binding_source": _normalize_optional_text(executor_binding.get("binding_source")),
+            "executor_binding_executor_name": _normalize_optional_text(executor_binding.get("executor_name")),
         },
     }
     if registered_executor_name:
@@ -371,6 +415,7 @@ def build_mutation_execution_request(
     actor_category: str | None,
     allow_mutation: bool,
     timeout_seconds: float | None,
+    executor_binding: dict[str, object] | None = None,
 ) -> MutationExecutionRequest | None:
     if not (
         isinstance(payload, dict)
@@ -392,11 +437,30 @@ def build_mutation_execution_request(
         actor_category=actor_category,
         allow_mutation=allow_mutation,
         timeout_seconds=timeout_seconds,
+        executor_binding=dict(executor_binding) if isinstance(executor_binding, dict) else None,
     )
 
 
 def is_mutation_execution_requested() -> bool:
     return runtime_service.parse_bool_env(MUTATION_EXECUTION_ENV_KEY, default=False)
+
+
+def _resolve_reindex_live_binding(request: MutationExecutionRequest) -> dict[str, str] | None:
+    binding = _safe_dict(request.executor_binding)
+    binding_kind = _normalize_optional_text(binding.get("binding_kind"))
+    binding_source = _normalize_optional_text(binding.get("binding_source"))
+    executor_name = _normalize_optional_text(binding.get("executor_name"))
+    if (
+        binding_kind != REINDEX_LIVE_ADAPTER_BINDING_KIND
+        or binding_source is None
+        or executor_name != REINDEX_LIVE_ADAPTER_EXECUTOR_NAME
+    ):
+        return None
+    return {
+        "binding_kind": binding_kind,
+        "binding_source": binding_source,
+        "executor_name": executor_name,
+    }
 
 
 @dataclass(frozen=True)
@@ -473,6 +537,43 @@ class ReindexMutationExecutorAdapter:
         }
 
 
+@dataclass(frozen=True)
+class ReindexLiveMutationExecutorBindingStub:
+    executor_name: str = REINDEX_LIVE_ADAPTER_EXECUTOR_NAME
+    binding_kind: str = REINDEX_LIVE_ADAPTER_BINDING_KIND
+    selection_state: str = "live_binding_stub"
+    selection_reason: str = "explicit_live_binding_requested"
+    activation_contract: dict[str, object] | None = None
+    boundary_contract: dict[str, object] | None = None
+
+    def supports(self, tool_name: str) -> bool:
+        return tool_name == "reindex"
+
+    def execute(self, request: MutationExecutionRequest) -> dict[str, object]:
+        activation_contract = dict(self.activation_contract) if isinstance(self.activation_contract, dict) else _build_activation_contract(request)
+        boundary_contract = dict(self.boundary_contract) if isinstance(self.boundary_contract, dict) else _build_boundary_contract(request)
+        return {
+            "ok": False,
+            "error": {
+                "code": tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED,
+                "message": "Mutation apply handshake validated, but execution is not enabled yet.",
+            },
+            "executor": _build_executor_contract(
+                request=request,
+                executor_name=self.executor_name,
+                binding_kind=self.binding_kind,
+                tool_registered=True,
+                execution_enabled=False,
+                activation_contract=activation_contract,
+                boundary_contract=boundary_contract,
+                selection_state=self.selection_state,
+                selection_reason=self.selection_reason,
+                registered_executor_name=REINDEX_MUTATION_EXECUTOR_NAME,
+                delegate_executor_name=NOOP_MUTATION_EXECUTOR_NAME,
+            ),
+        }
+
+
 def list_registered_mutation_executor_bindings() -> dict[str, str]:
     return {
         "reindex": REINDEX_MUTATION_EXECUTOR_NAME,
@@ -502,6 +603,11 @@ def resolve_mutation_executor(request: MutationExecutionRequest) -> MutationExec
             activation_contract=activation_contract,
             boundary_contract=boundary_contract,
             registered_executor_name=REINDEX_MUTATION_EXECUTOR_NAME,
+        )
+    if _resolve_reindex_live_binding(request) is not None:
+        return ReindexLiveMutationExecutorBindingStub(
+            activation_contract=activation_contract,
+            boundary_contract=boundary_contract,
         )
     return ReindexMutationExecutorAdapter(
         activation_contract=activation_contract,

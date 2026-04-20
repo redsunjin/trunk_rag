@@ -95,12 +95,20 @@ def _expected_reindex_boundary() -> dict[str, object]:
                 "binding_owner": "local_operator_or_test_harness",
                 "default_executor_name": mutation_executor_service.REINDEX_MUTATION_EXECUTOR_NAME,
                 "opt_in_executor_name": mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+                "binding_kind": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_KIND,
+                "binding_contract_fields": [
+                    "binding_kind",
+                    "binding_source",
+                    "executor_name",
+                ],
                 "selection_precedence": [
                     "tool_registration_boundary",
                     "activation_guard",
                     "candidate_stub_default",
                     "explicit_live_binding_override",
                 ],
+                "invalid_binding_behavior": "candidate_stub_fallback",
+                "live_selection_state": "live_binding_stub",
                 "required_signals": [
                     "activation_requested",
                     "durable_audit_ready",
@@ -108,6 +116,34 @@ def _expected_reindex_boundary() -> dict[str, object]:
                 ],
                 "public_surface_allowed": False,
                 "shared_with_upload_review": False,
+            },
+            "executor_injection_protocol": {
+                "schema_version": mutation_executor_service.REINDEX_LIVE_ADAPTER_INJECTION_PROTOCOL_SCHEMA_VERSION,
+                "mode": "request_scoped_local_only",
+                "carrier_chain": [
+                    "agent_runtime_request.executor_binding",
+                    "tool_context.executor_binding",
+                    "mutation_execution_request.executor_binding",
+                ],
+                "direct_entrypoints": [
+                    "agent_runtime_service.run_agent_entry",
+                    "tool_middleware_service.invoke_tool_with_middlewares",
+                    "mutation_executor_service.build_mutation_execution_request",
+                ],
+                "payload_channel_allowed": False,
+                "binding_owner": "local_runtime_or_test_harness",
+                "default_behavior": "absent_binding_keeps_candidate_stub",
+                "contract_signal_fields": [
+                    "request.executor_binding_present",
+                    "request.executor_binding_kind",
+                    "request.executor_binding_source",
+                    "request.executor_binding_executor_name",
+                ],
+                "required_guards": [
+                    "activation_requested",
+                    "durable_audit_ready",
+                    "explicit_live_adapter_binding",
+                ],
             },
             "opt_in_smoke_harness": {
                 "schema_version": mutation_executor_service.REINDEX_LIVE_ADAPTER_SMOKE_HARNESS_SCHEMA_VERSION,
@@ -157,6 +193,7 @@ def _sample_request(
     *,
     payload: dict[str, object] | None = None,
     audit_sink_receipt: dict[str, object] | None = None,
+    executor_binding: dict[str, object] | None = None,
     actor: str = "maintenance",
     actor_category: str = "maintenance_mutation",
 ) -> mutation_executor_service.MutationExecutionRequest:
@@ -193,9 +230,22 @@ def _sample_request(
         actor_category=actor_category,
         allow_mutation=True,
         timeout_seconds=7,
+        executor_binding=executor_binding,
     )
     assert request is not None
     return request
+
+
+def test_build_mutation_execution_request_preserves_optional_executor_binding():
+    binding = {
+        "binding_kind": "explicit_live_adapter",
+        "binding_source": "test_harness",
+        "executor_name": mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+    }
+
+    request = _sample_request("reindex", executor_binding=binding)
+
+    assert request.executor_binding == binding
 
 
 def test_execute_mutation_request_uses_noop_fallback_for_reindex_when_activation_guard_is_not_satisfied(monkeypatch):
@@ -243,6 +293,10 @@ def test_execute_mutation_request_uses_noop_fallback_for_reindex_when_activation
             "preview_schema_version": "v1.5.mutation_preview_seed.v1",
             "audit_record_schema_version": "v1.5.mutation_audit_record.v1",
             "audit_sink_type": "null_append_only",
+            "executor_binding_present": False,
+            "executor_binding_kind": None,
+            "executor_binding_source": None,
+            "executor_binding_executor_name": None,
         },
     }
 
@@ -289,6 +343,10 @@ def test_execute_mutation_request_keeps_reindex_in_noop_fallback_without_durable
             "preview_schema_version": "v1.5.mutation_preview_seed.v1",
             "audit_record_schema_version": "v1.5.mutation_audit_record.v1",
             "audit_sink_type": "null_append_only",
+            "executor_binding_present": False,
+            "executor_binding_kind": None,
+            "executor_binding_source": None,
+            "executor_binding_executor_name": None,
         },
     }
 
@@ -347,8 +405,68 @@ def test_execute_mutation_request_selects_reindex_candidate_stub_when_activation
             "preview_schema_version": "v1.5.mutation_preview_seed.v1",
             "audit_record_schema_version": "v1.5.mutation_audit_record.v1",
             "audit_sink_type": "local_file_append_only",
+            "executor_binding_present": False,
+            "executor_binding_kind": None,
+            "executor_binding_source": None,
+            "executor_binding_executor_name": None,
         },
     }
+
+
+def test_execute_mutation_request_selects_live_binding_stub_when_explicit_binding_is_injected(monkeypatch):
+    monkeypatch.setenv(mutation_executor_service.MUTATION_EXECUTION_ENV_KEY, "1")
+
+    result = mutation_executor_service.execute_mutation_request(
+        _sample_request(
+            "reindex",
+            audit_sink_receipt={
+                "sink_type": "local_file_append_only",
+                "sequence_id": 11,
+                "storage_path": "/tmp/mutation-audit/audit-20260418.jsonl",
+            },
+            executor_binding={
+                "binding_kind": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_KIND,
+                "binding_source": "test_harness",
+                "executor_name": mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+            },
+        )
+    )
+
+    assert result["ok"] is False
+    assert result["executor"]["executor_name"] == mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME
+    assert result["executor"]["binding_kind"] == mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_KIND
+    assert result["executor"]["selection_state"] == "live_binding_stub"
+    assert result["executor"]["selection_reason"] == "explicit_live_binding_requested"
+    assert result["executor"]["registered_executor_name"] == mutation_executor_service.REINDEX_MUTATION_EXECUTOR_NAME
+    assert result["executor"]["delegate_executor_name"] == mutation_executor_service.NOOP_MUTATION_EXECUTOR_NAME
+    assert result["executor"]["request"]["executor_binding_present"] is True
+    assert result["executor"]["request"]["executor_binding_source"] == "test_harness"
+
+
+def test_execute_mutation_request_falls_back_to_candidate_stub_when_executor_binding_is_invalid(monkeypatch):
+    monkeypatch.setenv(mutation_executor_service.MUTATION_EXECUTION_ENV_KEY, "1")
+
+    result = mutation_executor_service.execute_mutation_request(
+        _sample_request(
+            "reindex",
+            audit_sink_receipt={
+                "sink_type": "local_file_append_only",
+                "sequence_id": 11,
+                "storage_path": "/tmp/mutation-audit/audit-20260418.jsonl",
+            },
+            executor_binding={
+                "binding_kind": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_KIND,
+                "binding_source": "test_harness",
+                "executor_name": "wrong-live-adapter",
+            },
+        )
+    )
+
+    assert result["ok"] is False
+    assert result["executor"]["executor_name"] == mutation_executor_service.REINDEX_MUTATION_EXECUTOR_NAME
+    assert result["executor"]["selection_state"] == "candidate_stub"
+    assert result["executor"]["request"]["executor_binding_present"] is True
+    assert result["executor"]["request"]["executor_binding_executor_name"] == "wrong-live-adapter"
 
 
 def test_execute_mutation_request_keeps_approve_upload_request_in_boundary_noop_even_when_activation_is_requested(
@@ -429,6 +547,10 @@ def test_execute_mutation_request_keeps_approve_upload_request_in_boundary_noop_
             "preview_schema_version": "v1.5.mutation_preview_seed.v1",
             "audit_record_schema_version": "v1.5.mutation_audit_record.v1",
             "audit_sink_type": "local_file_append_only",
+            "executor_binding_present": False,
+            "executor_binding_kind": None,
+            "executor_binding_source": None,
+            "executor_binding_executor_name": None,
         },
     }
 
@@ -500,6 +622,10 @@ def test_execute_mutation_request_keeps_reject_upload_request_in_boundary_noop(m
             "preview_schema_version": "v1.5.mutation_preview_seed.v1",
             "audit_record_schema_version": "v1.5.mutation_audit_record.v1",
             "audit_sink_type": "null_append_only",
+            "executor_binding_present": False,
+            "executor_binding_kind": None,
+            "executor_binding_source": None,
+            "executor_binding_executor_name": None,
         },
     }
 

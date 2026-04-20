@@ -44,6 +44,10 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_BINDING_SEAM_DRAFT_2026-04-20.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_HARNESS_DRAFT_2026-04-20.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TEST_STATUS_ROADMAP_2026-04-20.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_EXECUTOR_INJECTION_PROTOCOL_DRAFT_2026-04-20.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BINDING_SELECTION_STUB_DRAFT_2026-04-20.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_COMMAND_DRAFT_2026-04-20.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_EVIDENCE_DRAFT_2026-04-20.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -51,8 +55,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-049`
-- current_active_title: `V1.5 reindex live adapter executor injection protocol draft`
+- current_active_id: `LOOP-053`
+- current_active_title: `V1.5 reindex live adapter concrete executor skeleton draft`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1238,10 +1242,10 @@ closeout 메모 (2026-04-20):
 - `tests/test_mutation_executor_service.py`, `tests/test_tool_middleware_service.py`, `tests/test_agent_runtime_service.py`는 smoke harness metadata가 추가돼도 current blocked/candidate path가 유지되는지 검증하도록 갱신됐다.
 - 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 통과로 마감한다.
 
-### A-Next42. V1.5 reindex live adapter executor injection protocol draft (현재 active)
-1. future `reindex` live adapter의 explicit local-only binding이 runtime/test harness에 어떻게 주입되는지 protocol 수준으로 정리한다.
-2. actual live execution을 열지 않고, binding injection source와 guardrail만 고정한다.
-3. upload review separate boundary와 public surface 비목표를 그대로 유지한다.
+### A-Next42. V1.5 reindex live adapter executor injection protocol draft (완료: 2026-04-20)
+1. explicit local-only binding carrier를 runtime/test harness에서 mutation executor request까지 전달하는 protocol을 고정했다.
+2. payload channel 없이 `AgentRuntimeRequest -> ToolContext -> MutationExecutionRequest` chain을 문서와 코드에 같이 반영했다.
+3. executor contract request metadata는 binding presence/source/kind/executor name signal을 남기게 됐다.
 
 완료 기준:
 - `reindex` live adapter executor injection protocol 초안이 문서와 테스트 기준으로 정리된다.
@@ -1253,8 +1257,77 @@ closeout 메모 (2026-04-20):
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 진행 메모 (2026-04-20):
-- `LOOP-048` closeout으로 opt-in smoke harness와 테스트 현황/로드맵 요약은 문서로 고정됐다.
-- 이번 단계는 actual execution을 열지 않고, explicit local-only binding이 runtime/test harness에 어떻게 들어오는지 protocol 관점으로 정리하는 것이다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_EXECUTOR_INJECTION_PROTOCOL_DRAFT_2026-04-20.md`를 추가했다.
+- `services/agent_runtime_service.py`, `services/tool_registry_service.py`, `services/tool_middleware_service.py`, `services/mutation_executor_service.py`에 `executor_binding` carrier를 추가했다.
+
+### A-Next43. V1.5 reindex live adapter binding selection stub draft (완료: 2026-04-20)
+1. valid explicit binding이 activation guard 뒤에서만 `reindex_mutation_adapter_live` selection stub로 승격되도록 정리했다.
+2. invalid binding은 `candidate_stub_fallback`으로 남기고 actual execution은 계속 닫아 둔다.
+3. live binding stub contract는 `registered_executor_name`과 `delegate_executor_name`으로 defer 상태를 유지한다.
+
+완료 기준:
+- live binding selection stub 초안이 문서와 테스트 기준으로 정리된다.
+- invalid binding fallback과 default candidate path가 함께 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-20):
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BINDING_SELECTION_STUB_DRAFT_2026-04-20.md`를 추가했다.
+- `services/mutation_executor_service.py`는 `REINDEX_LIVE_ADAPTER_BINDING_KIND`, `_resolve_reindex_live_binding()`, `ReindexLiveMutationExecutorBindingStub`를 제공한다.
+
+### A-Next44. V1.5 reindex live adapter opt-in smoke command draft (완료: 2026-04-20)
+1. default blocked smoke와 분리된 opt-in live binding command surface를 script 차원에서 concrete화했다.
+2. `--opt-in-live-binding` 또는 `DOC_RAG_MUTATION_SMOKE_LIVE_BINDING=1`일 때만 apply request에 live binding이 주입된다.
+3. default smoke semantics는 그대로 유지된다.
+
+완료 기준:
+- opt-in smoke command 초안이 문서와 테스트 기준으로 정리된다.
+- default smoke와 opt-in smoke의 분리 원칙이 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-20):
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_COMMAND_DRAFT_2026-04-20.md`를 추가했다.
+- `scripts/smoke_agent_runtime.py`는 `requested_live_binding` top-level signal과 opt-in binding injection helper를 제공한다.
+
+### A-Next45. V1.5 reindex live adapter opt-in smoke evidence draft (완료: 2026-04-20)
+1. activation/local-file backend/live binding을 함께 켠 실제 smoke output을 evidence로 고정했다.
+2. apply step에서 `reindex_mutation_adapter_live`, `live_binding_stub`, `explicit_live_binding_requested`가 확인됐다.
+3. smoke overall은 `ok=true`로 완료됐다.
+
+완료 기준:
+- opt-in smoke evidence가 문서와 command output 기준으로 정리된다.
+- live binding stub path가 default blocked path와 분리된 별도 evidence로 남는다.
+
+검증:
+- `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag-live-binding-smoke ./.venv/bin/python scripts/smoke_agent_runtime.py --opt-in-live-binding`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-20):
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_EVIDENCE_DRAFT_2026-04-20.md`를 추가했다.
+- 실측에서는 `requested_live_binding=true`, `mutation_executor.executor_name=reindex_mutation_adapter_live`, `selection_state=live_binding_stub`가 확인됐다.
+
+### A-Next46. V1.5 reindex live adapter concrete executor skeleton draft (현재 active)
+1. future `reindex` live adapter의 concrete executor skeleton을 actual result shape draft 수준까지 정리한다.
+2. current live binding stub 다음에 오는 success payload assembly와 rollback hint 연결 지점을 정리한다.
+3. actual side effect와 public surface는 계속 열지 않는다.
+
+완료 기준:
+- concrete live executor skeleton 초안이 문서와 테스트 기준으로 정리된다.
+- current live binding stub/smoke evidence와 future success contract가 충돌 없이 이어진다.
+- actual execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-20):
+- `LOOP-052` closeout으로 opt-in live binding smoke evidence까지 확보됐다.
+- 다음 단계는 live binding stub 이후의 concrete executor/result skeleton이다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
