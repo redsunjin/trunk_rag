@@ -10,6 +10,7 @@ REINDEX_LIVE_ADAPTER_OUTLINE_SCHEMA_VERSION = "v1.5.reindex_live_adapter_outline
 REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION = "v1.5.reindex_live_adapter_result.v1"
 REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION = "v1.5.reindex_live_adapter_error.v1"
 REINDEX_LIVE_ADAPTER_BINDING_SCHEMA_VERSION = "v1.5.reindex_live_adapter_binding.v1"
+REINDEX_LIVE_ADAPTER_SMOKE_HARNESS_SCHEMA_VERSION = "v1.5.reindex_live_adapter_smoke_harness.v1"
 MUTATION_EXECUTION_ENV_KEY = "DOC_RAG_AGENT_MUTATION_EXECUTION"
 REINDEX_MUTATION_EXECUTOR_NAME = "reindex_mutation_adapter_stub"
 REINDEX_LIVE_ADAPTER_EXECUTOR_NAME = "reindex_mutation_adapter_live"
@@ -209,6 +210,30 @@ def _build_boundary_contract(request: MutationExecutionRequest) -> dict[str, obj
                     ],
                     "public_surface_allowed": False,
                     "shared_with_upload_review": False,
+                },
+                "opt_in_smoke_harness": {
+                    "schema_version": REINDEX_LIVE_ADAPTER_SMOKE_HARNESS_SCHEMA_VERSION,
+                    "mode": "separate_from_default_smoke",
+                    "default_command": "./.venv/bin/python scripts/smoke_agent_runtime.py",
+                    "future_command_kind": "explicit_live_adapter_binding_required",
+                    "prerequisites": [
+                        "activation_requested",
+                        "durable_audit_ready",
+                        "explicit_live_adapter_binding",
+                        "local_only_runtime_context",
+                    ],
+                    "expected_evidence": [
+                        "result.ok=true",
+                        "result.mutation_executor.executor_name=reindex_mutation_adapter_live",
+                        "result.result.reindex_summary",
+                        "result.result.audit_receipt_ref",
+                        "result.result.rollback_hint",
+                    ],
+                    "isolation": {
+                        "shares_default_smoke_suite": False,
+                        "upload_review_included": False,
+                        "public_surface_allowed": False,
+                    },
                 },
                 "rollback_awareness": {
                     "mode": "rebuild_from_source_documents",

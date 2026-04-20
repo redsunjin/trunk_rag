@@ -42,6 +42,8 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TEST_PLAN_DRAFT_2026-04-20.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_SUCCESS_CONTRACT_DRAFT_2026-04-20.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_BINDING_SEAM_DRAFT_2026-04-20.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_HARNESS_DRAFT_2026-04-20.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TEST_STATUS_ROADMAP_2026-04-20.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -49,8 +51,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-048`
-- current_active_title: `V1.5 reindex live adapter opt-in smoke harness draft`
+- current_active_id: `LOOP-049`
+- current_active_title: `V1.5 reindex live adapter executor injection protocol draft`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1211,7 +1213,7 @@ closeout 메모 (2026-04-20):
 - `tests/test_mutation_executor_service.py`, `tests/test_tool_middleware_service.py`, `tests/test_agent_runtime_service.py`는 opt-in binding seam metadata가 추가돼도 current blocked/candidate path가 유지되는지 검증하도록 갱신됐다.
 - 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 통과로 마감한다.
 
-### A-Next41. V1.5 reindex live adapter opt-in smoke harness draft (현재 active)
+### A-Next41. V1.5 reindex live adapter opt-in smoke harness draft (완료: 2026-04-20)
 1. future `reindex` live adapter opt-in smoke를 default smoke와 분리된 별도 harness/command 관점으로 정리한다.
 2. actual live execution을 열지 않고, local-only prerequisites와 output evidence만 고정한다.
 3. upload review separate boundary와 public surface 비목표를 그대로 유지한다.
@@ -1228,6 +1230,31 @@ closeout 메모 (2026-04-20):
 진행 메모 (2026-04-20):
 - `LOOP-047` closeout으로 future live adapter의 explicit local-only binding seam은 문서와 boundary metadata에 함께 고정됐다.
 - 이번 단계는 actual execution을 열지 않고, future opt-in smoke를 default smoke와 분리된 harness/command 기준으로 정리하는 것이다.
+
+closeout 메모 (2026-04-20):
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_HARNESS_DRAFT_2026-04-20.md`를 추가해 opt-in smoke를 default smoke와 분리된 별도 harness/command 관점으로 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TEST_STATUS_ROADMAP_2026-04-20.md`를 추가해 현재까지의 검증 이력, 반복 검증 명령, 남은 테스트 갭, 권장 순서를 한 문서에 요약했다.
+- `services/mutation_executor_service.py`는 `boundary.live_adapter_outline`에 `opt_in_smoke_harness` metadata를 추가해 prerequisites, expected evidence, isolation rule을 코드 계약에도 반영했다.
+- `tests/test_mutation_executor_service.py`, `tests/test_tool_middleware_service.py`, `tests/test_agent_runtime_service.py`는 smoke harness metadata가 추가돼도 current blocked/candidate path가 유지되는지 검증하도록 갱신됐다.
+- 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 통과로 마감한다.
+
+### A-Next42. V1.5 reindex live adapter executor injection protocol draft (현재 active)
+1. future `reindex` live adapter의 explicit local-only binding이 runtime/test harness에 어떻게 주입되는지 protocol 수준으로 정리한다.
+2. actual live execution을 열지 않고, binding injection source와 guardrail만 고정한다.
+3. upload review separate boundary와 public surface 비목표를 그대로 유지한다.
+
+완료 기준:
+- `reindex` live adapter executor injection protocol 초안이 문서와 테스트 기준으로 정리된다.
+- current opt-in binding seam/opt-in smoke harness와 future injection protocol 경계가 충돌 없이 이어진다.
+- live execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-20):
+- `LOOP-048` closeout으로 opt-in smoke harness와 테스트 현황/로드맵 요약은 문서로 고정됐다.
+- 이번 단계는 actual execution을 열지 않고, explicit local-only binding이 runtime/test harness에 어떻게 들어오는지 protocol 관점으로 정리하는 것이다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
