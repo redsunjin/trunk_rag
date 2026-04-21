@@ -53,6 +53,7 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_DRAFT_2026-04-21.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_FAILURE_TAXONOMY_DRAFT_2026-04-21.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_GO_NO_GO_REVIEW_2026-04-21.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PRE_EXECUTION_HANDOFF_SEAM_DRAFT_2026-04-21.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -60,8 +61,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-058`
-- current_active_title: `V1.5 reindex live adapter pre-execution handoff seam draft`
+- current_active_id: `LOOP-059`
+- current_active_title: `V1.5 reindex live adapter fake executor smoke seam draft`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1424,7 +1425,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서는 `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_GO_NO_GO_REVIEW_2026-04-21.md`다.
 - 검증: `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`; `git diff --check` -> pass.
 
-### A-Next51. V1.5 reindex live adapter pre-execution handoff seam draft (현재 active)
+### A-Next51. V1.5 reindex live adapter pre-execution handoff seam draft (완료: 2026-04-21)
 1. actual side effect를 열지 않고 pre-execution audit/executor handoff seam을 고정한다.
 2. durable audit receipt, executor selection, top-level result/error promotion이 side effect 이전에 한 흐름으로 묶이는지 테스트 가능한 계약으로 정리한다.
 3. direct tool invocation 경로가 actual mutation execution을 우회하지 못하게 할 조건을 정리한다.
@@ -1437,6 +1438,33 @@ closeout 메모 (2026-04-20):
 검증:
 - `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-21 closeout):
+- `services/mutation_executor_service.py`에 `v1.5.reindex_live_adapter_pre_execution_handoff.v1` contract builder를 추가했다.
+- contract는 valid apply 이후 current runtime이 여전히 blocked result metadata enrichment에서 executor sidecar를 붙이고, guard를 단순히 열면 direct `_tool_reindex -> index_service.reindex()` path가 가능하다는 위험을 명시한다.
+- required pre-execution order는 apply envelope validation, persisted audit record, durable audit receipt, mutation execution request, executor resolution/execution, result/error promotion 순서로 고정했다.
+- side-effect barrier는 actual reindex side effect를 아직 `false`로 유지하고, `mutation_executor_service.execute_mutation_request` router가 side effect 전 필수임을 명시한다.
+- 기준 문서는 `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PRE_EXECUTION_HANDOFF_SEAM_DRAFT_2026-04-21.md`다.
+- 1차 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py` -> `15 passed in 0.07s`.
+- 최종 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` -> `50 passed in 0.09s`; `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`; `git diff --check` -> pass.
+
+### A-Next52. V1.5 reindex live adapter fake executor smoke seam draft (현재 active)
+1. actual `index_service.reindex()` side effect를 열지 않고 fake/sandboxed executor smoke seam을 고정한다.
+2. success/failure promotion을 실제 index mutation 없이 검증할 수 있는 smoke evidence 기준을 정리한다.
+3. pre-execution handoff contract와 smoke summary를 연결한다.
+
+완료 기준:
+- future runtime router가 실제 index mutation 없이 success/failure promotion을 검증할 수 있는 smoke seam이 문서/테스트 기준으로 정리된다.
+- default blocked path와 concrete skeleton smoke가 회귀하지 않는다.
+- local-only opt-in 범위가 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-21):
+- `LOOP-058` closeout으로 side effect 이전 handoff order와 barrier contract가 고정됐다.
+- 다음 작업은 실제 executor 구현이 아니라 fake/sandboxed smoke seam을 추가하는 것이다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

@@ -13,6 +13,7 @@ REINDEX_LIVE_ADAPTER_BINDING_SCHEMA_VERSION = "v1.5.reindex_live_adapter_binding
 REINDEX_LIVE_ADAPTER_INJECTION_PROTOCOL_SCHEMA_VERSION = "v1.5.reindex_live_adapter_injection_protocol.v1"
 REINDEX_LIVE_ADAPTER_SMOKE_HARNESS_SCHEMA_VERSION = "v1.5.reindex_live_adapter_smoke_harness.v1"
 REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_SCHEMA_VERSION = "v1.5.reindex_live_adapter_success_promotion.v1"
+REINDEX_LIVE_ADAPTER_PRE_EXECUTION_HANDOFF_SCHEMA_VERSION = "v1.5.reindex_live_adapter_pre_execution_handoff.v1"
 MUTATION_EXECUTION_ENV_KEY = "DOC_RAG_AGENT_MUTATION_EXECUTION"
 REINDEX_MUTATION_EXECUTOR_NAME = "reindex_mutation_adapter_stub"
 REINDEX_LIVE_ADAPTER_EXECUTOR_NAME = "reindex_mutation_adapter_live"
@@ -658,6 +659,69 @@ def list_reindex_live_failure_contracts() -> tuple[dict[str, object], ...]:
         for code in REINDEX_LIVE_ADAPTER_FAILURE_ORDER
     ]
     return tuple(contract for contract in contracts if contract is not None)
+
+
+def build_reindex_pre_execution_handoff_contract() -> dict[str, object]:
+    return {
+        "schema_version": REINDEX_LIVE_ADAPTER_PRE_EXECUTION_HANDOFF_SCHEMA_VERSION,
+        "tool_name": REINDEX_FIRST_LIVE_SCOPE,
+        "handoff_state": "draft_ready_not_enabled",
+        "surface_scope": "internal_service_only",
+        "current_runtime": {
+            "apply_guard_behavior": "always_block_after_valid_envelope",
+            "top_level_error_code": tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED,
+            "executor_invocation_location": "blocked_result_metadata_enrichment",
+            "direct_tool_invocation_possible_if_guard_is_opened": True,
+        },
+        "required_pre_execution_order": [
+            "validate_apply_envelope",
+            "build_persisted_audit_record",
+            "append_durable_audit_receipt",
+            "build_mutation_execution_request",
+            "resolve_mutation_executor",
+            "execute_mutation_executor",
+            "promote_executor_result_or_error",
+        ],
+        "side_effect_barrier": {
+            "actual_reindex_side_effect_allowed": False,
+            "direct_tool_handler": "tool_registry_service._tool_reindex",
+            "direct_tool_handler_policy": "must_not_be_invoked_for_preview_confirmed_mutation_apply",
+            "actual_runtime_handler": "index_service.reindex",
+            "router_required_before_side_effect": "mutation_executor_service.execute_mutation_request",
+        },
+        "audit_handoff": {
+            "receipt_required_before_executor": True,
+            "required_sink_type": LOCAL_FILE_APPEND_ONLY_SINK_TYPE,
+            "required_receipt_fields": [
+                "sink_type",
+                "sequence_id",
+                "storage_path",
+            ],
+            "null_sink_allows_actual_execution": False,
+        },
+        "executor_selection": {
+            "first_live_tool_scope": REINDEX_FIRST_LIVE_SCOPE,
+            "default_selection_without_binding": "candidate_stub_or_noop_fallback",
+            "actual_executor_requires_explicit_binding": True,
+            "required_binding_kind": REINDEX_LIVE_ADAPTER_BINDING_KIND,
+            "required_executor_name": REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+        },
+        "promotion_handoff": {
+            "success_contract_schema_version": REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION,
+            "failure_contract_schema_version": REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION,
+            "success_source": "mutation_executor_result",
+            "failure_source": "mutation_executor_error",
+            "top_level_success_location": "result",
+            "top_level_failure_location": "error",
+        },
+        "blocked_until": [
+            "mutation_apply_guard_routes_to_executor_instead_of_tool_handler",
+            "durable_audit_receipt_created_before_side_effect",
+            "explicit_live_adapter_binding_validated_before_side_effect",
+            "top_level_promotion_router_implemented",
+            "fake_executor_smoke_added",
+        ],
+    }
 
 
 @dataclass(frozen=True)

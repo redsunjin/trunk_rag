@@ -671,6 +671,71 @@ def test_reindex_boundary_failure_taxonomy_matches_failure_contract_order(monkey
     }
 
 
+def test_build_reindex_pre_execution_handoff_contract_keeps_side_effect_blocked_before_executor_router():
+    contract = mutation_executor_service.build_reindex_pre_execution_handoff_contract()
+
+    assert contract == {
+        "schema_version": mutation_executor_service.REINDEX_LIVE_ADAPTER_PRE_EXECUTION_HANDOFF_SCHEMA_VERSION,
+        "tool_name": "reindex",
+        "handoff_state": "draft_ready_not_enabled",
+        "surface_scope": "internal_service_only",
+        "current_runtime": {
+            "apply_guard_behavior": "always_block_after_valid_envelope",
+            "top_level_error_code": tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED,
+            "executor_invocation_location": "blocked_result_metadata_enrichment",
+            "direct_tool_invocation_possible_if_guard_is_opened": True,
+        },
+        "required_pre_execution_order": [
+            "validate_apply_envelope",
+            "build_persisted_audit_record",
+            "append_durable_audit_receipt",
+            "build_mutation_execution_request",
+            "resolve_mutation_executor",
+            "execute_mutation_executor",
+            "promote_executor_result_or_error",
+        ],
+        "side_effect_barrier": {
+            "actual_reindex_side_effect_allowed": False,
+            "direct_tool_handler": "tool_registry_service._tool_reindex",
+            "direct_tool_handler_policy": "must_not_be_invoked_for_preview_confirmed_mutation_apply",
+            "actual_runtime_handler": "index_service.reindex",
+            "router_required_before_side_effect": "mutation_executor_service.execute_mutation_request",
+        },
+        "audit_handoff": {
+            "receipt_required_before_executor": True,
+            "required_sink_type": "local_file_append_only",
+            "required_receipt_fields": [
+                "sink_type",
+                "sequence_id",
+                "storage_path",
+            ],
+            "null_sink_allows_actual_execution": False,
+        },
+        "executor_selection": {
+            "first_live_tool_scope": "reindex",
+            "default_selection_without_binding": "candidate_stub_or_noop_fallback",
+            "actual_executor_requires_explicit_binding": True,
+            "required_binding_kind": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_KIND,
+            "required_executor_name": mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+        },
+        "promotion_handoff": {
+            "success_contract_schema_version": mutation_executor_service.REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION,
+            "failure_contract_schema_version": mutation_executor_service.REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION,
+            "success_source": "mutation_executor_result",
+            "failure_source": "mutation_executor_error",
+            "top_level_success_location": "result",
+            "top_level_failure_location": "error",
+        },
+        "blocked_until": [
+            "mutation_apply_guard_routes_to_executor_instead_of_tool_handler",
+            "durable_audit_receipt_created_before_side_effect",
+            "explicit_live_adapter_binding_validated_before_side_effect",
+            "top_level_promotion_router_implemented",
+            "fake_executor_smoke_added",
+        ],
+    }
+
+
 def test_execute_mutation_request_falls_back_to_candidate_stub_when_executor_binding_is_invalid(monkeypatch):
     monkeypatch.setenv(mutation_executor_service.MUTATION_EXECUTION_ENV_KEY, "1")
 

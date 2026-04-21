@@ -33,16 +33,19 @@
 12. execution enablement go/no-go review
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_GO_NO_GO_REVIEW_2026-04-21.md`
    - 핵심: actual execution `No-Go`, next planning `Go` for pre-execution handoff seam
+13. pre-execution audit/executor handoff seam
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PRE_EXECUTION_HANDOFF_SEAM_DRAFT_2026-04-21.md`
+   - 핵심: actual side effect 전 durable audit receipt, mutation executor router, explicit binding, success/failure promotion handoff 순서 고정
 
 ### Verified Repeatedly
 
 반복적으로 유지 중인 공통 검증:
 
-- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 - `git diff --check`
 
-최근 루프들(`LOOP-045` ~ `LOOP-056`)은 같은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐고, 최신 closeout 기준 `53 passed`다.
+최근 루프들(`LOOP-045` ~ `LOOP-058`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐고, 최신 `LOOP-058` closeout 기준 `50 passed`다.
 
 ## Test Matrix
 
@@ -63,8 +66,8 @@
 
 ### Future Paths
 
-1. pre-execution audit/executor handoff seam
-   - 기대: actual side effect 전 durable audit receipt와 mutation executor router handoff 조건 고정
+1. fake/sandboxed executor smoke seam
+   - 기대: actual index mutation 없이 success/failure promotion 검증 가능
    - 상태: next draft
 
 ## Recommended Testing Order
@@ -77,12 +80,14 @@
 4. concrete executor skeleton smoke evidence 검증
 5. top-level success promotion 규칙 정리
 6. adapter-specific runtime failure taxonomy 검증
+7. pre-execution audit/executor handoff seam 검증
+8. fake/sandboxed executor smoke seam 검증
 
 ## Open Testing Gaps
 
 아직 남아 있는 테스트 갭:
 
-1. pre-execution handoff seam test
+1. fake/sandboxed executor smoke seam test
 2. actual execution enablement 이후 smoke 업데이트 기준
 3. real side-effect rollback drill 여부
 
@@ -93,4 +98,4 @@
 
 ## Next Step
 
-다음 구현은 `LOOP-058 V1.5 reindex live adapter pre-execution handoff seam draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 구현은 `LOOP-059 V1.5 reindex live adapter fake executor smoke seam draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
