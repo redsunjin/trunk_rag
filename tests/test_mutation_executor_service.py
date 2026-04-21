@@ -501,6 +501,85 @@ def test_execute_mutation_request_selects_live_result_skeleton_when_binding_stag
     }
 
 
+def test_build_reindex_live_success_promotion_contract_maps_sidecar_to_future_surface(monkeypatch):
+    monkeypatch.setenv(mutation_executor_service.MUTATION_EXECUTION_ENV_KEY, "1")
+
+    result = mutation_executor_service.execute_mutation_request(
+        _sample_request(
+            "reindex",
+            payload={"collection": "all", "reset": True, "include_compatibility_bundle": True},
+            audit_sink_receipt={
+                "sink_type": "local_file_append_only",
+                "sequence_id": 11,
+                "storage_path": "/tmp/mutation-audit/audit-20260418.jsonl",
+            },
+            executor_binding={
+                "binding_kind": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_KIND,
+                "binding_source": "test_harness",
+                "executor_name": mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+                mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD: mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_CONCRETE_SKELETON,
+            },
+        )
+    )
+
+    promotion = mutation_executor_service.build_reindex_live_success_promotion_contract(
+        executor_contract=result["executor"],
+        executor_result=result["result"],
+    )
+
+    assert promotion == {
+        "schema_version": mutation_executor_service.REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_SCHEMA_VERSION,
+        "tool_name": "reindex",
+        "promotion_state": "draft_ready_not_enabled",
+        "selection_state": "live_result_skeleton",
+        "selection_reason": "explicit_live_result_contract_requested",
+        "current_surface": {
+            "kind": "blocked_success_sidecar",
+            "top_level_ok": False,
+            "top_level_error_code": tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED,
+            "result_location": "error.mutation_executor_result",
+            "contract_location": "execution_trace.contracts.mutation_executor_result",
+            "blocked_by": "mutation_apply_guard",
+        },
+        "future_success_surface": {
+            "kind": "top_level_apply_success",
+            "top_level_ok": True,
+            "top_level_error": None,
+            "result_location": "result",
+            "result_schema_version": mutation_executor_service.REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION,
+            "promoted_fields": [
+                "reindex_summary",
+                "audit_receipt_ref",
+                "rollback_hint",
+            ],
+            "retained_contracts": [
+                "mutation_executor",
+                "mutation_executor_result",
+                "mutation_success_promotion",
+            ],
+        },
+        "promotion_gate": {
+            "default_behavior": "remain_blocked_success_sidecar",
+            "actual_side_effect_enabled": False,
+            "requires": [
+                "mutation_apply_guard_execution_enabled",
+                "executor_result_ok",
+                "live_result_skeleton",
+                "durable_audit_ready",
+                "explicit_live_adapter_binding",
+            ],
+        },
+        "result_summary": {
+            "collection_key": "all",
+            "operation": "rebuild_vector_index",
+            "requested_reset": True,
+            "requested_compatibility_bundle": True,
+            "audit_sequence_id": 11,
+            "rollback_mode": "rebuild_from_source_documents",
+        },
+    }
+
+
 def test_execute_mutation_request_falls_back_to_candidate_stub_when_executor_binding_is_invalid(monkeypatch):
     monkeypatch.setenv(mutation_executor_service.MUTATION_EXECUTION_ENV_KEY, "1")
 

@@ -110,6 +110,30 @@ def _summarize_mutation_executor_result(result: dict[str, object]) -> dict[str, 
     }
 
 
+def _summarize_mutation_success_promotion(result: dict[str, object]) -> dict[str, object] | None:
+    error = _safe_dict(result.get("error"))
+    execution_trace = _safe_dict(result.get("execution_trace"))
+    contracts = _safe_dict(execution_trace.get("contracts"))
+    promotion = _safe_dict(error.get("mutation_success_promotion")) or _safe_dict(
+        contracts.get("mutation_success_promotion")
+    )
+    if not promotion:
+        return None
+    current_surface = _safe_dict(promotion.get("current_surface"))
+    future_surface = _safe_dict(promotion.get("future_success_surface"))
+    promotion_gate = _safe_dict(promotion.get("promotion_gate"))
+    return {
+        "schema_version": promotion.get("schema_version"),
+        "promotion_state": promotion.get("promotion_state"),
+        "current_kind": current_surface.get("kind"),
+        "current_result_location": current_surface.get("result_location"),
+        "future_kind": future_surface.get("kind"),
+        "future_result_location": future_surface.get("result_location"),
+        "future_top_level_ok": future_surface.get("top_level_ok"),
+        "actual_side_effect_enabled": promotion_gate.get("actual_side_effect_enabled"),
+    }
+
+
 def _summarize_result(result: dict[str, object]) -> dict[str, object]:
     trace = _safe_dict(result.get("execution_trace"))
     summary = {
@@ -131,6 +155,9 @@ def _summarize_result(result: dict[str, object]) -> dict[str, object]:
     mutation_executor_result = _summarize_mutation_executor_result(result)
     if mutation_executor_result is not None:
         summary["mutation_executor_result"] = mutation_executor_result
+    mutation_success_promotion = _summarize_mutation_success_promotion(result)
+    if mutation_success_promotion is not None:
+        summary["mutation_success_promotion"] = mutation_success_promotion
     return summary
 
 

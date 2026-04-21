@@ -312,10 +312,28 @@ def test_smoke_agent_runtime_opt_in_live_binding_concrete_stage_injects_executor
                     "collection_key": "all",
                 },
             }
+            mutation_success_promotion = {
+                "schema_version": "v1.5.reindex_live_adapter_success_promotion.v1",
+                "promotion_state": "draft_ready_not_enabled",
+                "current_surface": {
+                    "kind": "blocked_success_sidecar",
+                    "result_location": "error.mutation_executor_result",
+                },
+                "future_success_surface": {
+                    "kind": "top_level_apply_success",
+                    "result_location": "result",
+                    "top_level_ok": True,
+                },
+                "promotion_gate": {
+                    "actual_side_effect_enabled": False,
+                },
+            }
             error["mutation_executor"] = mutation_executor
             error["mutation_executor_result"] = mutation_executor_result
+            error["mutation_success_promotion"] = mutation_success_promotion
             contracts["mutation_executor"] = mutation_executor
             contracts["mutation_executor_result"] = mutation_executor_result
+            contracts["mutation_success_promotion"] = mutation_success_promotion
         return {
             "ok": False,
             "entry": {"selected_tool": "reindex"},
@@ -368,6 +386,16 @@ def test_smoke_agent_runtime_opt_in_live_binding_concrete_stage_injects_executor
         "audit_storage_path": "/tmp/mutation-audit/audit-20260421.jsonl",
         "rollback_mode": "rebuild_from_source_documents",
         "rollback_collection_key": "all",
+    }
+    assert result["checks"][5]["summary"]["mutation_success_promotion"] == {
+        "schema_version": "v1.5.reindex_live_adapter_success_promotion.v1",
+        "promotion_state": "draft_ready_not_enabled",
+        "current_kind": "blocked_success_sidecar",
+        "current_result_location": "error.mutation_executor_result",
+        "future_kind": "top_level_apply_success",
+        "future_result_location": "result",
+        "future_top_level_ok": True,
+        "actual_side_effect_enabled": False,
     }
 
 

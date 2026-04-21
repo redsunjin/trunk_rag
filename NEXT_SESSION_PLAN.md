@@ -50,6 +50,7 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_EVIDENCE_DRAFT_2026-04-20.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_CONCRETE_EXECUTOR_SKELETON_DRAFT_2026-04-21.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_CONCRETE_SMOKE_EVIDENCE_DRAFT_2026-04-21.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_DRAFT_2026-04-21.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -57,8 +58,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-055`
-- current_active_title: `V1.5 reindex live adapter top-level success promotion draft`
+- current_active_id: `LOOP-056`
+- current_active_title: `V1.5 reindex live adapter runtime failure taxonomy draft`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1354,7 +1355,7 @@ closeout 메모 (2026-04-20):
 - `scripts/smoke_agent_runtime.py`는 `--opt-in-live-binding-stage-concrete`와 `DOC_RAG_MUTATION_SMOKE_LIVE_BINDING_STAGE`를 지원한다.
 - 실측에서는 `requested_live_binding_stage=concrete_executor_skeleton`, `selection_state=live_result_skeleton`, `mutation_executor_result.schema_version=v1.5.reindex_live_adapter_result.v1`가 확인됐다.
 
-### A-Next48. V1.5 reindex live adapter top-level success promotion draft (현재 active)
+### A-Next48. V1.5 reindex live adapter top-level success promotion draft (완료: 2026-04-21)
 1. current `mutation_executor_result` sidecar와 future top-level apply success 응답 사이의 승격 규칙을 정리한다.
 2. blocked-success smoke/runtime evidence와 actual success surface의 경계를 문서/contract로 고정한다.
 3. actual side effect enablement는 계속 별도 단계로 남긴다.
@@ -1362,6 +1363,30 @@ closeout 메모 (2026-04-20):
 완료 기준:
 - success promotion rule이 current sidecar contract와 충돌 없이 정리된다.
 - future apply success 응답에서 무엇이 top-level로 승격되고 무엇이 trace/contracts에 남는지 고정된다.
+- actual execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-21 closeout):
+- `services/mutation_executor_service.py`에 `v1.5.reindex_live_adapter_success_promotion.v1` contract builder를 추가했다.
+- `services/tool_middleware_service.py`는 concrete skeleton path에서 `mutation_success_promotion`을 error payload와 execution trace contracts에 함께 남긴다.
+- current surface는 계속 `ok=false`, `error.code=MUTATION_APPLY_NOT_ENABLED`, `error.mutation_executor_result` 위치를 유지한다.
+- future success surface는 같은 payload를 top-level `result`로 승격하고, `mutation_executor`/`mutation_executor_result`/`mutation_success_promotion` contracts를 retained contracts로 남기는 규칙으로 고정했다.
+- `scripts/smoke_agent_runtime.py`는 concrete opt-in smoke summary에 `mutation_success_promotion` evidence를 요약할 수 있게 됐다.
+- 기준 문서는 `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_DRAFT_2026-04-21.md`다.
+- 1차 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` -> `46 passed in 0.17s`.
+- 최종 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` -> `50 passed in 0.10s`; `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`; `git diff --check` -> pass.
+
+### A-Next49. V1.5 reindex live adapter runtime failure taxonomy draft (현재 active)
+1. adapter-specific runtime failure taxonomy deep cases를 테스트 seam으로 정리한다.
+2. `REINDEX_TARGET_MISMATCH`, `REINDEX_AUDIT_LINKAGE_INVALID`, `REINDEX_RUNTIME_EXECUTION_FAILED`, `REINDEX_ROLLBACK_HINT_UNAVAILABLE`의 발생 단계와 future failure surface mapping을 고정한다.
+3. default blocked path와 success promotion contract는 계속 회귀 없이 유지한다.
+
+완료 기준:
+- failure taxonomy 각 코드의 contract validation/runtime/post-execution 경계가 문서와 테스트 기준으로 정리된다.
+- current blocked-success surface와 future failure surface가 충돌하지 않는다.
 - actual execution off-by-default 정책이 계속 유지된다.
 
 검증:

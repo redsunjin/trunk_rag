@@ -12,6 +12,7 @@ REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION = "v1.5.reindex_live_adapter_error.v1"
 REINDEX_LIVE_ADAPTER_BINDING_SCHEMA_VERSION = "v1.5.reindex_live_adapter_binding.v1"
 REINDEX_LIVE_ADAPTER_INJECTION_PROTOCOL_SCHEMA_VERSION = "v1.5.reindex_live_adapter_injection_protocol.v1"
 REINDEX_LIVE_ADAPTER_SMOKE_HARNESS_SCHEMA_VERSION = "v1.5.reindex_live_adapter_smoke_harness.v1"
+REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_SCHEMA_VERSION = "v1.5.reindex_live_adapter_success_promotion.v1"
 MUTATION_EXECUTION_ENV_KEY = "DOC_RAG_AGENT_MUTATION_EXECUTION"
 REINDEX_MUTATION_EXECUTOR_NAME = "reindex_mutation_adapter_stub"
 REINDEX_LIVE_ADAPTER_EXECUTOR_NAME = "reindex_mutation_adapter_live"
@@ -512,6 +513,77 @@ def _build_reindex_live_result(request: MutationExecutionRequest) -> dict[str, o
             "mode": "rebuild_from_source_documents",
             "operator_action_required": True,
             "collection_key": collection_key,
+        },
+    }
+
+
+def build_reindex_live_success_promotion_contract(
+    *,
+    executor_contract: dict[str, object] | None,
+    executor_result: dict[str, object] | None,
+) -> dict[str, object] | None:
+    executor = _safe_dict(executor_contract)
+    result = _safe_dict(executor_result)
+    if (
+        executor.get("tool_name") != REINDEX_FIRST_LIVE_SCOPE
+        or executor.get("executor_name") != REINDEX_LIVE_ADAPTER_EXECUTOR_NAME
+        or executor.get("selection_state") != "live_result_skeleton"
+        or result.get("schema_version") != REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION
+    ):
+        return None
+
+    reindex_summary = _safe_dict(result.get("reindex_summary"))
+    audit_receipt_ref = _safe_dict(result.get("audit_receipt_ref"))
+    rollback_hint = _safe_dict(result.get("rollback_hint"))
+    return {
+        "schema_version": REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_SCHEMA_VERSION,
+        "tool_name": REINDEX_FIRST_LIVE_SCOPE,
+        "promotion_state": "draft_ready_not_enabled",
+        "selection_state": executor.get("selection_state"),
+        "selection_reason": executor.get("selection_reason"),
+        "current_surface": {
+            "kind": "blocked_success_sidecar",
+            "top_level_ok": False,
+            "top_level_error_code": tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED,
+            "result_location": "error.mutation_executor_result",
+            "contract_location": "execution_trace.contracts.mutation_executor_result",
+            "blocked_by": "mutation_apply_guard",
+        },
+        "future_success_surface": {
+            "kind": "top_level_apply_success",
+            "top_level_ok": True,
+            "top_level_error": None,
+            "result_location": "result",
+            "result_schema_version": REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION,
+            "promoted_fields": [
+                "reindex_summary",
+                "audit_receipt_ref",
+                "rollback_hint",
+            ],
+            "retained_contracts": [
+                "mutation_executor",
+                "mutation_executor_result",
+                "mutation_success_promotion",
+            ],
+        },
+        "promotion_gate": {
+            "default_behavior": "remain_blocked_success_sidecar",
+            "actual_side_effect_enabled": False,
+            "requires": [
+                "mutation_apply_guard_execution_enabled",
+                "executor_result_ok",
+                "live_result_skeleton",
+                "durable_audit_ready",
+                "explicit_live_adapter_binding",
+            ],
+        },
+        "result_summary": {
+            "collection_key": reindex_summary.get("collection_key"),
+            "operation": reindex_summary.get("operation"),
+            "requested_reset": reindex_summary.get("requested_reset"),
+            "requested_compatibility_bundle": reindex_summary.get("requested_compatibility_bundle"),
+            "audit_sequence_id": audit_receipt_ref.get("sequence_id"),
+            "rollback_mode": rollback_hint.get("mode"),
         },
     }
 

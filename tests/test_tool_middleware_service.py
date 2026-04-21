@@ -757,6 +757,26 @@ def test_mutation_apply_guard_exposes_live_result_skeleton_sidecar_when_binding_
     assert mutation_executor_result["reindex_summary"]["collection_key"] == "all"
     assert mutation_executor_result["reindex_summary"]["requested_compatibility_bundle"] is True
     assert result["execution_trace"]["contracts"]["mutation_executor_result"] == mutation_executor_result
+    mutation_success_promotion = result["error"]["mutation_success_promotion"]
+    assert mutation_success_promotion["schema_version"] == (
+        mutation_executor_service.REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_SCHEMA_VERSION
+    )
+    assert mutation_success_promotion["current_surface"] == {
+        "kind": "blocked_success_sidecar",
+        "top_level_ok": False,
+        "top_level_error_code": "MUTATION_APPLY_NOT_ENABLED",
+        "result_location": "error.mutation_executor_result",
+        "contract_location": "execution_trace.contracts.mutation_executor_result",
+        "blocked_by": "mutation_apply_guard",
+    }
+    assert mutation_success_promotion["future_success_surface"]["result_location"] == "result"
+    assert mutation_success_promotion["future_success_surface"]["promoted_fields"] == [
+        "reindex_summary",
+        "audit_receipt_ref",
+        "rollback_hint",
+    ]
+    assert mutation_success_promotion["promotion_gate"]["actual_side_effect_enabled"] is False
+    assert result["execution_trace"]["contracts"]["mutation_success_promotion"] == mutation_success_promotion
 
 
 def test_mutation_apply_guard_keeps_upload_review_in_boundary_noop_even_when_activation_and_durable_audit_are_ready(

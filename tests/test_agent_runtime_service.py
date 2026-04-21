@@ -845,6 +845,16 @@ def test_agent_entry_exposes_live_result_skeleton_sidecar_when_binding_stage_req
     assert mutation_executor_result["schema_version"] == mutation_executor_service.REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION
     assert mutation_executor_result["rollback_hint"]["collection_key"] == "all"
     assert result["execution_trace"]["contracts"]["mutation_executor_result"] == mutation_executor_result
+    mutation_success_promotion = result["error"]["mutation_success_promotion"]
+    assert mutation_success_promotion["schema_version"] == (
+        mutation_executor_service.REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_SCHEMA_VERSION
+    )
+    assert mutation_success_promotion["promotion_state"] == "draft_ready_not_enabled"
+    assert mutation_success_promotion["current_surface"]["result_location"] == "error.mutation_executor_result"
+    assert mutation_success_promotion["future_success_surface"]["result_location"] == "result"
+    assert mutation_success_promotion["future_success_surface"]["top_level_ok"] is True
+    assert mutation_success_promotion["promotion_gate"]["default_behavior"] == "remain_blocked_success_sidecar"
+    assert result["execution_trace"]["contracts"]["mutation_success_promotion"] == mutation_success_promotion
 
 
 def test_agent_entry_keeps_upload_review_in_boundary_noop_even_when_activation_and_durable_audit_are_ready(

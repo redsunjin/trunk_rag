@@ -36,6 +36,7 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_EVIDENCE_DRAFT_2026-04-20.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_CONCRETE_EXECUTOR_SKELETON_DRAFT_2026-04-21.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_CONCRETE_SMOKE_EVIDENCE_DRAFT_2026-04-21.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_DRAFT_2026-04-21.md`
 - `docs/PREPROCESSING_RULES.md`
 - `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md`
 - `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
@@ -112,7 +113,8 @@
 | LOOP-052 | done | V1.5 reindex live adapter opt-in smoke evidence draft | `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag-live-binding-smoke ./.venv/bin/python scripts/smoke_agent_runtime.py --opt-in-live-binding` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-053 | done | V1.5 reindex live adapter concrete executor skeleton draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-054 | done | V1.5 reindex live adapter concrete executor smoke evidence draft | `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag-live-binding-concrete-smoke ./.venv/bin/python scripts/smoke_agent_runtime.py --opt-in-live-binding --opt-in-live-binding-stage-concrete` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-055 | active | V1.5 reindex live adapter top-level success promotion draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-055 | done | V1.5 reindex live adapter top-level success promotion draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-056 | active | V1.5 reindex live adapter runtime failure taxonomy draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -1491,7 +1493,7 @@ closeout 메모 (2026-04-20):
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_EVIDENCE_DRAFT_2026-04-20.md`를 추가했다.
 - `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag-live-binding-smoke ./.venv/bin/python scripts/smoke_agent_runtime.py --opt-in-live-binding` 실측에서 `ok=true`, `requested_live_binding=true`, `mutation_executor.executor_name=reindex_mutation_adapter_live`, `selection_state=live_binding_stub`를 확인했다.
 
-## 현재 Active Loop (LOOP-055)
+## 완료 Loop (LOOP-055)
 
 목표:
 - future `reindex` live adapter의 `mutation_executor_result` sidecar를 top-level apply success surface로 어떻게 승격할지 handoff 규칙을 정리한다.
@@ -1512,7 +1514,36 @@ closeout 메모 (2026-04-20):
 진행 메모 (2026-04-21):
 - `LOOP-053` closeout으로 `concrete_executor_skeleton` stage, `live_result_skeleton` selection, `mutation_executor_result` sidecar contract를 고정했다.
 - `LOOP-054` closeout으로 `--opt-in-live-binding-stage-concrete` smoke 경로와 실제 `live_result_skeleton` evidence를 확보했다.
-- 다음 단계는 이 sidecar result를 future top-level apply success 응답으로 승격하는 규칙을 정리하는 것이다.
+- `services/mutation_executor_service.py`에 `v1.5.reindex_live_adapter_success_promotion.v1` contract builder를 추가했다.
+- `services/tool_middleware_service.py`는 concrete skeleton path에서 `mutation_success_promotion`을 error payload와 execution trace contracts에 함께 남긴다.
+- `scripts/smoke_agent_runtime.py`는 concrete opt-in smoke summary에 success promotion evidence를 요약할 수 있게 됐다.
+- current surface는 계속 `ok=false`, `error.code=MUTATION_APPLY_NOT_ENABLED`, `error.mutation_executor_result` 위치를 유지하고, future surface는 같은 payload를 top-level `result`로 승격하는 것으로 고정했다.
+- 실제 side effect enablement는 여전히 별도 단계이며 `promotion_gate.actual_side_effect_enabled=false`로 남긴다.
+- 기준 문서는 `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_DRAFT_2026-04-21.md`다.
+- 1차 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` -> `46 passed in 0.17s`.
+- 최종 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` -> `50 passed in 0.10s`; `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`; `git diff --check` -> pass.
+
+## 현재 Active Loop (LOOP-056)
+
+목표:
+- `reindex` live adapter의 adapter-specific runtime failure taxonomy를 테스트 seam으로 고정한다.
+
+범위:
+- 포함: failure taxonomy deep case 후보 정리, `REINDEX_TARGET_MISMATCH`/`REINDEX_AUDIT_LINKAGE_INVALID`/`REINDEX_RUNTIME_EXECUTION_FAILED`/`REINDEX_ROLLBACK_HINT_UNAVAILABLE` 재현 seam 초안, current blocked path와 future failure surface 매핑
+- 제외: 실제 reindex side effect 개방, public agent endpoint, upload review live execution, managed state rollback 구현
+
+완료 기준:
+- failure taxonomy 각 코드가 어떤 contract validation/runtime 단계에서 발생해야 하는지 문서와 테스트 기준으로 정리된다.
+- default blocked path와 concrete success promotion contract가 회귀하지 않는다.
+- actual execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-21):
+- `LOOP-055` closeout으로 blocked-success sidecar와 future top-level success surface의 mapping이 `mutation_success_promotion` contract로 고정됐다.
+- 다음 작업은 success path가 아니라 adapter-specific failure taxonomy deep cases를 테스트 seam으로 정리하는 것이다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
