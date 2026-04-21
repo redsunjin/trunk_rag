@@ -26,6 +26,42 @@ LOCAL_FILE_APPEND_ONLY_SINK_TYPE = "local_file_append_only"
 APPROVE_UPLOAD_REQUEST_TOOL = "approve_upload_request"
 REJECT_UPLOAD_REQUEST_TOOL = "reject_upload_request"
 UPLOAD_REVIEW_MUTATION_TOOLS = frozenset({APPROVE_UPLOAD_REQUEST_TOOL, REJECT_UPLOAD_REQUEST_TOOL})
+REINDEX_ERROR_TARGET_MISMATCH = "REINDEX_TARGET_MISMATCH"
+REINDEX_ERROR_AUDIT_LINKAGE_INVALID = "REINDEX_AUDIT_LINKAGE_INVALID"
+REINDEX_ERROR_RUNTIME_EXECUTION_FAILED = "REINDEX_RUNTIME_EXECUTION_FAILED"
+REINDEX_ERROR_ROLLBACK_HINT_UNAVAILABLE = "REINDEX_ROLLBACK_HINT_UNAVAILABLE"
+REINDEX_LIVE_ADAPTER_FAILURE_ORDER = (
+    REINDEX_ERROR_TARGET_MISMATCH,
+    REINDEX_ERROR_AUDIT_LINKAGE_INVALID,
+    REINDEX_ERROR_RUNTIME_EXECUTION_FAILED,
+    REINDEX_ERROR_ROLLBACK_HINT_UNAVAILABLE,
+)
+REINDEX_LIVE_ADAPTER_FAILURE_TAXONOMY = {
+    REINDEX_ERROR_TARGET_MISMATCH: {
+        "stage": "contract_validation",
+        "retryable": False,
+        "trigger": "payload_apply_preview_target_mismatch",
+        "message": "Reindex target fields do not agree across payload, preview, and apply envelope.",
+    },
+    REINDEX_ERROR_AUDIT_LINKAGE_INVALID: {
+        "stage": "audit_linkage",
+        "retryable": False,
+        "trigger": "append_only_receipt_unlinkable",
+        "message": "Append-only audit receipt cannot be linked to the reindex adapter result.",
+    },
+    REINDEX_ERROR_RUNTIME_EXECUTION_FAILED: {
+        "stage": "executor_runtime",
+        "retryable": True,
+        "trigger": "reindex_runtime_failed",
+        "message": "Reindex runtime execution failed after the adapter contract was accepted.",
+    },
+    REINDEX_ERROR_ROLLBACK_HINT_UNAVAILABLE: {
+        "stage": "post_execution",
+        "retryable": True,
+        "trigger": "operator_restore_hint_missing",
+        "message": "Reindex finished or partially finished, but an operator restore hint was not available.",
+    },
+}
 
 
 @dataclass(frozen=True)
@@ -74,6 +110,20 @@ def _safe_positive_int(value: object) -> int | None:
     if normalized <= 0:
         return None
     return normalized
+
+
+def _build_reindex_failure_taxonomy() -> dict[str, object]:
+    return {
+        "schema_version": REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION,
+        "codes": [
+            {
+                "code": code,
+                "stage": str(REINDEX_LIVE_ADAPTER_FAILURE_TAXONOMY[code]["stage"]),
+                "retryable": bool(REINDEX_LIVE_ADAPTER_FAILURE_TAXONOMY[code]["retryable"]),
+            }
+            for code in REINDEX_LIVE_ADAPTER_FAILURE_ORDER
+        ],
+    }
 
 
 def _build_activation_contract(request: MutationExecutionRequest) -> dict[str, object]:
@@ -172,31 +222,7 @@ def _build_boundary_contract(request: MutationExecutionRequest) -> dict[str, obj
                         "operator_action_required": True,
                     },
                 },
-                "failure_taxonomy": {
-                    "schema_version": REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION,
-                    "codes": [
-                        {
-                            "code": "REINDEX_TARGET_MISMATCH",
-                            "stage": "contract_validation",
-                            "retryable": False,
-                        },
-                        {
-                            "code": "REINDEX_AUDIT_LINKAGE_INVALID",
-                            "stage": "audit_linkage",
-                            "retryable": False,
-                        },
-                        {
-                            "code": "REINDEX_RUNTIME_EXECUTION_FAILED",
-                            "stage": "executor_runtime",
-                            "retryable": True,
-                        },
-                        {
-                            "code": "REINDEX_ROLLBACK_HINT_UNAVAILABLE",
-                            "stage": "post_execution",
-                            "retryable": True,
-                        },
-                    ],
-                },
+                "failure_taxonomy": _build_reindex_failure_taxonomy(),
                 "opt_in_binding": {
                     "schema_version": REINDEX_LIVE_ADAPTER_BINDING_SCHEMA_VERSION,
                     "mode": "explicit_local_only",
@@ -586,6 +612,52 @@ def build_reindex_live_success_promotion_contract(
             "rollback_mode": rollback_hint.get("mode"),
         },
     }
+
+
+def build_reindex_live_failure_contract(
+    code: str,
+    *,
+    details: dict[str, object] | None = None,
+) -> dict[str, object] | None:
+    taxonomy = REINDEX_LIVE_ADAPTER_FAILURE_TAXONOMY.get(str(code or "").strip())
+    if taxonomy is None:
+        return None
+    normalized_details = dict(details) if isinstance(details, dict) else {}
+    return {
+        "schema_version": REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION,
+        "tool_name": REINDEX_FIRST_LIVE_SCOPE,
+        "code": str(code).strip(),
+        "stage": str(taxonomy["stage"]),
+        "retryable": bool(taxonomy["retryable"]),
+        "trigger": str(taxonomy["trigger"]),
+        "message": str(taxonomy["message"]),
+        "current_surface": {
+            "kind": "draft_only_not_runtime_reachable",
+            "top_level_ok": False,
+            "top_level_error_code": tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED,
+            "blocked_by": "mutation_apply_guard",
+        },
+        "future_failure_surface": {
+            "kind": "top_level_apply_failure",
+            "top_level_ok": False,
+            "error_location": "error",
+            "error_schema_version": REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION,
+            "retained_contracts": [
+                "mutation_executor",
+                "mutation_failure_taxonomy",
+            ],
+        },
+        "default_behavior": "not_emitted_until_actual_live_adapter_execution",
+        "details": normalized_details,
+    }
+
+
+def list_reindex_live_failure_contracts() -> tuple[dict[str, object], ...]:
+    contracts = [
+        build_reindex_live_failure_contract(code)
+        for code in REINDEX_LIVE_ADAPTER_FAILURE_ORDER
+    ]
+    return tuple(contract for contract in contracts if contract is not None)
 
 
 @dataclass(frozen=True)

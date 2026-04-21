@@ -28,6 +28,8 @@
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_CONCRETE_SMOKE_EVIDENCE_DRAFT_2026-04-21.md`
 10. top-level success promotion rule
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_DRAFT_2026-04-21.md`
+11. adapter-specific failure taxonomy seam
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_FAILURE_TAXONOMY_DRAFT_2026-04-21.md`
 
 ### Verified Repeatedly
 
@@ -58,8 +60,8 @@
 
 ### Future Paths
 
-1. executor runtime failure taxonomy deep cases
-   - 기대: adapter-specific failure contract 재현
+1. actual execution enablement go/no-go review
+   - 기대: `mutation_apply_guard_execution_enabled` 전환 가능 조건과 blocker 판정
    - 상태: next draft
 
 ## Recommended Testing Order
@@ -77,9 +79,8 @@
 
 아직 남아 있는 테스트 갭:
 
-1. executor runtime failure 재현 케이스
-2. rollback hint unavailable 경로 검증
-3. actual execution enablement 이후 smoke 업데이트 기준
+1. actual execution enablement 이후 smoke 업데이트 기준
+2. real side-effect rollback drill 여부
 
 ## Notes
 
@@ -88,4 +89,4 @@
 
 ## Next Step
 
-다음 구현은 `LOOP-056 V1.5 reindex live adapter runtime failure taxonomy draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 구현은 `LOOP-057 V1.5 reindex live adapter execution enablement go/no-go review`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.

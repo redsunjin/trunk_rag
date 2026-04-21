@@ -580,6 +580,97 @@ def test_build_reindex_live_success_promotion_contract_maps_sidecar_to_future_su
     }
 
 
+def test_list_reindex_live_failure_contracts_maps_all_taxonomy_codes_to_future_failure_surface():
+    contracts = mutation_executor_service.list_reindex_live_failure_contracts()
+
+    assert [contract["code"] for contract in contracts] == [
+        mutation_executor_service.REINDEX_ERROR_TARGET_MISMATCH,
+        mutation_executor_service.REINDEX_ERROR_AUDIT_LINKAGE_INVALID,
+        mutation_executor_service.REINDEX_ERROR_RUNTIME_EXECUTION_FAILED,
+        mutation_executor_service.REINDEX_ERROR_ROLLBACK_HINT_UNAVAILABLE,
+    ]
+    assert [contract["stage"] for contract in contracts] == [
+        "contract_validation",
+        "audit_linkage",
+        "executor_runtime",
+        "post_execution",
+    ]
+    assert [contract["retryable"] for contract in contracts] == [
+        False,
+        False,
+        True,
+        True,
+    ]
+    for contract in contracts:
+        assert contract["schema_version"] == mutation_executor_service.REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION
+        assert contract["tool_name"] == "reindex"
+        assert contract["current_surface"] == {
+            "kind": "draft_only_not_runtime_reachable",
+            "top_level_ok": False,
+            "top_level_error_code": tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED,
+            "blocked_by": "mutation_apply_guard",
+        }
+        assert contract["future_failure_surface"] == {
+            "kind": "top_level_apply_failure",
+            "top_level_ok": False,
+            "error_location": "error",
+            "error_schema_version": mutation_executor_service.REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION,
+            "retained_contracts": [
+                "mutation_executor",
+                "mutation_failure_taxonomy",
+            ],
+        }
+        assert contract["default_behavior"] == "not_emitted_until_actual_live_adapter_execution"
+
+
+def test_build_reindex_live_failure_contract_preserves_case_details_and_rejects_unknown_code():
+    contract = mutation_executor_service.build_reindex_live_failure_contract(
+        mutation_executor_service.REINDEX_ERROR_TARGET_MISMATCH,
+        details={
+            "payload_collection": "all",
+            "preview_collection": "fr",
+        },
+    )
+
+    assert contract is not None
+    assert contract["code"] == mutation_executor_service.REINDEX_ERROR_TARGET_MISMATCH
+    assert contract["stage"] == "contract_validation"
+    assert contract["trigger"] == "payload_apply_preview_target_mismatch"
+    assert contract["details"] == {
+        "payload_collection": "all",
+        "preview_collection": "fr",
+    }
+    assert mutation_executor_service.build_reindex_live_failure_contract("UNKNOWN_CODE") is None
+
+
+def test_reindex_boundary_failure_taxonomy_matches_failure_contract_order(monkeypatch):
+    monkeypatch.setenv(mutation_executor_service.MUTATION_EXECUTION_ENV_KEY, "1")
+
+    result = mutation_executor_service.execute_mutation_request(
+        _sample_request(
+            "reindex",
+            audit_sink_receipt={
+                "sink_type": "local_file_append_only",
+                "sequence_id": 11,
+                "storage_path": "/tmp/mutation-audit/audit-20260418.jsonl",
+            },
+        )
+    )
+
+    failure_taxonomy = result["executor"]["boundary"]["live_adapter_outline"]["failure_taxonomy"]
+    assert failure_taxonomy == {
+        "schema_version": mutation_executor_service.REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION,
+        "codes": [
+            {
+                "code": contract["code"],
+                "stage": contract["stage"],
+                "retryable": contract["retryable"],
+            }
+            for contract in mutation_executor_service.list_reindex_live_failure_contracts()
+        ],
+    }
+
+
 def test_execute_mutation_request_falls_back_to_candidate_stub_when_executor_binding_is_invalid(monkeypatch):
     monkeypatch.setenv(mutation_executor_service.MUTATION_EXECUTION_ENV_KEY, "1")
 

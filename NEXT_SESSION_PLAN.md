@@ -51,6 +51,7 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_CONCRETE_EXECUTOR_SKELETON_DRAFT_2026-04-21.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_CONCRETE_SMOKE_EVIDENCE_DRAFT_2026-04-21.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_DRAFT_2026-04-21.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_FAILURE_TAXONOMY_DRAFT_2026-04-21.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -58,8 +59,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-056`
-- current_active_title: `V1.5 reindex live adapter runtime failure taxonomy draft`
+- current_active_id: `LOOP-057`
+- current_active_title: `V1.5 reindex live adapter execution enablement go/no-go review`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1379,7 +1380,7 @@ closeout 메모 (2026-04-20):
 - 1차 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` -> `46 passed in 0.17s`.
 - 최종 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` -> `50 passed in 0.10s`; `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`; `git diff --check` -> pass.
 
-### A-Next49. V1.5 reindex live adapter runtime failure taxonomy draft (현재 active)
+### A-Next49. V1.5 reindex live adapter runtime failure taxonomy draft (완료: 2026-04-21)
 1. adapter-specific runtime failure taxonomy deep cases를 테스트 seam으로 정리한다.
 2. `REINDEX_TARGET_MISMATCH`, `REINDEX_AUDIT_LINKAGE_INVALID`, `REINDEX_RUNTIME_EXECUTION_FAILED`, `REINDEX_ROLLBACK_HINT_UNAVAILABLE`의 발생 단계와 future failure surface mapping을 고정한다.
 3. default blocked path와 success promotion contract는 계속 회귀 없이 유지한다.
@@ -1391,6 +1392,27 @@ closeout 메모 (2026-04-20):
 
 검증:
 - `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-21 closeout):
+- `services/mutation_executor_service.py`에 `REINDEX_ERROR_*` constants, ordered taxonomy metadata, `build_reindex_live_failure_contract()`, `list_reindex_live_failure_contracts()`를 추가했다.
+- `boundary.live_adapter_outline.failure_taxonomy`는 같은 ordered metadata helper를 사용한다.
+- current surface는 계속 `draft_only_not_runtime_reachable` / `MUTATION_APPLY_NOT_ENABLED` / `mutation_apply_guard`로 남기고, future failure surface는 top-level `error`로 승격하는 mapping을 고정했다.
+- 기준 문서는 `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_FAILURE_TAXONOMY_DRAFT_2026-04-21.md`다.
+- 1차 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py` -> `14 passed in 0.07s`.
+- 최종 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` -> `53 passed in 0.10s`; `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`; `git diff --check` -> pass.
+
+### A-Next50. V1.5 reindex live adapter execution enablement go/no-go review (현재 active)
+1. actual execution enablement를 바로 열지 않고 go/no-go 조건을 재검토한다.
+2. `mutation_apply_guard_execution_enabled`, operator activation, durable audit, explicit binding, success/failure contract 준비도를 함께 평가한다.
+3. blocker가 있으면 재개 조건과 후속 loop를 문서화한다.
+
+완료 기준:
+- actual execution enablement 가능 여부가 go/no-go로 판정된다.
+- local-only opt-in 범위와 default/public surface 비개방 조건이 유지된다.
+- blocker가 있으면 재개 조건이 명확하다.
+
+검증:
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
