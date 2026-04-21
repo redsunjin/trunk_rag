@@ -14,6 +14,7 @@ REINDEX_LIVE_ADAPTER_INJECTION_PROTOCOL_SCHEMA_VERSION = "v1.5.reindex_live_adap
 REINDEX_LIVE_ADAPTER_SMOKE_HARNESS_SCHEMA_VERSION = "v1.5.reindex_live_adapter_smoke_harness.v1"
 REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_SCHEMA_VERSION = "v1.5.reindex_live_adapter_success_promotion.v1"
 REINDEX_LIVE_ADAPTER_PRE_EXECUTION_HANDOFF_SCHEMA_VERSION = "v1.5.reindex_live_adapter_pre_execution_handoff.v1"
+REINDEX_LIVE_ADAPTER_FAKE_SMOKE_SCHEMA_VERSION = "v1.5.reindex_live_adapter_fake_executor_smoke.v1"
 MUTATION_EXECUTION_ENV_KEY = "DOC_RAG_AGENT_MUTATION_EXECUTION"
 REINDEX_MUTATION_EXECUTOR_NAME = "reindex_mutation_adapter_stub"
 REINDEX_LIVE_ADAPTER_EXECUTOR_NAME = "reindex_mutation_adapter_live"
@@ -21,6 +22,8 @@ REINDEX_LIVE_ADAPTER_BINDING_KIND = "explicit_live_adapter"
 REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD = "binding_stage"
 REINDEX_LIVE_ADAPTER_BINDING_STAGE_SELECTION_STUB = "selection_stub"
 REINDEX_LIVE_ADAPTER_BINDING_STAGE_CONCRETE_SKELETON = "concrete_executor_skeleton"
+REINDEX_FAKE_EXECUTOR_SMOKE_SUCCESS_SELECTION_STATE = "fake_executor_smoke_success"
+REINDEX_FAKE_EXECUTOR_SMOKE_FAILURE_SELECTION_STATE = "fake_executor_smoke_failure"
 NOOP_MUTATION_EXECUTOR_NAME = "noop_mutation_executor"
 REINDEX_FIRST_LIVE_SCOPE = "reindex"
 LOCAL_FILE_APPEND_ONLY_SINK_TYPE = "local_file_append_only"
@@ -551,10 +554,14 @@ def build_reindex_live_success_promotion_contract(
 ) -> dict[str, object] | None:
     executor = _safe_dict(executor_contract)
     result = _safe_dict(executor_result)
+    selection_state = _normalize_optional_text(executor.get("selection_state"))
     if (
         executor.get("tool_name") != REINDEX_FIRST_LIVE_SCOPE
         or executor.get("executor_name") != REINDEX_LIVE_ADAPTER_EXECUTOR_NAME
-        or executor.get("selection_state") != "live_result_skeleton"
+        or selection_state not in {
+            "live_result_skeleton",
+            REINDEX_FAKE_EXECUTOR_SMOKE_SUCCESS_SELECTION_STATE,
+        }
         or result.get("schema_version") != REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION
     ):
         return None
@@ -566,7 +573,7 @@ def build_reindex_live_success_promotion_contract(
         "schema_version": REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_SCHEMA_VERSION,
         "tool_name": REINDEX_FIRST_LIVE_SCOPE,
         "promotion_state": "draft_ready_not_enabled",
-        "selection_state": executor.get("selection_state"),
+        "selection_state": selection_state,
         "selection_reason": executor.get("selection_reason"),
         "current_surface": {
             "kind": "blocked_success_sidecar",
@@ -599,7 +606,7 @@ def build_reindex_live_success_promotion_contract(
             "requires": [
                 "mutation_apply_guard_execution_enabled",
                 "executor_result_ok",
-                "live_result_skeleton",
+                selection_state,
                 "durable_audit_ready",
                 "explicit_live_adapter_binding",
             ],
@@ -720,6 +727,107 @@ def build_reindex_pre_execution_handoff_contract() -> dict[str, object]:
             "explicit_live_adapter_binding_validated_before_side_effect",
             "top_level_promotion_router_implemented",
             "fake_executor_smoke_added",
+        ],
+    }
+
+
+def build_reindex_fake_executor_smoke_contract() -> dict[str, object]:
+    pre_execution_handoff = build_reindex_pre_execution_handoff_contract()
+    side_effect_barrier = _safe_dict(pre_execution_handoff.get("side_effect_barrier"))
+    success_executor_contract = {
+        "tool_name": REINDEX_FIRST_LIVE_SCOPE,
+        "executor_name": REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+        "selection_state": REINDEX_FAKE_EXECUTOR_SMOKE_SUCCESS_SELECTION_STATE,
+        "selection_reason": "sandboxed_success_path",
+    }
+    success_executor_result = {
+        "schema_version": REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION,
+        "reindex_summary": {
+            "collection_key": "all",
+            "operation": "rebuild_vector_index",
+            "source_basis": "source_documents_snapshot",
+            "requested_reset": True,
+            "requested_compatibility_bundle": False,
+        },
+        "audit_receipt_ref": {
+            "source": "append_only_receipt",
+            "sequence_id": 1,
+            "storage_path": "sandbox://mutation-audit/reindex-fake-smoke.jsonl",
+        },
+        "rollback_hint": {
+            "mode": "rebuild_from_source_documents",
+            "operator_action_required": True,
+            "collection_key": "all",
+        },
+    }
+    success_promotion = build_reindex_live_success_promotion_contract(
+        executor_contract=success_executor_contract,
+        executor_result=success_executor_result,
+    )
+    failure_contract = build_reindex_live_failure_contract(
+        REINDEX_ERROR_RUNTIME_EXECUTION_FAILED,
+        details={
+            "smoke_mode": "sandboxed_no_side_effect",
+            "simulated": True,
+            "calls_index_service_reindex": False,
+        },
+    )
+    return {
+        "schema_version": REINDEX_LIVE_ADAPTER_FAKE_SMOKE_SCHEMA_VERSION,
+        "tool_name": REINDEX_FIRST_LIVE_SCOPE,
+        "smoke_state": "draft_ready_not_enabled",
+        "surface_scope": "internal_service_only",
+        "side_effect_policy": {
+            "actual_reindex_side_effect_allowed": False,
+            "calls_index_service_reindex": False,
+            "sandboxed_executor_only": True,
+            "public_surface_allowed": False,
+        },
+        "pre_execution_handoff": {
+            "schema_version": pre_execution_handoff.get("schema_version"),
+            "required_pre_execution_order": pre_execution_handoff.get("required_pre_execution_order"),
+            "router_required_before_side_effect": side_effect_barrier.get("router_required_before_side_effect"),
+        },
+        "fake_executor_modes": {
+            "success": {
+                "selection_state": REINDEX_FAKE_EXECUTOR_SMOKE_SUCCESS_SELECTION_STATE,
+                "executor_name": REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+                "result_schema_version": REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION,
+                "promotion_schema_version": REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_SCHEMA_VERSION,
+                "top_level_surface": "blocked_success_sidecar",
+            },
+            "failure": {
+                "selection_state": REINDEX_FAKE_EXECUTOR_SMOKE_FAILURE_SELECTION_STATE,
+                "executor_name": REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+                "error_schema_version": REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION,
+                "failure_codes": list(REINDEX_LIVE_ADAPTER_FAILURE_ORDER),
+                "future_surface": "top_level_apply_failure",
+            },
+        },
+        "success_evidence": {
+            "executor_contract": success_executor_contract,
+            "executor_result": success_executor_result,
+            "mutation_success_promotion": success_promotion,
+        },
+        "failure_evidence": {
+            "mutation_failure_contract": failure_contract,
+        },
+        "smoke_summary_contract": {
+            "success_required_summary_fields": [
+                "mutation_executor",
+                "mutation_executor_result",
+                "mutation_success_promotion",
+            ],
+            "failure_required_summary_fields": [
+                "mutation_executor",
+                "mutation_failure_contract",
+            ],
+            "default_smoke_must_remain_blocked": True,
+        },
+        "blocked_until": [
+            "fake_executor_success_smoke_command_added",
+            "fake_executor_failure_smoke_command_added",
+            "top_level_success_failure_promotion_router_implemented",
         ],
     }
 

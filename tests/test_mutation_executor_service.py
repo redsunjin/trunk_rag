@@ -736,6 +736,92 @@ def test_build_reindex_pre_execution_handoff_contract_keeps_side_effect_blocked_
     }
 
 
+def test_build_reindex_fake_executor_smoke_contract_links_handoff_success_and_failure_surfaces():
+    contract = mutation_executor_service.build_reindex_fake_executor_smoke_contract()
+
+    assert contract["schema_version"] == mutation_executor_service.REINDEX_LIVE_ADAPTER_FAKE_SMOKE_SCHEMA_VERSION
+    assert contract["tool_name"] == "reindex"
+    assert contract["smoke_state"] == "draft_ready_not_enabled"
+    assert contract["side_effect_policy"] == {
+        "actual_reindex_side_effect_allowed": False,
+        "calls_index_service_reindex": False,
+        "sandboxed_executor_only": True,
+        "public_surface_allowed": False,
+    }
+    assert contract["pre_execution_handoff"] == {
+        "schema_version": mutation_executor_service.REINDEX_LIVE_ADAPTER_PRE_EXECUTION_HANDOFF_SCHEMA_VERSION,
+        "required_pre_execution_order": [
+            "validate_apply_envelope",
+            "build_persisted_audit_record",
+            "append_durable_audit_receipt",
+            "build_mutation_execution_request",
+            "resolve_mutation_executor",
+            "execute_mutation_executor",
+            "promote_executor_result_or_error",
+        ],
+        "router_required_before_side_effect": "mutation_executor_service.execute_mutation_request",
+    }
+
+    success = contract["success_evidence"]
+    assert success["executor_contract"] == {
+        "tool_name": "reindex",
+        "executor_name": mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+        "selection_state": mutation_executor_service.REINDEX_FAKE_EXECUTOR_SMOKE_SUCCESS_SELECTION_STATE,
+        "selection_reason": "sandboxed_success_path",
+    }
+    assert success["executor_result"]["schema_version"] == mutation_executor_service.REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION
+    assert success["executor_result"]["reindex_summary"] == {
+        "collection_key": "all",
+        "operation": "rebuild_vector_index",
+        "source_basis": "source_documents_snapshot",
+        "requested_reset": True,
+        "requested_compatibility_bundle": False,
+    }
+    promotion = success["mutation_success_promotion"]
+    assert promotion["schema_version"] == mutation_executor_service.REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_SCHEMA_VERSION
+    assert promotion["selection_state"] == mutation_executor_service.REINDEX_FAKE_EXECUTOR_SMOKE_SUCCESS_SELECTION_STATE
+    assert promotion["current_surface"]["kind"] == "blocked_success_sidecar"
+    assert promotion["future_success_surface"]["kind"] == "top_level_apply_success"
+    assert promotion["promotion_gate"]["actual_side_effect_enabled"] is False
+    assert (
+        mutation_executor_service.REINDEX_FAKE_EXECUTOR_SMOKE_SUCCESS_SELECTION_STATE
+        in promotion["promotion_gate"]["requires"]
+    )
+
+    failure = contract["failure_evidence"]["mutation_failure_contract"]
+    assert failure["schema_version"] == mutation_executor_service.REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION
+    assert failure["code"] == mutation_executor_service.REINDEX_ERROR_RUNTIME_EXECUTION_FAILED
+    assert failure["future_failure_surface"]["kind"] == "top_level_apply_failure"
+    assert failure["details"] == {
+        "smoke_mode": "sandboxed_no_side_effect",
+        "simulated": True,
+        "calls_index_service_reindex": False,
+    }
+    assert contract["fake_executor_modes"]["failure"]["failure_codes"] == [
+        mutation_executor_service.REINDEX_ERROR_TARGET_MISMATCH,
+        mutation_executor_service.REINDEX_ERROR_AUDIT_LINKAGE_INVALID,
+        mutation_executor_service.REINDEX_ERROR_RUNTIME_EXECUTION_FAILED,
+        mutation_executor_service.REINDEX_ERROR_ROLLBACK_HINT_UNAVAILABLE,
+    ]
+    assert contract["smoke_summary_contract"] == {
+        "success_required_summary_fields": [
+            "mutation_executor",
+            "mutation_executor_result",
+            "mutation_success_promotion",
+        ],
+        "failure_required_summary_fields": [
+            "mutation_executor",
+            "mutation_failure_contract",
+        ],
+        "default_smoke_must_remain_blocked": True,
+    }
+    assert contract["blocked_until"] == [
+        "fake_executor_success_smoke_command_added",
+        "fake_executor_failure_smoke_command_added",
+        "top_level_success_failure_promotion_router_implemented",
+    ]
+
+
 def test_execute_mutation_request_falls_back_to_candidate_stub_when_executor_binding_is_invalid(monkeypatch):
     monkeypatch.setenv(mutation_executor_service.MUTATION_EXECUTION_ENV_KEY, "1")
 
