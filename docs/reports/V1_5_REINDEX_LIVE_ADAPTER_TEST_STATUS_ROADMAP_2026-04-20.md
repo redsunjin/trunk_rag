@@ -78,6 +78,9 @@
 27. post-audit enablement checkpoint review
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_AUDIT_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
    - 핵심: post-audit readiness `Go`, default/public top-level promotion `No-Go`, explicit local-only guarded promotion gate implementation planning `Go`
+28. guarded top-level promotion gate draft
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_TOP_LEVEL_PROMOTION_GATE_DRAFT_2026-04-22.md`
+   - 핵심: extra opt-in이 있는 explicit local-only guarded path만 linked post-executor audit receipt를 조건으로 top-level success/failure 승격
 
 ### Verified Repeatedly
 
@@ -87,7 +90,7 @@
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 - `git diff --check`
 
-최근 루프들(`LOOP-045` ~ `LOOP-071`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐다. 최신 `LOOP-071` closeout 기준 post-executor audit target은 `31 passed`이고, guarded smoke는 pre-executor audit sequence `24`, post-executor audit sequence `25`, `runtime_chunks=37`, `runtime_vectors=37` evidence를 남겼다.
+최근 루프들(`LOOP-045` ~ `LOOP-073`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐다. 최신 `LOOP-073` closeout 기준 promotion target은 `64 passed`이고, guarded top-level promotion smoke는 pre-executor audit sequence `6`, post-executor audit sequence `7`, top-level apply `ok=true`, `runtime_chunks=37`, `runtime_vectors=37` evidence를 남겼다.
 
 ## Test Matrix
 
@@ -112,9 +115,9 @@
 
 ### Future Paths
 
-1. guarded top-level promotion gate draft
-   - 기대: extra opt-in이 있을 때만 explicit local-only guarded path의 success/failure top-level promotion을 열고 default/public blocked behavior 유지
-   - 상태: next implementation
+1. post-promotion enablement checkpoint review
+   - 기대: extra opt-in local-only promotion을 유지할지, operator runbook 보강이 필요한지, broader/public gate를 계속 닫을지 재판정
+   - 상태: next checkpoint
 
 ## Recommended Testing Order
 
@@ -142,13 +145,14 @@
 20. post-executor audit evidence draft 검증
 21. post-audit enablement checkpoint review
 22. guarded top-level promotion gate draft 검증
+23. post-promotion enablement checkpoint review
 
 ## Open Testing Gaps
 
 아직 남아 있는 테스트 갭:
 
-1. guarded top-level promotion extra opt-in command/smoke surface
-2. actual top-level apply success/failure enablement 이후 smoke 업데이트 기준
+1. post-promotion operator runbook 보강 필요 여부
+2. broader/public top-level apply success/failure enablement 기준
 3. real side-effect rollback drill 여부
 
 ## Notes
@@ -158,4 +162,4 @@
 
 ## Next Step
 
-다음 작업은 `LOOP-073 V1.5 reindex live adapter guarded top-level promotion gate draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 작업은 `LOOP-074 V1.5 reindex live adapter post-promotion enablement checkpoint review`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.

@@ -16,6 +16,7 @@ from services import agent_runtime_service, mutation_executor_service
 MUTATION_ACTIVATION_SMOKE_SCHEMA_VERSION = "v1.5.mutation_activation_smoke.v1"
 MUTATION_ACTIVATION_SMOKE_LIVE_BINDING_ENV_KEY = "DOC_RAG_MUTATION_SMOKE_LIVE_BINDING"
 MUTATION_ACTIVATION_SMOKE_LIVE_BINDING_STAGE_ENV_KEY = "DOC_RAG_MUTATION_SMOKE_LIVE_BINDING_STAGE"
+MUTATION_ACTIVATION_SMOKE_TOP_LEVEL_PROMOTION_ENV_KEY = "DOC_RAG_MUTATION_SMOKE_TOP_LEVEL_PROMOTION"
 MUTATION_ACTIVATION_SMOKE_LIVE_BINDING_SOURCE = "smoke_harness"
 
 
@@ -255,7 +256,29 @@ def _summarize_result(result: dict[str, object]) -> dict[str, object]:
 def _apply_not_enabled_stage_evidence_ok(
     summary: dict[str, object],
     live_binding_stage: str | None,
+    top_level_promotion: bool = False,
 ) -> bool:
+    if top_level_promotion:
+        if live_binding_stage != mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_GUARDED_LIVE_EXECUTOR:
+            return False
+        mutation_executor = _safe_dict(summary.get("mutation_executor"))
+        mutation_executor_result = _safe_dict(summary.get("mutation_executor_result"))
+        mutation_executor_audit_receipt = _safe_dict(summary.get("mutation_executor_audit_receipt"))
+        promotion_router = _safe_dict(summary.get("mutation_top_level_promotion_router"))
+        return (
+            summary.get("ok") is True
+            and summary.get("error_code") is None
+            and mutation_executor.get("selection_state") == "guarded_live_executor"
+            and mutation_executor.get("actual_runtime_handler") == "index_service.reindex"
+            and mutation_executor.get("actual_runtime_handler_invoked") is True
+            and mutation_executor_result.get("runtime_chunks") is not None
+            and mutation_executor_result.get("runtime_vectors") is not None
+            and mutation_executor_audit_receipt.get("record_kind") == "mutation_executor_post_execution"
+            and promotion_router.get("success_eligible") is True
+            and promotion_router.get("top_level_promotion_enabled") is True
+        )
+    if summary.get("ok") is not False or summary.get("error_code") != "MUTATION_APPLY_NOT_ENABLED":
+        return False
     if live_binding_stage == mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_GUARDED_LIVE_EXECUTOR:
         mutation_executor = _safe_dict(summary.get("mutation_executor"))
         mutation_executor_result = _safe_dict(summary.get("mutation_executor_result"))
@@ -292,7 +315,11 @@ def _resolve_live_binding_stage(
     return normalized_stage or None
 
 
-def _build_live_binding(opt_in_live_binding: bool, live_binding_stage: str | None) -> dict[str, object] | None:
+def _build_live_binding(
+    opt_in_live_binding: bool,
+    live_binding_stage: str | None,
+    opt_in_top_level_promotion: bool = False,
+) -> dict[str, object] | None:
     if not opt_in_live_binding:
         return None
     binding = {
@@ -302,6 +329,8 @@ def _build_live_binding(opt_in_live_binding: bool, live_binding_stage: str | Non
     }
     if live_binding_stage:
         binding[mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD] = live_binding_stage
+    if opt_in_top_level_promotion:
+        binding[mutation_executor_service.REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_BINDING_FIELD] = True
     return binding
 
 
@@ -310,6 +339,7 @@ def run_smoke(
     opt_in_live_binding: bool | None = None,
     opt_in_live_binding_stage_concrete: bool = False,
     opt_in_live_binding_stage_guarded: bool = False,
+    opt_in_top_level_promotion: bool | None = None,
 ) -> dict[str, object]:
     load_project_env()
     resolved_opt_in_live_binding = (
@@ -317,11 +347,20 @@ def run_smoke(
         if opt_in_live_binding is None
         else bool(opt_in_live_binding)
     )
+    resolved_opt_in_top_level_promotion = (
+        _parse_bool_env(os.getenv(MUTATION_ACTIVATION_SMOKE_TOP_LEVEL_PROMOTION_ENV_KEY))
+        if opt_in_top_level_promotion is None
+        else bool(opt_in_top_level_promotion)
+    )
     resolved_live_binding_stage = _resolve_live_binding_stage(
         opt_in_live_binding_stage_concrete,
         opt_in_live_binding_stage_guarded,
     )
-    executor_binding = _build_live_binding(resolved_opt_in_live_binding, resolved_live_binding_stage)
+    executor_binding = _build_live_binding(
+        resolved_opt_in_live_binding,
+        resolved_live_binding_stage,
+        resolved_opt_in_top_level_promotion,
+    )
     reindex_apply_payload: dict[str, object] = {"collection": "all"}
     if (
         resolved_live_binding_stage
@@ -427,13 +466,10 @@ def run_smoke(
         },
         {
             "name": "write_tool_apply_not_enabled",
-            "ok": (
-                apply_not_enabled_result.get("ok") is False
-                and _error_code(apply_not_enabled_result) == "MUTATION_APPLY_NOT_ENABLED"
-                and _apply_not_enabled_stage_evidence_ok(
-                    apply_not_enabled_summary,
-                    resolved_live_binding_stage,
-                )
+            "ok": _apply_not_enabled_stage_evidence_ok(
+                apply_not_enabled_summary,
+                resolved_live_binding_stage,
+                resolved_opt_in_top_level_promotion,
             ),
             "summary": apply_not_enabled_summary,
         },
@@ -442,6 +478,7 @@ def run_smoke(
         "schema_version": MUTATION_ACTIVATION_SMOKE_SCHEMA_VERSION,
         "requested_live_binding": resolved_opt_in_live_binding,
         "requested_live_binding_stage": resolved_live_binding_stage,
+        "requested_top_level_promotion": resolved_opt_in_top_level_promotion,
         "ok": all(check["ok"] for check in checks),
         "checks": checks,
     }
@@ -452,11 +489,13 @@ def main() -> int:
     opt_in_live_binding = True if "--opt-in-live-binding" in args else None
     opt_in_live_binding_stage_concrete = "--opt-in-live-binding-stage-concrete" in sys.argv[1:]
     opt_in_live_binding_stage_guarded = "--opt-in-live-binding-stage-guarded" in sys.argv[1:]
+    opt_in_top_level_promotion = True if "--opt-in-top-level-promotion" in args else None
     try:
         result = run_smoke(
             opt_in_live_binding=opt_in_live_binding,
             opt_in_live_binding_stage_concrete=opt_in_live_binding_stage_concrete,
             opt_in_live_binding_stage_guarded=opt_in_live_binding_stage_guarded,
+            opt_in_top_level_promotion=opt_in_top_level_promotion,
         )
     except ValueError as exc:
         print(str(exc), file=sys.stderr)

@@ -884,6 +884,86 @@ def test_agent_entry_exposes_live_result_skeleton_sidecar_when_binding_stage_req
     assert result["execution_trace"]["contracts"]["mutation_top_level_promotion_router"] == promotion_router
 
 
+def test_agent_entry_promotes_guarded_top_level_success_when_explicitly_opted_in(
+    monkeypatch,
+    tmp_path,
+):
+    def fake_reindex(*, reset, collection_key, include_compatibility_bundle):
+        return {
+            "chunks": 12,
+            "vectors": 34,
+            "collection": "doc_rag_main",
+            "collection_key": collection_key,
+            "related_collection_keys": ["all"],
+            "reindex_scope": "default_runtime_only",
+        }
+
+    monkeypatch.setattr(
+        agent_runtime_service.tool_middleware_service.runtime_service,
+        "verify_admin_code",
+        lambda code: None,
+    )
+    monkeypatch.setattr(
+        agent_runtime_service.tool_middleware_service.mutation_executor_service.index_service,
+        "reindex",
+        fake_reindex,
+    )
+    monkeypatch.setenv(mutation_executor_service.MUTATION_EXECUTION_ENV_KEY, "1")
+    monkeypatch.setenv(tool_audit_sink_service.AUDIT_SINK_BACKEND_ENV_KEY, "local_file")
+    monkeypatch.setenv(
+        tool_audit_sink_service.AUDIT_SINK_DIR_ENV_KEY,
+        str(tmp_path / "mutation_audit"),
+    )
+
+    preview_result = agent_runtime_service.run_agent_entry(
+        agent_runtime_service.AgentRuntimeRequest(
+            input="Reindex the core collection.",
+            tool_name="reindex",
+            tool_payload={"collection": "all"},
+            actor="maintenance",
+            admin_code="admin1234",
+            mutation_intent="reindex all",
+            allow_mutation=True,
+            request_id="maintenance-preview-promote-1",
+        )
+    )
+
+    result = agent_runtime_service.run_agent_entry(
+        agent_runtime_service.AgentRuntimeRequest(
+            input="Apply the confirmed reindex plan.",
+            tool_name="reindex",
+            tool_payload={"collection": "all"},
+            actor="maintenance",
+            admin_code="admin1234",
+            mutation_intent="reindex all",
+            apply_envelope=preview_result["error"]["apply_envelope"],
+            executor_binding={
+                "binding_kind": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_KIND,
+                "binding_source": "test_harness",
+                "executor_name": mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+                mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD: (
+                    mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_GUARDED_LIVE_EXECUTOR
+                ),
+                mutation_executor_service.REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_BINDING_FIELD: True,
+            },
+            allow_mutation=True,
+            request_id="maintenance-apply-promote-1",
+        )
+    )
+
+    assert result["ok"] is True
+    assert result["error"] is None
+    assert result["tool_call"]["ok"] is True
+    assert result["tool_call"]["result"]["reindex_summary"]["runtime_chunks"] == 12
+    contracts = result["execution_trace"]["contracts"]
+    assert contracts["mutation_executor_audit_receipt"]["record_kind"] == "mutation_executor_post_execution"
+    promotion_router = contracts["mutation_top_level_promotion_router"]
+    assert promotion_router["router_state"] == "enabled_explicit_local_only"
+    assert promotion_router["enabled_route"] == "success"
+    assert promotion_router["promotion_gate"]["top_level_promotion_enabled"] is True
+    assert result["execution_trace"]["outcome"] == {"ok": True, "error": None}
+
+
 def test_agent_entry_keeps_upload_review_in_boundary_noop_even_when_activation_and_durable_audit_are_ready(
     monkeypatch,
     tmp_path,

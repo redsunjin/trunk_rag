@@ -623,6 +623,172 @@ def test_smoke_agent_runtime_opt_in_live_binding_guarded_stage_injects_executor_
     }
 
 
+def test_smoke_agent_runtime_top_level_promotion_opt_in_injects_binding_and_accepts_success(monkeypatch):
+    calls = []
+
+    def fake_run_agent_entry(request):
+        calls.append(request)
+        if request.tool_name == "health_check":
+            return {
+                "ok": True,
+                "entry": {"selected_tool": "health_check"},
+                "error": None,
+                "execution_trace": {
+                    "request_id": request.request_id,
+                    "middleware": {"blocked_by": None},
+                    "contracts": {},
+                },
+            }
+        if request.request_id == "agent-smoke-preview":
+            return {
+                "ok": False,
+                "entry": {"selected_tool": "reindex"},
+                "error": {
+                    "code": "PREVIEW_REQUIRED",
+                    "apply_envelope": {
+                        "schema_version": "v1.5.mutation_apply_envelope.v1",
+                        "preview_ref": {
+                            "tool_name": "reindex",
+                            "target": {"collection_key": "all"},
+                        },
+                        "audit_ref": {
+                            "sink_type": "local_file_append_only",
+                            "sequence_id": 20,
+                        },
+                        "apply_control": {
+                            "execution_enabled": False,
+                        },
+                    },
+                },
+                "execution_trace": {
+                    "request_id": request.request_id,
+                    "middleware": {"blocked_by": "mutation_policy_guard"},
+                    "contracts": {},
+                },
+            }
+        if request.request_id != "agent-smoke-apply":
+            error_codes = {
+                "agent-smoke-write-read-only": "TOOL_NOT_ALLOWED",
+                "agent-smoke-auth": "ADMIN_AUTH_REQUIRED",
+                "agent-smoke-intent": "MUTATION_INTENT_REQUIRED",
+            }
+            error_code = error_codes[request.request_id]
+            return {
+                "ok": False,
+                "entry": {"selected_tool": "reindex"},
+                "error": {"code": error_code},
+                "execution_trace": {
+                    "request_id": request.request_id,
+                    "middleware": {
+                        "blocked_by": "tool_allowlist"
+                        if error_code == "TOOL_NOT_ALLOWED"
+                        else "mutation_policy_guard"
+                    },
+                    "contracts": {},
+                },
+            }
+
+        mutation_executor = {
+            "executor_name": "reindex_mutation_adapter_live",
+            "selection_state": "guarded_live_executor",
+            "selection_reason": "explicit_guarded_live_executor_requested",
+            "activation_requested": True,
+            "execution_enabled": True,
+            "actual_runtime_handler": "index_service.reindex",
+            "actual_runtime_handler_invoked": True,
+        }
+        mutation_executor_result = {
+            "schema_version": "v1.5.reindex_live_adapter_result.v1",
+            "reindex_summary": {
+                "collection_key": "all",
+                "operation": "rebuild_vector_index",
+                "requested_reset": True,
+                "requested_compatibility_bundle": False,
+                "runtime_chunks": 12,
+                "runtime_vectors": 34,
+            },
+            "audit_receipt_ref": {
+                "sequence_id": 20,
+                "storage_path": "/tmp/mutation-audit/audit-20260422.jsonl",
+            },
+            "rollback_hint": {
+                "mode": "rebuild_from_source_documents",
+                "collection_key": "all",
+            },
+        }
+        mutation_executor_audit_receipt = {
+            "record_kind": "mutation_executor_post_execution",
+            "record_schema_version": "v1.5.mutation_executor_post_execution_audit.v1",
+            "sink_type": "local_file_append_only",
+            "sequence_id": 21,
+            "storage_path": "/tmp/mutation-audit/audit-20260422.jsonl",
+            "pre_executor_audit_sequence_id": 20,
+        }
+        mutation_top_level_promotion_router = {
+            "schema_version": "v1.5.reindex_live_adapter_top_level_promotion_router.v1",
+            "router_state": "enabled_explicit_local_only",
+            "success_route": {
+                "eligible": True,
+                "target_result_location": "result",
+                "target_top_level_ok": True,
+            },
+            "failure_route": {
+                "target_error_location": "error",
+                "supported_codes": [],
+            },
+            "promotion_gate": {
+                "top_level_promotion_enabled": True,
+                "actual_side_effect_enabled": True,
+            },
+        }
+        contracts = {
+            "mutation_executor": mutation_executor,
+            "mutation_executor_result": mutation_executor_result,
+            "mutation_executor_audit_receipt": mutation_executor_audit_receipt,
+            "mutation_top_level_promotion_router": mutation_top_level_promotion_router,
+        }
+        return {
+            "ok": True,
+            "entry": {"selected_tool": "reindex"},
+            "result": mutation_executor_result,
+            "error": None,
+            "execution_trace": {
+                "request_id": request.request_id,
+                "middleware": {"blocked_by": "mutation_apply_guard"},
+                "contracts": contracts,
+            },
+        }
+
+    monkeypatch.setattr(smoke_agent_runtime, "load_project_env", lambda: None)
+    monkeypatch.setattr(smoke_agent_runtime.agent_runtime_service, "run_agent_entry", fake_run_agent_entry)
+
+    result = smoke_agent_runtime.run_smoke(
+        opt_in_live_binding=True,
+        opt_in_live_binding_stage_guarded=True,
+        opt_in_top_level_promotion=True,
+    )
+
+    assert result["ok"] is True
+    assert result["requested_top_level_promotion"] is True
+    apply_request = calls[-1]
+    assert apply_request.executor_binding == {
+        "binding_kind": smoke_agent_runtime.mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_KIND,
+        "binding_source": smoke_agent_runtime.MUTATION_ACTIVATION_SMOKE_LIVE_BINDING_SOURCE,
+        "executor_name": smoke_agent_runtime.mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+        smoke_agent_runtime.mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD: (
+            smoke_agent_runtime.mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_GUARDED_LIVE_EXECUTOR
+        ),
+        smoke_agent_runtime.mutation_executor_service.REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_BINDING_FIELD: True,
+    }
+    assert result["checks"][5]["summary"]["ok"] is True
+    assert result["checks"][5]["summary"]["error_code"] is None
+    assert result["checks"][5]["summary"]["mutation_executor_audit_receipt"]["sequence_id"] == 21
+    assert (
+        result["checks"][5]["summary"]["mutation_top_level_promotion_router"]["top_level_promotion_enabled"]
+        is True
+    )
+
+
 def test_guarded_stage_apply_check_requires_runtime_sidecar():
     guarded_stage = (
         smoke_agent_runtime.mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_GUARDED_LIVE_EXECUTOR
@@ -642,6 +808,8 @@ def test_guarded_stage_apply_check_requires_runtime_sidecar():
 
     complete_summary = {
         **incomplete_summary,
+        "ok": False,
+        "error_code": "MUTATION_APPLY_NOT_ENABLED",
         "mutation_executor_result": {
             "runtime_chunks": 12,
             "runtime_vectors": 34,
