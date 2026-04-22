@@ -74,8 +74,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-084`
-- current_active_title: `V1.5 reindex live adapter branch handoff snapshot`
+- current_active_id: `LOOP-085`
+- current_active_title: `V1.5 branch publication decision`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -2020,7 +2020,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_POST_CLOSEOUT_NEXT_TRACK_SELECTION_2026-04-22.md`.
 - 다음 단계는 branch handoff snapshot이다.
 
-### A-Next77. V1.5 reindex live adapter branch handoff snapshot (현재 active)
+### A-Next77. V1.5 reindex live adapter branch handoff snapshot (완료: 2026-04-22)
 1. V1.5 `reindex` live adapter local-only track의 branch handoff snapshot을 작성한다.
 2. commit range, key report index, validation outcome, dirty/untracked 상태, reviewer handoff를 정리한다.
 3. PR 생성/푸시는 별도 지시 전까지 제외한다.
@@ -2035,6 +2035,28 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-083`에서 다음 track은 branch handoff snapshot으로 선택됐다.
+- branch handoff snapshot을 작성했다.
+- branch는 `codex/loop-034-go-no-go-review`, upstream 없음, `main` 대비 `46` commits ahead 상태다.
+- `main...HEAD` diff는 `73 files changed`, `12680 insertions`, `41 deletions`다.
+- untracked `.DS_Store`, `TRUNK_RAG_LINKS.md`는 handoff 범위와 무관한 파일로 기록했다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BRANCH_HANDOFF_SNAPSHOT_2026-04-22.md`.
+- 다음 단계는 branch publication decision이다.
+
+### A-Next78. V1.5 branch publication decision (현재 active)
+1. local-only handoff branch를 remote publication/PR로 넘길지 결정한다.
+2. push/PR 여부, PR 초안 필요성, publish 전 추가 검증 여부를 정한다.
+3. 사용자 확인 없이 GitHub push/PR은 수행하지 않는다.
+
+완료 기준:
+- branch publication 여부가 명확히 정해져야 한다.
+- publish를 진행한다면 별도 지시 또는 승인 후 수행해야 한다.
+- publish하지 않는다면 handoff 상태와 blocker가 유지되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-084`에서 branch handoff snapshot이 작성됐고 remote publication은 별도 결정으로 분리됐다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

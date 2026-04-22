@@ -81,7 +81,8 @@
 - 현재: public promotion blocker register는 product/API contract, authorization, production audit backend, recovery model, concurrency/job lifecycle, upload review boundary, observability/support, regression scope를 default/public blocker로 고정했다
 - 현재: local-only closeout 기준 terminal scope는 `reindex` explicit local-only operator/test surface `Go`, default/public top-level promotion `No-Go`, upload review live execution `No-Go`다
 - 현재: post-closeout next-track selection은 public blocker implementation 대신 branch handoff snapshot을 선택했다
-- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 `reindex` live adapter branch handoff snapshot을 진행하고, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
+- 현재: branch handoff snapshot은 branch `codex/loop-034-go-no-go-review`, `main` 대비 `46` commits ahead, `73 files changed`, latest rollback drill `ok=true` 상태를 기록했다
+- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 branch publication decision을 진행하고, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
 
 비목표(현재 단계):
 - 원본 수집/크롤링

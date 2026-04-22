@@ -158,7 +158,8 @@
 | LOOP-081 | done | V1.5 reindex live adapter public promotion blocker register | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-082 | done | V1.5 reindex live adapter local-only closeout | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-083 | done | V1.5 post-closeout next-track selection | `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-084 | active | V1.5 reindex live adapter branch handoff snapshot | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-084 | done | V1.5 reindex live adapter branch handoff snapshot | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-085 | active | V1.5 branch publication decision | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -2306,7 +2307,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_POST_CLOSEOUT_NEXT_TRACK_SELECTION_2026-04-22.md`.
 - 다음 단계는 branch handoff snapshot이다.
 
-## 현재 Active Loop (LOOP-084)
+## 완료 Loop (LOOP-084)
 
 목표:
 - V1.5 `reindex` live adapter local-only track의 branch handoff snapshot을 작성한다.
@@ -2325,6 +2326,32 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-083`에서 다음 track은 branch handoff snapshot으로 선택됐다.
+- branch handoff snapshot을 작성했다.
+- branch는 `codex/loop-034-go-no-go-review`, upstream 없음, `main` 대비 `46` commits ahead 상태다.
+- `main...HEAD` diff는 `73 files changed`, `12680 insertions`, `41 deletions`다.
+- untracked `.DS_Store`, `TRUNK_RAG_LINKS.md`는 handoff 범위와 무관한 파일로 기록했다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BRANCH_HANDOFF_SNAPSHOT_2026-04-22.md`.
+- 다음 단계는 branch publication decision이다.
+
+## 현재 Active Loop (LOOP-085)
+
+목표:
+- local-only handoff branch를 remote publication/PR로 넘길지 결정한다.
+
+범위:
+- 포함: push/PR 여부, PR 초안 필요성, publish 전 추가 검증 여부 결정
+- 제외: 사용자 확인 없는 GitHub push/PR 생성, public blocker 구현, upload review live execution 구현
+
+완료 기준:
+- branch publication 여부가 명확히 정해져야 한다.
+- publish를 진행한다면 별도 지시 또는 승인 후 수행해야 한다.
+- publish하지 않는다면 handoff 상태와 blocker가 유지되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-084`에서 branch handoff snapshot이 작성됐고 remote publication은 별도 결정으로 분리됐다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
