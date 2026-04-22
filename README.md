@@ -69,7 +69,8 @@
 - 현재: `services/index_service.py`는 source metadata의 list/dict 값을 보존하되 Chroma ingest 직전에는 JSON 문자열로 정규화해 vectorstore metadata 제약을 만족시킨다
 - 현재: guarded executor failure는 `mutation_executor_error` sidecar로 blocked apply response와 `execution_trace.contracts`에 남고, promotion router failure route는 supported reindex error code 기준으로 eligible evidence를 남긴다
 - 현재: guarded executor success/failure 이후 `mutation_executor_post_execution` audit record와 `mutation_executor_audit_receipt` sidecar가 남아 pre-executor audit sequence id와 post-executor outcome을 연결한다
-- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 `reindex` live adapter post-audit enablement checkpoint review를 진행하고, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
+- 현재: post-audit checkpoint 결론은 default/public top-level promotion `No-Go`, explicit local-only guarded top-level promotion gate implementation planning `Go`다
+- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 `reindex` live adapter guarded top-level promotion gate draft를 진행하고, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
 
 비목표(현재 단계):
 - 원본 수집/크롤링

@@ -146,7 +146,8 @@
 | LOOP-069 | done | V1.5 reindex live adapter executor error sidecar draft | `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py tests/test_mutation_executor_service.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-070 | done | V1.5 reindex live adapter post-error-sidecar enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-071 | done | V1.5 reindex live adapter post-executor audit evidence draft | `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_tool_audit_sink_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-072 | active | V1.5 reindex live adapter post-audit enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-072 | done | V1.5 reindex live adapter post-audit enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-073 | active | V1.5 reindex live adapter guarded top-level promotion gate draft | `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py tests/test_mutation_executor_service.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -1986,7 +1987,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_EXECUTOR_AUDIT_EVIDENCE_DRAFT_2026-04-22.md`.
 - 다음 단계는 post-executor durable audit evidence 이후 top-level promotion 가능 여부를 다시 판정하는 checkpoint review다.
 
-## 현재 Active Loop (LOOP-072)
+## 완료 Loop (LOOP-072)
 
 목표:
 - response sidecar와 durable post-executor audit evidence가 모두 확보된 상태에서 top-level apply success/failure promotion gate를 열 수 있는지 재판정한다.
@@ -2005,7 +2006,34 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-071` closeout으로 post-executor durable audit evidence가 확보됐다.
-- 아직 rollback drill은 없고 top-level promotion gate는 닫혀 있다.
+- post-audit readiness는 `Go`다.
+- default/public top-level promotion은 rollback drill 부재와 public scope 때문에 계속 `No-Go`다.
+- explicit local-only guarded top-level promotion gate implementation planning은 `Go`다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_AUDIT_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`.
+- 다음 단계는 추가 opt-in으로 묶은 guarded top-level promotion gate draft다.
+
+## 현재 Active Loop (LOOP-073)
+
+목표:
+- default/public blocked behavior를 유지하면서 explicit local-only guarded path에서만 top-level success/failure promotion gate를 여는 초안을 구현한다.
+
+범위:
+- 포함: 추가 promotion opt-in, success top-level `ok=true` mapping, eligible failure top-level error mapping, post-executor audit receipt requirement, tests/smoke summary update
+- 제외: default/public promotion enablement, upload review live execution, rollback drill 구현, `reindex` 외 tool 확대
+
+완료 기준:
+- 기본 guarded smoke는 extra promotion opt-in 없이는 계속 `MUTATION_APPLY_NOT_ENABLED` blocked surface를 유지해야 한다.
+- extra promotion opt-in이 있을 때 success는 linked post-executor audit receipt와 함께 top-level `ok=true` result로 승격되어야 한다.
+- eligible executor failure는 linked post-executor audit receipt가 있을 때 top-level failure code로 승격될 수 있어야 한다.
+- trace/contracts에는 executor sidecar와 audit receipt evidence가 유지되어야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py tests/test_mutation_executor_service.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-072`에서 post-audit readiness는 `Go`, default/public promotion은 `No-Go`, explicit local-only guarded promotion gate implementation planning은 `Go`로 판정했다.
+- rollback drill은 계속 broader/public gate blocker로 남긴다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

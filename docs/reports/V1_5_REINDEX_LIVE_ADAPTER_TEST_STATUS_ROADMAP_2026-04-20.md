@@ -75,6 +75,9 @@
 26. post-executor audit evidence draft
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_EXECUTOR_AUDIT_EVIDENCE_DRAFT_2026-04-22.md`
    - 핵심: guarded executor success/failure 후 `mutation_executor_post_execution` audit record와 `mutation_executor_audit_receipt` sidecar를 남기고 pre-executor audit sequence id와 연결
+27. post-audit enablement checkpoint review
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_AUDIT_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+   - 핵심: post-audit readiness `Go`, default/public top-level promotion `No-Go`, explicit local-only guarded promotion gate implementation planning `Go`
 
 ### Verified Repeatedly
 
@@ -109,9 +112,9 @@
 
 ### Future Paths
 
-1. post-audit enablement checkpoint review
-   - 기대: success/failure response sidecar와 append-only post-executor audit evidence가 모두 확보된 상태에서 top-level apply success/failure promotion gate readiness 재판정
-   - 상태: next checkpoint
+1. guarded top-level promotion gate draft
+   - 기대: extra opt-in이 있을 때만 explicit local-only guarded path의 success/failure top-level promotion을 열고 default/public blocked behavior 유지
+   - 상태: next implementation
 
 ## Recommended Testing Order
 
@@ -138,12 +141,13 @@
 19. post-error-sidecar enablement checkpoint review
 20. post-executor audit evidence draft 검증
 21. post-audit enablement checkpoint review
+22. guarded top-level promotion gate draft 검증
 
 ## Open Testing Gaps
 
 아직 남아 있는 테스트 갭:
 
-1. post-audit top-level promotion gate open 여부
+1. guarded top-level promotion extra opt-in command/smoke surface
 2. actual top-level apply success/failure enablement 이후 smoke 업데이트 기준
 3. real side-effect rollback drill 여부
 
@@ -154,4 +158,4 @@
 
 ## Next Step
 
-다음 작업은 `LOOP-072 V1.5 reindex live adapter post-audit enablement checkpoint review`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 작업은 `LOOP-073 V1.5 reindex live adapter guarded top-level promotion gate draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
