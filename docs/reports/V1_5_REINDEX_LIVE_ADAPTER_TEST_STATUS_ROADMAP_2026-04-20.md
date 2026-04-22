@@ -105,6 +105,9 @@
 36. public promotion blocker register
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PUBLIC_PROMOTION_BLOCKER_REGISTER_2026-04-22.md`
    - 핵심: product/API contract, authorization, production audit backend, recovery model, concurrency/job lifecycle, upload review boundary, observability/support, regression scope를 default/public blocker로 고정
+37. local-only closeout
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_LOCAL_ONLY_CLOSEOUT_2026-04-22.md`
+   - 핵심: `reindex` explicit local-only operator/test surface `Go`, default/public top-level promotion `No-Go`, upload review live execution `No-Go`를 terminal scope로 고정
 
 ### Verified Repeatedly
 
@@ -116,7 +119,7 @@
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 - `git diff --check`
 
-최근 루프들(`LOOP-045` ~ `LOOP-081`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐다. 최신 `LOOP-081` closeout 기준 default/public top-level promotion blocker register가 문서화됐고, local-only closeout이 다음 단계다.
+최근 루프들(`LOOP-045` ~ `LOOP-082`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐다. 최신 `LOOP-082` closeout 기준 `reindex` explicit local-only operator/test surface는 `Go`이고 default/public top-level promotion과 upload review live execution은 `No-Go`다.
 
 ## Test Matrix
 
@@ -145,9 +148,9 @@
 
 ### Future Paths
 
-1. local-only closeout
-   - 기대: `reindex` live adapter의 terminal scope를 explicit local-only operator/test surface로 정리
-   - 상태: next closeout
+1. post-closeout next-track selection
+   - 기대: merge/PR handoff, public blocker 구현, 다른 MVP/V1 항목 복귀 중 다음 진행 방향 선택
+   - 상태: next decision
 
 ## Recommended Testing Order
 
@@ -184,12 +187,13 @@
 29. post-rollback-drill enablement checkpoint review
 30. public promotion blocker register
 31. local-only closeout
+32. post-closeout next-track selection
 
 ## Open Testing Gaps
 
 아직 남아 있는 테스트 갭:
 
-1. local-only closeout/handoff 정리
+1. post-closeout next-track selection
 2. broader/public top-level apply success/failure enablement 기준
 3. upload review live execution precondition 재검토
 
@@ -200,4 +204,4 @@
 
 ## Next Step
 
-다음 작업은 `LOOP-082 V1.5 reindex live adapter local-only closeout`이다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 작업은 `LOOP-083 V1.5 post-closeout next-track selection`이다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.

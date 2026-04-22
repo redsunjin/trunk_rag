@@ -74,8 +74,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-082`
-- current_active_title: `V1.5 reindex live adapter local-only closeout`
+- current_active_id: `LOOP-083`
+- current_active_title: `V1.5 post-closeout next-track selection`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1979,7 +1979,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PUBLIC_PROMOTION_BLOCKER_REGISTER_2026-04-22.md`.
 - 다음 단계는 local-only live adapter closeout이다.
 
-### A-Next75. V1.5 reindex live adapter local-only closeout (현재 active)
+### A-Next75. V1.5 reindex live adapter local-only closeout (완료: 2026-04-22)
 1. `reindex` live adapter의 현재 terminal scope를 local-only operator/test surface로 closeout한다.
 2. local-only Go 상태, default/public No-Go 상태, upload review No-Go 상태, evidence index를 정리한다.
 3. 다음 loop가 없거나 blocked/future로 명확히 정리되도록 한다.
@@ -1994,6 +1994,27 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-081`에서 public promotion blocker register가 작성됐고 default/public promotion은 계속 No-Go다.
+- local-only closeout 문서를 생성했다.
+- terminal scope는 `reindex` explicit local-only operator/test surface `Go`, extra opt-in local-only top-level promotion `Go`, default/public top-level promotion `No-Go`, upload review live execution `No-Go`로 고정했다.
+- evidence index와 final local rollback drill evidence를 closeout에 정리했다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_LOCAL_ONLY_CLOSEOUT_2026-04-22.md`.
+- 다음 단계는 post-closeout next-track selection이다.
+
+### A-Next76. V1.5 post-closeout next-track selection (현재 active)
+1. V1.5 `reindex` live adapter local-only closeout 이후 다음 track을 선택한다.
+2. merge/PR handoff, public blocker 구현, 다른 MVP/V1 항목 복귀 중 다음 진행 방향을 정한다.
+3. 선택 전 default/public promotion 구현은 열지 않는다.
+
+완료 기준:
+- 다음 track이 하나로 정해져야 한다.
+- 구현이 필요한 경우 새 loop로 분리되어야 한다.
+- public/default promotion이 선택되지 않으면 blocked 상태가 유지되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-082`에서 local-only closeout이 완료됐고 broader public/default behavior는 blocker register에 따라 계속 막혀 있다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
