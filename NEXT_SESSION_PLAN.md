@@ -60,6 +60,7 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PRE_SIDE_EFFECT_EXECUTOR_ROUTER_IMPLEMENTATION_DRAFT_2026-04-22.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_ROUTER_IMPLEMENTATION_DRAFT_2026-04-22.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_FINAL_CHECKPOINT_REVIEW_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_IMPLEMENTATION_DRAFT_2026-04-22.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -67,8 +68,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-065`
-- current_active_title: `V1.5 reindex live adapter guarded live executor implementation draft`
+- current_active_id: `LOOP-066`
+- current_active_title: `V1.5 reindex live adapter guarded live executor smoke command draft`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1592,7 +1593,7 @@ closeout 메모 (2026-04-20):
 - 검증: `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check`.
 - 다음 단계는 actual top-level enablement를 계속 닫은 상태에서 guarded live executor implementation draft를 진행하는 것이다.
 
-### A-Next58. V1.5 reindex live adapter guarded live executor implementation draft (현재 active)
+### A-Next58. V1.5 reindex live adapter guarded live executor implementation draft (완료: 2026-04-22)
 1. actual top-level apply enablement는 계속 닫아 둔 채, explicit local-only binding stage로만 도달 가능한 guarded `reindex` live executor seam을 구현 초안 수준으로 고정한다.
 2. `index_service.reindex()` 호출 seam은 monkeypatch 기반 test proof로만 검증하고 default/public path는 닫아 둔다.
 3. executor result, success promotion, top-level promotion router evidence가 계속 이어지는지 확인한다.
@@ -1609,6 +1610,29 @@ closeout 메모 (2026-04-20):
 진행 메모 (2026-04-22):
 - `LOOP-064` final checkpoint는 actual execution enablement `No-Go`지만 guarded live executor implementation planning은 `Go`로 판정했다.
 - 이번 단계도 default/public side effect는 열지 않는다.
+- `services/mutation_executor_service.py`에 `binding_stage=guarded_live_executor`와 `ReindexGuardedLiveMutationExecutor`를 추가했다.
+- guarded stage에서만 `index_service.reindex()` 호출 seam이 열리고, executor contract에는 `actual_runtime_handler_invoked=true` evidence가 남는다.
+- middleware integration은 direct `_tool_reindex` handler를 계속 우회하며, guarded executor result를 blocked apply sidecar와 promotion router evidence로 남긴다.
+- 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` (`55 passed`), `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check`.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_IMPLEMENTATION_DRAFT_2026-04-22.md`.
+- 다음 단계는 guarded live executor stage를 smoke harness에서 명시적으로 선택하는 command draft다.
+
+### A-Next59. V1.5 reindex live adapter guarded live executor smoke command draft (현재 active)
+1. default smoke와 concrete skeleton smoke는 side effect 없이 유지하면서, guarded live executor stage를 명시적으로 선택하는 smoke command seam을 추가한다.
+2. smoke CLI/env stage selection과 request binding 전달을 fake smoke test로 검증한다.
+3. 실제 guarded command가 explicit local-only opt-in임을 문서에 남긴다.
+
+완료 기준:
+- smoke harness가 `guarded_live_executor` stage를 명시적으로 전달할 수 있어야 한다.
+- 기본 smoke와 concrete skeleton smoke는 기존 side-effect-free behavior를 유지해야 한다.
+- 실제 guarded command는 explicit local-only opt-in임이 문서에 남아야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_smoke_agent_runtime.py tests/test_mutation_executor_service.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-065` closeout으로 guarded executor stage 자체는 구현됐지만 smoke harness는 아직 해당 stage를 명시적으로 선택하는 dedicated flag/summary를 갖지 않는다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

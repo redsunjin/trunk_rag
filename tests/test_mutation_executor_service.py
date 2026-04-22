@@ -105,6 +105,9 @@ def _expected_reindex_boundary() -> dict[str, object]:
                 "binding_stage_field": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD,
                 "default_binding_stage": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_SELECTION_STUB,
                 "concrete_executor_stage": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_CONCRETE_SKELETON,
+                "guarded_live_executor_stage": (
+                    mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_GUARDED_LIVE_EXECUTOR
+                ),
                 "selection_precedence": [
                     "tool_registration_boundary",
                     "activation_guard",
@@ -498,6 +501,78 @@ def test_execute_mutation_request_selects_live_result_skeleton_when_binding_stag
             "operator_action_required": True,
             "collection_key": "all",
         },
+    }
+
+
+def test_execute_mutation_request_selects_guarded_live_executor_when_binding_stage_requests_it(monkeypatch):
+    monkeypatch.setenv(mutation_executor_service.MUTATION_EXECUTION_ENV_KEY, "1")
+    calls = []
+
+    def fake_reindex(*, reset, collection_key, include_compatibility_bundle):
+        calls.append(
+            {
+                "reset": reset,
+                "collection_key": collection_key,
+                "include_compatibility_bundle": include_compatibility_bundle,
+            }
+        )
+        return {
+            "chunks": 12,
+            "vectors": 34,
+            "collection": "doc_rag_main",
+            "collection_key": collection_key,
+            "related_collection_keys": ["all"],
+            "reindex_scope": "default_runtime_only",
+        }
+
+    monkeypatch.setattr(mutation_executor_service.index_service, "reindex", fake_reindex)
+
+    result = mutation_executor_service.execute_mutation_request(
+        _sample_request(
+            "reindex",
+            payload={"collection": "all", "reset": True, "include_compatibility_bundle": False},
+            audit_sink_receipt={
+                "sink_type": "local_file_append_only",
+                "sequence_id": 12,
+                "storage_path": "/tmp/mutation-audit/audit-20260422.jsonl",
+            },
+            executor_binding={
+                "binding_kind": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_KIND,
+                "binding_source": "test_harness",
+                "executor_name": mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+                mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD: (
+                    mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_GUARDED_LIVE_EXECUTOR
+                ),
+            },
+        )
+    )
+
+    assert calls == [
+        {
+            "reset": True,
+            "collection_key": "all",
+            "include_compatibility_bundle": False,
+        }
+    ]
+    assert result["ok"] is True
+    assert result["error"] is None
+    assert result["executor"]["selection_state"] == "guarded_live_executor"
+    assert result["executor"]["selection_reason"] == "explicit_guarded_live_executor_requested"
+    assert result["executor"]["actual_runtime_handler"] == "index_service.reindex"
+    assert result["executor"]["actual_runtime_handler_invoked"] is True
+    assert result["executor"]["request"]["executor_binding_stage"] == (
+        mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_GUARDED_LIVE_EXECUTOR
+    )
+    executor_result = result["result"]
+    assert executor_result["reindex_summary"]["runtime_chunks"] == 12
+    assert executor_result["reindex_summary"]["runtime_vectors"] == 34
+    assert executor_result["runtime_result"] == {
+        "collection_key": "all",
+        "collection": "doc_rag_main",
+        "chunks": 12,
+        "vectors": 34,
+        "related_collection_keys": ["all"],
+        "reindex_scope": "default_runtime_only",
     }
 
 

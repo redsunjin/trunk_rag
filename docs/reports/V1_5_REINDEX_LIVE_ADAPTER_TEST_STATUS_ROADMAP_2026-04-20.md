@@ -54,6 +54,9 @@
 19. execution enablement final checkpoint review
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_FINAL_CHECKPOINT_REVIEW_2026-04-22.md`
    - 핵심: actual execution `No-Go`, guarded live executor implementation planning `Go`
+20. guarded live executor implementation draft
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_IMPLEMENTATION_DRAFT_2026-04-22.md`
+   - 핵심: explicit local-only `binding_stage=guarded_live_executor`에서만 `index_service.reindex()` 호출 seam 검증
 
 ### Verified Repeatedly
 
@@ -63,7 +66,7 @@
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 - `git diff --check`
 
-최근 루프들(`LOOP-045` ~ `LOOP-064`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐고, 최신 `LOOP-064` closeout 기준 roadmap harness는 ready다.
+최근 루프들(`LOOP-045` ~ `LOOP-065`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐고, 최신 `LOOP-065` closeout 기준 expanded target은 `55 passed`다.
 
 ## Test Matrix
 
@@ -81,11 +84,15 @@
    - 기대: `live_result_skeleton`
    - 기대 에러: `MUTATION_APPLY_NOT_ENABLED`
    - 기대 sidecar: `mutation_executor_result`, `mutation_success_promotion`, `mutation_top_level_promotion_router`
+5. explicit guarded live executor path
+   - 기대: `guarded_live_executor`
+   - 기대: direct tool handler bypass, `index_service.reindex()` 호출 seam evidence
+   - 기대 top-level: `MUTATION_APPLY_NOT_ENABLED` blocked surface 유지
 
 ### Future Paths
 
-1. guarded live executor implementation draft
-   - 기대: default/public gate를 열지 않고 explicit local-only guarded executor stage에서 `index_service.reindex()` 호출 seam 검증
+1. guarded live executor smoke command draft
+   - 기대: default/concrete smoke를 side-effect-free로 유지하면서 guarded stage opt-in command seam 추가
    - 상태: next implementation
 
 ## Recommended Testing Order
@@ -106,12 +113,13 @@
 12. top-level promotion router implementation draft 검증
 13. execution enablement final checkpoint review
 14. guarded live executor implementation draft 검증
+15. guarded live executor smoke command draft 검증
 
 ## Open Testing Gaps
 
 아직 남아 있는 테스트 갭:
 
-1. guarded live executor implementation test
+1. guarded live executor smoke command test
 2. actual execution enablement 이후 smoke 업데이트 기준
 3. real side-effect rollback drill 여부
 
@@ -122,4 +130,4 @@
 
 ## Next Step
 
-다음 작업은 `LOOP-065 V1.5 reindex live adapter guarded live executor implementation draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 작업은 `LOOP-066 V1.5 reindex live adapter guarded live executor smoke command draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.

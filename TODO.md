@@ -129,7 +129,8 @@
 | LOOP-062 | done | V1.5 reindex live adapter pre-side-effect executor router implementation draft | `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-063 | done | V1.5 reindex live adapter top-level promotion router implementation draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-064 | done | V1.5 reindex live adapter execution enablement final checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-065 | active | V1.5 reindex live adapter guarded live executor implementation draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-065 | done | V1.5 reindex live adapter guarded live executor implementation draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-066 | active | V1.5 reindex live adapter guarded live executor smoke command draft | `./.venv/bin/python -m pytest -q tests/test_smoke_agent_runtime.py tests/test_mutation_executor_service.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -1780,7 +1781,7 @@ closeout 메모 (2026-04-20):
 - 검증: `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check`.
 - 다음 단계는 actual top-level enablement를 계속 닫은 상태에서 guarded live executor implementation draft를 진행하는 것이다.
 
-## 현재 Active Loop (LOOP-065)
+## 완료 Loop (LOOP-065)
 
 목표:
 - actual top-level apply enablement는 계속 닫아 둔 채, explicit local-only binding stage로만 도달 가능한 guarded `reindex` live executor seam을 구현 초안 수준으로 고정한다.
@@ -1801,6 +1802,33 @@ closeout 메모 (2026-04-20):
 진행 메모 (2026-04-22):
 - `LOOP-064` final checkpoint는 actual execution enablement `No-Go`지만 guarded live executor implementation planning은 `Go`로 판정했다.
 - 이번 단계도 default/public side effect는 열지 않는다.
+- `services/mutation_executor_service.py`에 `binding_stage=guarded_live_executor`와 `ReindexGuardedLiveMutationExecutor`를 추가했다.
+- guarded stage에서만 `index_service.reindex()` 호출 seam이 열리고, executor contract에는 `actual_runtime_handler_invoked=true` evidence가 남는다.
+- middleware integration은 direct `_tool_reindex` handler를 계속 우회하며, guarded executor result를 blocked apply sidecar와 promotion router evidence로 남긴다.
+- 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` (`55 passed`), `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check`.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_IMPLEMENTATION_DRAFT_2026-04-22.md`.
+- 다음 단계는 guarded live executor stage를 smoke harness에서 명시적으로 선택하는 command draft다.
+
+## 현재 Active Loop (LOOP-066)
+
+목표:
+- default smoke와 concrete skeleton smoke는 side effect 없이 유지하면서, guarded live executor stage를 명시적으로 선택하는 smoke command seam을 추가한다.
+
+범위:
+- 포함: smoke CLI/env stage selection, guarded stage request binding, fake smoke test proof, default/concrete path 회귀 방지
+- 제외: 기본 smoke에서 actual side effect 실행, public route enablement, upload review live execution, real rollback drill
+
+완료 기준:
+- smoke harness가 `guarded_live_executor` stage를 명시적으로 전달할 수 있어야 한다.
+- 기본 smoke와 concrete skeleton smoke는 기존 side-effect-free behavior를 유지해야 한다.
+- 실제 guarded command는 explicit local-only opt-in임이 문서에 남아야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_smoke_agent_runtime.py tests/test_mutation_executor_service.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-065` closeout으로 guarded executor stage 자체는 구현됐지만 smoke harness는 아직 해당 stage를 명시적으로 선택하는 dedicated flag/summary를 갖지 않는다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

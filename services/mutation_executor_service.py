@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 
-from services import runtime_service, tool_apply_service
+from services import index_service, runtime_service, tool_apply_service
 
 MUTATION_EXECUTOR_CONTRACT_SCHEMA_VERSION = "v1.5.mutation_executor_contract.v1"
 REINDEX_LIVE_ADAPTER_OUTLINE_SCHEMA_VERSION = "v1.5.reindex_live_adapter_outline.v1"
@@ -26,6 +26,7 @@ REINDEX_LIVE_ADAPTER_BINDING_KIND = "explicit_live_adapter"
 REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD = "binding_stage"
 REINDEX_LIVE_ADAPTER_BINDING_STAGE_SELECTION_STUB = "selection_stub"
 REINDEX_LIVE_ADAPTER_BINDING_STAGE_CONCRETE_SKELETON = "concrete_executor_skeleton"
+REINDEX_LIVE_ADAPTER_BINDING_STAGE_GUARDED_LIVE_EXECUTOR = "guarded_live_executor"
 REINDEX_FAKE_EXECUTOR_SMOKE_SUCCESS_SELECTION_STATE = "fake_executor_smoke_success"
 REINDEX_FAKE_EXECUTOR_SMOKE_FAILURE_SELECTION_STATE = "fake_executor_smoke_failure"
 NOOP_MUTATION_EXECUTOR_NAME = "noop_mutation_executor"
@@ -118,6 +119,14 @@ def _safe_positive_int(value: object) -> int | None:
     if normalized <= 0:
         return None
     return normalized
+
+
+def _normalize_bool(value: object, *, default: bool) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return default
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _build_reindex_failure_taxonomy() -> dict[str, object]:
@@ -248,6 +257,7 @@ def _build_boundary_contract(request: MutationExecutionRequest) -> dict[str, obj
                     "binding_stage_field": REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD,
                     "default_binding_stage": REINDEX_LIVE_ADAPTER_BINDING_STAGE_SELECTION_STUB,
                     "concrete_executor_stage": REINDEX_LIVE_ADAPTER_BINDING_STAGE_CONCRETE_SKELETON,
+                    "guarded_live_executor_stage": REINDEX_LIVE_ADAPTER_BINDING_STAGE_GUARDED_LIVE_EXECUTOR,
                     "selection_precedence": [
                         "tool_registration_boundary",
                         "activation_guard",
@@ -524,12 +534,16 @@ def _resolve_reindex_collection_key(request: MutationExecutionRequest) -> str:
     return REINDEX_FIRST_LIVE_SCOPE
 
 
-def _build_reindex_live_result(request: MutationExecutionRequest) -> dict[str, object]:
+def _build_reindex_live_result(
+    request: MutationExecutionRequest,
+    *,
+    runtime_result: dict[str, object] | None = None,
+) -> dict[str, object]:
     audit_sink_receipt = _safe_dict(request.audit_sink_receipt)
     collection_key = _resolve_reindex_collection_key(request)
     requested_reset = request.payload.get("reset")
     include_compatibility_bundle = request.payload.get("include_compatibility_bundle")
-    return {
+    result = {
         "schema_version": REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION,
         "reindex_summary": {
             "collection_key": collection_key,
@@ -549,6 +563,23 @@ def _build_reindex_live_result(request: MutationExecutionRequest) -> dict[str, o
             "collection_key": collection_key,
         },
     }
+    runtime_payload = _safe_dict(runtime_result)
+    if runtime_payload:
+        result["reindex_summary"] = {
+            **_safe_dict(result.get("reindex_summary")),
+            "runtime_chunks": runtime_payload.get("chunks"),
+            "runtime_vectors": runtime_payload.get("vectors"),
+            "runtime_scope": runtime_payload.get("reindex_scope"),
+        }
+        result["runtime_result"] = {
+            "collection_key": runtime_payload.get("collection_key"),
+            "collection": runtime_payload.get("collection"),
+            "chunks": runtime_payload.get("chunks"),
+            "vectors": runtime_payload.get("vectors"),
+            "related_collection_keys": runtime_payload.get("related_collection_keys"),
+            "reindex_scope": runtime_payload.get("reindex_scope"),
+        }
+    return result
 
 
 def build_reindex_live_success_promotion_contract(
@@ -564,6 +595,7 @@ def build_reindex_live_success_promotion_contract(
         or executor.get("executor_name") != REINDEX_LIVE_ADAPTER_EXECUTOR_NAME
         or selection_state not in {
             "live_result_skeleton",
+            "guarded_live_executor",
             REINDEX_FAKE_EXECUTOR_SMOKE_SUCCESS_SELECTION_STATE,
         }
         or result.get("schema_version") != REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION
@@ -758,6 +790,9 @@ def build_reindex_top_level_promotion_router_contract(
             "audit_receipt_ref": _safe_dict(result.get("audit_receipt_ref")),
             "rollback_hint": _safe_dict(result.get("rollback_hint")),
         }
+        runtime_result = _safe_dict(result.get("runtime_result"))
+        if runtime_result:
+            contract["success_result_preview"]["runtime_result"] = runtime_result
     return contract
 
 
@@ -1147,6 +1182,67 @@ class ReindexLiveMutationExecutorSkeleton:
         }
 
 
+@dataclass(frozen=True)
+class ReindexGuardedLiveMutationExecutor:
+    executor_name: str = REINDEX_LIVE_ADAPTER_EXECUTOR_NAME
+    binding_kind: str = REINDEX_LIVE_ADAPTER_BINDING_KIND
+    selection_state: str = "guarded_live_executor"
+    selection_reason: str = "explicit_guarded_live_executor_requested"
+    activation_contract: dict[str, object] | None = None
+    boundary_contract: dict[str, object] | None = None
+
+    def supports(self, tool_name: str) -> bool:
+        return tool_name == "reindex"
+
+    def execute(self, request: MutationExecutionRequest) -> dict[str, object]:
+        activation_contract = dict(self.activation_contract) if isinstance(self.activation_contract, dict) else _build_activation_contract(request)
+        boundary_contract = dict(self.boundary_contract) if isinstance(self.boundary_contract, dict) else _build_boundary_contract(request)
+        collection_key = _resolve_reindex_collection_key(request)
+        reset = _normalize_bool(_safe_dict(request.payload).get("reset"), default=True)
+        include_compatibility_bundle = _normalize_bool(
+            _safe_dict(request.payload).get("include_compatibility_bundle"),
+            default=False,
+        )
+        executor_contract = _build_executor_contract(
+            request=request,
+            executor_name=self.executor_name,
+            binding_kind=self.binding_kind,
+            tool_registered=True,
+            execution_enabled=True,
+            activation_contract=activation_contract,
+            boundary_contract=boundary_contract,
+            selection_state=self.selection_state,
+            selection_reason=self.selection_reason,
+            registered_executor_name=REINDEX_MUTATION_EXECUTOR_NAME,
+            delegate_executor_name=NOOP_MUTATION_EXECUTOR_NAME,
+        )
+        executor_contract["actual_runtime_handler"] = "index_service.reindex"
+        executor_contract["actual_runtime_handler_invoked"] = True
+        try:
+            runtime_result = index_service.reindex(
+                reset=reset,
+                collection_key=collection_key,
+                include_compatibility_bundle=include_compatibility_bundle,
+            )
+        except Exception as exc:
+            return {
+                "ok": False,
+                "result": None,
+                "error": {
+                    "code": REINDEX_ERROR_RUNTIME_EXECUTION_FAILED,
+                    "message": "Guarded reindex live executor failed.",
+                    "exception_type": type(exc).__name__,
+                },
+                "executor": executor_contract,
+            }
+        return {
+            "ok": True,
+            "result": _build_reindex_live_result(request, runtime_result=runtime_result),
+            "error": None,
+            "executor": executor_contract,
+        }
+
+
 def list_registered_mutation_executor_bindings() -> dict[str, str]:
     return {
         "reindex": REINDEX_MUTATION_EXECUTOR_NAME,
@@ -1179,6 +1275,11 @@ def resolve_mutation_executor(request: MutationExecutionRequest) -> MutationExec
         )
     live_binding = _resolve_reindex_live_binding(request)
     if isinstance(live_binding, dict):
+        if live_binding.get("binding_stage") == REINDEX_LIVE_ADAPTER_BINDING_STAGE_GUARDED_LIVE_EXECUTOR:
+            return ReindexGuardedLiveMutationExecutor(
+                activation_contract=activation_contract,
+                boundary_contract=boundary_contract,
+            )
         if live_binding.get("binding_stage") == REINDEX_LIVE_ADAPTER_BINDING_STAGE_CONCRETE_SKELETON:
             return ReindexLiveMutationExecutorSkeleton(
                 activation_contract=activation_contract,
