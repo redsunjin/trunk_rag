@@ -74,8 +74,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-074`
-- current_active_title: `V1.5 reindex live adapter post-promotion enablement checkpoint review`
+- current_active_id: `LOOP-075`
+- current_active_title: `V1.5 reindex live adapter top-level promotion operator runbook update`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1807,7 +1807,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_TOP_LEVEL_PROMOTION_GATE_DRAFT_2026-04-22.md`.
 - 다음 단계는 post-promotion enablement checkpoint review다.
 
-### A-Next67. V1.5 reindex live adapter post-promotion enablement checkpoint review (현재 active)
+### A-Next67. V1.5 reindex live adapter post-promotion enablement checkpoint review (완료: 2026-04-22)
 1. guarded top-level promotion gate 구현 이후 default/public enablement, local-only operator surface, rollback/runbook blocker를 재판정한다.
 2. extra opt-in local-only promotion을 유지할지, operator runbook 보강이 필요한지, broader/public gate를 계속 닫을지 판단한다.
 3. 다음 implementation loop가 필요하면 범위와 검증 방법을 확정한다.
@@ -1823,6 +1823,27 @@ closeout 메모 (2026-04-20):
 진행 메모 (2026-04-22):
 - `LOOP-073`에서 explicit local-only guarded top-level promotion gate가 구현됐다.
 - rollback drill은 여전히 broader/public gate blocker로 남아 있다.
+- extra opt-in local-only top-level promotion은 internal operator/test surface로 `Go`다.
+- default/public top-level promotion은 계속 `No-Go`다.
+- 기존 operator runbook은 activation-only 기준이라 top-level promotion command/abort condition을 반영해야 한다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_PROMOTION_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`.
+- 다음 단계는 top-level promotion operator runbook update다.
+
+### A-Next68. V1.5 reindex live adapter top-level promotion operator runbook update (현재 active)
+1. operator runbook에 default blocked, guarded blocked, guarded top-level promotion path를 구분해 반영한다.
+2. `--opt-in-top-level-promotion` command와 `DOC_RAG_MUTATION_SMOKE_TOP_LEVEL_PROMOTION=1` env surface를 문서화한다.
+3. pre/post audit sequence 확인과 abort condition을 업데이트한다.
+
+완료 기준:
+- top-level success가 허용되는 조건이 explicit promotion command로만 제한되어야 한다.
+- default smoke와 guarded blocked smoke의 기대값은 계속 `MUTATION_APPLY_NOT_ENABLED`로 남아야 한다.
+- runbook이 post-executor audit receipt sequence linkage 확인 절차를 포함해야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-074`에서 extra opt-in local-only top-level promotion은 `Go`, default/public promotion은 `No-Go`, operator runbook update는 `Go`로 판정했다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
