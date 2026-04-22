@@ -157,7 +157,8 @@
 | LOOP-080 | done | V1.5 reindex live adapter post-rollback-drill enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-081 | done | V1.5 reindex live adapter public promotion blocker register | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-082 | done | V1.5 reindex live adapter local-only closeout | `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-083 | active | V1.5 post-closeout next-track selection | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-083 | done | V1.5 post-closeout next-track selection | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-084 | active | V1.5 reindex live adapter branch handoff snapshot | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -2281,7 +2282,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_LOCAL_ONLY_CLOSEOUT_2026-04-22.md`.
 - 다음 단계는 post-closeout next-track selection이다.
 
-## 현재 Active Loop (LOOP-083)
+## 완료 Loop (LOOP-083)
 
 목표:
 - V1.5 `reindex` live adapter local-only closeout 이후 다음 track을 선택한다.
@@ -2300,6 +2301,30 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-082`에서 local-only closeout이 완료됐고 broader public/default behavior는 blocker register에 따라 계속 막혀 있다.
+- 선택된 다음 track은 branch handoff snapshot이다.
+- public blocker implementation, upload review live execution, 새 live adapter candidate는 이번 세션에서 시작하지 않는다.
+- 기준 문서: `docs/reports/V1_5_POST_CLOSEOUT_NEXT_TRACK_SELECTION_2026-04-22.md`.
+- 다음 단계는 branch handoff snapshot이다.
+
+## 현재 Active Loop (LOOP-084)
+
+목표:
+- V1.5 `reindex` live adapter local-only track의 branch handoff snapshot을 작성한다.
+
+범위:
+- 포함: commit range, key report index, validation outcome, dirty/untracked 상태, reviewer handoff
+- 제외: PR 생성/푸시, public blocker 구현, upload review live execution 구현
+
+완료 기준:
+- branch handoff snapshot 문서가 생성되어야 한다.
+- 검증 결과와 남은 blocker가 요약되어야 한다.
+- TODO/NEXT가 다음 행동 또는 사용자 결정 대기 상태를 명확히 반영해야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-083`에서 다음 track은 branch handoff snapshot으로 선택됐다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

@@ -74,8 +74,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-083`
-- current_active_title: `V1.5 post-closeout next-track selection`
+- current_active_id: `LOOP-084`
+- current_active_title: `V1.5 reindex live adapter branch handoff snapshot`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -2000,7 +2000,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_LOCAL_ONLY_CLOSEOUT_2026-04-22.md`.
 - 다음 단계는 post-closeout next-track selection이다.
 
-### A-Next76. V1.5 post-closeout next-track selection (현재 active)
+### A-Next76. V1.5 post-closeout next-track selection (완료: 2026-04-22)
 1. V1.5 `reindex` live adapter local-only closeout 이후 다음 track을 선택한다.
 2. merge/PR handoff, public blocker 구현, 다른 MVP/V1 항목 복귀 중 다음 진행 방향을 정한다.
 3. 선택 전 default/public promotion 구현은 열지 않는다.
@@ -2015,6 +2015,26 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-082`에서 local-only closeout이 완료됐고 broader public/default behavior는 blocker register에 따라 계속 막혀 있다.
+- 선택된 다음 track은 branch handoff snapshot이다.
+- public blocker implementation, upload review live execution, 새 live adapter candidate는 이번 세션에서 시작하지 않는다.
+- 기준 문서: `docs/reports/V1_5_POST_CLOSEOUT_NEXT_TRACK_SELECTION_2026-04-22.md`.
+- 다음 단계는 branch handoff snapshot이다.
+
+### A-Next77. V1.5 reindex live adapter branch handoff snapshot (현재 active)
+1. V1.5 `reindex` live adapter local-only track의 branch handoff snapshot을 작성한다.
+2. commit range, key report index, validation outcome, dirty/untracked 상태, reviewer handoff를 정리한다.
+3. PR 생성/푸시는 별도 지시 전까지 제외한다.
+
+완료 기준:
+- branch handoff snapshot 문서가 생성되어야 한다.
+- 검증 결과와 남은 blocker가 요약되어야 한다.
+- TODO/NEXT가 다음 행동 또는 사용자 결정 대기 상태를 명확히 반영해야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-083`에서 다음 track은 branch handoff snapshot으로 선택됐다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
