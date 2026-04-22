@@ -74,8 +74,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-075`
-- current_active_title: `V1.5 reindex live adapter top-level promotion operator runbook update`
+- current_active_id: `LOOP-076`
+- current_active_title: `V1.5 reindex live adapter post-runbook enablement checkpoint review`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1829,7 +1829,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_PROMOTION_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`.
 - 다음 단계는 top-level promotion operator runbook update다.
 
-### A-Next68. V1.5 reindex live adapter top-level promotion operator runbook update (현재 active)
+### A-Next68. V1.5 reindex live adapter top-level promotion operator runbook update (완료: 2026-04-22)
 1. operator runbook에 default blocked, guarded blocked, guarded top-level promotion path를 구분해 반영한다.
 2. `--opt-in-top-level-promotion` command와 `DOC_RAG_MUTATION_SMOKE_TOP_LEVEL_PROMOTION=1` env surface를 문서화한다.
 3. pre/post audit sequence 확인과 abort condition을 업데이트한다.
@@ -1844,6 +1844,27 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-074`에서 extra opt-in local-only top-level promotion은 `Go`, default/public promotion은 `No-Go`, operator runbook update는 `Go`로 판정했다.
+- operator runbook에 default blocked, activation check, guarded blocked, guarded top-level promotion command를 구분해 반영했다.
+- `--opt-in-top-level-promotion` 및 `DOC_RAG_MUTATION_SMOKE_TOP_LEVEL_PROMOTION=1` env surface를 추가했다.
+- abort condition에 explicit promotion command 외 top-level success, post-executor audit receipt 누락, pre/post sequence linkage 불일치를 추가했다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_OPERATOR_RUNBOOK_UPDATE_2026-04-22.md`.
+- 다음 단계는 post-runbook enablement checkpoint review다.
+
+### A-Next69. V1.5 reindex live adapter post-runbook enablement checkpoint review (현재 active)
+1. runbook 보강 이후 local-only operator surface가 충분한지, rollback drill planning을 다음 범위로 올릴지 재판정한다.
+2. default/public No-Go와 upload review boundary 상태를 확인한다.
+3. 다음 loop 범위와 검증 방법을 확정한다.
+
+완료 기준:
+- local-only operator surface를 현 상태로 유지할지 판단해야 한다.
+- rollback drill planning이 다음 active로 필요한지 판단해야 한다.
+- default/public gate와 upload review boundary 상태가 명확해야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-075`에서 operator runbook이 top-level promotion command와 audit linkage 확인 절차를 포함하도록 갱신됐다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

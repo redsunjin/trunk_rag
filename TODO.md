@@ -149,7 +149,8 @@
 | LOOP-072 | done | V1.5 reindex live adapter post-audit enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-073 | done | V1.5 reindex live adapter guarded top-level promotion gate draft | `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py tests/test_mutation_executor_service.py` + guarded top-level promotion smoke + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-074 | done | V1.5 reindex live adapter post-promotion enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-075 | active | V1.5 reindex live adapter top-level promotion operator runbook update | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-075 | done | V1.5 reindex live adapter top-level promotion operator runbook update | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-076 | active | V1.5 reindex live adapter post-runbook enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -2070,7 +2071,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_PROMOTION_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`.
 - 다음 단계는 top-level promotion operator runbook update다.
 
-## 현재 Active Loop (LOOP-075)
+## 완료 Loop (LOOP-075)
 
 목표:
 - operator runbook에 default blocked, guarded blocked, guarded top-level promotion path를 구분해 반영한다.
@@ -2089,6 +2090,31 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-074`에서 extra opt-in local-only top-level promotion은 `Go`, default/public promotion은 `No-Go`, operator runbook update는 `Go`로 판정했다.
+- operator runbook에 default blocked, activation check, guarded blocked, guarded top-level promotion command를 구분해 반영했다.
+- `--opt-in-top-level-promotion` 및 `DOC_RAG_MUTATION_SMOKE_TOP_LEVEL_PROMOTION=1` env surface를 추가했다.
+- abort condition에 explicit promotion command 외 top-level success, post-executor audit receipt 누락, pre/post sequence linkage 불일치를 추가했다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_OPERATOR_RUNBOOK_UPDATE_2026-04-22.md`.
+- 다음 단계는 post-runbook enablement checkpoint review다.
+
+## 현재 Active Loop (LOOP-076)
+
+목표:
+- runbook 보강 이후 local-only operator surface가 충분한지, rollback drill planning을 다음 범위로 올릴지 재판정한다.
+
+범위:
+- 포함: runbook coverage, local-only promotion sufficiency, rollback drill blocker, default/public No-Go 유지 여부, 다음 loop 범위
+- 제외: rollback drill 구현, default/public promotion 구현, upload review live execution
+
+완료 기준:
+- local-only operator surface를 현 상태로 유지할지 판단해야 한다.
+- rollback drill planning이 다음 active로 필요한지 판단해야 한다.
+- default/public gate와 upload review boundary 상태가 명확해야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-075`에서 operator runbook이 top-level promotion command와 audit linkage 확인 절차를 포함하도록 갱신됐다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

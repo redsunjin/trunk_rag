@@ -84,6 +84,9 @@
 29. post-promotion enablement checkpoint review
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_PROMOTION_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
    - 핵심: extra opt-in local-only promotion `Go`, default/public promotion `No-Go`, operator runbook update `Go`
+30. top-level promotion operator runbook update
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_OPERATOR_RUNBOOK_UPDATE_2026-04-22.md`
+   - 핵심: default blocked, activation check, guarded blocked, guarded top-level promotion command와 audit linkage 확인 절차를 operator runbook에 반영
 
 ### Verified Repeatedly
 
@@ -118,9 +121,9 @@
 
 ### Future Paths
 
-1. top-level promotion operator runbook update
-   - 기대: default blocked, guarded blocked, guarded top-level promotion command와 audit verification을 운영 절차로 구분
-   - 상태: next implementation
+1. post-runbook enablement checkpoint review
+   - 기대: local-only operator surface 충분성, rollback drill planning 필요 여부, default/public No-Go 유지 여부 재판정
+   - 상태: next checkpoint
 
 ## Recommended Testing Order
 
@@ -150,12 +153,13 @@
 22. guarded top-level promotion gate draft 검증
 23. post-promotion enablement checkpoint review
 24. top-level promotion operator runbook update 검증
+25. post-runbook enablement checkpoint review
 
 ## Open Testing Gaps
 
 아직 남아 있는 테스트 갭:
 
-1. top-level promotion operator runbook 문서 반영
+1. local-only operator surface 충분성 판단
 2. broader/public top-level apply success/failure enablement 기준
 3. real side-effect rollback drill 여부
 
@@ -166,4 +170,4 @@
 
 ## Next Step
 
-다음 작업은 `LOOP-075 V1.5 reindex live adapter top-level promotion operator runbook update`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 작업은 `LOOP-076 V1.5 reindex live adapter post-runbook enablement checkpoint review`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.

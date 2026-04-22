@@ -4,21 +4,23 @@
 
 - 대상 루프: `LOOP-043 V1.5 reindex activation operator runbook draft`
 - 목적: `reindex` staged activation을 local operator 관점에서 점검하는 절차를 정리한다.
-- 전제: 이 runbook은 live execution을 여는 문서가 아니라, activation precondition과 checkpoint 확인 절차를 운영 문서로 번역한 초안이다.
+- 전제: 이 runbook은 default/public live execution을 여는 문서가 아니라, activation precondition, explicit local-only guarded execution, extra opt-in top-level promotion 확인 절차를 운영 문서로 번역한 초안이다.
 
 ## Guardrails
 
 1. 대상 tool은 `reindex` 하나로 제한한다.
 2. public `/agent/*` endpoint는 여전히 범위 밖이다.
 3. upload review(`approve_upload_request`, `reject_upload_request`)는 별도 boundary로 남겨 두고 이 runbook에 넣지 않는다.
-4. actual live adapter가 없으므로 apply는 끝까지 `MUTATION_APPLY_NOT_ENABLED`여야 한다.
+4. default smoke, activation check smoke, guarded blocked smoke에서는 apply가 끝까지 `MUTATION_APPLY_NOT_ENABLED`여야 한다.
+5. top-level `ok=true`는 `--opt-in-top-level-promotion` 또는 `DOC_RAG_MUTATION_SMOKE_TOP_LEVEL_PROMOTION=1`까지 명시한 local-only guarded command에서만 허용된다.
+6. broader/default/public promotion은 rollback drill 전까지 열지 않는다.
 
 ## Preflight Checklist
 
 runbook 실행 전 아래를 모두 만족해야 한다.
 
 - `docs/reports/V1_5_MUTATION_EXECUTION_GO_NO_GO_REVIEW_2026-04-17.md`를 읽고 현재 verdict가 여전히 `No-Go`임을 확인한다.
-- `docs/reports/V1_5_REINDEX_LIVE_READINESS_CHECKLIST_DRAFT_2026-04-19.md`와 `docs/reports/V1_5_REINDEX_ACTIVATION_CHECKPOINT_REVIEW_2026-04-19.md`를 기준 문서로 둔다.
+- `docs/reports/V1_5_REINDEX_LIVE_READINESS_CHECKLIST_DRAFT_2026-04-19.md`, `docs/reports/V1_5_REINDEX_ACTIVATION_CHECKPOINT_REVIEW_2026-04-19.md`, `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_PROMOTION_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`를 기준 문서로 둔다.
 - local audit backend는 `local_file`로만 취급한다.
 - retention/prune ownership은 `90일 rolling_window`, `local_operator`, `explicit_manual` 기준을 따른다.
 - upload review live execution은 이번 절차에서 다루지 않는다.
@@ -88,7 +90,71 @@ env DOC_RAG_AGENT_MUTATION_EXECUTION=1 \
 - expected end state는 여전히 `MUTATION_APPLY_NOT_ENABLED`다.
 - 현재 runbook의 목적은 "candidate path가 보이는지" 확인하는 것이지, live execution success를 만드는 것이 아니다.
 
-## Step 4. Audit Receipt 확인
+## Step 4. Guarded Live Executor Blocked Smoke
+
+다음 명령은 explicit local-only guarded executor를 호출하지만 top-level apply surface는 여전히 blocked로 유지한다.
+
+```bash
+env DOC_RAG_AGENT_MUTATION_EXECUTION=1 \
+  DOC_RAG_MUTATION_AUDIT_BACKEND=local_file \
+  DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag_mutation_audit_checkpoint \
+  ./.venv/bin/python scripts/smoke_agent_runtime.py \
+  --opt-in-live-binding \
+  --opt-in-live-binding-stage-guarded
+```
+
+기대 결과:
+
+- overall `ok=true`
+- `write_tool_apply_not_enabled.summary.error_code=MUTATION_APPLY_NOT_ENABLED`
+- `write_tool_apply_not_enabled.summary.mutation_executor.selection_state=guarded_live_executor`
+- `write_tool_apply_not_enabled.summary.mutation_executor.actual_runtime_handler=index_service.reindex`
+- `write_tool_apply_not_enabled.summary.mutation_executor.actual_runtime_handler_invoked=true`
+- `write_tool_apply_not_enabled.summary.mutation_executor_result.runtime_chunks`와 `runtime_vectors`가 양수다.
+- `write_tool_apply_not_enabled.summary.mutation_executor_audit_receipt.record_kind=mutation_executor_post_execution`
+- `write_tool_apply_not_enabled.summary.mutation_executor_audit_receipt.pre_executor_audit_sequence_id`가 apply pre-executor audit sequence와 일치한다.
+- `write_tool_apply_not_enabled.summary.mutation_top_level_promotion_router.top_level_promotion_enabled=false`
+
+## Step 5. Guarded Top-Level Promotion Smoke
+
+다음 명령만 top-level `ok=true` success를 허용한다.
+
+```bash
+env DOC_RAG_AGENT_MUTATION_EXECUTION=1 \
+  DOC_RAG_MUTATION_AUDIT_BACKEND=local_file \
+  DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag_mutation_audit_checkpoint \
+  ./.venv/bin/python scripts/smoke_agent_runtime.py \
+  --opt-in-live-binding \
+  --opt-in-live-binding-stage-guarded \
+  --opt-in-top-level-promotion
+```
+
+동일한 opt-in은 env로도 표현할 수 있다.
+
+```bash
+DOC_RAG_MUTATION_SMOKE_LIVE_BINDING=1
+DOC_RAG_MUTATION_SMOKE_LIVE_BINDING_STAGE=guarded_live_executor
+DOC_RAG_MUTATION_SMOKE_TOP_LEVEL_PROMOTION=1
+```
+
+기대 결과:
+
+- overall `ok=true`
+- `requested_top_level_promotion=true`
+- `write_tool_apply_not_enabled.summary.ok=true`
+- `write_tool_apply_not_enabled.summary.error_code=null`
+- `write_tool_apply_not_enabled.summary.mutation_executor.selection_state=guarded_live_executor`
+- `write_tool_apply_not_enabled.summary.mutation_executor_audit_receipt.record_kind=mutation_executor_post_execution`
+- `write_tool_apply_not_enabled.summary.mutation_top_level_promotion_router.router_state=enabled_explicit_local_only`
+- `write_tool_apply_not_enabled.summary.mutation_top_level_promotion_router.top_level_promotion_enabled=true`
+- `write_tool_apply_not_enabled.summary.mutation_executor_result.rollback_mode=rebuild_from_source_documents`
+
+중요:
+
+- 이 success는 public/default enablement가 아니라 local-only smoke/operator surface다.
+- post-executor audit receipt가 없거나 pre/post sequence linkage가 맞지 않으면 success로 취급하지 않는다.
+
+## Step 6. Audit Receipt 확인
 
 activation check smoke 이후 local audit tree를 확인한다.
 
@@ -102,8 +168,10 @@ activation check smoke 이후 local audit tree를 확인한다.
 - `audit-*.jsonl`에 append-only entry가 추가된다.
 - `sequence_state.json`의 `last_sequence_id`가 증가한다.
 - entry/receipt에 `retention_days=90`, `prune_policy=rolling_window`, nested `ops.prune_owner=local_operator`, `ops.prune_mode=explicit_manual`가 남아 있다.
+- guarded command 이후 마지막 post-executor record는 `record.source_schema_version=v1.5.mutation_executor_post_execution_audit.v1`를 가져야 한다.
+- guarded top-level promotion command 이후 마지막 post-executor record는 `record.outcome.ok=true`와 `record.audit.events[0].pre_executor_audit_sequence_id`를 함께 가져야 한다.
 
-## Step 5. Deactivation
+## Step 7. Deactivation
 
 checkpoint 확인이 끝나면 기본값으로 되돌린다.
 
@@ -118,16 +186,19 @@ checkpoint 확인이 끝나면 기본값으로 되돌린다.
 아래 중 하나라도 발생하면 runbook을 중단하고 live enablement 논의를 멈춘다.
 
 1. apply가 `MUTATION_APPLY_NOT_ENABLED`를 지나 실제 성공으로 보인다.
+   - 예외: Step 5의 explicit guarded top-level promotion command에서만 success가 허용된다.
 2. `audit_sink.sink_type`가 `local_file_append_only`가 아니거나 durable receipt가 비어 있다.
-3. upload review tool이 같은 절차로 섞여 들어온다.
-4. public `/agent/*` surface나 외부 노출 경로가 전제된다.
-5. operator가 retention/prune ownership을 확인할 수 없다.
+3. guarded success인데 `mutation_executor_audit_receipt.record_kind=mutation_executor_post_execution`가 없다.
+4. post-executor receipt의 `pre_executor_audit_sequence_id`가 apply pre-executor audit sequence와 연결되지 않는다.
+5. upload review tool이 같은 절차로 섞여 들어온다.
+6. public `/agent/*` surface나 외부 노출 경로가 전제된다.
+7. operator가 retention/prune ownership을 확인할 수 없다.
 
 ## Non-goals
 
-- actual `reindex` live adapter 구현
-- actual live execution enablement
+- default/public live execution enablement
 - upload review operator runbook
+- rollback drill 구현
 - prune 자동화
 
 ## Validation
@@ -135,8 +206,10 @@ checkpoint 확인이 끝나면 기본값으로 되돌린다.
 - `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
 - `./.venv/bin/python scripts/smoke_agent_runtime.py`
 - `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag_mutation_audit_checkpoint ./.venv/bin/python scripts/smoke_agent_runtime.py`
+- `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag_mutation_audit_checkpoint ./.venv/bin/python scripts/smoke_agent_runtime.py --opt-in-live-binding --opt-in-live-binding-stage-guarded`
+- `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag_mutation_audit_checkpoint ./.venv/bin/python scripts/smoke_agent_runtime.py --opt-in-live-binding --opt-in-live-binding-stage-guarded --opt-in-top-level-promotion`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 ## Next Step
 
-다음 loop는 `LOOP-044 V1.5 reindex live adapter outline draft`다. 이 단계에서는 runbook 다음에 필요한 actual live adapter 책임과 경계를 outline 수준으로만 정리한다.
+다음 loop는 `LOOP-076 V1.5 reindex live adapter post-runbook enablement checkpoint review`다. 이 단계에서는 local-only operator surface를 유지한 채 rollback/public blocker와 다음 범위를 재판정한다.

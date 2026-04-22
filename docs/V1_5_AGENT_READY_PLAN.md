@@ -166,7 +166,8 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_AUDIT_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`는 post-audit readiness `Go`, default/public top-level promotion `No-Go`, explicit local-only guarded promotion gate implementation planning `Go`로 판정했다.
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_TOP_LEVEL_PROMOTION_GATE_DRAFT_2026-04-22.md`는 extra opt-in이 있는 explicit local-only guarded path만 top-level success/failure로 승격하고, 기본 guarded path는 `MUTATION_APPLY_NOT_ENABLED` blocked surface로 유지한다.
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_PROMOTION_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`는 extra opt-in local-only top-level promotion `Go`, default/public promotion `No-Go`, operator runbook update `Go`로 판정했다.
-- 다음 구현은 `LOOP-075 reindex live adapter top-level promotion operator runbook update`이며, 이 단계에서는 default blocked, guarded blocked, guarded top-level promotion path를 operator 절차로 구분한다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_OPERATOR_RUNBOOK_UPDATE_2026-04-22.md`는 default blocked, activation check, guarded blocked, guarded top-level promotion command와 audit linkage 확인 절차를 operator runbook에 반영했다.
+- 다음 구현은 `LOOP-076 reindex live adapter post-runbook enablement checkpoint review`이며, 이 단계에서는 local-only operator surface와 rollback/public blocker를 재판정한다.
 - raw input, retrieved context, document content, local path, admin code, credential은 저장/노출 기본 대상에서 제외한다.
 - `services/tool_trace_service.py`는 `redact_execution_trace()`로 `internal`, `public`, `persisted` audience별 trace 정규화를 제공한다.
 
