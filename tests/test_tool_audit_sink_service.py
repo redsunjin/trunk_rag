@@ -54,6 +54,31 @@ def test_append_persisted_audit_record_accepts_valid_record_with_memory_sink():
     assert sink.list_records() == [_sample_persisted_audit_record()]
 
 
+def test_append_persisted_audit_record_accepts_post_executor_audit_metadata():
+    sink = tool_audit_sink_service.InMemoryAppendOnlyAuditSink()
+    record = _sample_persisted_audit_record()
+    record["source_schema_version"] = "v1.5.mutation_executor_post_execution_audit.v1"
+    record["outcome"] = {
+        "ok": False,
+        "error": {"code": "REINDEX_RUNTIME_EXECUTION_FAILED"},
+    }
+    record["mutation_executor_audit"] = {
+        "schema_version": "v1.5.mutation_executor_post_execution_audit.v1",
+        "pre_executor_audit_sequence_id": 18,
+        "executor_name": "reindex_mutation_adapter_live",
+        "selection_state": "guarded_live_executor",
+        "error": {
+            "code": "REINDEX_RUNTIME_EXECUTION_FAILED",
+            "exception_type": "ValueError",
+        },
+    }
+
+    receipt = tool_audit_sink_service.append_persisted_audit_record(record, sink=sink)
+
+    assert receipt["sequence_id"] == 1
+    assert sink.list_records() == [record]
+
+
 def test_append_persisted_audit_record_rejects_sensitive_fields():
     record = _sample_persisted_audit_record()
     record["actor"] = "admin@example.test"

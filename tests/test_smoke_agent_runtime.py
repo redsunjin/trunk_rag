@@ -665,6 +665,14 @@ def test_smoke_summary_includes_mutation_executor_error_sidecar():
                 "message": "Guarded reindex live executor failed.",
                 "exception_type": "ValueError",
             },
+            "mutation_executor_audit_receipt": {
+                "record_kind": "mutation_executor_post_execution",
+                "record_schema_version": "v1.5.mutation_executor_post_execution_audit.v1",
+                "sink_type": "local_file_append_only",
+                "sequence_id": 19,
+                "storage_path": "/tmp/mutation-audit/audit-20260422.jsonl",
+                "pre_executor_audit_sequence_id": 18,
+            },
             "mutation_top_level_promotion_router": {
                 "schema_version": "v1.5.reindex_live_adapter_top_level_promotion_router.v1",
                 "router_state": "draft_ready_not_enabled",
@@ -698,6 +706,14 @@ def test_smoke_summary_includes_mutation_executor_error_sidecar():
         "code": "REINDEX_RUNTIME_EXECUTION_FAILED",
         "message": "Guarded reindex live executor failed.",
         "exception_type": "ValueError",
+    }
+    assert summary["mutation_executor_audit_receipt"] == {
+        "record_kind": "mutation_executor_post_execution",
+        "record_schema_version": "v1.5.mutation_executor_post_execution_audit.v1",
+        "sink_type": "local_file_append_only",
+        "sequence_id": 19,
+        "storage_path": "/tmp/mutation-audit/audit-20260422.jsonl",
+        "pre_executor_audit_sequence_id": 18,
     }
     assert summary["mutation_top_level_promotion_router"]["failure_eligible"] is True
     assert (

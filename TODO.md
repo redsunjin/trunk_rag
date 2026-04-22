@@ -52,6 +52,7 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_SMOKE_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_EXECUTOR_ERROR_SIDECAR_DRAFT_2026-04-22.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ERROR_SIDECAR_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_EXECUTOR_AUDIT_EVIDENCE_DRAFT_2026-04-22.md`
 - `docs/PREPROCESSING_RULES.md`
 - `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md`
 - `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
@@ -144,7 +145,8 @@
 | LOOP-068 | done | V1.5 reindex live adapter post-smoke enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-069 | done | V1.5 reindex live adapter executor error sidecar draft | `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py tests/test_mutation_executor_service.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-070 | done | V1.5 reindex live adapter post-error-sidecar enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-071 | active | V1.5 reindex live adapter post-executor audit evidence draft | `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_tool_audit_sink_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-071 | done | V1.5 reindex live adapter post-executor audit evidence draft | `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_tool_audit_sink_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-072 | active | V1.5 reindex live adapter post-audit enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -1957,7 +1959,7 @@ closeout 메모 (2026-04-20):
 - 다음 단계는 guarded executor success/failure 후 post-executor audit record와 linked receipt sidecar를 남기는 것이다.
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ERROR_SIDECAR_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`.
 
-## 현재 Active Loop (LOOP-071)
+## 완료 Loop (LOOP-071)
 
 목표:
 - guarded executor success/failure 이후 post-executor audit evidence를 append-only sink에 남기고, pre-executor audit receipt와 연결한다.
@@ -1977,6 +1979,33 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-070` 판정상 top-level promotion 전 post-executor durable audit evidence가 필요하다.
+- `mutation_executor_post_execution` audit record와 `mutation_executor_audit_receipt` sidecar를 추가했다.
+- guarded executor success/failure 이후 append-only sink에 post-executor audit record를 남기고, pre-executor audit sequence id를 연결한다.
+- 실제 guarded smoke에서는 apply pre-executor audit sequence `24`, post-executor audit sequence `25`, `runtime_chunks=37`, `runtime_vectors=37` evidence가 남았다.
+- 검증: guarded smoke command, `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_tool_audit_sink_service.py tests/test_smoke_agent_runtime.py` (`31 passed`).
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_EXECUTOR_AUDIT_EVIDENCE_DRAFT_2026-04-22.md`.
+- 다음 단계는 post-executor durable audit evidence 이후 top-level promotion 가능 여부를 다시 판정하는 checkpoint review다.
+
+## 현재 Active Loop (LOOP-072)
+
+목표:
+- response sidecar와 durable post-executor audit evidence가 모두 확보된 상태에서 top-level apply success/failure promotion gate를 열 수 있는지 재판정한다.
+
+범위:
+- 포함: guarded success evidence, executor error sidecar, post-executor audit receipt, rollback blocker, top-level promotion readiness
+- 제외: top-level promotion gate 구현, public route enablement, upload review live execution, rollback drill 구현
+
+완료 기준:
+- top-level success/failure promotion enablement 판단과 남은 blocker가 문서 기준으로 명확해야 한다.
+- 다음 implementation loop가 필요하면 범위와 검증 방법이 이어져야 한다.
+- default blocked path와 guarded local-only scope가 유지되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-071` closeout으로 post-executor durable audit evidence가 확보됐다.
+- 아직 rollback drill은 없고 top-level promotion gate는 닫혀 있다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

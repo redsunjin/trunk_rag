@@ -910,6 +910,20 @@ def test_mutation_apply_guard_routes_guarded_live_executor_without_direct_tool_h
     assert mutation_executor_result["reindex_summary"]["runtime_chunks"] == 12
     assert mutation_executor_result["reindex_summary"]["runtime_vectors"] == 34
     assert result["execution_trace"]["contracts"]["mutation_executor_result"] == mutation_executor_result
+    mutation_executor_audit_receipt = result["error"]["mutation_executor_audit_receipt"]
+    assert mutation_executor_audit_receipt["record_kind"] == "mutation_executor_post_execution"
+    assert mutation_executor_audit_receipt["record_schema_version"] == (
+        tool_middleware_service.MUTATION_EXECUTOR_POST_AUDIT_SCHEMA_VERSION
+    )
+    assert mutation_executor_audit_receipt["pre_executor_audit_sequence_id"] == (
+        mutation_executor_result["audit_receipt_ref"]["sequence_id"]
+    )
+    assert mutation_executor_audit_receipt["sequence_id"] == (
+        mutation_executor_result["audit_receipt_ref"]["sequence_id"] + 1
+    )
+    assert result["execution_trace"]["contracts"]["mutation_executor_audit_receipt"] == (
+        mutation_executor_audit_receipt
+    )
     promotion_router = result["error"]["mutation_top_level_promotion_router"]
     assert promotion_router["success_route"]["eligible"] is True
     assert promotion_router["success_result_preview"] == mutation_executor_result
@@ -977,6 +991,31 @@ def test_mutation_apply_guard_attaches_guarded_executor_error_sidecar(
         "exception_type": "ValueError",
     }
     assert result["execution_trace"]["contracts"]["mutation_executor_error"] == mutation_executor_error
+    mutation_executor_audit_receipt = result["error"]["mutation_executor_audit_receipt"]
+    assert mutation_executor_audit_receipt["record_kind"] == "mutation_executor_post_execution"
+    assert mutation_executor_audit_receipt["record_schema_version"] == (
+        tool_middleware_service.MUTATION_EXECUTOR_POST_AUDIT_SCHEMA_VERSION
+    )
+    assert mutation_executor_audit_receipt["pre_executor_audit_sequence_id"] == (
+        result["error"]["mutation_executor"]["activation"]["audit_sequence_id"]
+    )
+    assert result["execution_trace"]["contracts"]["mutation_executor_audit_receipt"] == (
+        mutation_executor_audit_receipt
+    )
+    sink = tool_audit_sink_service.LocalFileAppendOnlyAuditSink(root_dir=tmp_path / "mutation_audit")
+    latest_entry = sink.list_entries()[-1]
+    assert latest_entry["sequence_id"] == mutation_executor_audit_receipt["sequence_id"]
+    assert latest_entry["record"]["source_schema_version"] == (
+        tool_middleware_service.MUTATION_EXECUTOR_POST_AUDIT_SCHEMA_VERSION
+    )
+    assert latest_entry["record"]["outcome"] == {
+        "ok": False,
+        "error": {"code": mutation_executor_service.REINDEX_ERROR_RUNTIME_EXECUTION_FAILED},
+    }
+    assert latest_entry["record"]["mutation_executor_audit"]["error"] == {
+        "code": mutation_executor_service.REINDEX_ERROR_RUNTIME_EXECUTION_FAILED,
+        "exception_type": "ValueError",
+    }
     promotion_router = result["error"]["mutation_top_level_promotion_router"]
     assert promotion_router["success_route"]["eligible"] is False
     assert promotion_router["failure_route"]["eligible"] is True

@@ -72,6 +72,9 @@
 25. post-error-sidecar enablement checkpoint review
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ERROR_SIDECAR_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
    - 핵심: success/failure sidecar readiness `Go`, top-level promotion `No-Go`, post-executor audit evidence planning `Go`
+26. post-executor audit evidence draft
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_EXECUTOR_AUDIT_EVIDENCE_DRAFT_2026-04-22.md`
+   - 핵심: guarded executor success/failure 후 `mutation_executor_post_execution` audit record와 `mutation_executor_audit_receipt` sidecar를 남기고 pre-executor audit sequence id와 연결
 
 ### Verified Repeatedly
 
@@ -81,7 +84,7 @@
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 - `git diff --check`
 
-최근 루프들(`LOOP-045` ~ `LOOP-069`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐고, 최신 `LOOP-069` closeout 기준 middleware/smoke/executor target은 `46 passed`다.
+최근 루프들(`LOOP-045` ~ `LOOP-071`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐다. 최신 `LOOP-071` closeout 기준 post-executor audit target은 `31 passed`이고, guarded smoke는 pre-executor audit sequence `24`, post-executor audit sequence `25`, `runtime_chunks=37`, `runtime_vectors=37` evidence를 남겼다.
 
 ## Test Matrix
 
@@ -106,9 +109,9 @@
 
 ### Future Paths
 
-1. post-executor audit evidence draft
-   - 기대: guarded executor success/failure 후 append-only post-executor audit receipt와 pre-executor sequence linkage
-   - 상태: next implementation
+1. post-audit enablement checkpoint review
+   - 기대: success/failure response sidecar와 append-only post-executor audit evidence가 모두 확보된 상태에서 top-level apply success/failure promotion gate readiness 재판정
+   - 상태: next checkpoint
 
 ## Recommended Testing Order
 
@@ -134,13 +137,14 @@
 18. executor error sidecar draft 검증
 19. post-error-sidecar enablement checkpoint review
 20. post-executor audit evidence draft 검증
+21. post-audit enablement checkpoint review
 
 ## Open Testing Gaps
 
 아직 남아 있는 테스트 갭:
 
-1. post-executor durable audit result/error linkage
-2. actual execution enablement 이후 smoke 업데이트 기준
+1. post-audit top-level promotion gate open 여부
+2. actual top-level apply success/failure enablement 이후 smoke 업데이트 기준
 3. real side-effect rollback drill 여부
 
 ## Notes
@@ -150,4 +154,4 @@
 
 ## Next Step
 
-다음 작업은 `LOOP-071 V1.5 reindex live adapter post-executor audit evidence draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 작업은 `LOOP-072 V1.5 reindex live adapter post-audit enablement checkpoint review`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.

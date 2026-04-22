@@ -142,6 +142,25 @@ def _summarize_mutation_executor_error(result: dict[str, object]) -> dict[str, o
     }
 
 
+def _summarize_mutation_executor_audit_receipt(result: dict[str, object]) -> dict[str, object] | None:
+    error = _safe_dict(result.get("error"))
+    execution_trace = _safe_dict(result.get("execution_trace"))
+    contracts = _safe_dict(execution_trace.get("contracts"))
+    audit_receipt = _safe_dict(error.get("mutation_executor_audit_receipt")) or _safe_dict(
+        contracts.get("mutation_executor_audit_receipt")
+    )
+    if not audit_receipt:
+        return None
+    return {
+        "record_kind": audit_receipt.get("record_kind"),
+        "record_schema_version": audit_receipt.get("record_schema_version"),
+        "sink_type": audit_receipt.get("sink_type"),
+        "sequence_id": audit_receipt.get("sequence_id"),
+        "storage_path": audit_receipt.get("storage_path"),
+        "pre_executor_audit_sequence_id": audit_receipt.get("pre_executor_audit_sequence_id"),
+    }
+
+
 def _summarize_mutation_success_promotion(result: dict[str, object]) -> dict[str, object] | None:
     error = _safe_dict(result.get("error"))
     execution_trace = _safe_dict(result.get("execution_trace"))
@@ -221,6 +240,9 @@ def _summarize_result(result: dict[str, object]) -> dict[str, object]:
     mutation_executor_error = _summarize_mutation_executor_error(result)
     if mutation_executor_error is not None:
         summary["mutation_executor_error"] = mutation_executor_error
+    mutation_executor_audit_receipt = _summarize_mutation_executor_audit_receipt(result)
+    if mutation_executor_audit_receipt is not None:
+        summary["mutation_executor_audit_receipt"] = mutation_executor_audit_receipt
     mutation_success_promotion = _summarize_mutation_success_promotion(result)
     if mutation_success_promotion is not None:
         summary["mutation_success_promotion"] = mutation_success_promotion

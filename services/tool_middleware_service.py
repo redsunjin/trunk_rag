@@ -19,6 +19,7 @@ from services.tool_registry_service import ToolContext, ToolInputError, ToolPayl
 
 ToolExecutionResult = dict[str, object]
 ToolMiddleware = Callable[["ToolExecutionState"], None]
+MUTATION_EXECUTOR_POST_AUDIT_SCHEMA_VERSION = "v1.5.mutation_executor_post_execution_audit.v1"
 
 
 @dataclass
@@ -42,6 +43,7 @@ class ToolExecutionState:
     mutation_executor_contract: dict[str, object] | None = None
     mutation_executor_result: dict[str, object] | None = None
     mutation_executor_error: dict[str, object] | None = None
+    mutation_executor_audit_receipt: dict[str, object] | None = None
     mutation_success_promotion: dict[str, object] | None = None
     mutation_top_level_promotion_router: dict[str, object] | None = None
     mutation_apply_router_dry_run: dict[str, object] | None = None
@@ -73,6 +75,10 @@ def _normalize_optional_text(value: object) -> str | None:
         return None
     normalized = str(value).strip()
     return normalized or None
+
+
+def _safe_dict(value: object) -> dict[str, object]:
+    return dict(value) if isinstance(value, dict) else {}
 
 
 def _resolve_request_id(request_id: str) -> str:
@@ -179,6 +185,7 @@ def _attach_middleware_metadata(
     mutation_executor_contract = state.mutation_executor_contract
     mutation_executor_result = state.mutation_executor_result
     mutation_executor_error = state.mutation_executor_error
+    mutation_executor_audit_receipt = state.mutation_executor_audit_receipt
     mutation_success_promotion = state.mutation_success_promotion
     mutation_top_level_promotion_router = state.mutation_top_level_promotion_router
     mutation_apply_router_dry_run = state.mutation_apply_router_dry_run
@@ -230,6 +237,8 @@ def _attach_middleware_metadata(
                 error["mutation_executor_result"] = mutation_executor_result
             if mutation_executor_error is not None:
                 error["mutation_executor_error"] = mutation_executor_error
+            if mutation_executor_audit_receipt is not None:
+                error["mutation_executor_audit_receipt"] = mutation_executor_audit_receipt
             if mutation_success_promotion is not None:
                 error["mutation_success_promotion"] = mutation_success_promotion
             if mutation_top_level_promotion_router is not None:
@@ -259,6 +268,8 @@ def _attach_middleware_metadata(
         contracts["mutation_executor_result"] = mutation_executor_result
     if mutation_executor_error is not None:
         contracts["mutation_executor_error"] = mutation_executor_error
+    if mutation_executor_audit_receipt is not None:
+        contracts["mutation_executor_audit_receipt"] = mutation_executor_audit_receipt
     if mutation_success_promotion is not None:
         contracts["mutation_success_promotion"] = mutation_success_promotion
     if mutation_top_level_promotion_router is not None:
@@ -277,6 +288,8 @@ def _attach_middleware_metadata(
             updated_error["mutation_executor_result"] = mutation_executor_result
         if mutation_executor_error is not None:
             updated_error["mutation_executor_error"] = mutation_executor_error
+        if mutation_executor_audit_receipt is not None:
+            updated_error["mutation_executor_audit_receipt"] = mutation_executor_audit_receipt
         if mutation_success_promotion is not None:
             updated_error["mutation_success_promotion"] = mutation_success_promotion
         if mutation_top_level_promotion_router is not None:
@@ -409,6 +422,97 @@ def _build_mutation_execution_request(
     )
 
 
+def _summarize_executor_result_for_audit(executor_result: dict[str, object] | None) -> dict[str, object]:
+    result = _safe_dict(executor_result)
+    reindex_summary = _safe_dict(result.get("reindex_summary"))
+    audit_receipt_ref = _safe_dict(result.get("audit_receipt_ref"))
+    return {
+        "schema_version": result.get("schema_version"),
+        "collection_key": reindex_summary.get("collection_key"),
+        "operation": reindex_summary.get("operation"),
+        "runtime_chunks": reindex_summary.get("runtime_chunks"),
+        "runtime_vectors": reindex_summary.get("runtime_vectors"),
+        "audit_sequence_id": audit_receipt_ref.get("sequence_id"),
+    }
+
+
+def _summarize_executor_error_for_audit(executor_error: dict[str, object] | None) -> dict[str, object]:
+    error = _safe_dict(executor_error)
+    return {
+        "code": error.get("code"),
+        "exception_type": error.get("exception_type"),
+    }
+
+
+def _build_mutation_executor_post_audit_record(state: ToolExecutionState) -> dict[str, object] | None:
+    pre_executor_audit_receipt = _safe_dict(state.audit_sink_receipt)
+    pre_executor_sequence_id = pre_executor_audit_receipt.get("sequence_id")
+    executor_contract = _safe_dict(state.mutation_executor_contract)
+    executor_result = _safe_dict(state.mutation_executor_result)
+    executor_error = _safe_dict(state.mutation_executor_error)
+    if not executor_contract or (not executor_result and not executor_error):
+        return None
+    ok = bool(executor_result) and not bool(executor_error)
+    error_code = executor_error.get("code") if executor_error else None
+    event: dict[str, object] = {
+        "event": "mutation_executor.completed" if ok else "mutation_executor.failed",
+        "elapsed_ms": state.elapsed_ms,
+        "tool": state.tool_name,
+        "pre_executor_audit_sequence_id": pre_executor_sequence_id,
+    }
+    if error_code is not None:
+        event["code"] = error_code
+    policy_decision = state.policy_decision
+    record: dict[str, object] = {
+        "schema_version": tool_trace_service.PERSISTED_AUDIT_RECORD_SCHEMA_VERSION,
+        "source_schema_version": MUTATION_EXECUTOR_POST_AUDIT_SCHEMA_VERSION,
+        "request_id": state.context.request_id,
+        "actor_category": policy_decision.actor_category if policy_decision else None,
+        "audit_scope": policy_decision.audit_scope if policy_decision else "request_only",
+        "tool": {
+            "name": state.tool_name,
+            "side_effect": state.side_effect or "unknown",
+        },
+        "blocked_by": "mutation_apply_guard",
+        "runtime": {
+            "elapsed_ms": state.elapsed_ms,
+        },
+        "outcome": {
+            "ok": ok,
+            "error": {"code": error_code} if error_code is not None else None,
+        },
+        "audit": {
+            "events": [event],
+        },
+        "mutation_executor_audit": {
+            "schema_version": MUTATION_EXECUTOR_POST_AUDIT_SCHEMA_VERSION,
+            "pre_executor_audit_sequence_id": pre_executor_sequence_id,
+            "executor_name": executor_contract.get("executor_name"),
+            "selection_state": executor_contract.get("selection_state"),
+            "actual_runtime_handler": executor_contract.get("actual_runtime_handler"),
+            "actual_runtime_handler_invoked": executor_contract.get("actual_runtime_handler_invoked"),
+            "result": _summarize_executor_result_for_audit(executor_result) if executor_result else None,
+            "error": _summarize_executor_error_for_audit(executor_error) if executor_error else None,
+        },
+    }
+    return record
+
+
+def _append_mutation_executor_post_audit_record(state: ToolExecutionState) -> None:
+    if state.mutation_executor_audit_receipt is not None:
+        return
+    record = _build_mutation_executor_post_audit_record(state)
+    if record is None:
+        return
+    receipt = tool_audit_sink_service.append_persisted_audit_record(record)
+    state.mutation_executor_audit_receipt = {
+        **dict(receipt),
+        "record_kind": "mutation_executor_post_execution",
+        "record_schema_version": MUTATION_EXECUTOR_POST_AUDIT_SCHEMA_VERSION,
+        "pre_executor_audit_sequence_id": _safe_dict(state.audit_sink_receipt).get("sequence_id"),
+    }
+
+
 def _route_pre_side_effect_mutation_executor_dry_run(state: ToolExecutionState) -> None:
     blocked_result = state.blocked_result
     if not isinstance(blocked_result, dict):
@@ -462,6 +566,7 @@ def _route_pre_side_effect_mutation_executor_dry_run(state: ToolExecutionState) 
     executor_error = executor_result.get("error")
     if isinstance(executor_error, dict):
         state.mutation_executor_error = dict(executor_error)
+    _append_mutation_executor_post_audit_record(state)
     state.mutation_success_promotion = mutation_executor_service.build_reindex_live_success_promotion_contract(
         executor_contract=state.mutation_executor_contract,
         executor_result=state.mutation_executor_result,

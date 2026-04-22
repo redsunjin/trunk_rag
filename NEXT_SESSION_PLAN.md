@@ -66,6 +66,7 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_SMOKE_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_EXECUTOR_ERROR_SIDECAR_DRAFT_2026-04-22.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ERROR_SIDECAR_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_EXECUTOR_AUDIT_EVIDENCE_DRAFT_2026-04-22.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -73,8 +74,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-071`
-- current_active_title: `V1.5 reindex live adapter post-executor audit evidence draft`
+- current_active_id: `LOOP-072`
+- current_active_title: `V1.5 reindex live adapter post-audit enablement checkpoint review`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1736,7 +1737,7 @@ closeout 메모 (2026-04-20):
 - 다음 단계는 guarded executor success/failure 후 post-executor audit record와 linked receipt sidecar를 남기는 것이다.
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ERROR_SIDECAR_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`.
 
-### A-Next64. V1.5 reindex live adapter post-executor audit evidence draft (현재 active)
+### A-Next64. V1.5 reindex live adapter post-executor audit evidence draft (완료: 2026-04-22)
 1. guarded executor success/failure 이후 post-executor audit evidence를 append-only sink에 남기고, pre-executor audit receipt와 연결한다.
 2. blocked apply response/contracts에 linked audit receipt sidecar를 노출한다.
 3. success/failure tests로 durable evidence를 검증한다.
@@ -1752,6 +1753,29 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-070` 판정상 top-level promotion 전 post-executor durable audit evidence가 필요하다.
+- `mutation_executor_post_execution` audit record와 `mutation_executor_audit_receipt` sidecar를 추가했다.
+- guarded executor success/failure 이후 append-only sink에 post-executor audit record를 남기고, pre-executor audit sequence id를 연결한다.
+- 실제 guarded smoke에서는 apply pre-executor audit sequence `24`, post-executor audit sequence `25`, `runtime_chunks=37`, `runtime_vectors=37` evidence가 남았다.
+- 검증: guarded smoke command, `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_tool_audit_sink_service.py tests/test_smoke_agent_runtime.py` (`31 passed`).
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_EXECUTOR_AUDIT_EVIDENCE_DRAFT_2026-04-22.md`.
+- 다음 단계는 post-executor durable audit evidence 이후 top-level promotion 가능 여부를 다시 판정하는 checkpoint review다.
+
+### A-Next65. V1.5 reindex live adapter post-audit enablement checkpoint review (현재 active)
+1. response sidecar와 durable post-executor audit evidence가 모두 확보된 상태에서 top-level apply success/failure promotion gate를 열 수 있는지 재판정한다.
+2. rollback blocker와 guarded local-only scope를 함께 점검한다.
+3. 다음 implementation loop가 필요하면 범위와 검증 방법을 확정한다.
+
+완료 기준:
+- top-level success/failure promotion enablement 판단과 남은 blocker가 문서 기준으로 명확해야 한다.
+- 다음 implementation loop가 필요하면 범위와 검증 방법이 이어져야 한다.
+- default blocked path와 guarded local-only scope가 유지되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-071` closeout으로 post-executor durable audit evidence가 확보됐다.
+- 아직 rollback drill은 없고 top-level promotion gate는 닫혀 있다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
