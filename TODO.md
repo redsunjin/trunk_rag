@@ -159,7 +159,8 @@
 | LOOP-082 | done | V1.5 reindex live adapter local-only closeout | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-083 | done | V1.5 post-closeout next-track selection | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-084 | done | V1.5 reindex live adapter branch handoff snapshot | `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-085 | active | V1.5 branch publication decision | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-085 | done | V1.5 branch publication decision | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-086 | active | Await explicit publication or next-track instruction | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -2333,7 +2334,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BRANCH_HANDOFF_SNAPSHOT_2026-04-22.md`.
 - 다음 단계는 branch publication decision이다.
 
-## 현재 Active Loop (LOOP-085)
+## 완료 Loop (LOOP-085)
 
 목표:
 - local-only handoff branch를 remote publication/PR로 넘길지 결정한다.
@@ -2352,6 +2353,31 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-084`에서 branch handoff snapshot이 작성됐고 remote publication은 별도 결정으로 분리됐다.
+- publication decision 결론: local branch handoff `Go`, automatic remote push/PR `No-Go`.
+- branch는 head `b086055`, `main` 대비 `47` commits ahead, `74 files changed`, `12824 insertions`, `41 deletions`다.
+- remote publication/PR 생성은 명시 지시 후 별도 수행한다.
+- 기준 문서: `docs/reports/V1_5_BRANCH_PUBLICATION_DECISION_2026-04-22.md`.
+- 다음 단계는 explicit publication 또는 next-track instruction 대기다.
+
+## 현재 Active Loop (LOOP-086)
+
+목표:
+- 사용자의 명시 지시에 따라 publication 또는 다른 next-track으로 이동한다.
+
+범위:
+- 포함: push/PR 지시 수신 시 publication 수행, 또는 새 MVP/V1/V1.5 track 선택
+- 제외: 명시 지시 없는 GitHub push/PR, public blocker 구현, upload review live execution 구현
+
+완료 기준:
+- 사용자가 publication, 다른 track, 또는 중단을 명시해야 한다.
+- publication을 진행한다면 push/PR 결과가 기록되어야 한다.
+- 다른 track을 진행한다면 TODO/NEXT active가 해당 track으로 재정렬되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-085`에서 remote publication은 자동 진행하지 않고 명시 지시 대기로 분리했다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

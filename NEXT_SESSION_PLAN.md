@@ -74,8 +74,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-085`
-- current_active_title: `V1.5 branch publication decision`
+- current_active_id: `LOOP-086`
+- current_active_title: `Await explicit publication or next-track instruction`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -2042,7 +2042,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BRANCH_HANDOFF_SNAPSHOT_2026-04-22.md`.
 - 다음 단계는 branch publication decision이다.
 
-### A-Next78. V1.5 branch publication decision (현재 active)
+### A-Next78. V1.5 branch publication decision (완료: 2026-04-22)
 1. local-only handoff branch를 remote publication/PR로 넘길지 결정한다.
 2. push/PR 여부, PR 초안 필요성, publish 전 추가 검증 여부를 정한다.
 3. 사용자 확인 없이 GitHub push/PR은 수행하지 않는다.
@@ -2057,6 +2057,27 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-084`에서 branch handoff snapshot이 작성됐고 remote publication은 별도 결정으로 분리됐다.
+- publication decision 결론: local branch handoff `Go`, automatic remote push/PR `No-Go`.
+- branch는 head `b086055`, `main` 대비 `47` commits ahead, `74 files changed`, `12824 insertions`, `41 deletions`다.
+- remote publication/PR 생성은 명시 지시 후 별도 수행한다.
+- 기준 문서: `docs/reports/V1_5_BRANCH_PUBLICATION_DECISION_2026-04-22.md`.
+- 다음 단계는 explicit publication 또는 next-track instruction 대기다.
+
+### A-Next79. Await explicit publication or next-track instruction (현재 active)
+1. 사용자의 명시 지시에 따라 publication 또는 다른 next-track으로 이동한다.
+2. push/PR 지시 수신 시 publication을 수행하거나, 새 MVP/V1/V1.5 track으로 재정렬한다.
+3. 명시 지시 없는 GitHub push/PR은 수행하지 않는다.
+
+완료 기준:
+- 사용자가 publication, 다른 track, 또는 중단을 명시해야 한다.
+- publication을 진행한다면 push/PR 결과가 기록되어야 한다.
+- 다른 track을 진행한다면 TODO/NEXT active가 해당 track으로 재정렬되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-085`에서 remote publication은 자동 진행하지 않고 명시 지시 대기로 분리했다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

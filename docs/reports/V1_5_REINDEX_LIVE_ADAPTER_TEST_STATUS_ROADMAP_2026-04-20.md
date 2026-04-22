@@ -114,6 +114,9 @@
 39. branch handoff snapshot
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BRANCH_HANDOFF_SNAPSHOT_2026-04-22.md`
    - 핵심: branch `codex/loop-034-go-no-go-review`, `main` 대비 `46` commits ahead, `73 files changed`, latest rollback drill `ok=true` 상태 기록
+40. branch publication decision
+   - 문서: `docs/reports/V1_5_BRANCH_PUBLICATION_DECISION_2026-04-22.md`
+   - 핵심: local branch handoff `Go`, automatic remote push/PR `No-Go`, head `b086055` 기준 `main` 대비 `47` commits ahead 상태 기록
 
 ### Verified Repeatedly
 
@@ -125,7 +128,7 @@
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 - `git diff --check`
 
-최근 루프들(`LOOP-045` ~ `LOOP-084`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐다. 최신 `LOOP-084` 기준 branch handoff snapshot이 작성됐고 remote publication/PR은 별도 decision으로 분리됐다.
+최근 루프들(`LOOP-045` ~ `LOOP-085`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐다. 최신 `LOOP-085` 기준 local branch handoff는 `Go`, automatic remote push/PR은 `No-Go`다.
 
 ## Test Matrix
 
@@ -154,9 +157,9 @@
 
 ### Future Paths
 
-1. branch publication decision
-   - 기대: remote publication/PR 여부와 publish 전 추가 검증 필요성 결정
-   - 상태: next decision
+1. explicit publication or next-track instruction
+   - 기대: 사용자 명시 지시에 따라 publication 또는 다른 track으로 이동
+   - 상태: waiting
 
 ## Recommended Testing Order
 
@@ -196,12 +199,13 @@
 32. post-closeout next-track selection
 33. branch handoff snapshot
 34. branch publication decision
+35. explicit publication or next-track instruction
 
 ## Open Testing Gaps
 
 아직 남아 있는 테스트 갭:
 
-1. branch publication decision
+1. explicit publication or next-track instruction
 2. broader/public top-level apply success/failure enablement 기준
 3. upload review live execution precondition 재검토
 
@@ -212,4 +216,4 @@
 
 ## Next Step
 
-다음 작업은 `LOOP-085 V1.5 branch publication decision`이다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 작업은 `LOOP-086 Await explicit publication or next-track instruction`이다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.

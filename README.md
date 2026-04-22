@@ -82,7 +82,8 @@
 - 현재: local-only closeout 기준 terminal scope는 `reindex` explicit local-only operator/test surface `Go`, default/public top-level promotion `No-Go`, upload review live execution `No-Go`다
 - 현재: post-closeout next-track selection은 public blocker implementation 대신 branch handoff snapshot을 선택했다
 - 현재: branch handoff snapshot은 branch `codex/loop-034-go-no-go-review`, `main` 대비 `46` commits ahead, `73 files changed`, latest rollback drill `ok=true` 상태를 기록했다
-- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 branch publication decision을 진행하고, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
+- 현재: branch publication decision 결론은 local branch handoff `Go`, automatic remote push/PR `No-Go`이며, head `b086055` 기준 `main` 대비 `47` commits ahead다
+- 다음 우선순위: explicit publication 또는 next-track instruction 대기이며, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
 
 비목표(현재 단계):
 - 원본 수집/크롤링

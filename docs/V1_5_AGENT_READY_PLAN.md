@@ -176,7 +176,8 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_LOCAL_ONLY_CLOSEOUT_2026-04-22.md`는 `reindex` explicit local-only operator/test surface `Go`, default/public top-level promotion `No-Go`, upload review live execution `No-Go`를 terminal scope로 고정했다.
 - `docs/reports/V1_5_POST_CLOSEOUT_NEXT_TRACK_SELECTION_2026-04-22.md`는 public blocker implementation 대신 branch handoff snapshot을 다음 track으로 선택했다.
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BRANCH_HANDOFF_SNAPSHOT_2026-04-22.md`는 branch `codex/loop-034-go-no-go-review`, `main` 대비 `46` commits ahead, `73 files changed`, latest rollback drill `ok=true`, untracked unrelated `.DS_Store`/`TRUNK_RAG_LINKS.md` 상태를 기록했다.
-- 다음 구현은 `LOOP-085 V1.5 branch publication decision`이며, 이 단계에서는 remote publication/PR 여부를 별도 결정한다.
+- `docs/reports/V1_5_BRANCH_PUBLICATION_DECISION_2026-04-22.md`는 local branch handoff `Go`, automatic remote push/PR `No-Go`, head `b086055` 기준 `main` 대비 `47` commits ahead 상태를 기록했다.
+- 다음 구현은 `LOOP-086 Await explicit publication or next-track instruction`이며, 이 단계에서는 사용자 명시 지시에 따라 publication 또는 다른 track으로 이동한다.
 - raw input, retrieved context, document content, local path, admin code, credential은 저장/노출 기본 대상에서 제외한다.
 - `services/tool_trace_service.py`는 `redact_execution_trace()`로 `internal`, `public`, `persisted` audience별 trace 정규화를 제공한다.
 
