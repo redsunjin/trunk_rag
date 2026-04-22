@@ -74,8 +74,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-076`
-- current_active_title: `V1.5 reindex live adapter post-runbook enablement checkpoint review`
+- current_active_id: `LOOP-077`
+- current_active_title: `V1.5 reindex live adapter rollback drill plan draft`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1850,7 +1850,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_OPERATOR_RUNBOOK_UPDATE_2026-04-22.md`.
 - 다음 단계는 post-runbook enablement checkpoint review다.
 
-### A-Next69. V1.5 reindex live adapter post-runbook enablement checkpoint review (현재 active)
+### A-Next69. V1.5 reindex live adapter post-runbook enablement checkpoint review (완료: 2026-04-22)
 1. runbook 보강 이후 local-only operator surface가 충분한지, rollback drill planning을 다음 범위로 올릴지 재판정한다.
 2. default/public No-Go와 upload review boundary 상태를 확인한다.
 3. 다음 loop 범위와 검증 방법을 확정한다.
@@ -1865,6 +1865,27 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-075`에서 operator runbook이 top-level promotion command와 audit linkage 확인 절차를 포함하도록 갱신됐다.
+- local-only operator surface는 `Go`다.
+- default/public top-level promotion과 upload review live execution은 계속 `No-Go`다.
+- broader/default/public gate의 다음 blocker는 rollback drill plan이다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_RUNBOOK_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`.
+- 다음 단계는 rollback drill plan draft다.
+
+### A-Next70. V1.5 reindex live adapter rollback drill plan draft (현재 active)
+1. `reindex` guarded live adapter의 local-only rollback drill 계획을 정의한다.
+2. drill precondition, capture-before/capture-after evidence, audit linkage, rebuild-from-source recovery verification, abort condition을 고정한다.
+3. 실제 drill execution을 별도 loop로 열지, 즉시 실행 가능한지 판단 가능하게 만든다.
+
+완료 기준:
+- rollback drill 실행 전 필요한 데이터/환경/증거와 성공 기준이 문서화되어야 한다.
+- 실제 drill execution을 별도 loop로 열지, 즉시 실행 가능한지 판단이 가능해야 한다.
+- local-only scope와 default/public No-Go가 유지되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-076`에서 local-only operator surface는 충분하지만 rollback drill planning이 broader gate의 다음 blocker로 판정됐다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

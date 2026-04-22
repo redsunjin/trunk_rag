@@ -73,7 +73,8 @@
 - 현재: `executor_binding.top_level_promotion_enabled` 추가 opt-in이 있는 explicit local-only guarded path만 top-level `ok=true` success 또는 eligible failure로 승격할 수 있고, 기본 guarded path는 계속 `MUTATION_APPLY_NOT_ENABLED` blocked surface를 유지한다
 - 현재: post-promotion checkpoint 결론은 extra opt-in local-only top-level promotion `Go`, default/public promotion `No-Go`, operator runbook update `Go`다
 - 현재: operator runbook은 default blocked, activation check, guarded blocked, guarded top-level promotion command와 pre/post audit sequence 확인 절차를 구분한다
-- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 `reindex` live adapter post-runbook enablement checkpoint review를 진행하고, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
+- 현재: post-runbook checkpoint 결론은 local-only operator surface `Go`, default/public promotion `No-Go`, rollback drill planning `Go`다
+- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 `reindex` live adapter rollback drill plan draft를 진행하고, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
 
 비목표(현재 단계):
 - 원본 수집/크롤링

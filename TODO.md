@@ -150,7 +150,8 @@
 | LOOP-073 | done | V1.5 reindex live adapter guarded top-level promotion gate draft | `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py tests/test_mutation_executor_service.py` + guarded top-level promotion smoke + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-074 | done | V1.5 reindex live adapter post-promotion enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-075 | done | V1.5 reindex live adapter top-level promotion operator runbook update | `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-076 | active | V1.5 reindex live adapter post-runbook enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-076 | done | V1.5 reindex live adapter post-runbook enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-077 | active | V1.5 reindex live adapter rollback drill plan draft | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -2096,7 +2097,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_OPERATOR_RUNBOOK_UPDATE_2026-04-22.md`.
 - 다음 단계는 post-runbook enablement checkpoint review다.
 
-## 현재 Active Loop (LOOP-076)
+## 완료 Loop (LOOP-076)
 
 목표:
 - runbook 보강 이후 local-only operator surface가 충분한지, rollback drill planning을 다음 범위로 올릴지 재판정한다.
@@ -2115,6 +2116,31 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-075`에서 operator runbook이 top-level promotion command와 audit linkage 확인 절차를 포함하도록 갱신됐다.
+- local-only operator surface는 `Go`다.
+- default/public top-level promotion과 upload review live execution은 계속 `No-Go`다.
+- broader/default/public gate의 다음 blocker는 rollback drill plan이다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_RUNBOOK_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`.
+- 다음 단계는 rollback drill plan draft다.
+
+## 현재 Active Loop (LOOP-077)
+
+목표:
+- `reindex` guarded live adapter의 local-only rollback drill 계획을 정의한다.
+
+범위:
+- 포함: drill precondition, capture-before/capture-after evidence, audit linkage, rebuild-from-source recovery verification, abort condition, later execution criteria
+- 제외: rollback drill 실제 실행, default/public promotion 구현, upload review live execution
+
+완료 기준:
+- rollback drill 실행 전 필요한 데이터/환경/증거와 성공 기준이 문서화되어야 한다.
+- 실제 drill execution을 별도 loop로 열지, 즉시 실행 가능한지 판단이 가능해야 한다.
+- local-only scope와 default/public No-Go가 유지되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-076`에서 local-only operator surface는 충분하지만 rollback drill planning이 broader gate의 다음 blocker로 판정됐다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

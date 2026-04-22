@@ -87,6 +87,9 @@
 30. top-level promotion operator runbook update
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_OPERATOR_RUNBOOK_UPDATE_2026-04-22.md`
    - 핵심: default blocked, activation check, guarded blocked, guarded top-level promotion command와 audit linkage 확인 절차를 operator runbook에 반영
+31. post-runbook enablement checkpoint review
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_RUNBOOK_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+   - 핵심: local-only operator surface `Go`, default/public promotion `No-Go`, rollback drill planning `Go`
 
 ### Verified Repeatedly
 
@@ -121,9 +124,9 @@
 
 ### Future Paths
 
-1. post-runbook enablement checkpoint review
-   - 기대: local-only operator surface 충분성, rollback drill planning 필요 여부, default/public No-Go 유지 여부 재판정
-   - 상태: next checkpoint
+1. rollback drill plan draft
+   - 기대: local-only rollback drill precondition, evidence, recovery verification, abort condition 고정
+   - 상태: next implementation
 
 ## Recommended Testing Order
 
@@ -154,14 +157,15 @@
 23. post-promotion enablement checkpoint review
 24. top-level promotion operator runbook update 검증
 25. post-runbook enablement checkpoint review
+26. rollback drill plan draft 검증
 
 ## Open Testing Gaps
 
 아직 남아 있는 테스트 갭:
 
-1. local-only operator surface 충분성 판단
+1. rollback drill plan 문서 반영
 2. broader/public top-level apply success/failure enablement 기준
-3. real side-effect rollback drill 여부
+3. real side-effect rollback drill 실행 여부
 
 ## Notes
 
@@ -170,4 +174,4 @@
 
 ## Next Step
 
-다음 작업은 `LOOP-076 V1.5 reindex live adapter post-runbook enablement checkpoint review`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 작업은 `LOOP-077 V1.5 reindex live adapter rollback drill plan draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
