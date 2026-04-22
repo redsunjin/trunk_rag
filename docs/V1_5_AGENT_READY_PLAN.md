@@ -158,7 +158,8 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PRE_SIDE_EFFECT_EXECUTOR_ROUTER_IMPLEMENTATION_DRAFT_2026-04-22.md`와 `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_ROUTER_IMPLEMENTATION_DRAFT_2026-04-22.md`는 blocked apply path 안에서 durable audit receipt, executor router, future top-level success/failure surface mapping evidence를 고정했다.
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_IMPLEMENTATION_DRAFT_2026-04-22.md`는 explicit local-only `binding_stage=guarded_live_executor`에서만 `index_service.reindex()` 호출 seam을 여는 구현 초안을 고정했다.
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_SMOKE_COMMAND_DRAFT_2026-04-22.md`는 `--opt-in-live-binding-stage-guarded` command surface와 guarded runtime sidecar summary를 고정했다.
-- 다음 구현은 `LOOP-067 reindex live adapter guarded live executor smoke evidence draft`이며, 이 단계에서는 explicit local-only guarded command를 실제 local-file audit config로 실행해 blocked top-level surface와 runtime sidecar evidence를 함께 기록한다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_SMOKE_EVIDENCE_DRAFT_2026-04-22.md`는 explicit local-only guarded command가 `runtime_chunks=37`, `runtime_vectors=37` sidecar evidence를 남기고 top-level은 `MUTATION_APPLY_NOT_ENABLED` blocked surface를 유지함을 확인했다.
+- 다음 구현은 `LOOP-068 reindex live adapter post-smoke enablement checkpoint review`이며, 이 단계에서는 top-level promotion/actual execution enablement Go/No-Go를 다시 판단한다.
 - raw input, retrieved context, document content, local path, admin code, credential은 저장/노출 기본 대상에서 제외한다.
 - `services/tool_trace_service.py`는 `redact_execution_trace()`로 `internal`, `public`, `persisted` audience별 trace 정규화를 제공한다.
 

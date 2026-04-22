@@ -125,6 +125,29 @@ def _clone_documents(docs: list[Document]) -> list[Document]:
     ]
 
 
+def _normalize_vectorstore_metadata(metadata: dict[str, object]) -> dict[str, str | int | float | bool]:
+    normalized: dict[str, str | int | float | bool] = {}
+    for raw_key, value in metadata.items():
+        key = str(raw_key).strip()
+        if not key or value is None:
+            continue
+        if isinstance(value, (str, int, float, bool)):
+            normalized[key] = value
+            continue
+        normalized[key] = json.dumps(value, ensure_ascii=False, sort_keys=True, default=str)
+    return normalized
+
+
+def _prepare_vectorstore_documents(docs: list[Document]) -> list[Document]:
+    return [
+        Document(
+            page_content=str(doc.page_content),
+            metadata=_normalize_vectorstore_metadata(dict(doc.metadata)),
+        )
+        for doc in docs
+    ]
+
+
 def get_collection_documents_from_store(collection_key: str = DEFAULT_COLLECTION_KEY) -> list[Document]:
     embedding_model = runtime_service.get_embedding_model()
     cache_key = _db_cache_key(collection_key, embedding_model)
@@ -496,6 +519,7 @@ def index_documents_for_collection(
         chunking_mode=chunking["mode"],
         token_encoding=chunking["token_encoding"],
     )
+    chunks = _prepare_vectorstore_documents(chunks)
 
     current_vectors = get_vector_count_fast(collection_name) or 0
     projected_vectors = len(chunks) if reset else current_vectors + len(chunks)

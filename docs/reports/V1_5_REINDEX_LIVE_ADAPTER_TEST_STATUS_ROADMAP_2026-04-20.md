@@ -60,6 +60,9 @@
 21. guarded live executor smoke command draft
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_SMOKE_COMMAND_DRAFT_2026-04-22.md`
    - 핵심: `--opt-in-live-binding-stage-guarded` command surface와 guarded runtime sidecar summary 고정
+22. guarded live executor smoke evidence draft
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_SMOKE_EVIDENCE_DRAFT_2026-04-22.md`
+   - 핵심: actual guarded local execution smoke에서 `runtime_chunks=37`, `runtime_vectors=37` sidecar evidence와 blocked top-level surface 동시 확인
 
 ### Verified Repeatedly
 
@@ -69,7 +72,7 @@
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 - `git diff --check`
 
-최근 루프들(`LOOP-045` ~ `LOOP-066`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐고, 최신 `LOOP-066` closeout 기준 smoke/executor target은 `24 passed`다.
+최근 루프들(`LOOP-045` ~ `LOOP-067`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐고, 최신 `LOOP-067` closeout 기준 index/smoke/executor target은 `36 passed`다.
 
 ## Test Matrix
 
@@ -94,9 +97,9 @@
 
 ### Future Paths
 
-1. guarded live executor smoke evidence draft
-   - 기대: explicit local-only guarded command에서 blocked top-level surface와 runtime sidecar evidence 동시 확인
-   - 상태: next implementation
+1. post-smoke enablement checkpoint review
+   - 기대: guarded smoke evidence 이후 top-level promotion/actual execution enablement Go/No-Go 재판정
+   - 상태: next review
 
 ## Recommended Testing Order
 
@@ -118,12 +121,13 @@
 14. guarded live executor implementation draft 검증
 15. guarded live executor smoke command draft 검증
 16. guarded live executor smoke evidence draft 검증
+17. post-smoke enablement checkpoint review
 
 ## Open Testing Gaps
 
 아직 남아 있는 테스트 갭:
 
-1. guarded live executor smoke evidence capture
+1. post-smoke top-level promotion enablement decision
 2. actual execution enablement 이후 smoke 업데이트 기준
 3. real side-effect rollback drill 여부
 
@@ -134,4 +138,4 @@
 
 ## Next Step
 
-다음 작업은 `LOOP-067 V1.5 reindex live adapter guarded live executor smoke evidence draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 작업은 `LOOP-068 V1.5 reindex live adapter post-smoke enablement checkpoint review`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.

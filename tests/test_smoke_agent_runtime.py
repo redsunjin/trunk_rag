@@ -533,10 +533,29 @@ def test_smoke_agent_runtime_opt_in_live_binding_guarded_stage_injects_executor_
                     "reindex_scope": "default_runtime_only",
                 },
             }
+            mutation_top_level_promotion_router = {
+                "schema_version": "v1.5.reindex_live_adapter_top_level_promotion_router.v1",
+                "router_state": "draft_ready_not_enabled",
+                "success_route": {
+                    "eligible": True,
+                    "target_result_location": "result",
+                    "target_top_level_ok": True,
+                },
+                "failure_route": {
+                    "target_error_location": "error",
+                    "supported_codes": [],
+                },
+                "promotion_gate": {
+                    "top_level_promotion_enabled": False,
+                    "actual_side_effect_enabled": False,
+                },
+            }
             error["mutation_executor"] = mutation_executor
             error["mutation_executor_result"] = mutation_executor_result
+            error["mutation_top_level_promotion_router"] = mutation_top_level_promotion_router
             contracts["mutation_executor"] = mutation_executor
             contracts["mutation_executor_result"] = mutation_executor_result
+            contracts["mutation_top_level_promotion_router"] = mutation_top_level_promotion_router
         return {
             "ok": False,
             "entry": {"selected_tool": "reindex"},
@@ -564,6 +583,7 @@ def test_smoke_agent_runtime_opt_in_live_binding_guarded_stage_injects_executor_
         opt_in_live_binding_stage_guarded=True,
     )
 
+    assert result["ok"] is True
     assert result["requested_live_binding"] is True
     assert (
         result["requested_live_binding_stage"]
@@ -601,6 +621,37 @@ def test_smoke_agent_runtime_opt_in_live_binding_guarded_stage_injects_executor_
         "runtime_collection": "doc_rag_main",
         "runtime_reindex_scope": "default_runtime_only",
     }
+
+
+def test_guarded_stage_apply_check_requires_runtime_sidecar():
+    guarded_stage = (
+        smoke_agent_runtime.mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_GUARDED_LIVE_EXECUTOR
+    )
+    incomplete_summary = {
+        "mutation_executor": {
+            "selection_state": "guarded_live_executor",
+            "actual_runtime_handler": "index_service.reindex",
+            "actual_runtime_handler_invoked": True,
+        },
+        "mutation_top_level_promotion_router": {
+            "success_eligible": False,
+        },
+    }
+
+    assert smoke_agent_runtime._apply_not_enabled_stage_evidence_ok(incomplete_summary, guarded_stage) is False
+
+    complete_summary = {
+        **incomplete_summary,
+        "mutation_executor_result": {
+            "runtime_chunks": 12,
+            "runtime_vectors": 34,
+        },
+        "mutation_top_level_promotion_router": {
+            "success_eligible": True,
+        },
+    }
+
+    assert smoke_agent_runtime._apply_not_enabled_stage_evidence_ok(complete_summary, guarded_stage) is True
 
 
 def test_smoke_agent_runtime_fails_when_write_tool_is_not_blocked(monkeypatch):

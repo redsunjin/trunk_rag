@@ -206,6 +206,25 @@ def _summarize_result(result: dict[str, object]) -> dict[str, object]:
     return summary
 
 
+def _apply_not_enabled_stage_evidence_ok(
+    summary: dict[str, object],
+    live_binding_stage: str | None,
+) -> bool:
+    if live_binding_stage == mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_GUARDED_LIVE_EXECUTOR:
+        mutation_executor = _safe_dict(summary.get("mutation_executor"))
+        mutation_executor_result = _safe_dict(summary.get("mutation_executor_result"))
+        promotion_router = _safe_dict(summary.get("mutation_top_level_promotion_router"))
+        return (
+            mutation_executor.get("selection_state") == "guarded_live_executor"
+            and mutation_executor.get("actual_runtime_handler") == "index_service.reindex"
+            and mutation_executor.get("actual_runtime_handler_invoked") is True
+            and mutation_executor_result.get("runtime_chunks") is not None
+            and mutation_executor_result.get("runtime_vectors") is not None
+            and promotion_router.get("success_eligible") is True
+        )
+    return True
+
+
 def _parse_bool_env(value: str | None) -> bool:
     if value is None:
         return False
@@ -333,6 +352,7 @@ def run_smoke(
             timeout_seconds=5,
         )
     )
+    apply_not_enabled_summary = _summarize_result(apply_not_enabled_result)
     checks = [
         {
             "name": "read_only_health_check",
@@ -361,8 +381,15 @@ def run_smoke(
         },
         {
             "name": "write_tool_apply_not_enabled",
-            "ok": apply_not_enabled_result.get("ok") is False and _error_code(apply_not_enabled_result) == "MUTATION_APPLY_NOT_ENABLED",
-            "summary": _summarize_result(apply_not_enabled_result),
+            "ok": (
+                apply_not_enabled_result.get("ok") is False
+                and _error_code(apply_not_enabled_result) == "MUTATION_APPLY_NOT_ENABLED"
+                and _apply_not_enabled_stage_evidence_ok(
+                    apply_not_enabled_summary,
+                    resolved_live_binding_stage,
+                )
+            ),
+            "summary": apply_not_enabled_summary,
         },
     ]
     return {
