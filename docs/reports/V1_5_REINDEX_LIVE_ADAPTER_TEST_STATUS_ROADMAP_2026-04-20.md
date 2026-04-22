@@ -96,6 +96,9 @@
 33. rollback drill harness draft
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_HARNESS_DRAFT_2026-04-22.md`
    - 핵심: explicit local env guard, pre-state capture, guarded promotion smoke, audit linkage check, rebuild-from-source recovery, post-recovery vector evidence report를 제공
+34. rollback drill execution evidence
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_EXECUTION_EVIDENCE_2026-04-22.md`
+   - 핵심: explicit local env에서 `ok=true`, audit linkage `6 -> 7`, recovery rebuild `37/37`, post-recovery vector count `37` 확인
 
 ### Verified Repeatedly
 
@@ -103,10 +106,11 @@
 
 - `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py`
 - `./.venv/bin/python -m pytest -q tests/test_smoke_reindex_rollback_drill.py`
+- `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag-rollback-drill ./.venv/bin/python scripts/smoke_reindex_rollback_drill.py`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 - `git diff --check`
 
-최근 루프들(`LOOP-045` ~ `LOOP-078`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐다. 최신 `LOOP-078` closeout 기준 rollback drill harness target은 `2 passed`이고, harness는 explicit local env guard와 guarded top-level promotion/recovery rebuild orchestration을 검증한다.
+최근 루프들(`LOOP-045` ~ `LOOP-079`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐다. 최신 `LOOP-079` closeout 기준 rollback drill은 `ok=true`이고, audit linkage `6 -> 7`, recovery rebuild `37/37`, post-recovery vector count `37` evidence를 남겼다.
 
 ## Test Matrix
 
@@ -135,9 +139,9 @@
 
 ### Future Paths
 
-1. rollback drill execution evidence
-   - 기대: local-only drill harness를 explicit env로 실행해 pre-state, guarded promotion, post-executor audit linkage, rebuild recovery, post-recovery vector evidence를 남김
-   - 상태: next execution evidence
+1. post-rollback-drill enablement checkpoint review
+   - 기대: rollback drill evidence 이후 local-only operator surface와 default/public top-level promotion 상태를 재판정
+   - 상태: next checkpoint review
 
 ## Recommended Testing Order
 
@@ -171,14 +175,15 @@
 26. rollback drill plan draft 검증
 27. rollback drill harness draft 검증
 28. rollback drill execution evidence 검증
+29. post-rollback-drill enablement checkpoint review
 
 ## Open Testing Gaps
 
 아직 남아 있는 테스트 갭:
 
-1. rollback drill execution evidence capture
+1. rollback drill result 이후 broader gate go/no-go 판정
 2. broader/public top-level apply success/failure enablement 기준
-3. rollback drill result 이후 broader gate go/no-go 판정
+3. upload review live execution precondition 재검토
 
 ## Notes
 
@@ -187,4 +192,4 @@
 
 ## Next Step
 
-다음 작업은 `LOOP-079 V1.5 reindex live adapter rollback drill execution evidence`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 작업은 `LOOP-080 V1.5 reindex live adapter post-rollback-drill enablement checkpoint review`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.

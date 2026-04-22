@@ -74,8 +74,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-079`
-- current_active_title: `V1.5 reindex live adapter rollback drill execution evidence`
+- current_active_id: `LOOP-080`
+- current_active_title: `V1.5 reindex live adapter post-rollback-drill enablement checkpoint review`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1915,7 +1915,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_HARNESS_DRAFT_2026-04-22.md`.
 - 다음 단계는 rollback drill execution evidence다.
 
-### A-Next72. V1.5 reindex live adapter rollback drill execution evidence (현재 active)
+### A-Next72. V1.5 reindex live adapter rollback drill execution evidence (완료: 2026-04-22)
 1. rollback drill harness를 explicit local env로 실행하고 evidence를 문서화한다.
 2. pre/post/recovery vector evidence, audit linkage evidence, pass/fail 판정을 기록한다.
 3. default/public No-Go를 유지한다.
@@ -1931,6 +1931,28 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-078`에서 rollback drill harness가 추가됐고 unit guard/orchestration test가 통과했다.
+- rollback drill harness를 explicit local env로 실행했고 exit code `0`, top-level `ok=true`를 확인했다.
+- pre-state vector count는 `37`, guarded runtime chunks/vectors는 `37/37`, recovery rebuild chunks/vectors는 `37/37`, post-recovery vector count는 `37`이다.
+- post-executor audit linkage는 pre-executor audit sequence `6`, post-executor audit sequence `7`, record kind `mutation_executor_post_execution`으로 확인했다.
+- audit file `/tmp/trunk_rag-rollback-drill/audit-20260422.jsonl`은 drill 후 `7` entries를 포함했고 final event는 `mutation_executor.completed`다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_EXECUTION_EVIDENCE_2026-04-22.md`.
+- 다음 단계는 post-rollback-drill enablement checkpoint review다.
+
+### A-Next73. V1.5 reindex live adapter post-rollback-drill enablement checkpoint review (현재 active)
+1. rollback drill execution evidence 이후 enablement 상태를 재판정한다.
+2. local-only operator surface Go/No-Go, default/public top-level promotion Go/No-Go, 다음 작업을 정한다.
+3. default/public promotion 구현은 checkpoint 결과 없이 열지 않는다.
+
+완료 기준:
+- rollback drill evidence에 기반한 checkpoint decision이 문서화되어야 한다.
+- default/public promotion 상태가 명시적으로 유지되거나 변경 사유가 기록되어야 한다.
+- 다음 loop가 구현/문서/blocked 중 하나로 정리되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-079`에서 rollback drill이 `ok=true`로 통과했고 audit linkage `6 -> 7`, recovery rebuild `37/37`, post-recovery vector count `37` evidence를 남겼다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
