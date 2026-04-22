@@ -623,6 +623,80 @@ def test_list_reindex_live_failure_contracts_maps_all_taxonomy_codes_to_future_f
         assert contract["default_behavior"] == "not_emitted_until_actual_live_adapter_execution"
 
 
+def test_build_reindex_top_level_promotion_router_contract_keeps_promotion_disabled(monkeypatch):
+    monkeypatch.setenv(mutation_executor_service.MUTATION_EXECUTION_ENV_KEY, "1")
+
+    result = mutation_executor_service.execute_mutation_request(
+        _sample_request(
+            "reindex",
+            payload={"collection": "all", "reset": True, "include_compatibility_bundle": True},
+            audit_sink_receipt={
+                "sink_type": "local_file_append_only",
+                "sequence_id": 11,
+                "storage_path": "/tmp/mutation-audit/audit-20260418.jsonl",
+            },
+            executor_binding={
+                "binding_kind": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_KIND,
+                "binding_source": "test_harness",
+                "executor_name": mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+                mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD: mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_CONCRETE_SKELETON,
+            },
+        )
+    )
+    success_promotion = mutation_executor_service.build_reindex_live_success_promotion_contract(
+        executor_contract=result["executor"],
+        executor_result=result["result"],
+    )
+
+    router = mutation_executor_service.build_reindex_top_level_promotion_router_contract(
+        executor_contract=result["executor"],
+        executor_result=result["result"],
+        mutation_success_promotion=success_promotion,
+    )
+
+    assert router is not None
+    assert router["schema_version"] == (
+        mutation_executor_service.REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_ROUTER_SCHEMA_VERSION
+    )
+    assert router["router_state"] == "draft_ready_not_enabled"
+    assert router["current_runtime_surface"] == {
+        "top_level_ok": False,
+        "top_level_error_code": tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED,
+        "result_location": "error.mutation_executor_result",
+        "blocked_by": "mutation_apply_guard",
+    }
+    assert router["success_route"] == {
+        "eligible": True,
+        "source_result_location": "error.mutation_executor_result",
+        "target_result_location": "result",
+        "target_top_level_ok": True,
+        "result_schema_version": mutation_executor_service.REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION,
+        "selection_state": "live_result_skeleton",
+        "promoted_fields": [
+            "reindex_summary",
+            "audit_receipt_ref",
+            "rollback_hint",
+        ],
+    }
+    assert router["success_result_preview"] == result["result"]
+    assert router["failure_route"]["eligible"] is False
+    assert router["failure_route"]["target_error_location"] == "error"
+    assert router["failure_route"]["supported_codes"] == [
+        mutation_executor_service.REINDEX_ERROR_TARGET_MISMATCH,
+        mutation_executor_service.REINDEX_ERROR_AUDIT_LINKAGE_INVALID,
+        mutation_executor_service.REINDEX_ERROR_RUNTIME_EXECUTION_FAILED,
+        mutation_executor_service.REINDEX_ERROR_ROLLBACK_HINT_UNAVAILABLE,
+    ]
+    assert router["promotion_gate"]["top_level_promotion_enabled"] is False
+    assert router["promotion_gate"]["actual_side_effect_enabled"] is False
+    assert (
+        mutation_executor_service.build_reindex_top_level_promotion_router_contract(
+            executor_contract={"tool_name": "approve_upload_request"}
+        )
+        is None
+    )
+
+
 def test_build_reindex_live_failure_contract_preserves_case_details_and_rejects_unknown_code():
     contract = mutation_executor_service.build_reindex_live_failure_contract(
         mutation_executor_service.REINDEX_ERROR_TARGET_MISMATCH,
@@ -730,7 +804,7 @@ def test_build_reindex_pre_execution_handoff_contract_keeps_side_effect_blocked_
             "mutation_apply_guard_routes_to_executor_instead_of_tool_handler",
             "durable_audit_receipt_created_before_side_effect",
             "explicit_live_adapter_binding_validated_before_side_effect",
-            "top_level_promotion_router_implemented",
+            "top_level_promotion_router_enabled",
             "fake_executor_smoke_added",
         ],
     }
@@ -818,7 +892,7 @@ def test_build_reindex_fake_executor_smoke_contract_links_handoff_success_and_fa
     assert contract["blocked_until"] == [
         "fake_executor_success_smoke_command_added",
         "fake_executor_failure_smoke_command_added",
-        "top_level_success_failure_promotion_router_implemented",
+        "top_level_success_failure_promotion_router_enabled",
     ]
 
 

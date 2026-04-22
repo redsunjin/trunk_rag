@@ -328,12 +328,36 @@ def test_smoke_agent_runtime_opt_in_live_binding_concrete_stage_injects_executor
                     "actual_side_effect_enabled": False,
                 },
             }
+            mutation_top_level_promotion_router = {
+                "schema_version": "v1.5.reindex_live_adapter_top_level_promotion_router.v1",
+                "router_state": "draft_ready_not_enabled",
+                "success_route": {
+                    "eligible": True,
+                    "target_result_location": "result",
+                    "target_top_level_ok": True,
+                },
+                "failure_route": {
+                    "target_error_location": "error",
+                    "supported_codes": [
+                        "REINDEX_TARGET_MISMATCH",
+                        "REINDEX_AUDIT_LINKAGE_INVALID",
+                        "REINDEX_RUNTIME_EXECUTION_FAILED",
+                        "REINDEX_ROLLBACK_HINT_UNAVAILABLE",
+                    ],
+                },
+                "promotion_gate": {
+                    "top_level_promotion_enabled": False,
+                    "actual_side_effect_enabled": False,
+                },
+            }
             error["mutation_executor"] = mutation_executor
             error["mutation_executor_result"] = mutation_executor_result
             error["mutation_success_promotion"] = mutation_success_promotion
+            error["mutation_top_level_promotion_router"] = mutation_top_level_promotion_router
             contracts["mutation_executor"] = mutation_executor
             contracts["mutation_executor_result"] = mutation_executor_result
             contracts["mutation_success_promotion"] = mutation_success_promotion
+            contracts["mutation_top_level_promotion_router"] = mutation_top_level_promotion_router
         return {
             "ok": False,
             "entry": {"selected_tool": "reindex"},
@@ -395,6 +419,17 @@ def test_smoke_agent_runtime_opt_in_live_binding_concrete_stage_injects_executor
         "future_kind": "top_level_apply_success",
         "future_result_location": "result",
         "future_top_level_ok": True,
+        "actual_side_effect_enabled": False,
+    }
+    assert result["checks"][5]["summary"]["mutation_top_level_promotion_router"] == {
+        "schema_version": "v1.5.reindex_live_adapter_top_level_promotion_router.v1",
+        "router_state": "draft_ready_not_enabled",
+        "success_eligible": True,
+        "success_target_result_location": "result",
+        "success_target_top_level_ok": True,
+        "failure_target_error_location": "error",
+        "failure_code_count": 4,
+        "top_level_promotion_enabled": False,
         "actual_side_effect_enabled": False,
     }
 

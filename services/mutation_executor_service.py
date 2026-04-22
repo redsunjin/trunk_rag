@@ -13,6 +13,9 @@ REINDEX_LIVE_ADAPTER_BINDING_SCHEMA_VERSION = "v1.5.reindex_live_adapter_binding
 REINDEX_LIVE_ADAPTER_INJECTION_PROTOCOL_SCHEMA_VERSION = "v1.5.reindex_live_adapter_injection_protocol.v1"
 REINDEX_LIVE_ADAPTER_SMOKE_HARNESS_SCHEMA_VERSION = "v1.5.reindex_live_adapter_smoke_harness.v1"
 REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_SCHEMA_VERSION = "v1.5.reindex_live_adapter_success_promotion.v1"
+REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_ROUTER_SCHEMA_VERSION = (
+    "v1.5.reindex_live_adapter_top_level_promotion_router.v1"
+)
 REINDEX_LIVE_ADAPTER_PRE_EXECUTION_HANDOFF_SCHEMA_VERSION = "v1.5.reindex_live_adapter_pre_execution_handoff.v1"
 REINDEX_LIVE_ADAPTER_FAKE_SMOKE_SCHEMA_VERSION = "v1.5.reindex_live_adapter_fake_executor_smoke.v1"
 REINDEX_MUTATION_APPLY_ROUTER_DRY_RUN_SCHEMA_VERSION = "v1.5.reindex_live_adapter_mutation_apply_router_dry_run.v1"
@@ -669,6 +672,95 @@ def list_reindex_live_failure_contracts() -> tuple[dict[str, object], ...]:
     return tuple(contract for contract in contracts if contract is not None)
 
 
+def build_reindex_top_level_promotion_router_contract(
+    *,
+    executor_contract: dict[str, object] | None,
+    executor_result: dict[str, object] | None = None,
+    mutation_success_promotion: dict[str, object] | None = None,
+) -> dict[str, object] | None:
+    executor = _safe_dict(executor_contract)
+    if executor.get("tool_name") != REINDEX_FIRST_LIVE_SCOPE:
+        return None
+
+    result = _safe_dict(executor_result)
+    success_promotion = _safe_dict(mutation_success_promotion)
+    future_success_surface = _safe_dict(success_promotion.get("future_success_surface"))
+    success_eligible = (
+        success_promotion.get("schema_version") == REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_SCHEMA_VERSION
+        and result.get("schema_version") == REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION
+        and future_success_surface.get("kind") == "top_level_apply_success"
+    )
+    failure_contracts = list_reindex_live_failure_contracts()
+    failure_routes = []
+    for contract in failure_contracts:
+        future_failure_surface = _safe_dict(contract.get("future_failure_surface"))
+        failure_routes.append(
+            {
+                "code": contract.get("code"),
+                "stage": contract.get("stage"),
+                "retryable": contract.get("retryable"),
+                "target_error_location": future_failure_surface.get("error_location"),
+                "target_top_level_ok": future_failure_surface.get("top_level_ok"),
+            }
+        )
+
+    contract: dict[str, object] = {
+        "schema_version": REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_ROUTER_SCHEMA_VERSION,
+        "tool_name": REINDEX_FIRST_LIVE_SCOPE,
+        "router_state": "draft_ready_not_enabled",
+        "surface_scope": "internal_service_only",
+        "current_runtime_surface": {
+            "top_level_ok": False,
+            "top_level_error_code": tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED,
+            "result_location": "error.mutation_executor_result" if result else None,
+            "blocked_by": "mutation_apply_guard",
+        },
+        "success_route": {
+            "eligible": success_eligible,
+            "source_result_location": "error.mutation_executor_result",
+            "target_result_location": future_success_surface.get("result_location"),
+            "target_top_level_ok": future_success_surface.get("top_level_ok"),
+            "result_schema_version": result.get("schema_version"),
+            "selection_state": executor.get("selection_state"),
+            "promoted_fields": future_success_surface.get("promoted_fields") or [],
+        },
+        "failure_route": {
+            "eligible": False,
+            "source_error_location": "mutation_executor_error",
+            "target_error_location": "error",
+            "error_schema_version": REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION,
+            "supported_codes": [route["code"] for route in failure_routes],
+            "routes": failure_routes,
+        },
+        "retained_contracts": [
+            "mutation_executor",
+            "mutation_executor_result",
+            "mutation_success_promotion",
+            "mutation_top_level_promotion_router",
+        ],
+        "promotion_gate": {
+            "default_behavior": "remain_blocked_sidecar",
+            "top_level_promotion_enabled": False,
+            "actual_side_effect_enabled": False,
+            "requires": [
+                "mutation_apply_guard_execution_enabled",
+                "executor_router_result_available",
+                "durable_audit_ready",
+                "explicit_live_adapter_binding",
+                "actual_execution_go_no_go_review",
+            ],
+        },
+    }
+    if success_eligible:
+        contract["success_result_preview"] = {
+            "schema_version": result.get("schema_version"),
+            "reindex_summary": _safe_dict(result.get("reindex_summary")),
+            "audit_receipt_ref": _safe_dict(result.get("audit_receipt_ref")),
+            "rollback_hint": _safe_dict(result.get("rollback_hint")),
+        }
+    return contract
+
+
 def build_reindex_pre_execution_handoff_contract() -> dict[str, object]:
     return {
         "schema_version": REINDEX_LIVE_ADAPTER_PRE_EXECUTION_HANDOFF_SCHEMA_VERSION,
@@ -726,7 +818,7 @@ def build_reindex_pre_execution_handoff_contract() -> dict[str, object]:
             "mutation_apply_guard_routes_to_executor_instead_of_tool_handler",
             "durable_audit_receipt_created_before_side_effect",
             "explicit_live_adapter_binding_validated_before_side_effect",
-            "top_level_promotion_router_implemented",
+            "top_level_promotion_router_enabled",
             "fake_executor_smoke_added",
         ],
     }
@@ -828,7 +920,7 @@ def build_reindex_fake_executor_smoke_contract() -> dict[str, object]:
         "blocked_until": [
             "fake_executor_success_smoke_command_added",
             "fake_executor_failure_smoke_command_added",
-            "top_level_success_failure_promotion_router_implemented",
+            "top_level_success_failure_promotion_router_enabled",
         ],
     }
 

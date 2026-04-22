@@ -58,6 +58,7 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_MUTATION_APPLY_ROUTER_DRY_RUN_SEAM_DRAFT_2026-04-22.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PRE_SIDE_EFFECT_EXECUTOR_ROUTER_IMPLEMENTATION_DRAFT_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_ROUTER_IMPLEMENTATION_DRAFT_2026-04-22.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -65,8 +66,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-063`
-- current_active_title: `V1.5 reindex live adapter top-level promotion router implementation draft`
+- current_active_id: `LOOP-064`
+- current_active_title: `V1.5 reindex live adapter execution enablement final checkpoint review`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1543,7 +1544,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PRE_SIDE_EFFECT_EXECUTOR_ROUTER_IMPLEMENTATION_DRAFT_2026-04-22.md`.
 - 다음 단계는 actual side effect를 열지 않는 top-level promotion router implementation draft다.
 
-### A-Next56. V1.5 reindex live adapter top-level promotion router implementation draft (현재 active)
+### A-Next56. V1.5 reindex live adapter top-level promotion router implementation draft (완료: 2026-04-22)
 1. actual `index_service.reindex()` side effect를 열지 않고 executor result/error sidecar를 future top-level apply success/failure surface로 승격하는 promotion router implementation draft를 코드/테스트 기준으로 고정한다.
 2. concrete skeleton success sidecar, adapter failure contract, execution trace retained contracts를 같은 promotion seam에서 확인한다.
 3. default blocked path와 smoke suite 회귀를 막는다.
@@ -1560,6 +1561,30 @@ closeout 메모 (2026-04-20):
 진행 메모 (2026-04-22):
 - `LOOP-062` closeout으로 valid apply 이후 direct `_tool_reindex`/`index_service.reindex`로 내려가지 않고 pre-side-effect executor router dry-run이 먼저 실행되는 runtime path가 고정됐다.
 - 다음 blocker는 executor sidecar를 top-level apply result/error로 승격하는 router가 아직 실제 runtime path에 없다는 점이다.
+- `services/mutation_executor_service.py`에 `v1.5.reindex_live_adapter_top_level_promotion_router.v1` contract builder를 추가해 success sidecar와 adapter failure taxonomy를 future top-level apply surface로 매핑했다.
+- `services/tool_middleware_service.py`는 `mutation_top_level_promotion_router`를 error payload와 execution trace contracts에 함께 남긴다.
+- `scripts/smoke_agent_runtime.py`는 concrete opt-in smoke summary에 top-level promotion router evidence를 요약한다.
+- current runtime surface는 계속 `ok=false`, `error.code=MUTATION_APPLY_NOT_ENABLED`이며 `promotion_gate.top_level_promotion_enabled=false`, `actual_side_effect_enabled=false`로 유지한다.
+- 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` (`53 passed`), `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check`.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_ROUTER_IMPLEMENTATION_DRAFT_2026-04-22.md`.
+- 다음 단계는 actual execution enablement final checkpoint review다.
+
+### A-Next57. V1.5 reindex live adapter execution enablement final checkpoint review (현재 active)
+1. `LOOP-062` pre-side-effect router와 `LOOP-063` top-level promotion router 구현 이후에도 `reindex` actual execution을 열 수 있는지 최종 checkpoint로 재판정한다.
+2. direct tool handler bypass, durable audit receipt before side effect, explicit local-only binding, top-level promotion router, default smoke 유지 조건을 함께 재검토한다.
+3. 필요하면 다음 implementation loop의 범위와 검증 방법을 정한다.
+
+완료 기준:
+- actual execution enablement `Go`/`No-Go`와 남은 blocker가 문서 기준으로 명확해야 한다.
+- 다음 implementation loop가 필요하면 범위와 검증 방법이 이어져야 한다.
+- default blocked path와 current smoke/test 기준이 유지되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-063` closeout으로 executor result/error sidecar를 top-level apply success/failure surface로 옮기는 deterministic router draft evidence가 고정됐다.
+- 남은 핵심 판단은 top-level promotion gate와 actual side effect gate를 열 수 있는지, 또는 smoke/rollback evidence를 더 보강해야 하는지다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

@@ -805,6 +805,25 @@ def test_mutation_apply_guard_exposes_live_result_skeleton_sidecar_when_binding_
     ]
     assert mutation_success_promotion["promotion_gate"]["actual_side_effect_enabled"] is False
     assert result["execution_trace"]["contracts"]["mutation_success_promotion"] == mutation_success_promotion
+    promotion_router = result["error"]["mutation_top_level_promotion_router"]
+    assert promotion_router["schema_version"] == (
+        mutation_executor_service.REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_ROUTER_SCHEMA_VERSION
+    )
+    assert promotion_router["router_state"] == "draft_ready_not_enabled"
+    assert promotion_router["current_runtime_surface"]["top_level_error_code"] == "MUTATION_APPLY_NOT_ENABLED"
+    assert promotion_router["success_route"]["eligible"] is True
+    assert promotion_router["success_route"]["target_result_location"] == "result"
+    assert promotion_router["success_result_preview"] == mutation_executor_result
+    assert promotion_router["failure_route"]["target_error_location"] == "error"
+    assert promotion_router["failure_route"]["supported_codes"] == [
+        mutation_executor_service.REINDEX_ERROR_TARGET_MISMATCH,
+        mutation_executor_service.REINDEX_ERROR_AUDIT_LINKAGE_INVALID,
+        mutation_executor_service.REINDEX_ERROR_RUNTIME_EXECUTION_FAILED,
+        mutation_executor_service.REINDEX_ERROR_ROLLBACK_HINT_UNAVAILABLE,
+    ]
+    assert promotion_router["promotion_gate"]["top_level_promotion_enabled"] is False
+    assert promotion_router["promotion_gate"]["actual_side_effect_enabled"] is False
+    assert result["execution_trace"]["contracts"]["mutation_top_level_promotion_router"] == promotion_router
 
 
 def test_mutation_apply_guard_keeps_upload_review_in_boundary_noop_even_when_activation_and_durable_audit_are_ready(

@@ -48,6 +48,9 @@
 17. pre-side-effect executor router implementation draft
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PRE_SIDE_EFFECT_EXECUTOR_ROUTER_IMPLEMENTATION_DRAFT_2026-04-22.md`
    - 핵심: valid apply 이후 direct tool handler 전에 durable audit receipt와 mutation executor router dry-run 실행
+18. top-level promotion router implementation draft
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_ROUTER_IMPLEMENTATION_DRAFT_2026-04-22.md`
+   - 핵심: executor success/failure sidecar를 future top-level apply `result`/`error` surface로 매핑하는 router evidence 고정
 
 ### Verified Repeatedly
 
@@ -57,7 +60,7 @@
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 - `git diff --check`
 
-최근 루프들(`LOOP-045` ~ `LOOP-062`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐고, 최신 `LOOP-062` closeout 기준 active target은 `35 passed`다.
+최근 루프들(`LOOP-045` ~ `LOOP-063`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐고, 최신 `LOOP-063` closeout 기준 expanded target은 `53 passed`다.
 
 ## Test Matrix
 
@@ -74,13 +77,13 @@
 4. explicit live binding concrete skeleton path
    - 기대: `live_result_skeleton`
    - 기대 에러: `MUTATION_APPLY_NOT_ENABLED`
-   - 기대 sidecar: `mutation_executor_result`
+   - 기대 sidecar: `mutation_executor_result`, `mutation_success_promotion`, `mutation_top_level_promotion_router`
 
 ### Future Paths
 
-1. top-level promotion router implementation draft
-   - 기대: actual side effect 없이 executor success/failure sidecar의 future top-level apply surface promotion 조건 고정
-   - 상태: next draft
+1. execution enablement final checkpoint review
+   - 기대: actual side effect gate를 열 수 있는지 Go/No-Go 재판정
+   - 상태: next review
 
 ## Recommended Testing Order
 
@@ -98,12 +101,13 @@
 10. execution enablement checkpoint review
 11. pre-side-effect executor router implementation draft 검증
 12. top-level promotion router implementation draft 검증
+13. execution enablement final checkpoint review
 
 ## Open Testing Gaps
 
 아직 남아 있는 테스트 갭:
 
-1. top-level promotion router implementation test
+1. execution enablement final checkpoint review
 2. actual execution enablement 이후 smoke 업데이트 기준
 3. real side-effect rollback drill 여부
 
@@ -114,4 +118,4 @@
 
 ## Next Step
 
-다음 구현은 `LOOP-063 V1.5 reindex live adapter top-level promotion router implementation draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 작업은 `LOOP-064 V1.5 reindex live adapter execution enablement final checkpoint review`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.

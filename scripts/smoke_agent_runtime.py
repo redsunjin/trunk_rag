@@ -134,6 +134,32 @@ def _summarize_mutation_success_promotion(result: dict[str, object]) -> dict[str
     }
 
 
+def _summarize_mutation_top_level_promotion_router(result: dict[str, object]) -> dict[str, object] | None:
+    error = _safe_dict(result.get("error"))
+    execution_trace = _safe_dict(result.get("execution_trace"))
+    contracts = _safe_dict(execution_trace.get("contracts"))
+    router = _safe_dict(error.get("mutation_top_level_promotion_router")) or _safe_dict(
+        contracts.get("mutation_top_level_promotion_router")
+    )
+    if not router:
+        return None
+    success_route = _safe_dict(router.get("success_route"))
+    failure_route = _safe_dict(router.get("failure_route"))
+    promotion_gate = _safe_dict(router.get("promotion_gate"))
+    supported_codes = failure_route.get("supported_codes")
+    return {
+        "schema_version": router.get("schema_version"),
+        "router_state": router.get("router_state"),
+        "success_eligible": success_route.get("eligible"),
+        "success_target_result_location": success_route.get("target_result_location"),
+        "success_target_top_level_ok": success_route.get("target_top_level_ok"),
+        "failure_target_error_location": failure_route.get("target_error_location"),
+        "failure_code_count": len(supported_codes) if isinstance(supported_codes, list) else 0,
+        "top_level_promotion_enabled": promotion_gate.get("top_level_promotion_enabled"),
+        "actual_side_effect_enabled": promotion_gate.get("actual_side_effect_enabled"),
+    }
+
+
 def _summarize_result(result: dict[str, object]) -> dict[str, object]:
     trace = _safe_dict(result.get("execution_trace"))
     summary = {
@@ -158,6 +184,9 @@ def _summarize_result(result: dict[str, object]) -> dict[str, object]:
     mutation_success_promotion = _summarize_mutation_success_promotion(result)
     if mutation_success_promotion is not None:
         summary["mutation_success_promotion"] = mutation_success_promotion
+    mutation_top_level_promotion_router = _summarize_mutation_top_level_promotion_router(result)
+    if mutation_top_level_promotion_router is not None:
+        summary["mutation_top_level_promotion_router"] = mutation_top_level_promotion_router
     return summary
 
 
