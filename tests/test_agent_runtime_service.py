@@ -724,6 +724,15 @@ def test_agent_entry_exposes_reindex_candidate_stub_when_activation_and_durable_
     assert boundary == _expected_reindex_boundary()
     assert result["error"]["mutation_executor"]["delegate_executor_name"] == "noop_mutation_executor"
     assert result["execution_trace"]["contracts"]["mutation_executor"] == result["error"]["mutation_executor"]
+    router_dry_run = result["error"]["mutation_apply_router_dry_run"]
+    assert router_dry_run["schema_version"] == (
+        mutation_executor_service.REINDEX_MUTATION_APPLY_ROUTER_DRY_RUN_SCHEMA_VERSION
+    )
+    assert router_dry_run["router_handoff"]["route_location"] == "mutation_apply_guard_pre_side_effect_router"
+    assert router_dry_run["router_handoff"]["direct_tool_handler_invoked"] is False
+    assert router_dry_run["router_handoff"]["actual_runtime_handler_invoked"] is False
+    assert router_dry_run["executor_evidence"]["selection_state"] == "candidate_stub"
+    assert result["execution_trace"]["contracts"]["mutation_apply_router_dry_run"] == router_dry_run
 
 
 def test_agent_entry_selects_live_binding_stub_when_executor_binding_is_injected(

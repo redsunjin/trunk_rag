@@ -45,6 +45,9 @@
 16. execution enablement checkpoint review
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
    - 핵심: actual execution `No-Go`, next planning `Go` for pre-side-effect executor router implementation draft
+17. pre-side-effect executor router implementation draft
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PRE_SIDE_EFFECT_EXECUTOR_ROUTER_IMPLEMENTATION_DRAFT_2026-04-22.md`
+   - 핵심: valid apply 이후 direct tool handler 전에 durable audit receipt와 mutation executor router dry-run 실행
 
 ### Verified Repeatedly
 
@@ -54,7 +57,7 @@
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 - `git diff --check`
 
-최근 루프들(`LOOP-045` ~ `LOOP-060`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐고, 최신 `LOOP-060` closeout 기준 `52 passed`다.
+최근 루프들(`LOOP-045` ~ `LOOP-062`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐고, 최신 `LOOP-062` closeout 기준 active target은 `35 passed`다.
 
 ## Test Matrix
 
@@ -75,8 +78,8 @@
 
 ### Future Paths
 
-1. pre-side-effect executor router implementation draft
-   - 기대: actual side effect 없이 valid apply 이후 direct tool handler 대신 executor router path 우선 조건 고정
+1. top-level promotion router implementation draft
+   - 기대: actual side effect 없이 executor success/failure sidecar의 future top-level apply surface promotion 조건 고정
    - 상태: next draft
 
 ## Recommended Testing Order
@@ -94,12 +97,13 @@
 9. mutation apply executor router dry-run seam 검증
 10. execution enablement checkpoint review
 11. pre-side-effect executor router implementation draft 검증
+12. top-level promotion router implementation draft 검증
 
 ## Open Testing Gaps
 
 아직 남아 있는 테스트 갭:
 
-1. pre-side-effect executor router implementation test
+1. top-level promotion router implementation test
 2. actual execution enablement 이후 smoke 업데이트 기준
 3. real side-effect rollback drill 여부
 
@@ -110,4 +114,4 @@
 
 ## Next Step
 
-다음 구현은 `LOOP-062 V1.5 reindex live adapter pre-side-effect executor router implementation draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 구현은 `LOOP-063 V1.5 reindex live adapter top-level promotion router implementation draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.

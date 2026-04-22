@@ -671,7 +671,7 @@ def test_mutation_apply_guard_exposes_reindex_candidate_stub_when_activation_and
         "blocks_before_tool_handler": True,
     }
     assert router_dry_run["router_handoff"] == {
-        "route_location": "blocked_result_metadata_enrichment",
+        "route_location": "mutation_apply_guard_pre_side_effect_router",
         "request_builder": "tool_middleware_service._build_mutation_execution_request",
         "router": "mutation_executor_service.execute_mutation_request",
         "dry_run_only": True,

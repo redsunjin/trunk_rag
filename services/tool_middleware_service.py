@@ -40,6 +40,9 @@ class ToolExecutionState:
     persisted_audit_record: dict[str, object] | None = None
     audit_sink_receipt: dict[str, object] | None = None
     mutation_executor_contract: dict[str, object] | None = None
+    mutation_executor_result: dict[str, object] | None = None
+    mutation_success_promotion: dict[str, object] | None = None
+    mutation_apply_router_dry_run: dict[str, object] | None = None
 
     @property
     def side_effect(self) -> str:
@@ -172,42 +175,45 @@ def _attach_middleware_metadata(
         persisted_audit_record
     )
     mutation_executor_contract = state.mutation_executor_contract
-    mutation_executor_result: dict[str, object] | None = None
-    mutation_success_promotion: dict[str, object] | None = None
-    mutation_apply_router_dry_run: dict[str, object] | None = None
+    mutation_executor_result = state.mutation_executor_result
+    mutation_success_promotion = state.mutation_success_promotion
+    mutation_apply_router_dry_run = state.mutation_apply_router_dry_run
     if isinstance(enriched.get("error"), dict):
         error = dict(enriched["error"])
         if error.get("code") == tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED:
-            mutation_request = _build_mutation_execution_request(
-                state,
-                persisted_audit_record=persisted_audit_record,
-                audit_sink_receipt=audit_sink_receipt,
-            )
-            if mutation_request is not None:
-                executor_result = mutation_executor_service.execute_mutation_request(mutation_request)
-                executor_error = executor_result.get("error")
-                if isinstance(executor_error, dict):
-                    error = {
-                        **error,
-                        **dict(executor_error),
-                    }
-                executor_contract = executor_result.get("executor")
-                if isinstance(executor_contract, dict):
-                    mutation_executor_contract = dict(executor_contract)
-                executor_payload = executor_result.get("result")
-                if isinstance(executor_payload, dict):
-                    mutation_executor_result = dict(executor_payload)
-            mutation_success_promotion = mutation_executor_service.build_reindex_live_success_promotion_contract(
-                executor_contract=mutation_executor_contract,
-                executor_result=mutation_executor_result,
-            )
-            mutation_apply_router_dry_run = (
-                mutation_executor_service.build_reindex_mutation_apply_router_dry_run_contract(
+            if mutation_executor_contract is None:
+                mutation_request = _build_mutation_execution_request(
+                    state,
+                    persisted_audit_record=persisted_audit_record,
+                    audit_sink_receipt=audit_sink_receipt,
+                )
+                if mutation_request is not None:
+                    executor_result = mutation_executor_service.execute_mutation_request(mutation_request)
+                    executor_error = executor_result.get("error")
+                    if isinstance(executor_error, dict):
+                        error = {
+                            **error,
+                            **dict(executor_error),
+                        }
+                    executor_contract = executor_result.get("executor")
+                    if isinstance(executor_contract, dict):
+                        mutation_executor_contract = dict(executor_contract)
+                    executor_payload = executor_result.get("result")
+                    if isinstance(executor_payload, dict):
+                        mutation_executor_result = dict(executor_payload)
+            if mutation_success_promotion is None:
+                mutation_success_promotion = mutation_executor_service.build_reindex_live_success_promotion_contract(
                     executor_contract=mutation_executor_contract,
                     executor_result=mutation_executor_result,
-                    mutation_success_promotion=mutation_success_promotion,
                 )
-            )
+            if mutation_apply_router_dry_run is None:
+                mutation_apply_router_dry_run = (
+                    mutation_executor_service.build_reindex_mutation_apply_router_dry_run_contract(
+                        executor_contract=mutation_executor_contract,
+                        executor_result=mutation_executor_result,
+                        mutation_success_promotion=mutation_success_promotion,
+                    )
+                )
             if mutation_executor_contract is not None:
                 error["mutation_executor"] = mutation_executor_contract
             if mutation_executor_result is not None:
@@ -378,6 +384,68 @@ def _build_mutation_execution_request(
         allow_mutation=state.context.allow_mutation,
         timeout_seconds=state.timeout_seconds,
         executor_binding=_resolve_executor_binding(state),
+    )
+
+
+def _route_pre_side_effect_mutation_executor_dry_run(state: ToolExecutionState) -> None:
+    blocked_result = state.blocked_result
+    if not isinstance(blocked_result, dict):
+        return
+    error = blocked_result.get("error")
+    if not isinstance(error, dict) or error.get("code") != tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED:
+        return
+    if state.mutation_executor_contract is not None:
+        return
+
+    allowed_tools = list(state.allowed_tools) if state.allowed_tools is not None else None
+    policy_details = state.policy_decision.as_dict() if state.policy_decision else None
+    execution_trace = tool_trace_service.build_execution_trace(
+        request_id=state.context.request_id,
+        actor=state.context.actor,
+        tool_name=state.tool_name,
+        side_effect=state.side_effect,
+        allow_mutation=state.context.allow_mutation,
+        allowed_tools=allowed_tools,
+        policy_details=policy_details,
+        timeout_seconds=state.timeout_seconds,
+        elapsed_ms=state.elapsed_ms,
+        middleware_steps=list(state.middleware_trace),
+        audit_events=list(state.audit_log),
+        result=blocked_result,
+    )
+    persisted_audit_record = state.persisted_audit_record or tool_trace_service.build_persisted_audit_record(
+        execution_trace
+    )
+    audit_sink_receipt = state.audit_sink_receipt or tool_audit_sink_service.append_persisted_audit_record(
+        persisted_audit_record
+    )
+    state.persisted_audit_record = persisted_audit_record
+    state.audit_sink_receipt = audit_sink_receipt
+
+    mutation_request = _build_mutation_execution_request(
+        state,
+        persisted_audit_record=persisted_audit_record,
+        audit_sink_receipt=audit_sink_receipt,
+    )
+    if mutation_request is None:
+        return
+
+    executor_result = mutation_executor_service.execute_mutation_request(mutation_request)
+    executor_contract = executor_result.get("executor")
+    if isinstance(executor_contract, dict):
+        state.mutation_executor_contract = dict(executor_contract)
+    executor_payload = executor_result.get("result")
+    if isinstance(executor_payload, dict):
+        state.mutation_executor_result = dict(executor_payload)
+    state.mutation_success_promotion = mutation_executor_service.build_reindex_live_success_promotion_contract(
+        executor_contract=state.mutation_executor_contract,
+        executor_result=state.mutation_executor_result,
+    )
+    state.mutation_apply_router_dry_run = mutation_executor_service.build_reindex_mutation_apply_router_dry_run_contract(
+        executor_contract=state.mutation_executor_contract,
+        executor_result=state.mutation_executor_result,
+        mutation_success_promotion=state.mutation_success_promotion,
+        route_location="mutation_apply_guard_pre_side_effect_router",
     )
 
 
@@ -660,6 +728,7 @@ def invoke_tool_with_middlewares(
                 "tool.invoke.blocked",
                 code=str(state.blocked_result.get("error", {}).get("code", "BLOCKED")),
             )
+            _route_pre_side_effect_mutation_executor_dry_run(state)
             return _attach_middleware_metadata(state.blocked_result, state)
 
     result = tool_registry_service.invoke_tool(name, resolved_payload, context=state.context)

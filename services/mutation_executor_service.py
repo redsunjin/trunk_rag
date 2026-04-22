@@ -838,6 +838,7 @@ def build_reindex_mutation_apply_router_dry_run_contract(
     executor_contract: dict[str, object] | None,
     executor_result: dict[str, object] | None = None,
     mutation_success_promotion: dict[str, object] | None = None,
+    route_location: str = "blocked_result_metadata_enrichment",
 ) -> dict[str, object] | None:
     executor = _safe_dict(executor_contract)
     if executor.get("tool_name") != REINDEX_FIRST_LIVE_SCOPE:
@@ -863,7 +864,7 @@ def build_reindex_mutation_apply_router_dry_run_contract(
             "blocks_before_tool_handler": True,
         },
         "router_handoff": {
-            "route_location": "blocked_result_metadata_enrichment",
+            "route_location": route_location,
             "request_builder": "tool_middleware_service._build_mutation_execution_request",
             "router": "mutation_executor_service.execute_mutation_request",
             "dry_run_only": True,

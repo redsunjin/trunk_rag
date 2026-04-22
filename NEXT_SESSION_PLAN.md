@@ -57,6 +57,7 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_FAKE_EXECUTOR_SMOKE_SEAM_DRAFT_2026-04-21.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_MUTATION_APPLY_ROUTER_DRY_RUN_SEAM_DRAFT_2026-04-22.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PRE_SIDE_EFFECT_EXECUTOR_ROUTER_IMPLEMENTATION_DRAFT_2026-04-22.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -64,8 +65,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-062`
-- current_active_title: `V1.5 reindex live adapter pre-side-effect executor router implementation draft`
+- current_active_id: `LOOP-063`
+- current_active_title: `V1.5 reindex live adapter top-level promotion router implementation draft`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1519,7 +1520,7 @@ closeout 메모 (2026-04-20):
 - `mutation_apply_guard`를 단순히 열면 middleware tail이 기존 `tool_registry_service.invoke_tool()` direct path로 진행할 수 있으므로 actual side effect는 계속 닫아 둔다.
 - 기준 문서는 `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`다.
 
-### A-Next55. V1.5 reindex live adapter pre-side-effect executor router implementation draft (현재 active)
+### A-Next55. V1.5 reindex live adapter pre-side-effect executor router implementation draft (완료: 2026-04-22)
 1. actual `index_service.reindex()` side effect를 열지 않고 valid apply 이후 direct tool handler 대신 mutation executor router로 들어가는 runtime seam을 구현 초안 수준으로 고정한다.
 2. durable audit receipt precondition, direct tool handler bypass, local-only explicit binding을 같은 path에서 확인한다.
 3. default blocked path와 smoke suite 회귀를 막는다.
@@ -1535,6 +1536,30 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-061` checkpoint는 actual execution `No-Go`로 닫고, 다음 단계는 side effect를 열지 않는 pre-side-effect executor router implementation draft로 잡았다.
+- `services/tool_middleware_service.py`가 blocked apply result를 만든 뒤 direct tool handler로 내려가기 전 `_route_pre_side_effect_mutation_executor_dry_run()`을 실행하도록 바꿨다.
+- pre-side-effect router는 persisted audit record와 append-only receipt를 먼저 만들고 `mutation_executor_service.execute_mutation_request()`를 호출하며, `_attach_middleware_metadata()`는 같은 receipt/executor result/promotion/router dry-run evidence를 재사용한다.
+- `mutation_apply_router_dry_run.router_handoff.route_location`은 runtime path에서 `mutation_apply_guard_pre_side_effect_router`로 고정했다.
+- 검증: `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` (`35 passed`), `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check`.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PRE_SIDE_EFFECT_EXECUTOR_ROUTER_IMPLEMENTATION_DRAFT_2026-04-22.md`.
+- 다음 단계는 actual side effect를 열지 않는 top-level promotion router implementation draft다.
+
+### A-Next56. V1.5 reindex live adapter top-level promotion router implementation draft (현재 active)
+1. actual `index_service.reindex()` side effect를 열지 않고 executor result/error sidecar를 future top-level apply success/failure surface로 승격하는 promotion router implementation draft를 코드/테스트 기준으로 고정한다.
+2. concrete skeleton success sidecar, adapter failure contract, execution trace retained contracts를 같은 promotion seam에서 확인한다.
+3. default blocked path와 smoke suite 회귀를 막는다.
+
+완료 기준:
+- concrete skeleton success sidecar와 adapter failure contract가 future top-level success/failure surface로 어떻게 이동할지 코드/테스트 기준으로 재현 가능해야 한다.
+- actual execution은 여전히 disabled/dry-run 상태로 유지된다.
+- default blocked path와 smoke suite가 회귀하지 않는다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-062` closeout으로 valid apply 이후 direct `_tool_reindex`/`index_service.reindex`로 내려가지 않고 pre-side-effect executor router dry-run이 먼저 실행되는 runtime path가 고정됐다.
+- 다음 blocker는 executor sidecar를 top-level apply result/error로 승격하는 router가 아직 실제 runtime path에 없다는 점이다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
