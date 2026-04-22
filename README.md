@@ -66,7 +66,7 @@
 - 현재: `mutation_apply_guard`는 preview-confirmed envelope를 검증하고 `PREVIEW_REFERENCE_MISMATCH`, `AUDIT_SINK_RECEIPT_REQUIRED`, `AUDIT_SINK_RECEIPT_INVALID`, `MUTATION_INTENT_SUMMARY_REQUIRED`, `MUTATION_APPLY_NOT_ENABLED`를 분리해 차단한다
 - 현재: `services/tool_audit_sink_service.py`는 default `null_append_only`를 유지한 채 `DOC_RAG_MUTATION_AUDIT_BACKEND=local_file`일 때만 local append-only file backend와 stable `sequence_id` receipt를 제공하고, receipt/entry에 `90일` rolling retention과 explicit local-operator prune를 드러내는 nested `ops` contract를 남긴다
 - 현재: `scripts/smoke_agent_runtime.py`는 `--opt-in-live-binding`, `--opt-in-live-binding-stage-concrete`, `DOC_RAG_MUTATION_SMOKE_LIVE_BINDING=1`, `DOC_RAG_MUTATION_SMOKE_LIVE_BINDING_STAGE`를 지원하고, concrete stage smoke에서는 `live_result_skeleton`, `mutation_executor_result`, `mutation_success_promotion`, `mutation_top_level_promotion_router` evidence를 남긴다
-- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 `reindex` live adapter execution enablement final checkpoint review를 진행하고, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
+- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 `reindex` live adapter guarded live executor implementation draft를 진행하고, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
 
 비목표(현재 단계):
 - 원본 수집/크롤링
