@@ -57,6 +57,9 @@
 20. guarded live executor implementation draft
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_IMPLEMENTATION_DRAFT_2026-04-22.md`
    - 핵심: explicit local-only `binding_stage=guarded_live_executor`에서만 `index_service.reindex()` 호출 seam 검증
+21. guarded live executor smoke command draft
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_SMOKE_COMMAND_DRAFT_2026-04-22.md`
+   - 핵심: `--opt-in-live-binding-stage-guarded` command surface와 guarded runtime sidecar summary 고정
 
 ### Verified Repeatedly
 
@@ -66,7 +69,7 @@
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 - `git diff --check`
 
-최근 루프들(`LOOP-045` ~ `LOOP-065`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐고, 최신 `LOOP-065` closeout 기준 expanded target은 `55 passed`다.
+최근 루프들(`LOOP-045` ~ `LOOP-066`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐고, 최신 `LOOP-066` closeout 기준 smoke/executor target은 `24 passed`다.
 
 ## Test Matrix
 
@@ -91,8 +94,8 @@
 
 ### Future Paths
 
-1. guarded live executor smoke command draft
-   - 기대: default/concrete smoke를 side-effect-free로 유지하면서 guarded stage opt-in command seam 추가
+1. guarded live executor smoke evidence draft
+   - 기대: explicit local-only guarded command에서 blocked top-level surface와 runtime sidecar evidence 동시 확인
    - 상태: next implementation
 
 ## Recommended Testing Order
@@ -114,12 +117,13 @@
 13. execution enablement final checkpoint review
 14. guarded live executor implementation draft 검증
 15. guarded live executor smoke command draft 검증
+16. guarded live executor smoke evidence draft 검증
 
 ## Open Testing Gaps
 
 아직 남아 있는 테스트 갭:
 
-1. guarded live executor smoke command test
+1. guarded live executor smoke evidence capture
 2. actual execution enablement 이후 smoke 업데이트 기준
 3. real side-effect rollback drill 여부
 
@@ -130,4 +134,4 @@
 
 ## Next Step
 
-다음 작업은 `LOOP-066 V1.5 reindex live adapter guarded live executor smoke command draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 작업은 `LOOP-067 V1.5 reindex live adapter guarded live executor smoke evidence draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.

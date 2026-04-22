@@ -153,7 +153,12 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_EVIDENCE_DRAFT_2026-04-20.md`는 activation/local-file/live-binding 조합에서 `reindex_mutation_adapter_live`, `live_binding_stub` evidence를 실제 smoke output으로 고정했다.
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_CONCRETE_EXECUTOR_SKELETON_DRAFT_2026-04-21.md`는 `concrete_executor_skeleton` stage, `live_result_skeleton` selection, `mutation_executor_result` sidecar contract를 고정했다.
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_CONCRETE_SMOKE_EVIDENCE_DRAFT_2026-04-21.md`는 `--opt-in-live-binding-stage-concrete`와 `DOC_RAG_MUTATION_SMOKE_LIVE_BINDING_STAGE` command/env surface, `live_result_skeleton` smoke evidence를 고정했다.
-- 다음 구현은 `LOOP-055 reindex live adapter top-level success promotion draft`이며, 이 단계에서는 blocked-success sidecar를 future top-level apply success surface로 어떻게 승격할지 정리한다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_DRAFT_2026-04-21.md`는 blocked-success sidecar를 future top-level apply success surface로 옮기는 promotion contract를 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_FAILURE_TAXONOMY_DRAFT_2026-04-21.md`는 adapter-specific runtime failure taxonomy를 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PRE_SIDE_EFFECT_EXECUTOR_ROUTER_IMPLEMENTATION_DRAFT_2026-04-22.md`와 `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_ROUTER_IMPLEMENTATION_DRAFT_2026-04-22.md`는 blocked apply path 안에서 durable audit receipt, executor router, future top-level success/failure surface mapping evidence를 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_IMPLEMENTATION_DRAFT_2026-04-22.md`는 explicit local-only `binding_stage=guarded_live_executor`에서만 `index_service.reindex()` 호출 seam을 여는 구현 초안을 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_SMOKE_COMMAND_DRAFT_2026-04-22.md`는 `--opt-in-live-binding-stage-guarded` command surface와 guarded runtime sidecar summary를 고정했다.
+- 다음 구현은 `LOOP-067 reindex live adapter guarded live executor smoke evidence draft`이며, 이 단계에서는 explicit local-only guarded command를 실제 local-file audit config로 실행해 blocked top-level surface와 runtime sidecar evidence를 함께 기록한다.
 - raw input, retrieved context, document content, local path, admin code, credential은 저장/노출 기본 대상에서 제외한다.
 - `services/tool_trace_service.py`는 `redact_execution_trace()`로 `internal`, `public`, `persisted` audience별 trace 정규화를 제공한다.
 

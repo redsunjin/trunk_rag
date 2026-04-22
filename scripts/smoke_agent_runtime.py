@@ -73,7 +73,7 @@ def _summarize_mutation_executor(result: dict[str, object]) -> dict[str, object]
         return None
     activation = _safe_dict(executor.get("activation"))
     boundary = _safe_dict(executor.get("boundary"))
-    return {
+    summary = {
         "executor_name": executor.get("executor_name"),
         "selection_state": executor.get("selection_state"),
         "selection_reason": executor.get("selection_reason"),
@@ -85,6 +85,11 @@ def _summarize_mutation_executor(result: dict[str, object]) -> dict[str, object]
         "boundary_family": boundary.get("family"),
         "boundary_classification": boundary.get("classification"),
     }
+    if "actual_runtime_handler" in executor:
+        summary["actual_runtime_handler"] = executor.get("actual_runtime_handler")
+    if "actual_runtime_handler_invoked" in executor:
+        summary["actual_runtime_handler_invoked"] = executor.get("actual_runtime_handler_invoked")
+    return summary
 
 
 def _summarize_mutation_executor_result(result: dict[str, object]) -> dict[str, object] | None:
@@ -97,7 +102,8 @@ def _summarize_mutation_executor_result(result: dict[str, object]) -> dict[str, 
     reindex_summary = _safe_dict(executor_result.get("reindex_summary"))
     audit_receipt_ref = _safe_dict(executor_result.get("audit_receipt_ref"))
     rollback_hint = _safe_dict(executor_result.get("rollback_hint"))
-    return {
+    runtime_result = _safe_dict(executor_result.get("runtime_result"))
+    summary = {
         "schema_version": executor_result.get("schema_version"),
         "collection_key": reindex_summary.get("collection_key"),
         "operation": reindex_summary.get("operation"),
@@ -108,6 +114,16 @@ def _summarize_mutation_executor_result(result: dict[str, object]) -> dict[str, 
         "rollback_mode": rollback_hint.get("mode"),
         "rollback_collection_key": rollback_hint.get("collection_key"),
     }
+    if "runtime_chunks" in reindex_summary:
+        summary["runtime_chunks"] = reindex_summary.get("runtime_chunks")
+    if "runtime_vectors" in reindex_summary:
+        summary["runtime_vectors"] = reindex_summary.get("runtime_vectors")
+    if "runtime_scope" in reindex_summary:
+        summary["runtime_scope"] = reindex_summary.get("runtime_scope")
+    if runtime_result:
+        summary["runtime_collection"] = runtime_result.get("collection")
+        summary["runtime_reindex_scope"] = runtime_result.get("reindex_scope")
+    return summary
 
 
 def _summarize_mutation_success_promotion(result: dict[str, object]) -> dict[str, object] | None:
@@ -196,7 +212,14 @@ def _parse_bool_env(value: str | None) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
-def _resolve_live_binding_stage(opt_in_live_binding_stage_concrete: bool) -> str | None:
+def _resolve_live_binding_stage(
+    opt_in_live_binding_stage_concrete: bool,
+    opt_in_live_binding_stage_guarded: bool,
+) -> str | None:
+    if opt_in_live_binding_stage_concrete and opt_in_live_binding_stage_guarded:
+        raise ValueError("choose only one live binding stage flag")
+    if opt_in_live_binding_stage_guarded:
+        return mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_GUARDED_LIVE_EXECUTOR
     if opt_in_live_binding_stage_concrete:
         return mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_CONCRETE_SKELETON
     raw_stage = os.getenv(MUTATION_ACTIVATION_SMOKE_LIVE_BINDING_STAGE_ENV_KEY)
@@ -221,6 +244,7 @@ def run_smoke(
     *,
     opt_in_live_binding: bool | None = None,
     opt_in_live_binding_stage_concrete: bool = False,
+    opt_in_live_binding_stage_guarded: bool = False,
 ) -> dict[str, object]:
     load_project_env()
     resolved_opt_in_live_binding = (
@@ -228,7 +252,10 @@ def run_smoke(
         if opt_in_live_binding is None
         else bool(opt_in_live_binding)
     )
-    resolved_live_binding_stage = _resolve_live_binding_stage(opt_in_live_binding_stage_concrete)
+    resolved_live_binding_stage = _resolve_live_binding_stage(
+        opt_in_live_binding_stage_concrete,
+        opt_in_live_binding_stage_guarded,
+    )
     executor_binding = _build_live_binding(resolved_opt_in_live_binding, resolved_live_binding_stage)
     reindex_apply_payload: dict[str, object] = {"collection": "all"}
     if (
@@ -348,12 +375,19 @@ def run_smoke(
 
 
 def main() -> int:
-    opt_in_live_binding = "--opt-in-live-binding" in sys.argv[1:]
+    args = sys.argv[1:]
+    opt_in_live_binding = True if "--opt-in-live-binding" in args else None
     opt_in_live_binding_stage_concrete = "--opt-in-live-binding-stage-concrete" in sys.argv[1:]
-    result = run_smoke(
-        opt_in_live_binding=opt_in_live_binding,
-        opt_in_live_binding_stage_concrete=opt_in_live_binding_stage_concrete,
-    )
+    opt_in_live_binding_stage_guarded = "--opt-in-live-binding-stage-guarded" in sys.argv[1:]
+    try:
+        result = run_smoke(
+            opt_in_live_binding=opt_in_live_binding,
+            opt_in_live_binding_stage_concrete=opt_in_live_binding_stage_concrete,
+            opt_in_live_binding_stage_guarded=opt_in_live_binding_stage_guarded,
+        )
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
     return 0 if result["ok"] is True else 1
 
