@@ -93,16 +93,20 @@
 32. rollback drill plan draft
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_PLAN_DRAFT_2026-04-22.md`
    - 핵심: pre-state capture, guarded promotion, audit linkage, rebuild-from-source recovery, post-recovery health/vector check 순서 고정
+33. rollback drill harness draft
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_HARNESS_DRAFT_2026-04-22.md`
+   - 핵심: explicit local env guard, pre-state capture, guarded promotion smoke, audit linkage check, rebuild-from-source recovery, post-recovery vector evidence report를 제공
 
 ### Verified Repeatedly
 
 반복적으로 유지 중인 공통 검증:
 
 - `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python -m pytest -q tests/test_smoke_reindex_rollback_drill.py`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 - `git diff --check`
 
-최근 루프들(`LOOP-045` ~ `LOOP-073`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐다. 최신 `LOOP-073` closeout 기준 promotion target은 `64 passed`이고, guarded top-level promotion smoke는 pre-executor audit sequence `6`, post-executor audit sequence `7`, top-level apply `ok=true`, `runtime_chunks=37`, `runtime_vectors=37` evidence를 남겼다.
+최근 루프들(`LOOP-045` ~ `LOOP-078`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐다. 최신 `LOOP-078` closeout 기준 rollback drill harness target은 `2 passed`이고, harness는 explicit local env guard와 guarded top-level promotion/recovery rebuild orchestration을 검증한다.
 
 ## Test Matrix
 
@@ -124,12 +128,16 @@
    - 기대: `guarded_live_executor`
    - 기대: direct tool handler bypass, `index_service.reindex()` 호출 seam evidence
    - 기대 top-level: `MUTATION_APPLY_NOT_ENABLED` blocked surface 유지
+6. explicit guarded top-level promotion path
+   - 기대: `guarded_live_executor`
+   - 기대: linked `mutation_executor_post_execution` audit receipt가 있을 때만 top-level `ok=true` 승격
+   - 기대: local-only extra opt-in 없이는 default/public top-level surface 비활성 유지
 
 ### Future Paths
 
-1. rollback drill harness draft
-   - 기대: local-only drill harness가 env guard, pre/post/recovery evidence report, command orchestration을 제공
-   - 상태: next implementation
+1. rollback drill execution evidence
+   - 기대: local-only drill harness를 explicit env로 실행해 pre-state, guarded promotion, post-executor audit linkage, rebuild recovery, post-recovery vector evidence를 남김
+   - 상태: next execution evidence
 
 ## Recommended Testing Order
 
@@ -162,14 +170,15 @@
 25. post-runbook enablement checkpoint review
 26. rollback drill plan draft 검증
 27. rollback drill harness draft 검증
+28. rollback drill execution evidence 검증
 
 ## Open Testing Gaps
 
 아직 남아 있는 테스트 갭:
 
-1. rollback drill harness 구현
+1. rollback drill execution evidence capture
 2. broader/public top-level apply success/failure enablement 기준
-3. real side-effect rollback drill 실행 여부
+3. rollback drill result 이후 broader gate go/no-go 판정
 
 ## Notes
 
@@ -178,4 +187,4 @@
 
 ## Next Step
 
-다음 작업은 `LOOP-078 V1.5 reindex live adapter rollback drill harness draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 작업은 `LOOP-079 V1.5 reindex live adapter rollback drill execution evidence`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.

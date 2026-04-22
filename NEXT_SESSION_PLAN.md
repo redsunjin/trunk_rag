@@ -74,8 +74,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-078`
-- current_active_title: `V1.5 reindex live adapter rollback drill harness draft`
+- current_active_id: `LOOP-079`
+- current_active_title: `V1.5 reindex live adapter rollback drill execution evidence`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1892,7 +1892,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_PLAN_DRAFT_2026-04-22.md`.
 - 다음 단계는 rollback drill harness draft다.
 
-### A-Next71. V1.5 reindex live adapter rollback drill harness draft (현재 active)
+### A-Next71. V1.5 reindex live adapter rollback drill harness draft (완료: 2026-04-22)
 1. rollback drill 계획을 실행 가능한 local-only harness 초안으로 만든다.
 2. pre-state capture, guarded top-level promotion invocation, rebuild-from-source recovery invocation, compact report output, explicit env guard를 구현한다.
 3. harness test가 command orchestration과 guard behavior를 검증해야 한다.
@@ -1908,6 +1908,29 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-077`에서 rollback drill plan이 local-only, source-document rebuild recovery 기준으로 정리됐다.
+- `scripts/smoke_reindex_rollback_drill.py` harness를 추가했다.
+- harness는 explicit local mutation/local-file audit env 없이는 실행을 거부한다.
+- harness는 pre-state capture, guarded top-level promotion smoke, post-executor audit linkage 확인, rebuild-from-source recovery, post-recovery vector count capture를 구조화해 출력한다.
+- 검증: `./.venv/bin/python -m pytest -q tests/test_smoke_reindex_rollback_drill.py` -> `2 passed`.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_HARNESS_DRAFT_2026-04-22.md`.
+- 다음 단계는 rollback drill execution evidence다.
+
+### A-Next72. V1.5 reindex live adapter rollback drill execution evidence (현재 active)
+1. rollback drill harness를 explicit local env로 실행하고 evidence를 문서화한다.
+2. pre/post/recovery vector evidence, audit linkage evidence, pass/fail 판정을 기록한다.
+3. default/public No-Go를 유지한다.
+
+완료 기준:
+- rollback drill harness가 `ok=true`로 종료하거나, 실패 시 blocker와 영향 범위가 문서화되어야 한다.
+- pre/post executor audit linkage와 recovery rebuild result가 evidence로 남아야 한다.
+- default/public No-Go가 유지되어야 한다.
+
+검증:
+- `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag-rollback-drill ./.venv/bin/python scripts/smoke_reindex_rollback_drill.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-078`에서 rollback drill harness가 추가됐고 unit guard/orchestration test가 통과했다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

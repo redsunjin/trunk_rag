@@ -75,7 +75,8 @@
 - 현재: operator runbook은 default blocked, activation check, guarded blocked, guarded top-level promotion command와 pre/post audit sequence 확인 절차를 구분한다
 - 현재: post-runbook checkpoint 결론은 local-only operator surface `Go`, default/public promotion `No-Go`, rollback drill planning `Go`다
 - 현재: rollback drill plan은 pre-state capture, guarded top-level promotion, audit linkage 확인, rebuild-from-source recovery, post-recovery health/vector check 순서로 고정됐다
-- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 `reindex` live adapter rollback drill harness draft를 진행하고, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
+- 현재: `scripts/smoke_reindex_rollback_drill.py`는 explicit local env guard, pre-state capture, guarded promotion smoke, rebuild-from-source recovery, post-recovery vector capture를 구조화해 출력한다
+- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 `reindex` live adapter rollback drill execution evidence를 진행하고, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
 
 비목표(현재 단계):
 - 원본 수집/크롤링
