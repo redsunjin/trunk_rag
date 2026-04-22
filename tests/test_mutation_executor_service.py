@@ -822,6 +822,88 @@ def test_build_reindex_fake_executor_smoke_contract_links_handoff_success_and_fa
     ]
 
 
+def test_build_reindex_mutation_apply_router_dry_run_contract_connects_guard_to_router_without_side_effect():
+    executor_contract = {
+        "tool_name": "reindex",
+        "executor_name": mutation_executor_service.REINDEX_MUTATION_EXECUTOR_NAME,
+        "selection_state": "candidate_stub",
+        "selection_reason": "activation_guard_satisfied",
+        "execution_enabled": False,
+    }
+
+    contract = mutation_executor_service.build_reindex_mutation_apply_router_dry_run_contract(
+        executor_contract=executor_contract,
+    )
+
+    assert contract == {
+        "schema_version": mutation_executor_service.REINDEX_MUTATION_APPLY_ROUTER_DRY_RUN_SCHEMA_VERSION,
+        "tool_name": "reindex",
+        "dry_run_state": "draft_ready_not_enabled",
+        "surface_scope": "internal_service_only",
+        "apply_guard": {
+            "validated_apply_envelope": True,
+            "blocked_error_code": tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED,
+            "blocked_by": "mutation_apply_guard",
+            "blocks_before_tool_handler": True,
+        },
+        "router_handoff": {
+            "route_location": "blocked_result_metadata_enrichment",
+            "request_builder": "tool_middleware_service._build_mutation_execution_request",
+            "router": "mutation_executor_service.execute_mutation_request",
+            "dry_run_only": True,
+            "direct_tool_handler": "tool_registry_service._tool_reindex",
+            "actual_runtime_handler": "index_service.reindex",
+            "direct_tool_handler_invoked": False,
+            "actual_runtime_handler_invoked": False,
+        },
+        "pre_execution_handoff": {
+            "schema_version": mutation_executor_service.REINDEX_LIVE_ADAPTER_PRE_EXECUTION_HANDOFF_SCHEMA_VERSION,
+            "required_pre_execution_order": [
+                "validate_apply_envelope",
+                "build_persisted_audit_record",
+                "append_durable_audit_receipt",
+                "build_mutation_execution_request",
+                "resolve_mutation_executor",
+                "execute_mutation_executor",
+                "promote_executor_result_or_error",
+            ],
+            "router_required_before_side_effect": "mutation_executor_service.execute_mutation_request",
+        },
+        "fake_smoke_link": {
+            "schema_version": mutation_executor_service.REINDEX_LIVE_ADAPTER_FAKE_SMOKE_SCHEMA_VERSION,
+            "success_selection_state": mutation_executor_service.REINDEX_FAKE_EXECUTOR_SMOKE_SUCCESS_SELECTION_STATE,
+            "failure_selection_state": mutation_executor_service.REINDEX_FAKE_EXECUTOR_SMOKE_FAILURE_SELECTION_STATE,
+            "calls_index_service_reindex": False,
+        },
+        "executor_evidence": {
+            "executor_name": mutation_executor_service.REINDEX_MUTATION_EXECUTOR_NAME,
+            "selection_state": "candidate_stub",
+            "selection_reason": "activation_guard_satisfied",
+            "execution_enabled": False,
+            "result_schema_version": None,
+            "success_promotion_schema_version": None,
+        },
+        "promotion_policy": {
+            "top_level_result_promoted": False,
+            "top_level_failure_promoted": False,
+            "actual_side_effect_enabled": False,
+        },
+        "blocked_until": [
+            "mutation_apply_guard_execution_enabled",
+            "dry_run_promoted_to_pre_execution_router",
+            "durable_audit_receipt_created_before_side_effect",
+            "direct_tool_handler_bypass_test_promoted_to_runtime",
+            "actual_execution_go_no_go_review",
+        ],
+    }
+    assert (
+        mutation_executor_service.build_reindex_mutation_apply_router_dry_run_contract(
+            executor_contract={"tool_name": "approve_upload_request"}
+        )
+        is None
+    )
+
+
 def test_execute_mutation_request_falls_back_to_candidate_stub_when_executor_binding_is_invalid(monkeypatch):
     monkeypatch.setenv(mutation_executor_service.MUTATION_EXECUTION_ENV_KEY, "1")
 

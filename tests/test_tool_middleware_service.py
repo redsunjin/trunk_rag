@@ -604,7 +604,11 @@ def test_mutation_apply_guard_exposes_reindex_candidate_stub_when_activation_and
     monkeypatch,
     tmp_path,
 ):
+    def fail_if_invoked(*args, **kwargs):
+        raise AssertionError("direct reindex tool handler must not be called during apply dry-run")
+
     monkeypatch.setattr(tool_middleware_service.runtime_service, "verify_admin_code", lambda code: None)
+    monkeypatch.setattr(tool_middleware_service.tool_registry_service, "invoke_tool", fail_if_invoked)
     monkeypatch.setenv(mutation_executor_service.MUTATION_EXECUTION_ENV_KEY, "1")
     monkeypatch.setenv(tool_audit_sink_service.AUDIT_SINK_BACKEND_ENV_KEY, "local_file")
     monkeypatch.setenv(tool_audit_sink_service.AUDIT_SINK_DIR_ENV_KEY, str(tmp_path / "mutation_audit"))
@@ -656,6 +660,30 @@ def test_mutation_apply_guard_exposes_reindex_candidate_stub_when_activation_and
     assert boundary == _expected_reindex_boundary()
     assert result["error"]["mutation_executor"]["delegate_executor_name"] == "noop_mutation_executor"
     assert result["execution_trace"]["contracts"]["mutation_executor"] == result["error"]["mutation_executor"]
+    router_dry_run = result["error"]["mutation_apply_router_dry_run"]
+    assert router_dry_run["schema_version"] == (
+        mutation_executor_service.REINDEX_MUTATION_APPLY_ROUTER_DRY_RUN_SCHEMA_VERSION
+    )
+    assert router_dry_run["apply_guard"] == {
+        "validated_apply_envelope": True,
+        "blocked_error_code": "MUTATION_APPLY_NOT_ENABLED",
+        "blocked_by": "mutation_apply_guard",
+        "blocks_before_tool_handler": True,
+    }
+    assert router_dry_run["router_handoff"] == {
+        "route_location": "blocked_result_metadata_enrichment",
+        "request_builder": "tool_middleware_service._build_mutation_execution_request",
+        "router": "mutation_executor_service.execute_mutation_request",
+        "dry_run_only": True,
+        "direct_tool_handler": "tool_registry_service._tool_reindex",
+        "actual_runtime_handler": "index_service.reindex",
+        "direct_tool_handler_invoked": False,
+        "actual_runtime_handler_invoked": False,
+    }
+    assert router_dry_run["executor_evidence"]["executor_name"] == "reindex_mutation_adapter_stub"
+    assert router_dry_run["executor_evidence"]["selection_state"] == "candidate_stub"
+    assert router_dry_run["promotion_policy"]["actual_side_effect_enabled"] is False
+    assert result["execution_trace"]["contracts"]["mutation_apply_router_dry_run"] == router_dry_run
 
 
 def test_mutation_apply_guard_forwards_executor_binding_into_mutation_executor_contract(

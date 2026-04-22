@@ -174,6 +174,7 @@ def _attach_middleware_metadata(
     mutation_executor_contract = state.mutation_executor_contract
     mutation_executor_result: dict[str, object] | None = None
     mutation_success_promotion: dict[str, object] | None = None
+    mutation_apply_router_dry_run: dict[str, object] | None = None
     if isinstance(enriched.get("error"), dict):
         error = dict(enriched["error"])
         if error.get("code") == tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED:
@@ -200,12 +201,21 @@ def _attach_middleware_metadata(
                 executor_contract=mutation_executor_contract,
                 executor_result=mutation_executor_result,
             )
+            mutation_apply_router_dry_run = (
+                mutation_executor_service.build_reindex_mutation_apply_router_dry_run_contract(
+                    executor_contract=mutation_executor_contract,
+                    executor_result=mutation_executor_result,
+                    mutation_success_promotion=mutation_success_promotion,
+                )
+            )
             if mutation_executor_contract is not None:
                 error["mutation_executor"] = mutation_executor_contract
             if mutation_executor_result is not None:
                 error["mutation_executor_result"] = mutation_executor_result
             if mutation_success_promotion is not None:
                 error["mutation_success_promotion"] = mutation_success_promotion
+            if mutation_apply_router_dry_run is not None:
+                error["mutation_apply_router_dry_run"] = mutation_apply_router_dry_run
             enriched["error"] = error
     mutation_intent_summary = _resolve_mutation_intent(state)
     apply_envelope_draft = tool_apply_service.build_mutation_apply_envelope(
@@ -229,6 +239,8 @@ def _attach_middleware_metadata(
         contracts["mutation_executor_result"] = mutation_executor_result
     if mutation_success_promotion is not None:
         contracts["mutation_success_promotion"] = mutation_success_promotion
+    if mutation_apply_router_dry_run is not None:
+        contracts["mutation_apply_router_dry_run"] = mutation_apply_router_dry_run
     middleware_metadata["contracts"] = contracts
     execution_trace["contracts"] = contracts
     if isinstance(enriched.get("error"), dict):
@@ -241,6 +253,8 @@ def _attach_middleware_metadata(
             updated_error["mutation_executor_result"] = mutation_executor_result
         if mutation_success_promotion is not None:
             updated_error["mutation_success_promotion"] = mutation_success_promotion
+        if mutation_apply_router_dry_run is not None:
+            updated_error["mutation_apply_router_dry_run"] = mutation_apply_router_dry_run
         enriched["error"] = updated_error
     enriched["middleware"] = middleware_metadata
     enriched["execution_trace"] = execution_trace

@@ -15,6 +15,7 @@ REINDEX_LIVE_ADAPTER_SMOKE_HARNESS_SCHEMA_VERSION = "v1.5.reindex_live_adapter_s
 REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_SCHEMA_VERSION = "v1.5.reindex_live_adapter_success_promotion.v1"
 REINDEX_LIVE_ADAPTER_PRE_EXECUTION_HANDOFF_SCHEMA_VERSION = "v1.5.reindex_live_adapter_pre_execution_handoff.v1"
 REINDEX_LIVE_ADAPTER_FAKE_SMOKE_SCHEMA_VERSION = "v1.5.reindex_live_adapter_fake_executor_smoke.v1"
+REINDEX_MUTATION_APPLY_ROUTER_DRY_RUN_SCHEMA_VERSION = "v1.5.reindex_live_adapter_mutation_apply_router_dry_run.v1"
 MUTATION_EXECUTION_ENV_KEY = "DOC_RAG_AGENT_MUTATION_EXECUTION"
 REINDEX_MUTATION_EXECUTOR_NAME = "reindex_mutation_adapter_stub"
 REINDEX_LIVE_ADAPTER_EXECUTOR_NAME = "reindex_mutation_adapter_live"
@@ -828,6 +829,81 @@ def build_reindex_fake_executor_smoke_contract() -> dict[str, object]:
             "fake_executor_success_smoke_command_added",
             "fake_executor_failure_smoke_command_added",
             "top_level_success_failure_promotion_router_implemented",
+        ],
+    }
+
+
+def build_reindex_mutation_apply_router_dry_run_contract(
+    *,
+    executor_contract: dict[str, object] | None,
+    executor_result: dict[str, object] | None = None,
+    mutation_success_promotion: dict[str, object] | None = None,
+) -> dict[str, object] | None:
+    executor = _safe_dict(executor_contract)
+    if executor.get("tool_name") != REINDEX_FIRST_LIVE_SCOPE:
+        return None
+
+    result = _safe_dict(executor_result)
+    success_promotion = _safe_dict(mutation_success_promotion)
+    pre_execution_handoff = build_reindex_pre_execution_handoff_contract()
+    side_effect_barrier = _safe_dict(pre_execution_handoff.get("side_effect_barrier"))
+    fake_smoke = build_reindex_fake_executor_smoke_contract()
+    fake_modes = _safe_dict(fake_smoke.get("fake_executor_modes"))
+    success_mode = _safe_dict(fake_modes.get("success"))
+    failure_mode = _safe_dict(fake_modes.get("failure"))
+    return {
+        "schema_version": REINDEX_MUTATION_APPLY_ROUTER_DRY_RUN_SCHEMA_VERSION,
+        "tool_name": REINDEX_FIRST_LIVE_SCOPE,
+        "dry_run_state": "draft_ready_not_enabled",
+        "surface_scope": "internal_service_only",
+        "apply_guard": {
+            "validated_apply_envelope": True,
+            "blocked_error_code": tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED,
+            "blocked_by": "mutation_apply_guard",
+            "blocks_before_tool_handler": True,
+        },
+        "router_handoff": {
+            "route_location": "blocked_result_metadata_enrichment",
+            "request_builder": "tool_middleware_service._build_mutation_execution_request",
+            "router": "mutation_executor_service.execute_mutation_request",
+            "dry_run_only": True,
+            "direct_tool_handler": side_effect_barrier.get("direct_tool_handler"),
+            "actual_runtime_handler": side_effect_barrier.get("actual_runtime_handler"),
+            "direct_tool_handler_invoked": False,
+            "actual_runtime_handler_invoked": False,
+        },
+        "pre_execution_handoff": {
+            "schema_version": pre_execution_handoff.get("schema_version"),
+            "required_pre_execution_order": pre_execution_handoff.get("required_pre_execution_order"),
+            "router_required_before_side_effect": side_effect_barrier.get("router_required_before_side_effect"),
+        },
+        "fake_smoke_link": {
+            "schema_version": fake_smoke.get("schema_version"),
+            "success_selection_state": success_mode.get("selection_state"),
+            "failure_selection_state": failure_mode.get("selection_state"),
+            "calls_index_service_reindex": _safe_dict(fake_smoke.get("side_effect_policy")).get(
+                "calls_index_service_reindex"
+            ),
+        },
+        "executor_evidence": {
+            "executor_name": executor.get("executor_name"),
+            "selection_state": executor.get("selection_state"),
+            "selection_reason": executor.get("selection_reason"),
+            "execution_enabled": executor.get("execution_enabled"),
+            "result_schema_version": result.get("schema_version"),
+            "success_promotion_schema_version": success_promotion.get("schema_version"),
+        },
+        "promotion_policy": {
+            "top_level_result_promoted": False,
+            "top_level_failure_promoted": False,
+            "actual_side_effect_enabled": False,
+        },
+        "blocked_until": [
+            "mutation_apply_guard_execution_enabled",
+            "dry_run_promoted_to_pre_execution_router",
+            "durable_audit_receipt_created_before_side_effect",
+            "direct_tool_handler_bypass_test_promoted_to_runtime",
+            "actual_execution_go_no_go_review",
         ],
     }
 

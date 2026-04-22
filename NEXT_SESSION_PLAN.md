@@ -55,6 +55,7 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_GO_NO_GO_REVIEW_2026-04-21.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PRE_EXECUTION_HANDOFF_SEAM_DRAFT_2026-04-21.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_FAKE_EXECUTOR_SMOKE_SEAM_DRAFT_2026-04-21.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_MUTATION_APPLY_ROUTER_DRY_RUN_SEAM_DRAFT_2026-04-22.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -62,8 +63,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-060`
-- current_active_title: `V1.5 reindex live adapter mutation apply executor router dry-run seam draft`
+- current_active_id: `LOOP-061`
+- current_active_title: `V1.5 reindex live adapter execution enablement checkpoint review`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1473,7 +1474,7 @@ closeout 메모 (2026-04-20):
 - 1차 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py` -> `16 passed in 0.07s`.
 - 최종 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` -> `51 passed in 0.09s`; `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`; `git diff --check` -> pass.
 
-### A-Next53. V1.5 reindex live adapter mutation apply executor router dry-run seam draft (현재 active)
+### A-Next53. V1.5 reindex live adapter mutation apply executor router dry-run seam draft (완료: 2026-04-22)
 1. actual `index_service.reindex()` side effect를 열지 않고 `mutation_apply_guard` 이후 write path가 mutation executor router dry-run으로 넘어가는 seam을 고정한다.
 2. direct tool handler 우회 차단 조건과 fake smoke contract 연결을 테스트 가능한 계약으로 정리한다.
 3. future enablement 전에 router 위치와 promotion handoff를 다시 확인할 수 있게 한다.
@@ -1489,7 +1490,30 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-21):
 - `LOOP-059` closeout으로 실제 index mutation 없는 fake success/failure smoke contract가 고정됐다.
-- 다음 작업은 actual execution enablement가 아니라 mutation apply 이후 executor router dry-run 조건을 고정하는 것이다.
+- `services/mutation_executor_service.py`에 `v1.5.reindex_live_adapter_mutation_apply_router_dry_run.v1` contract builder를 추가했다.
+- `services/tool_middleware_service.py`는 `MUTATION_APPLY_NOT_ENABLED` blocked apply metadata에 `mutation_apply_router_dry_run` contract를 붙인다.
+- contract는 route location을 `blocked_result_metadata_enrichment`, router를 `mutation_executor_service.execute_mutation_request`로 고정하고, direct `_tool_reindex`와 `index_service.reindex` 호출 여부를 모두 `false`로 명시한다.
+- middleware test는 direct reindex tool handler가 apply dry-run 중 호출되지 않는 것을 monkeypatch로 고정했다.
+- 기준 문서는 `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_MUTATION_APPLY_ROUTER_DRY_RUN_SEAM_DRAFT_2026-04-22.md`다.
+- 1차 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py` -> `34 passed in 0.13s`.
+- 최종 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` -> `52 passed in 0.10s`; `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`; `git diff --check` -> pass.
+
+### A-Next54. V1.5 reindex live adapter execution enablement checkpoint review (현재 active)
+1. actual `index_service.reindex()` side effect를 열기 전 enablement checkpoint를 다시 검토한다.
+2. `LOOP-058` pre-execution handoff, `LOOP-059` fake smoke, `LOOP-060` router dry-run 이후 남은 blocker를 재평가한다.
+3. Go/No-Go와 후속 loop를 문서화한다.
+
+완료 기준:
+- actual execution enablement가 가능한지 또는 추가 blocker가 남았는지 checkpoint verdict로 판정된다.
+- enablement가 가능하더라도 default/public surface를 열지 않고 local-only opt-in 범위를 유지하는 조건이 문서화된다.
+- blocker가 있으면 재개 조건과 후속 loop가 명확해진다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-060` closeout으로 apply guard 이후 executor router dry-run evidence가 error payload와 execution trace contract에 함께 고정됐다.
+- 다음 작업은 actual execution 구현이 아니라 enablement checkpoint review다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
