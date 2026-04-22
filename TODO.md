@@ -49,6 +49,7 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_IMPLEMENTATION_DRAFT_2026-04-22.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_SMOKE_COMMAND_DRAFT_2026-04-22.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_SMOKE_EVIDENCE_DRAFT_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_SMOKE_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
 - `docs/PREPROCESSING_RULES.md`
 - `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md`
 - `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
@@ -138,7 +139,8 @@
 | LOOP-065 | done | V1.5 reindex live adapter guarded live executor implementation draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-066 | done | V1.5 reindex live adapter guarded live executor smoke command draft | `./.venv/bin/python -m pytest -q tests/test_smoke_agent_runtime.py tests/test_mutation_executor_service.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-067 | done | V1.5 reindex live adapter guarded live executor smoke evidence draft | `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag-guarded-live-smoke ./.venv/bin/python scripts/smoke_agent_runtime.py --opt-in-live-binding --opt-in-live-binding-stage-guarded` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-068 | active | V1.5 reindex live adapter post-smoke enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-068 | done | V1.5 reindex live adapter post-smoke enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-069 | active | V1.5 reindex live adapter executor error sidecar draft | `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py tests/test_mutation_executor_service.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -1874,7 +1876,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_SMOKE_EVIDENCE_DRAFT_2026-04-22.md`.
 - 다음 단계는 actual guarded smoke evidence 이후 top-level promotion/enablement 가능 여부를 다시 판정하는 checkpoint review다.
 
-## 현재 Active Loop (LOOP-068)
+## 완료 Loop (LOOP-068)
 
 목표:
 - guarded live executor smoke evidence 이후 top-level apply success promotion과 actual execution enablement의 Go/No-Go를 재판정한다.
@@ -1894,6 +1896,31 @@ closeout 메모 (2026-04-20):
 진행 메모 (2026-04-22):
 - `LOOP-067` closeout으로 actual guarded local execution evidence는 확보됐다.
 - 아직 top-level promotion gate는 닫혀 있고, 다음 판단은 success surface를 열 수 있는지와 추가 audit/rollback evidence가 필요한지다.
+- 판정: guarded local execution evidence는 `Go`, top-level apply success promotion은 `No-Go`, next implementation planning은 `Go`.
+- top-level promotion을 열기 전 blocker는 executor failure detail이 아직 first-class blocked apply sidecar로 남지 않는 점, durable audit이 post-executor result/error를 아직 별도 evidence로 남기지 않는 점, rollback drill이 advisory hint 수준인 점이다.
+- 다음 단계는 executor가 호출됐지만 result를 만들지 못했을 때 `mutation_executor_error` sidecar와 failure route evidence를 deterministic하게 남기는 것이다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_SMOKE_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`.
+
+## 현재 Active Loop (LOOP-069)
+
+목표:
+- guarded executor가 실패할 때 `mutation_executor_error` sidecar와 promotion router failure route evidence를 blocked apply response에 남긴다.
+
+범위:
+- 포함: executor error capture, blocked apply error/contracts attachment, top-level promotion router failure eligibility, smoke summary, monkeypatch failure tests
+- 제외: top-level success promotion gate 구현, public route enablement, rollback drill 구현, upload review live execution
+
+완료 기준:
+- `execute_mutation_request()`가 `ok=false`와 supported reindex error code를 반환하면 middleware blocked apply response에 `mutation_executor_error`가 포함되어야 한다.
+- top-level promotion router failure route가 supported executor error code 기준으로 eligible evidence를 남겨야 한다.
+- smoke summary가 executor error sidecar를 요약할 수 있어야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py tests/test_mutation_executor_service.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-068` 판정상 success promotion gate를 열기 전 실패 sidecar/audit evidence 보강이 우선이다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

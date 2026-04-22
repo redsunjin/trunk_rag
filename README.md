@@ -67,7 +67,7 @@
 - 현재: `services/tool_audit_sink_service.py`는 default `null_append_only`를 유지한 채 `DOC_RAG_MUTATION_AUDIT_BACKEND=local_file`일 때만 local append-only file backend와 stable `sequence_id` receipt를 제공하고, receipt/entry에 `90일` rolling retention과 explicit local-operator prune를 드러내는 nested `ops` contract를 남긴다
 - 현재: `scripts/smoke_agent_runtime.py`는 `--opt-in-live-binding`, `--opt-in-live-binding-stage-concrete`, `--opt-in-live-binding-stage-guarded`, `DOC_RAG_MUTATION_SMOKE_LIVE_BINDING=1`, `DOC_RAG_MUTATION_SMOKE_LIVE_BINDING_STAGE`를 지원한다. concrete stage smoke에서는 side-effect-free `live_result_skeleton` evidence를 남기고, guarded stage smoke에서는 explicit local-only `guarded_live_executor` binding으로 `index_service.reindex()`를 호출해 runtime sidecar evidence를 남긴다. guarded stage에서는 runtime sidecar가 없으면 smoke check가 실패한다
 - 현재: `services/index_service.py`는 source metadata의 list/dict 값을 보존하되 Chroma ingest 직전에는 JSON 문자열로 정규화해 vectorstore metadata 제약을 만족시킨다
-- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 `reindex` live adapter post-smoke enablement checkpoint review를 진행하고, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
+- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 `reindex` live adapter executor error sidecar draft를 진행하고, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
 
 비목표(현재 단계):
 - 원본 수집/크롤링

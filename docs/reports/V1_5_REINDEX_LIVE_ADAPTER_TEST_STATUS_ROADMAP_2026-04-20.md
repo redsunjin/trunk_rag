@@ -63,6 +63,9 @@
 22. guarded live executor smoke evidence draft
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_SMOKE_EVIDENCE_DRAFT_2026-04-22.md`
    - 핵심: actual guarded local execution smoke에서 `runtime_chunks=37`, `runtime_vectors=37` sidecar evidence와 blocked top-level surface 동시 확인
+23. post-smoke enablement checkpoint review
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_SMOKE_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+   - 핵심: guarded local execution evidence `Go`, top-level success promotion `No-Go`, executor error sidecar implementation planning `Go`
 
 ### Verified Repeatedly
 
@@ -97,9 +100,9 @@
 
 ### Future Paths
 
-1. post-smoke enablement checkpoint review
-   - 기대: guarded smoke evidence 이후 top-level promotion/actual execution enablement Go/No-Go 재판정
-   - 상태: next review
+1. executor error sidecar draft
+   - 기대: guarded executor failure를 `mutation_executor_error` sidecar와 promotion router failure route evidence로 노출
+   - 상태: next implementation
 
 ## Recommended Testing Order
 
@@ -122,12 +125,13 @@
 15. guarded live executor smoke command draft 검증
 16. guarded live executor smoke evidence draft 검증
 17. post-smoke enablement checkpoint review
+18. executor error sidecar draft 검증
 
 ## Open Testing Gaps
 
 아직 남아 있는 테스트 갭:
 
-1. post-smoke top-level promotion enablement decision
+1. executor error sidecar and failure route evidence
 2. actual execution enablement 이후 smoke 업데이트 기준
 3. real side-effect rollback drill 여부
 
@@ -138,4 +142,4 @@
 
 ## Next Step
 
-다음 작업은 `LOOP-068 V1.5 reindex live adapter post-smoke enablement checkpoint review`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 작업은 `LOOP-069 V1.5 reindex live adapter executor error sidecar draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
