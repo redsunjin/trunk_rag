@@ -42,6 +42,9 @@
 15. mutation apply executor router dry-run seam
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_MUTATION_APPLY_ROUTER_DRY_RUN_SEAM_DRAFT_2026-04-22.md`
    - 핵심: blocked apply path에서 direct `_tool_reindex`/`index_service.reindex` 호출 없이 mutation executor router dry-run evidence 고정
+16. execution enablement checkpoint review
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+   - 핵심: actual execution `No-Go`, next planning `Go` for pre-side-effect executor router implementation draft
 
 ### Verified Repeatedly
 
@@ -72,8 +75,8 @@
 
 ### Future Paths
 
-1. execution enablement checkpoint review
-   - 기대: pre-execution handoff, fake smoke, router dry-run 이후 actual enablement Go/No-Go 재판정
+1. pre-side-effect executor router implementation draft
+   - 기대: actual side effect 없이 valid apply 이후 direct tool handler 대신 executor router path 우선 조건 고정
    - 상태: next draft
 
 ## Recommended Testing Order
@@ -90,12 +93,13 @@
 8. fake/sandboxed executor smoke seam 검증
 9. mutation apply executor router dry-run seam 검증
 10. execution enablement checkpoint review
+11. pre-side-effect executor router implementation draft 검증
 
 ## Open Testing Gaps
 
 아직 남아 있는 테스트 갭:
 
-1. actual execution enablement checkpoint verdict
+1. pre-side-effect executor router implementation test
 2. actual execution enablement 이후 smoke 업데이트 기준
 3. real side-effect rollback drill 여부
 
@@ -106,4 +110,4 @@
 
 ## Next Step
 
-다음 구현은 `LOOP-061 V1.5 reindex live adapter execution enablement checkpoint review`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 구현은 `LOOP-062 V1.5 reindex live adapter pre-side-effect executor router implementation draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.

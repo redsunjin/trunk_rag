@@ -56,6 +56,7 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PRE_EXECUTION_HANDOFF_SEAM_DRAFT_2026-04-21.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_FAKE_EXECUTOR_SMOKE_SEAM_DRAFT_2026-04-21.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_MUTATION_APPLY_ROUTER_DRY_RUN_SEAM_DRAFT_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -63,8 +64,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-061`
-- current_active_title: `V1.5 reindex live adapter execution enablement checkpoint review`
+- current_active_id: `LOOP-062`
+- current_active_title: `V1.5 reindex live adapter pre-side-effect executor router implementation draft`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1498,7 +1499,7 @@ closeout 메모 (2026-04-20):
 - 1차 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py` -> `34 passed in 0.13s`.
 - 최종 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` -> `52 passed in 0.10s`; `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`; `git diff --check` -> pass.
 
-### A-Next54. V1.5 reindex live adapter execution enablement checkpoint review (현재 active)
+### A-Next54. V1.5 reindex live adapter execution enablement checkpoint review (완료: 2026-04-22)
 1. actual `index_service.reindex()` side effect를 열기 전 enablement checkpoint를 다시 검토한다.
 2. `LOOP-058` pre-execution handoff, `LOOP-059` fake smoke, `LOOP-060` router dry-run 이후 남은 blocker를 재평가한다.
 3. Go/No-Go와 후속 loop를 문서화한다.
@@ -1513,7 +1514,27 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-060` closeout으로 apply guard 이후 executor router dry-run evidence가 error payload와 execution trace contract에 함께 고정됐다.
-- 다음 작업은 actual execution 구현이 아니라 enablement checkpoint review다.
+- 판정은 actual execution enablement `No-Go`, 다음 planning step `Go`다.
+- 핵심 blocker는 dry-run evidence가 blocked apply metadata enrichment에 남을 뿐, valid apply가 side effect 전에 executor router로 들어가는 non-blocking runtime path가 아직 없다는 점이다.
+- `mutation_apply_guard`를 단순히 열면 middleware tail이 기존 `tool_registry_service.invoke_tool()` direct path로 진행할 수 있으므로 actual side effect는 계속 닫아 둔다.
+- 기준 문서는 `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`다.
+
+### A-Next55. V1.5 reindex live adapter pre-side-effect executor router implementation draft (현재 active)
+1. actual `index_service.reindex()` side effect를 열지 않고 valid apply 이후 direct tool handler 대신 mutation executor router로 들어가는 runtime seam을 구현 초안 수준으로 고정한다.
+2. durable audit receipt precondition, direct tool handler bypass, local-only explicit binding을 같은 path에서 확인한다.
+3. default blocked path와 smoke suite 회귀를 막는다.
+
+완료 기준:
+- valid apply 이후 direct `_tool_reindex -> index_service.reindex()` path가 열리지 않고 executor router path가 우선된다는 조건이 코드/테스트 기준으로 정리된다.
+- actual execution은 여전히 disabled/dry-run 상태로 유지된다.
+- default blocked path와 smoke suite가 회귀하지 않는다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-061` checkpoint는 actual execution `No-Go`로 닫고, 다음 단계는 side effect를 열지 않는 pre-side-effect executor router implementation draft로 잡았다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

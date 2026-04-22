@@ -42,6 +42,7 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PRE_EXECUTION_HANDOFF_SEAM_DRAFT_2026-04-21.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_FAKE_EXECUTOR_SMOKE_SEAM_DRAFT_2026-04-21.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_MUTATION_APPLY_ROUTER_DRY_RUN_SEAM_DRAFT_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
 - `docs/PREPROCESSING_RULES.md`
 - `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md`
 - `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
@@ -124,7 +125,8 @@
 | LOOP-058 | done | V1.5 reindex live adapter pre-execution handoff seam draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-059 | done | V1.5 reindex live adapter fake executor smoke seam draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-060 | done | V1.5 reindex live adapter mutation apply executor router dry-run seam draft | `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-061 | active | V1.5 reindex live adapter execution enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-061 | done | V1.5 reindex live adapter execution enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-062 | active | V1.5 reindex live adapter pre-side-effect executor router implementation draft | `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -1669,7 +1671,7 @@ closeout 메모 (2026-04-20):
 - 1차 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py` -> `34 passed in 0.13s`.
 - 최종 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` -> `52 passed in 0.10s`; `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`; `git diff --check` -> pass.
 
-## 현재 Active Loop (LOOP-061)
+## 완료 Loop (LOOP-061)
 
 목표:
 - actual `index_service.reindex()` side effect를 열기 전 enablement checkpoint를 다시 검토한다.
@@ -1688,7 +1690,31 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-060` closeout으로 apply guard 이후 executor router dry-run evidence가 error payload와 execution trace contract에 함께 고정됐다.
-- 다음 작업은 actual execution 구현이 아니라 enablement checkpoint review다.
+- 판정은 actual execution enablement `No-Go`, 다음 planning step `Go`다.
+- 핵심 blocker는 dry-run evidence가 blocked apply metadata enrichment에 남을 뿐, valid apply가 side effect 전에 executor router로 들어가는 non-blocking runtime path가 아직 없다는 점이다.
+- `mutation_apply_guard`를 단순히 열면 middleware tail이 기존 `tool_registry_service.invoke_tool()` direct path로 진행할 수 있으므로 actual side effect는 계속 닫아 둔다.
+- 기준 문서는 `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`다.
+
+## 현재 Active Loop (LOOP-062)
+
+목표:
+- actual `index_service.reindex()` side effect를 열지 않고 valid apply 이후 direct tool handler 대신 mutation executor router로 들어가는 pre-side-effect runtime seam을 구현 초안 수준으로 고정한다.
+
+범위:
+- 포함: mutation apply guard 이후 executor router handoff 위치, direct tool handler bypass, durable audit receipt precondition 연결, local-only explicit binding 유지
+- 제외: actual reindex side effect 개방, public agent endpoint, upload review live execution, managed state rollback 구현
+
+완료 기준:
+- valid apply 이후 direct `_tool_reindex -> index_service.reindex()` path가 열리지 않고 executor router path가 우선된다는 조건이 코드/테스트 기준으로 정리된다.
+- actual execution은 여전히 disabled/dry-run 상태로 유지된다.
+- default blocked path와 smoke suite가 회귀하지 않는다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-061` checkpoint는 actual execution `No-Go`로 닫고, 다음 단계는 side effect를 열지 않는 pre-side-effect executor router implementation draft로 잡았다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
