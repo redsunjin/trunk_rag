@@ -102,6 +102,9 @@
 35. post-rollback-drill enablement checkpoint review
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ROLLBACK_DRILL_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
    - 핵심: local-only rollback-drilled operator surface `Go`, extra opt-in local-only top-level promotion `Go`, default/public top-level promotion `No-Go`, upload review live execution `No-Go`
+36. public promotion blocker register
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PUBLIC_PROMOTION_BLOCKER_REGISTER_2026-04-22.md`
+   - 핵심: product/API contract, authorization, production audit backend, recovery model, concurrency/job lifecycle, upload review boundary, observability/support, regression scope를 default/public blocker로 고정
 
 ### Verified Repeatedly
 
@@ -113,7 +116,7 @@
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 - `git diff --check`
 
-최근 루프들(`LOOP-045` ~ `LOOP-080`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐다. 최신 `LOOP-080` closeout 기준 local-only rollback-drilled operator surface는 `Go`이고, default/public top-level promotion과 upload review live execution은 `No-Go`다.
+최근 루프들(`LOOP-045` ~ `LOOP-081`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐다. 최신 `LOOP-081` closeout 기준 default/public top-level promotion blocker register가 문서화됐고, local-only closeout이 다음 단계다.
 
 ## Test Matrix
 
@@ -142,9 +145,9 @@
 
 ### Future Paths
 
-1. public promotion blocker register
-   - 기대: default/public top-level promotion을 막는 blocker와 future evidence minimum을 local-only 충족 조건과 분리
-   - 상태: next documentation
+1. local-only closeout
+   - 기대: `reindex` live adapter의 terminal scope를 explicit local-only operator/test surface로 정리
+   - 상태: next closeout
 
 ## Recommended Testing Order
 
@@ -180,12 +183,13 @@
 28. rollback drill execution evidence 검증
 29. post-rollback-drill enablement checkpoint review
 30. public promotion blocker register
+31. local-only closeout
 
 ## Open Testing Gaps
 
 아직 남아 있는 테스트 갭:
 
-1. broader/public top-level promotion blocker register
+1. local-only closeout/handoff 정리
 2. broader/public top-level apply success/failure enablement 기준
 3. upload review live execution precondition 재검토
 
@@ -196,4 +200,4 @@
 
 ## Next Step
 
-다음 작업은 `LOOP-081 V1.5 reindex live adapter public promotion blocker register`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 작업은 `LOOP-082 V1.5 reindex live adapter local-only closeout`이다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.

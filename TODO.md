@@ -155,7 +155,8 @@
 | LOOP-078 | done | V1.5 reindex live adapter rollback drill harness draft | `./.venv/bin/python -m pytest -q tests/test_smoke_reindex_rollback_drill.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-079 | done | V1.5 reindex live adapter rollback drill execution evidence | `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag-rollback-drill ./.venv/bin/python scripts/smoke_reindex_rollback_drill.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-080 | done | V1.5 reindex live adapter post-rollback-drill enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-081 | active | V1.5 reindex live adapter public promotion blocker register | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-081 | done | V1.5 reindex live adapter public promotion blocker register | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-082 | active | V1.5 reindex live adapter local-only closeout | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -2229,7 +2230,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ROLLBACK_DRILL_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`.
 - 다음 단계는 public promotion blocker register다.
 
-## 현재 Active Loop (LOOP-081)
+## 완료 Loop (LOOP-081)
 
 목표:
 - default/public top-level promotion을 막는 blocker를 명시적으로 정리한다.
@@ -2248,6 +2249,31 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-080`에서 rollback drill 이후에도 default/public top-level promotion은 No-Go로 유지하기로 판정했다.
+- public promotion blocker register를 문서화했다.
+- local-only에서 충족된 조건은 explicit activation, policy gates, executor evidence, audit evidence, operator evidence로 분리했다.
+- public blocker는 product/API contract, authorization, audit backend, recovery model, concurrency/job lifecycle, upload review boundary, observability/support, regression scope로 정리했다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PUBLIC_PROMOTION_BLOCKER_REGISTER_2026-04-22.md`.
+- 다음 단계는 local-only live adapter closeout이다.
+
+## 현재 Active Loop (LOOP-082)
+
+목표:
+- `reindex` live adapter의 현재 terminal scope를 local-only operator/test surface로 closeout한다.
+
+범위:
+- 포함: local-only Go 상태, default/public No-Go 상태, upload review No-Go 상태, evidence index, handoff 문서 정리
+- 제외: default/public promotion 구현, upload review live execution 구현, non-local audit backend 구현
+
+완료 기준:
+- local-only closeout 문서가 생성되어야 한다.
+- TODO/NEXT/README/SPEC/roadmap이 closeout 기준을 반영해야 한다.
+- 다음 loop가 없거나 blocked/future로 명확히 정리되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-081`에서 public promotion blocker register가 작성됐고 default/public promotion은 계속 No-Go다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

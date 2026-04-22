@@ -78,7 +78,8 @@
 - 현재: `scripts/smoke_reindex_rollback_drill.py`는 explicit local env guard, pre-state capture, guarded promotion smoke, rebuild-from-source recovery, post-recovery vector capture를 구조화해 출력한다
 - 현재: rollback drill execution evidence는 explicit local env에서 `ok=true`, audit linkage `6 -> 7`, recovery rebuild `37/37`, post-recovery vector count `37`을 확인했다
 - 현재: post-rollback-drill checkpoint 결론은 local-only rollback-drilled operator surface `Go`, extra opt-in local-only top-level promotion `Go`, default/public top-level promotion `No-Go`, upload review live execution `No-Go`다
-- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 `reindex` live adapter public promotion blocker register를 진행하고, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
+- 현재: public promotion blocker register는 product/API contract, authorization, production audit backend, recovery model, concurrency/job lifecycle, upload review boundary, observability/support, regression scope를 default/public blocker로 고정했다
+- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 `reindex` live adapter local-only closeout을 진행하고, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
 
 비목표(현재 단계):
 - 원본 수집/크롤링

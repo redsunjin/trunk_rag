@@ -74,8 +74,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-081`
-- current_active_title: `V1.5 reindex live adapter public promotion blocker register`
+- current_active_id: `LOOP-082`
+- current_active_title: `V1.5 reindex live adapter local-only closeout`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1958,7 +1958,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ROLLBACK_DRILL_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`.
 - 다음 단계는 public promotion blocker register다.
 
-### A-Next74. V1.5 reindex live adapter public promotion blocker register (현재 active)
+### A-Next74. V1.5 reindex live adapter public promotion blocker register (완료: 2026-04-22)
 1. default/public top-level promotion을 막는 blocker를 명시적으로 정리한다.
 2. local-only에서 충족된 조건과 public/default에서 아직 필요한 조건을 분리한다.
 3. future evidence minimum을 정의한다.
@@ -1973,6 +1973,27 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-080`에서 rollback drill 이후에도 default/public top-level promotion은 No-Go로 유지하기로 판정했다.
+- public promotion blocker register를 문서화했다.
+- local-only에서 충족된 조건은 explicit activation, policy gates, executor evidence, audit evidence, operator evidence로 분리했다.
+- public blocker는 product/API contract, authorization, audit backend, recovery model, concurrency/job lifecycle, upload review boundary, observability/support, regression scope로 정리했다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PUBLIC_PROMOTION_BLOCKER_REGISTER_2026-04-22.md`.
+- 다음 단계는 local-only live adapter closeout이다.
+
+### A-Next75. V1.5 reindex live adapter local-only closeout (현재 active)
+1. `reindex` live adapter의 현재 terminal scope를 local-only operator/test surface로 closeout한다.
+2. local-only Go 상태, default/public No-Go 상태, upload review No-Go 상태, evidence index를 정리한다.
+3. 다음 loop가 없거나 blocked/future로 명확히 정리되도록 한다.
+
+완료 기준:
+- local-only closeout 문서가 생성되어야 한다.
+- TODO/NEXT/README/SPEC/roadmap이 closeout 기준을 반영해야 한다.
+- 다음 loop가 없거나 blocked/future로 명확히 정리되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-081`에서 public promotion blocker register가 작성됐고 default/public promotion은 계속 No-Go다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
