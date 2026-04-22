@@ -99,6 +99,9 @@
 34. rollback drill execution evidence
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_EXECUTION_EVIDENCE_2026-04-22.md`
    - 핵심: explicit local env에서 `ok=true`, audit linkage `6 -> 7`, recovery rebuild `37/37`, post-recovery vector count `37` 확인
+35. post-rollback-drill enablement checkpoint review
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ROLLBACK_DRILL_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+   - 핵심: local-only rollback-drilled operator surface `Go`, extra opt-in local-only top-level promotion `Go`, default/public top-level promotion `No-Go`, upload review live execution `No-Go`
 
 ### Verified Repeatedly
 
@@ -110,7 +113,7 @@
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 - `git diff --check`
 
-최근 루프들(`LOOP-045` ~ `LOOP-079`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐다. 최신 `LOOP-079` closeout 기준 rollback drill은 `ok=true`이고, audit linkage `6 -> 7`, recovery rebuild `37/37`, post-recovery vector count `37` evidence를 남겼다.
+최근 루프들(`LOOP-045` ~ `LOOP-080`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐다. 최신 `LOOP-080` closeout 기준 local-only rollback-drilled operator surface는 `Go`이고, default/public top-level promotion과 upload review live execution은 `No-Go`다.
 
 ## Test Matrix
 
@@ -139,9 +142,9 @@
 
 ### Future Paths
 
-1. post-rollback-drill enablement checkpoint review
-   - 기대: rollback drill evidence 이후 local-only operator surface와 default/public top-level promotion 상태를 재판정
-   - 상태: next checkpoint review
+1. public promotion blocker register
+   - 기대: default/public top-level promotion을 막는 blocker와 future evidence minimum을 local-only 충족 조건과 분리
+   - 상태: next documentation
 
 ## Recommended Testing Order
 
@@ -176,12 +179,13 @@
 27. rollback drill harness draft 검증
 28. rollback drill execution evidence 검증
 29. post-rollback-drill enablement checkpoint review
+30. public promotion blocker register
 
 ## Open Testing Gaps
 
 아직 남아 있는 테스트 갭:
 
-1. rollback drill result 이후 broader gate go/no-go 판정
+1. broader/public top-level promotion blocker register
 2. broader/public top-level apply success/failure enablement 기준
 3. upload review live execution precondition 재검토
 
@@ -192,4 +196,4 @@
 
 ## Next Step
 
-다음 작업은 `LOOP-080 V1.5 reindex live adapter post-rollback-drill enablement checkpoint review`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 작업은 `LOOP-081 V1.5 reindex live adapter public promotion blocker register`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.

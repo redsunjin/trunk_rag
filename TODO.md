@@ -154,7 +154,8 @@
 | LOOP-077 | done | V1.5 reindex live adapter rollback drill plan draft | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-078 | done | V1.5 reindex live adapter rollback drill harness draft | `./.venv/bin/python -m pytest -q tests/test_smoke_reindex_rollback_drill.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-079 | done | V1.5 reindex live adapter rollback drill execution evidence | `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag-rollback-drill ./.venv/bin/python scripts/smoke_reindex_rollback_drill.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-080 | active | V1.5 reindex live adapter post-rollback-drill enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-080 | done | V1.5 reindex live adapter post-rollback-drill enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-081 | active | V1.5 reindex live adapter public promotion blocker register | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -2204,7 +2205,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_EXECUTION_EVIDENCE_2026-04-22.md`.
 - 다음 단계는 post-rollback-drill enablement checkpoint review다.
 
-## 현재 Active Loop (LOOP-080)
+## 완료 Loop (LOOP-080)
 
 목표:
 - rollback drill execution evidence 이후 enablement 상태를 재판정한다.
@@ -2223,6 +2224,30 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-079`에서 rollback drill이 `ok=true`로 통과했고 audit linkage `6 -> 7`, recovery rebuild `37/37`, post-recovery vector count `37` evidence를 남겼다.
+- checkpoint 결론: local-only rollback-drilled operator surface `Go`, extra opt-in local-only top-level promotion `Go`.
+- checkpoint 결론: default/public top-level promotion `No-Go`, upload review live execution `No-Go`.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ROLLBACK_DRILL_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`.
+- 다음 단계는 public promotion blocker register다.
+
+## 현재 Active Loop (LOOP-081)
+
+목표:
+- default/public top-level promotion을 막는 blocker를 명시적으로 정리한다.
+
+범위:
+- 포함: local-only에서 충족된 조건, public/default에서 아직 필요한 조건, upload review live execution blocker, future evidence minimum
+- 제외: default/public promotion 구현, upload review live execution 구현, non-local audit backend 구현
+
+완료 기준:
+- public promotion blocker register가 문서화되어야 한다.
+- local-only Go와 default/public No-Go 기준이 분리되어야 한다.
+- 다음 loop가 local-only closeout, blocker implementation, 또는 blocked 상태 중 하나로 정리되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-080`에서 rollback drill 이후에도 default/public top-level promotion은 No-Go로 유지하기로 판정했다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

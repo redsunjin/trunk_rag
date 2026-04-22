@@ -74,8 +74,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-080`
-- current_active_title: `V1.5 reindex live adapter post-rollback-drill enablement checkpoint review`
+- current_active_id: `LOOP-081`
+- current_active_title: `V1.5 reindex live adapter public promotion blocker register`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1938,7 +1938,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_EXECUTION_EVIDENCE_2026-04-22.md`.
 - 다음 단계는 post-rollback-drill enablement checkpoint review다.
 
-### A-Next73. V1.5 reindex live adapter post-rollback-drill enablement checkpoint review (현재 active)
+### A-Next73. V1.5 reindex live adapter post-rollback-drill enablement checkpoint review (완료: 2026-04-22)
 1. rollback drill execution evidence 이후 enablement 상태를 재판정한다.
 2. local-only operator surface Go/No-Go, default/public top-level promotion Go/No-Go, 다음 작업을 정한다.
 3. default/public promotion 구현은 checkpoint 결과 없이 열지 않는다.
@@ -1953,6 +1953,26 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-079`에서 rollback drill이 `ok=true`로 통과했고 audit linkage `6 -> 7`, recovery rebuild `37/37`, post-recovery vector count `37` evidence를 남겼다.
+- checkpoint 결론: local-only rollback-drilled operator surface `Go`, extra opt-in local-only top-level promotion `Go`.
+- checkpoint 결론: default/public top-level promotion `No-Go`, upload review live execution `No-Go`.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ROLLBACK_DRILL_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`.
+- 다음 단계는 public promotion blocker register다.
+
+### A-Next74. V1.5 reindex live adapter public promotion blocker register (현재 active)
+1. default/public top-level promotion을 막는 blocker를 명시적으로 정리한다.
+2. local-only에서 충족된 조건과 public/default에서 아직 필요한 조건을 분리한다.
+3. future evidence minimum을 정의한다.
+
+완료 기준:
+- public promotion blocker register가 문서화되어야 한다.
+- local-only Go와 default/public No-Go 기준이 분리되어야 한다.
+- 다음 loop가 local-only closeout, blocker implementation, 또는 blocked 상태 중 하나로 정리되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-080`에서 rollback drill 이후에도 default/public top-level promotion은 No-Go로 유지하기로 판정했다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
