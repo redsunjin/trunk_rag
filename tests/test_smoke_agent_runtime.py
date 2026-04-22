@@ -654,6 +654,58 @@ def test_guarded_stage_apply_check_requires_runtime_sidecar():
     assert smoke_agent_runtime._apply_not_enabled_stage_evidence_ok(complete_summary, guarded_stage) is True
 
 
+def test_smoke_summary_includes_mutation_executor_error_sidecar():
+    result = {
+        "ok": False,
+        "entry": {"selected_tool": "reindex"},
+        "error": {
+            "code": "MUTATION_APPLY_NOT_ENABLED",
+            "mutation_executor_error": {
+                "code": "REINDEX_RUNTIME_EXECUTION_FAILED",
+                "message": "Guarded reindex live executor failed.",
+                "exception_type": "ValueError",
+            },
+            "mutation_top_level_promotion_router": {
+                "schema_version": "v1.5.reindex_live_adapter_top_level_promotion_router.v1",
+                "router_state": "draft_ready_not_enabled",
+                "success_route": {
+                    "eligible": False,
+                    "target_result_location": None,
+                    "target_top_level_ok": None,
+                },
+                "failure_route": {
+                    "eligible": True,
+                    "target_error_location": "error",
+                    "error_code": "REINDEX_RUNTIME_EXECUTION_FAILED",
+                    "supported_codes": ["REINDEX_RUNTIME_EXECUTION_FAILED"],
+                },
+                "promotion_gate": {
+                    "top_level_promotion_enabled": False,
+                    "actual_side_effect_enabled": False,
+                },
+            },
+        },
+        "execution_trace": {
+            "request_id": "agent-smoke-apply",
+            "middleware": {"blocked_by": "mutation_apply_guard"},
+            "contracts": {},
+        },
+    }
+
+    summary = smoke_agent_runtime._summarize_result(result)
+
+    assert summary["mutation_executor_error"] == {
+        "code": "REINDEX_RUNTIME_EXECUTION_FAILED",
+        "message": "Guarded reindex live executor failed.",
+        "exception_type": "ValueError",
+    }
+    assert summary["mutation_top_level_promotion_router"]["failure_eligible"] is True
+    assert (
+        summary["mutation_top_level_promotion_router"]["failure_error_code"]
+        == "REINDEX_RUNTIME_EXECUTION_FAILED"
+    )
+
+
 def test_smoke_agent_runtime_fails_when_write_tool_is_not_blocked(monkeypatch):
     def fake_run_agent_entry(request):
         return {

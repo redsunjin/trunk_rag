@@ -916,6 +916,79 @@ def test_mutation_apply_guard_routes_guarded_live_executor_without_direct_tool_h
     assert promotion_router["promotion_gate"]["top_level_promotion_enabled"] is False
 
 
+def test_mutation_apply_guard_attaches_guarded_executor_error_sidecar(
+    monkeypatch,
+    tmp_path,
+):
+    def fail_if_invoked(*args, **kwargs):
+        raise AssertionError("direct reindex tool handler must not be called for guarded live executor")
+
+    def fail_reindex(*, reset, collection_key, include_compatibility_bundle):
+        raise ValueError("metadata rejected")
+
+    monkeypatch.setattr(tool_middleware_service.runtime_service, "verify_admin_code", lambda code: None)
+    monkeypatch.setattr(tool_middleware_service.tool_registry_service, "invoke_tool", fail_if_invoked)
+    monkeypatch.setattr(tool_middleware_service.mutation_executor_service.index_service, "reindex", fail_reindex)
+    monkeypatch.setenv(mutation_executor_service.MUTATION_EXECUTION_ENV_KEY, "1")
+    monkeypatch.setenv(tool_audit_sink_service.AUDIT_SINK_BACKEND_ENV_KEY, "local_file")
+    monkeypatch.setenv(tool_audit_sink_service.AUDIT_SINK_DIR_ENV_KEY, str(tmp_path / "mutation_audit"))
+
+    preview_result = tool_middleware_service.invoke_tool_with_middlewares(
+        "reindex",
+        {"collection": "all"},
+        context=ToolContext(
+            actor="maintenance",
+            admin_code="admin1234",
+            mutation_intent="reindex all",
+            allow_mutation=True,
+        ),
+    )
+
+    result = tool_middleware_service.invoke_tool_with_middlewares(
+        "reindex",
+        {"collection": "all", "reset": True, "include_compatibility_bundle": False},
+        context=ToolContext(
+            actor="maintenance",
+            admin_code="admin1234",
+            mutation_intent="reindex all",
+            apply_envelope=preview_result["error"]["apply_envelope"],
+            executor_binding={
+                "binding_kind": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_KIND,
+                "binding_source": "test_harness",
+                "executor_name": mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+                mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD: (
+                    mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_GUARDED_LIVE_EXECUTOR
+                ),
+            },
+            allow_mutation=True,
+        ),
+    )
+
+    assert result["ok"] is False
+    assert result["error"]["code"] == "MUTATION_APPLY_NOT_ENABLED"
+    assert "mutation_executor_result" not in result["error"]
+    mutation_executor = result["error"]["mutation_executor"]
+    assert mutation_executor["selection_state"] == "guarded_live_executor"
+    assert mutation_executor["actual_runtime_handler_invoked"] is True
+    mutation_executor_error = result["error"]["mutation_executor_error"]
+    assert mutation_executor_error == {
+        "code": mutation_executor_service.REINDEX_ERROR_RUNTIME_EXECUTION_FAILED,
+        "message": "Guarded reindex live executor failed.",
+        "exception_type": "ValueError",
+    }
+    assert result["execution_trace"]["contracts"]["mutation_executor_error"] == mutation_executor_error
+    promotion_router = result["error"]["mutation_top_level_promotion_router"]
+    assert promotion_router["success_route"]["eligible"] is False
+    assert promotion_router["failure_route"]["eligible"] is True
+    assert promotion_router["failure_route"]["error_code"] == mutation_executor_service.REINDEX_ERROR_RUNTIME_EXECUTION_FAILED
+    assert promotion_router["failure_error_preview"] == {
+        "schema_version": mutation_executor_service.REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION,
+        "code": mutation_executor_service.REINDEX_ERROR_RUNTIME_EXECUTION_FAILED,
+        "message": "Guarded reindex live executor failed.",
+        "exception_type": "ValueError",
+    }
+
+
 def test_mutation_apply_guard_keeps_upload_review_in_boundary_noop_even_when_activation_and_durable_audit_are_ready(
     monkeypatch,
     tmp_path,

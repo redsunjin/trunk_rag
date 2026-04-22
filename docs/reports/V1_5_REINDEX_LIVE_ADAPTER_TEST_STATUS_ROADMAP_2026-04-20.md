@@ -66,6 +66,9 @@
 23. post-smoke enablement checkpoint review
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_SMOKE_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
    - 핵심: guarded local execution evidence `Go`, top-level success promotion `No-Go`, executor error sidecar implementation planning `Go`
+24. executor error sidecar draft
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_EXECUTOR_ERROR_SIDECAR_DRAFT_2026-04-22.md`
+   - 핵심: guarded executor failure를 `mutation_executor_error` sidecar와 promotion router failure route eligibility로 노출
 
 ### Verified Repeatedly
 
@@ -75,7 +78,7 @@
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 - `git diff --check`
 
-최근 루프들(`LOOP-045` ~ `LOOP-067`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐고, 최신 `LOOP-067` closeout 기준 index/smoke/executor target은 `36 passed`다.
+최근 루프들(`LOOP-045` ~ `LOOP-069`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐고, 최신 `LOOP-069` closeout 기준 middleware/smoke/executor target은 `46 passed`다.
 
 ## Test Matrix
 
@@ -100,9 +103,9 @@
 
 ### Future Paths
 
-1. executor error sidecar draft
-   - 기대: guarded executor failure를 `mutation_executor_error` sidecar와 promotion router failure route evidence로 노출
-   - 상태: next implementation
+1. post-error-sidecar enablement checkpoint review
+   - 기대: success/failure sidecar 확보 이후 top-level promotion/actual execution enablement Go/No-Go 재판정
+   - 상태: next review
 
 ## Recommended Testing Order
 
@@ -126,12 +129,13 @@
 16. guarded live executor smoke evidence draft 검증
 17. post-smoke enablement checkpoint review
 18. executor error sidecar draft 검증
+19. post-error-sidecar enablement checkpoint review
 
 ## Open Testing Gaps
 
 아직 남아 있는 테스트 갭:
 
-1. executor error sidecar and failure route evidence
+1. post-error-sidecar top-level promotion enablement decision
 2. actual execution enablement 이후 smoke 업데이트 기준
 3. real side-effect rollback drill 여부
 
@@ -142,4 +146,4 @@
 
 ## Next Step
 
-다음 작업은 `LOOP-069 V1.5 reindex live adapter executor error sidecar draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 작업은 `LOOP-070 V1.5 reindex live adapter post-error-sidecar enablement checkpoint review`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.

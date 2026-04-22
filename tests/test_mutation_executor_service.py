@@ -772,6 +772,50 @@ def test_build_reindex_top_level_promotion_router_contract_keeps_promotion_disab
     )
 
 
+def test_build_reindex_top_level_promotion_router_marks_failure_route_eligible(monkeypatch):
+    monkeypatch.setenv(mutation_executor_service.MUTATION_EXECUTION_ENV_KEY, "1")
+
+    result = mutation_executor_service.execute_mutation_request(
+        _sample_request(
+            "reindex",
+            payload={"collection": "all", "reset": True},
+            audit_sink_receipt={
+                "sink_type": "local_file_append_only",
+                "sequence_id": 12,
+                "storage_path": "/tmp/mutation-audit/audit-20260422.jsonl",
+            },
+            executor_binding={
+                "binding_kind": mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_KIND,
+                "binding_source": "test_harness",
+                "executor_name": mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+            },
+        )
+    )
+    executor_error = {
+        "code": mutation_executor_service.REINDEX_ERROR_RUNTIME_EXECUTION_FAILED,
+        "message": "Guarded reindex live executor failed.",
+        "exception_type": "ValueError",
+    }
+
+    router = mutation_executor_service.build_reindex_top_level_promotion_router_contract(
+        executor_contract=result["executor"],
+        executor_error=executor_error,
+        mutation_success_promotion=None,
+    )
+
+    assert router is not None
+    assert router["success_route"]["eligible"] is False
+    assert router["failure_route"]["eligible"] is True
+    assert router["failure_route"]["source_error_location"] == "error.mutation_executor_error"
+    assert router["failure_route"]["error_code"] == mutation_executor_service.REINDEX_ERROR_RUNTIME_EXECUTION_FAILED
+    assert router["failure_error_preview"] == {
+        "schema_version": mutation_executor_service.REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION,
+        "code": mutation_executor_service.REINDEX_ERROR_RUNTIME_EXECUTION_FAILED,
+        "message": "Guarded reindex live executor failed.",
+        "exception_type": "ValueError",
+    }
+
+
 def test_build_reindex_live_failure_contract_preserves_case_details_and_rejects_unknown_code():
     contract = mutation_executor_service.build_reindex_live_failure_contract(
         mutation_executor_service.REINDEX_ERROR_TARGET_MISMATCH,

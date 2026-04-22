@@ -126,6 +126,22 @@ def _summarize_mutation_executor_result(result: dict[str, object]) -> dict[str, 
     return summary
 
 
+def _summarize_mutation_executor_error(result: dict[str, object]) -> dict[str, object] | None:
+    error = _safe_dict(result.get("error"))
+    execution_trace = _safe_dict(result.get("execution_trace"))
+    contracts = _safe_dict(execution_trace.get("contracts"))
+    executor_error = _safe_dict(error.get("mutation_executor_error")) or _safe_dict(
+        contracts.get("mutation_executor_error")
+    )
+    if not executor_error:
+        return None
+    return {
+        "code": executor_error.get("code"),
+        "message": executor_error.get("message"),
+        "exception_type": executor_error.get("exception_type"),
+    }
+
+
 def _summarize_mutation_success_promotion(result: dict[str, object]) -> dict[str, object] | None:
     error = _safe_dict(result.get("error"))
     execution_trace = _safe_dict(result.get("execution_trace"))
@@ -163,7 +179,7 @@ def _summarize_mutation_top_level_promotion_router(result: dict[str, object]) ->
     failure_route = _safe_dict(router.get("failure_route"))
     promotion_gate = _safe_dict(router.get("promotion_gate"))
     supported_codes = failure_route.get("supported_codes")
-    return {
+    summary = {
         "schema_version": router.get("schema_version"),
         "router_state": router.get("router_state"),
         "success_eligible": success_route.get("eligible"),
@@ -174,6 +190,11 @@ def _summarize_mutation_top_level_promotion_router(result: dict[str, object]) ->
         "top_level_promotion_enabled": promotion_gate.get("top_level_promotion_enabled"),
         "actual_side_effect_enabled": promotion_gate.get("actual_side_effect_enabled"),
     }
+    if failure_route.get("eligible") is True:
+        summary["failure_eligible"] = True
+    if failure_route.get("error_code") is not None:
+        summary["failure_error_code"] = failure_route.get("error_code")
+    return summary
 
 
 def _summarize_result(result: dict[str, object]) -> dict[str, object]:
@@ -197,6 +218,9 @@ def _summarize_result(result: dict[str, object]) -> dict[str, object]:
     mutation_executor_result = _summarize_mutation_executor_result(result)
     if mutation_executor_result is not None:
         summary["mutation_executor_result"] = mutation_executor_result
+    mutation_executor_error = _summarize_mutation_executor_error(result)
+    if mutation_executor_error is not None:
+        summary["mutation_executor_error"] = mutation_executor_error
     mutation_success_promotion = _summarize_mutation_success_promotion(result)
     if mutation_success_promotion is not None:
         summary["mutation_success_promotion"] = mutation_success_promotion

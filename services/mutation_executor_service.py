@@ -708,6 +708,7 @@ def build_reindex_top_level_promotion_router_contract(
     *,
     executor_contract: dict[str, object] | None,
     executor_result: dict[str, object] | None = None,
+    executor_error: dict[str, object] | None = None,
     mutation_success_promotion: dict[str, object] | None = None,
 ) -> dict[str, object] | None:
     executor = _safe_dict(executor_contract)
@@ -715,6 +716,7 @@ def build_reindex_top_level_promotion_router_contract(
         return None
 
     result = _safe_dict(executor_result)
+    error = _safe_dict(executor_error)
     success_promotion = _safe_dict(mutation_success_promotion)
     future_success_surface = _safe_dict(success_promotion.get("future_success_surface"))
     success_eligible = (
@@ -723,6 +725,9 @@ def build_reindex_top_level_promotion_router_contract(
         and future_success_surface.get("kind") == "top_level_apply_success"
     )
     failure_contracts = list_reindex_live_failure_contracts()
+    supported_failure_codes = [str(contract.get("code")) for contract in failure_contracts]
+    failure_error_code = str(error.get("code")) if error.get("code") is not None else None
+    failure_eligible = failure_error_code in supported_failure_codes
     failure_routes = []
     for contract in failure_contracts:
         future_failure_surface = _safe_dict(contract.get("future_failure_surface"))
@@ -757,16 +762,18 @@ def build_reindex_top_level_promotion_router_contract(
             "promoted_fields": future_success_surface.get("promoted_fields") or [],
         },
         "failure_route": {
-            "eligible": False,
-            "source_error_location": "mutation_executor_error",
+            "eligible": failure_eligible,
+            "source_error_location": "error.mutation_executor_error",
             "target_error_location": "error",
             "error_schema_version": REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION,
+            "error_code": failure_error_code,
             "supported_codes": [route["code"] for route in failure_routes],
             "routes": failure_routes,
         },
         "retained_contracts": [
             "mutation_executor",
             "mutation_executor_result",
+            "mutation_executor_error",
             "mutation_success_promotion",
             "mutation_top_level_promotion_router",
         ],
@@ -793,6 +800,13 @@ def build_reindex_top_level_promotion_router_contract(
         runtime_result = _safe_dict(result.get("runtime_result"))
         if runtime_result:
             contract["success_result_preview"]["runtime_result"] = runtime_result
+    if failure_eligible:
+        contract["failure_error_preview"] = {
+            "schema_version": REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION,
+            "code": failure_error_code,
+            "message": error.get("message"),
+            "exception_type": error.get("exception_type"),
+        }
     return contract
 
 

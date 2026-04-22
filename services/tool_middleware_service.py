@@ -41,6 +41,7 @@ class ToolExecutionState:
     audit_sink_receipt: dict[str, object] | None = None
     mutation_executor_contract: dict[str, object] | None = None
     mutation_executor_result: dict[str, object] | None = None
+    mutation_executor_error: dict[str, object] | None = None
     mutation_success_promotion: dict[str, object] | None = None
     mutation_top_level_promotion_router: dict[str, object] | None = None
     mutation_apply_router_dry_run: dict[str, object] | None = None
@@ -177,6 +178,7 @@ def _attach_middleware_metadata(
     )
     mutation_executor_contract = state.mutation_executor_contract
     mutation_executor_result = state.mutation_executor_result
+    mutation_executor_error = state.mutation_executor_error
     mutation_success_promotion = state.mutation_success_promotion
     mutation_top_level_promotion_router = state.mutation_top_level_promotion_router
     mutation_apply_router_dry_run = state.mutation_apply_router_dry_run
@@ -193,10 +195,7 @@ def _attach_middleware_metadata(
                     executor_result = mutation_executor_service.execute_mutation_request(mutation_request)
                     executor_error = executor_result.get("error")
                     if isinstance(executor_error, dict):
-                        error = {
-                            **error,
-                            **dict(executor_error),
-                        }
+                        mutation_executor_error = dict(executor_error)
                     executor_contract = executor_result.get("executor")
                     if isinstance(executor_contract, dict):
                         mutation_executor_contract = dict(executor_contract)
@@ -213,6 +212,7 @@ def _attach_middleware_metadata(
                     mutation_executor_service.build_reindex_top_level_promotion_router_contract(
                         executor_contract=mutation_executor_contract,
                         executor_result=mutation_executor_result,
+                        executor_error=mutation_executor_error,
                         mutation_success_promotion=mutation_success_promotion,
                     )
                 )
@@ -228,6 +228,8 @@ def _attach_middleware_metadata(
                 error["mutation_executor"] = mutation_executor_contract
             if mutation_executor_result is not None:
                 error["mutation_executor_result"] = mutation_executor_result
+            if mutation_executor_error is not None:
+                error["mutation_executor_error"] = mutation_executor_error
             if mutation_success_promotion is not None:
                 error["mutation_success_promotion"] = mutation_success_promotion
             if mutation_top_level_promotion_router is not None:
@@ -255,6 +257,8 @@ def _attach_middleware_metadata(
         contracts["mutation_executor"] = mutation_executor_contract
     if mutation_executor_result is not None:
         contracts["mutation_executor_result"] = mutation_executor_result
+    if mutation_executor_error is not None:
+        contracts["mutation_executor_error"] = mutation_executor_error
     if mutation_success_promotion is not None:
         contracts["mutation_success_promotion"] = mutation_success_promotion
     if mutation_top_level_promotion_router is not None:
@@ -271,6 +275,8 @@ def _attach_middleware_metadata(
             updated_error["mutation_executor"] = mutation_executor_contract
         if mutation_executor_result is not None:
             updated_error["mutation_executor_result"] = mutation_executor_result
+        if mutation_executor_error is not None:
+            updated_error["mutation_executor_error"] = mutation_executor_error
         if mutation_success_promotion is not None:
             updated_error["mutation_success_promotion"] = mutation_success_promotion
         if mutation_top_level_promotion_router is not None:
@@ -453,6 +459,9 @@ def _route_pre_side_effect_mutation_executor_dry_run(state: ToolExecutionState) 
     executor_payload = executor_result.get("result")
     if isinstance(executor_payload, dict):
         state.mutation_executor_result = dict(executor_payload)
+    executor_error = executor_result.get("error")
+    if isinstance(executor_error, dict):
+        state.mutation_executor_error = dict(executor_error)
     state.mutation_success_promotion = mutation_executor_service.build_reindex_live_success_promotion_contract(
         executor_contract=state.mutation_executor_contract,
         executor_result=state.mutation_executor_result,
@@ -460,6 +469,7 @@ def _route_pre_side_effect_mutation_executor_dry_run(state: ToolExecutionState) 
     state.mutation_top_level_promotion_router = mutation_executor_service.build_reindex_top_level_promotion_router_contract(
         executor_contract=state.mutation_executor_contract,
         executor_result=state.mutation_executor_result,
+        executor_error=state.mutation_executor_error,
         mutation_success_promotion=state.mutation_success_promotion,
     )
     state.mutation_apply_router_dry_run = mutation_executor_service.build_reindex_mutation_apply_router_dry_run_contract(

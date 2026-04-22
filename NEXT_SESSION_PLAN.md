@@ -64,6 +64,7 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_SMOKE_COMMAND_DRAFT_2026-04-22.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_SMOKE_EVIDENCE_DRAFT_2026-04-22.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_SMOKE_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_EXECUTOR_ERROR_SIDECAR_DRAFT_2026-04-22.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -71,8 +72,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-069`
-- current_active_title: `V1.5 reindex live adapter executor error sidecar draft`
+- current_active_id: `LOOP-070`
+- current_active_title: `V1.5 reindex live adapter post-error-sidecar enablement checkpoint review`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1690,7 +1691,7 @@ closeout 메모 (2026-04-20):
 - 다음 단계는 executor가 호출됐지만 result를 만들지 못했을 때 `mutation_executor_error` sidecar와 failure route evidence를 deterministic하게 남기는 것이다.
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_SMOKE_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`.
 
-### A-Next62. V1.5 reindex live adapter executor error sidecar draft (현재 active)
+### A-Next62. V1.5 reindex live adapter executor error sidecar draft (완료: 2026-04-22)
 1. guarded executor가 실패할 때 `mutation_executor_error` sidecar와 promotion router failure route evidence를 blocked apply response에 남긴다.
 2. supported reindex error code가 있으면 top-level promotion router failure route eligibility를 명시한다.
 3. smoke summary와 monkeypatch failure tests로 failure evidence를 검증한다.
@@ -1706,6 +1707,29 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-068` 판정상 success promotion gate를 열기 전 실패 sidecar/audit evidence 보강이 우선이다.
+- `ToolExecutionState.mutation_executor_error`를 추가해 guarded executor failure를 blocked apply response와 `execution_trace.contracts`에 남기도록 했다.
+- `build_reindex_top_level_promotion_router_contract()`는 supported executor error code를 받으면 failure route를 eligible로 표시하고 `failure_error_preview`를 남긴다.
+- smoke summary는 `mutation_executor_error`와 failure route eligibility/error code를 요약한다.
+- 검증: `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py tests/test_mutation_executor_service.py` (`46 passed`).
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_EXECUTOR_ERROR_SIDECAR_DRAFT_2026-04-22.md`.
+- 다음 단계는 success/failure sidecar 보강 이후 top-level promotion 가능 여부를 다시 판정하는 checkpoint review다.
+
+### A-Next63. V1.5 reindex live adapter post-error-sidecar enablement checkpoint review (현재 active)
+1. success/failure sidecar가 모두 확보된 후 top-level apply success/failure promotion gate를 열 수 있는지 재판정한다.
+2. durable audit/post-executor evidence gap과 rollback blocker를 함께 점검한다.
+3. 다음 implementation loop가 필요하면 범위와 검증 방법을 확정한다.
+
+완료 기준:
+- top-level success/failure promotion enablement 판단과 남은 blocker가 문서 기준으로 명확해야 한다.
+- 다음 implementation loop가 필요하면 범위와 검증 방법이 이어져야 한다.
+- default blocked path와 guarded local-only scope가 유지되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-069` closeout으로 executor success result sidecar와 failure error sidecar가 모두 blocked apply surface에서 관측 가능해졌다.
+- 아직 top-level promotion gate는 닫혀 있고, 남은 판단은 post-executor durable audit evidence와 rollback drill을 gate 전 필수로 볼지 여부다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
