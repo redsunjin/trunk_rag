@@ -74,8 +74,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-077`
-- current_active_title: `V1.5 reindex live adapter rollback drill plan draft`
+- current_active_id: `LOOP-078`
+- current_active_title: `V1.5 reindex live adapter rollback drill harness draft`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -1871,7 +1871,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_RUNBOOK_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`.
 - 다음 단계는 rollback drill plan draft다.
 
-### A-Next70. V1.5 reindex live adapter rollback drill plan draft (현재 active)
+### A-Next70. V1.5 reindex live adapter rollback drill plan draft (완료: 2026-04-22)
 1. `reindex` guarded live adapter의 local-only rollback drill 계획을 정의한다.
 2. drill precondition, capture-before/capture-after evidence, audit linkage, rebuild-from-source recovery verification, abort condition을 고정한다.
 3. 실제 drill execution을 별도 loop로 열지, 즉시 실행 가능한지 판단 가능하게 만든다.
@@ -1886,6 +1886,28 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-076`에서 local-only operator surface는 충분하지만 rollback drill planning이 broader gate의 다음 blocker로 판정됐다.
+- local-only rollback drill 계획을 문서화했다.
+- drill은 pre-state capture, guarded top-level promotion, post-executor audit linkage 확인, rebuild-from-source recovery, post-recovery health/vector check 순서로 정의했다.
+- 실제 drill 실행은 별도 harness draft loop로 분리한다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_PLAN_DRAFT_2026-04-22.md`.
+- 다음 단계는 rollback drill harness draft다.
+
+### A-Next71. V1.5 reindex live adapter rollback drill harness draft (현재 active)
+1. rollback drill 계획을 실행 가능한 local-only harness 초안으로 만든다.
+2. pre-state capture, guarded top-level promotion invocation, rebuild-from-source recovery invocation, compact report output, explicit env guard를 구현한다.
+3. harness test가 command orchestration과 guard behavior를 검증해야 한다.
+
+완료 기준:
+- harness가 explicit local audit/mutation env 없이는 실행을 거부해야 한다.
+- harness가 pre/post/recovery evidence를 구조화된 report로 출력해야 한다.
+- harness test가 command orchestration과 guard behavior를 검증해야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_smoke_reindex_rollback_drill.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-077`에서 rollback drill plan이 local-only, source-document rebuild recovery 기준으로 정리됐다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

@@ -151,7 +151,8 @@
 | LOOP-074 | done | V1.5 reindex live adapter post-promotion enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-075 | done | V1.5 reindex live adapter top-level promotion operator runbook update | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-076 | done | V1.5 reindex live adapter post-runbook enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-077 | active | V1.5 reindex live adapter rollback drill plan draft | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-077 | done | V1.5 reindex live adapter rollback drill plan draft | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-078 | active | V1.5 reindex live adapter rollback drill harness draft | `./.venv/bin/python -m pytest -q tests/test_smoke_reindex_rollback_drill.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -2122,7 +2123,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_RUNBOOK_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`.
 - 다음 단계는 rollback drill plan draft다.
 
-## 현재 Active Loop (LOOP-077)
+## 완료 Loop (LOOP-077)
 
 목표:
 - `reindex` guarded live adapter의 local-only rollback drill 계획을 정의한다.
@@ -2141,6 +2142,32 @@ closeout 메모 (2026-04-20):
 
 진행 메모 (2026-04-22):
 - `LOOP-076`에서 local-only operator surface는 충분하지만 rollback drill planning이 broader gate의 다음 blocker로 판정됐다.
+- local-only rollback drill 계획을 문서화했다.
+- drill은 pre-state capture, guarded top-level promotion, post-executor audit linkage 확인, rebuild-from-source recovery, post-recovery health/vector check 순서로 정의했다.
+- 실제 drill 실행은 별도 harness draft loop로 분리한다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_PLAN_DRAFT_2026-04-22.md`.
+- 다음 단계는 rollback drill harness draft다.
+
+## 현재 Active Loop (LOOP-078)
+
+목표:
+- rollback drill 계획을 실행 가능한 local-only harness 초안으로 만든다.
+
+범위:
+- 포함: pre-state capture, guarded top-level promotion invocation, rebuild-from-source recovery invocation, compact report output, explicit env guard, unit tests
+- 제외: default/public promotion 구현, upload review live execution, non-local data 대상 drill 실행
+
+완료 기준:
+- harness가 explicit local audit/mutation env 없이는 실행을 거부해야 한다.
+- harness가 pre/post/recovery evidence를 구조화된 report로 출력해야 한다.
+- harness test가 command orchestration과 guard behavior를 검증해야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_smoke_reindex_rollback_drill.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-077`에서 rollback drill plan이 local-only, source-document rebuild recovery 기준으로 정리됐다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

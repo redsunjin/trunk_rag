@@ -90,6 +90,9 @@
 31. post-runbook enablement checkpoint review
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_RUNBOOK_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
    - 핵심: local-only operator surface `Go`, default/public promotion `No-Go`, rollback drill planning `Go`
+32. rollback drill plan draft
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_PLAN_DRAFT_2026-04-22.md`
+   - 핵심: pre-state capture, guarded promotion, audit linkage, rebuild-from-source recovery, post-recovery health/vector check 순서 고정
 
 ### Verified Repeatedly
 
@@ -124,8 +127,8 @@
 
 ### Future Paths
 
-1. rollback drill plan draft
-   - 기대: local-only rollback drill precondition, evidence, recovery verification, abort condition 고정
+1. rollback drill harness draft
+   - 기대: local-only drill harness가 env guard, pre/post/recovery evidence report, command orchestration을 제공
    - 상태: next implementation
 
 ## Recommended Testing Order
@@ -158,12 +161,13 @@
 24. top-level promotion operator runbook update 검증
 25. post-runbook enablement checkpoint review
 26. rollback drill plan draft 검증
+27. rollback drill harness draft 검증
 
 ## Open Testing Gaps
 
 아직 남아 있는 테스트 갭:
 
-1. rollback drill plan 문서 반영
+1. rollback drill harness 구현
 2. broader/public top-level apply success/failure enablement 기준
 3. real side-effect rollback drill 실행 여부
 
@@ -174,4 +178,4 @@
 
 ## Next Step
 
-다음 작업은 `LOOP-077 V1.5 reindex live adapter rollback drill plan draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 작업은 `LOOP-078 V1.5 reindex live adapter rollback drill harness draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.

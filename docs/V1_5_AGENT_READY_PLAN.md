@@ -168,7 +168,8 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_PROMOTION_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`는 extra opt-in local-only top-level promotion `Go`, default/public promotion `No-Go`, operator runbook update `Go`로 판정했다.
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_OPERATOR_RUNBOOK_UPDATE_2026-04-22.md`는 default blocked, activation check, guarded blocked, guarded top-level promotion command와 audit linkage 확인 절차를 operator runbook에 반영했다.
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_RUNBOOK_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`는 local-only operator surface `Go`, default/public promotion `No-Go`, rollback drill planning `Go`로 판정했다.
-- 다음 구현은 `LOOP-077 reindex live adapter rollback drill plan draft`이며, 이 단계에서는 broader/default/public gate의 다음 blocker인 rollback drill 계획을 고정한다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_PLAN_DRAFT_2026-04-22.md`는 local-only rollback drill을 pre-state capture, guarded promotion, audit linkage, rebuild-from-source recovery, post-recovery health/vector check 순서로 정의했다.
+- 다음 구현은 `LOOP-078 reindex live adapter rollback drill harness draft`이며, 이 단계에서는 rollback drill 계획을 실행 가능한 local-only harness 초안으로 만든다.
 - raw input, retrieved context, document content, local path, admin code, credential은 저장/노출 기본 대상에서 제외한다.
 - `services/tool_trace_service.py`는 `redact_execution_trace()`로 `internal`, `public`, `persisted` audience별 trace 정규화를 제공한다.
 
