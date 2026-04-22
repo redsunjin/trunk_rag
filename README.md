@@ -68,7 +68,7 @@
 - 현재: `scripts/smoke_agent_runtime.py`는 `--opt-in-live-binding`, `--opt-in-live-binding-stage-concrete`, `--opt-in-live-binding-stage-guarded`, `DOC_RAG_MUTATION_SMOKE_LIVE_BINDING=1`, `DOC_RAG_MUTATION_SMOKE_LIVE_BINDING_STAGE`를 지원한다. concrete stage smoke에서는 side-effect-free `live_result_skeleton` evidence를 남기고, guarded stage smoke에서는 explicit local-only `guarded_live_executor` binding으로 `index_service.reindex()`를 호출해 runtime sidecar evidence를 남긴다. guarded stage에서는 runtime sidecar가 없으면 smoke check가 실패한다
 - 현재: `services/index_service.py`는 source metadata의 list/dict 값을 보존하되 Chroma ingest 직전에는 JSON 문자열로 정규화해 vectorstore metadata 제약을 만족시킨다
 - 현재: guarded executor failure는 `mutation_executor_error` sidecar로 blocked apply response와 `execution_trace.contracts`에 남고, promotion router failure route는 supported reindex error code 기준으로 eligible evidence를 남긴다
-- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 `reindex` live adapter post-error-sidecar enablement checkpoint review를 진행하고, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
+- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 `reindex` live adapter post-executor audit evidence draft를 진행하고, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
 
 비목표(현재 단계):
 - 원본 수집/크롤링

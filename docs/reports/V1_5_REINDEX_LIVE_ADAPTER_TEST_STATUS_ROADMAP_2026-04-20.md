@@ -69,6 +69,9 @@
 24. executor error sidecar draft
    - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_EXECUTOR_ERROR_SIDECAR_DRAFT_2026-04-22.md`
    - 핵심: guarded executor failure를 `mutation_executor_error` sidecar와 promotion router failure route eligibility로 노출
+25. post-error-sidecar enablement checkpoint review
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ERROR_SIDECAR_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+   - 핵심: success/failure sidecar readiness `Go`, top-level promotion `No-Go`, post-executor audit evidence planning `Go`
 
 ### Verified Repeatedly
 
@@ -103,9 +106,9 @@
 
 ### Future Paths
 
-1. post-error-sidecar enablement checkpoint review
-   - 기대: success/failure sidecar 확보 이후 top-level promotion/actual execution enablement Go/No-Go 재판정
-   - 상태: next review
+1. post-executor audit evidence draft
+   - 기대: guarded executor success/failure 후 append-only post-executor audit receipt와 pre-executor sequence linkage
+   - 상태: next implementation
 
 ## Recommended Testing Order
 
@@ -130,12 +133,13 @@
 17. post-smoke enablement checkpoint review
 18. executor error sidecar draft 검증
 19. post-error-sidecar enablement checkpoint review
+20. post-executor audit evidence draft 검증
 
 ## Open Testing Gaps
 
 아직 남아 있는 테스트 갭:
 
-1. post-error-sidecar top-level promotion enablement decision
+1. post-executor durable audit result/error linkage
 2. actual execution enablement 이후 smoke 업데이트 기준
 3. real side-effect rollback drill 여부
 
@@ -146,4 +150,4 @@
 
 ## Next Step
 
-다음 작업은 `LOOP-070 V1.5 reindex live adapter post-error-sidecar enablement checkpoint review`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.
+다음 작업은 `LOOP-071 V1.5 reindex live adapter post-executor audit evidence draft`다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.

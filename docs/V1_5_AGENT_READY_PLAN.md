@@ -161,7 +161,8 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_SMOKE_EVIDENCE_DRAFT_2026-04-22.md`는 explicit local-only guarded command가 `runtime_chunks=37`, `runtime_vectors=37` sidecar evidence를 남기고 top-level은 `MUTATION_APPLY_NOT_ENABLED` blocked surface를 유지함을 확인했다.
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_SMOKE_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`는 guarded local execution evidence `Go`, top-level apply success promotion `No-Go`, next implementation planning `Go`로 판정했다.
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_EXECUTOR_ERROR_SIDECAR_DRAFT_2026-04-22.md`는 guarded executor failure를 `mutation_executor_error` sidecar와 promotion router failure route evidence로 노출한다.
-- 다음 구현은 `LOOP-070 reindex live adapter post-error-sidecar enablement checkpoint review`이며, 이 단계에서는 success/failure sidecar 확보 이후 top-level promotion/actual execution enablement Go/No-Go를 다시 판단한다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ERROR_SIDECAR_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`는 success/failure sidecar readiness `Go`, top-level apply success/failure promotion `No-Go`, next implementation planning `Go`로 판정했다.
+- 다음 구현은 `LOOP-071 reindex live adapter post-executor audit evidence draft`이며, 이 단계에서는 guarded executor success/failure 후 append-only post-executor audit evidence를 남긴다.
 - raw input, retrieved context, document content, local path, admin code, credential은 저장/노출 기본 대상에서 제외한다.
 - `services/tool_trace_service.py`는 `redact_execution_trace()`로 `internal`, `public`, `persisted` audience별 trace 정규화를 제공한다.
 

@@ -51,6 +51,7 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_SMOKE_EVIDENCE_DRAFT_2026-04-22.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_SMOKE_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_EXECUTOR_ERROR_SIDECAR_DRAFT_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ERROR_SIDECAR_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
 - `docs/PREPROCESSING_RULES.md`
 - `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md`
 - `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
@@ -142,7 +143,8 @@
 | LOOP-067 | done | V1.5 reindex live adapter guarded live executor smoke evidence draft | `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag-guarded-live-smoke ./.venv/bin/python scripts/smoke_agent_runtime.py --opt-in-live-binding --opt-in-live-binding-stage-guarded` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-068 | done | V1.5 reindex live adapter post-smoke enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-069 | done | V1.5 reindex live adapter executor error sidecar draft | `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py tests/test_mutation_executor_service.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-070 | active | V1.5 reindex live adapter post-error-sidecar enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-070 | done | V1.5 reindex live adapter post-error-sidecar enablement checkpoint review | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-071 | active | V1.5 reindex live adapter post-executor audit evidence draft | `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_tool_audit_sink_service.py tests/test_smoke_agent_runtime.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -1930,7 +1932,7 @@ closeout 메모 (2026-04-20):
 - 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_EXECUTOR_ERROR_SIDECAR_DRAFT_2026-04-22.md`.
 - 다음 단계는 success/failure sidecar 보강 이후 top-level promotion 가능 여부를 다시 판정하는 checkpoint review다.
 
-## 현재 Active Loop (LOOP-070)
+## 완료 Loop (LOOP-070)
 
 목표:
 - success/failure sidecar가 모두 확보된 후 top-level apply success/failure promotion gate를 열 수 있는지 재판정한다.
@@ -1950,6 +1952,31 @@ closeout 메모 (2026-04-20):
 진행 메모 (2026-04-22):
 - `LOOP-069` closeout으로 executor success result sidecar와 failure error sidecar가 모두 blocked apply surface에서 관측 가능해졌다.
 - 아직 top-level promotion gate는 닫혀 있고, 남은 판단은 post-executor durable audit evidence와 rollback drill을 gate 전 필수로 볼지 여부다.
+- 판정: success/failure sidecar readiness는 `Go`, top-level apply success/failure promotion은 `No-Go`, next implementation planning은 `Go`.
+- blocker는 side effect 이후 result/error가 아직 별도 append-only audit record로 남지 않고, pre-executor audit receipt와 post-executor outcome linkage가 없다는 점이다.
+- 다음 단계는 guarded executor success/failure 후 post-executor audit record와 linked receipt sidecar를 남기는 것이다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ERROR_SIDECAR_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`.
+
+## 현재 Active Loop (LOOP-071)
+
+목표:
+- guarded executor success/failure 이후 post-executor audit evidence를 append-only sink에 남기고, pre-executor audit receipt와 연결한다.
+
+범위:
+- 포함: post-executor audit record, linked receipt sidecar, success/failure tests, response/contracts exposure
+- 제외: top-level promotion gate 구현, public route enablement, rollback drill 구현, upload review live execution
+
+완료 기준:
+- guarded executor success와 failure 모두 post-executor audit receipt를 남겨야 한다.
+- post-executor audit receipt는 pre-executor audit sequence id와 executor result/error summary를 연결해야 한다.
+- blocked apply response/contracts에 linked audit receipt sidecar가 포함되어야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_tool_audit_sink_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-070` 판정상 top-level promotion 전 post-executor durable audit evidence가 필요하다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
