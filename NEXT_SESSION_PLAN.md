@@ -2079,6 +2079,14 @@ closeout 메모 (2026-04-20):
 진행 메모 (2026-04-22):
 - `LOOP-085`에서 remote publication은 자동 진행하지 않고 명시 지시 대기로 분리했다.
 
+재시작 handoff (2026-04-23):
+- `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`.
+- tracked dirty 없음.
+- 남은 untracked 파일은 `.DS_Store`, `TRUNK_RAG_LINKS.md`이며, V1.5 `reindex` live adapter handoff 범위와 무관하다.
+- 다음 세션은 `LOOP-086`에서 시작한다.
+- 선택지는 `git push`/draft PR publication 지시, 다른 MVP/V1/V1.5 track 지시, 또는 대기 유지다.
+- 명시 지시 전에는 remote push/PR, public blocker 구현, upload review live execution을 시작하지 않는다.
+
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
 2. `/query` E2E 재측정
