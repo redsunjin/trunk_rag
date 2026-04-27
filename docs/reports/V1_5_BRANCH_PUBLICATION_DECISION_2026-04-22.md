@@ -25,6 +25,20 @@ Current branch state:
 
 The branch handoff snapshot is complete, and the local-only `reindex` live adapter track is closed out. Publication is a separate external action because it changes remote GitHub state and may create review/CI obligations.
 
+## Restart Sync Note (2026-04-27)
+
+The 2026-04-22 basis above is preserved as the publication decision snapshot. At the 2026-04-27 sync start:
+
+- branch: `codex/loop-034-go-no-go-review`
+- upstream: none configured
+- head at sync start: `540128a`
+- commits ahead of `main`: `49`
+- diff from `main...HEAD`: `75 files changed`, `12940 insertions`, `41 deletions`
+- validation: `roadmap_harness.py validate -> ready`, full pytest `239 passed`, default `smoke_agent_runtime.py -> ok=true`
+- untracked unrelated files remain `.DS_Store`, `TRUNK_RAG_LINKS.md`
+
+The decision does not change: automatic remote push/PR remains `No-Go` until an explicit publication instruction is given.
+
 ## If Publication Is Requested
 
 Use a separate explicit instruction before running remote actions such as:

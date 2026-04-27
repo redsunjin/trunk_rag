@@ -1,4 +1,4 @@
-# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-04-21 기준)
+# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-04-27 기준)
 
 기준 문서:
 - `SPEC.md`
@@ -67,6 +67,20 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_EXECUTOR_ERROR_SIDECAR_DRAFT_2026-04-22.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ERROR_SIDECAR_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_EXECUTOR_AUDIT_EVIDENCE_DRAFT_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_AUDIT_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_TOP_LEVEL_PROMOTION_GATE_DRAFT_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_PROMOTION_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_OPERATOR_RUNBOOK_UPDATE_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_RUNBOOK_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_PLAN_DRAFT_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_HARNESS_DRAFT_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_EXECUTION_EVIDENCE_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ROLLBACK_DRILL_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PUBLIC_PROMOTION_BLOCKER_REGISTER_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_LOCAL_ONLY_CLOSEOUT_2026-04-22.md`
+- `docs/reports/V1_5_POST_CLOSEOUT_NEXT_TRACK_SELECTION_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BRANCH_HANDOFF_SNAPSHOT_2026-04-22.md`
+- `docs/reports/V1_5_BRANCH_PUBLICATION_DECISION_2026-04-22.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -2058,10 +2072,16 @@ closeout 메모 (2026-04-20):
 진행 메모 (2026-04-22):
 - `LOOP-084`에서 branch handoff snapshot이 작성됐고 remote publication은 별도 결정으로 분리됐다.
 - publication decision 결론: local branch handoff `Go`, automatic remote push/PR `No-Go`.
-- branch는 head `b086055`, `main` 대비 `47` commits ahead, `74 files changed`, `12824 insertions`, `41 deletions`다.
+- 2026-04-22 decision snapshot은 head `b086055`, `main` 대비 `47` commits ahead, `74 files changed`, `12824 insertions`, `41 deletions`다.
 - remote publication/PR 생성은 명시 지시 후 별도 수행한다.
 - 기준 문서: `docs/reports/V1_5_BRANCH_PUBLICATION_DECISION_2026-04-22.md`.
 - 다음 단계는 explicit publication 또는 next-track instruction 대기다.
+
+현행화 메모 (2026-04-27):
+- 위 branch publication decision은 2026-04-22 당시 snapshot으로 유지한다.
+- 2026-04-27 현행화 시작 시점의 branch는 `codex/loop-034-go-no-go-review`, head `540128a`, upstream 없음, `main` 대비 `49` commits ahead 상태다.
+- 같은 시점 `main...HEAD` diff는 `75 files changed`, `12940 insertions`, `41 deletions`다.
+- remote publication/PR 생성은 여전히 명시 지시 후 별도 수행한다.
 
 ### A-Next79. Await explicit publication or next-track instruction (현재 active)
 1. 사용자의 명시 지시에 따라 publication 또는 다른 next-track으로 이동한다.
@@ -2086,6 +2106,13 @@ closeout 메모 (2026-04-20):
 - 다음 세션은 `LOOP-086`에서 시작한다.
 - 선택지는 `git push`/draft PR publication 지시, 다른 MVP/V1/V1.5 track 지시, 또는 대기 유지다.
 - 명시 지시 전에는 remote push/PR, public blocker 구현, upload review live execution을 시작하지 않는다.
+
+현행화 handoff (2026-04-27):
+- `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`.
+- `./.venv/bin/python -m pytest -q` -> `239 passed in 7.87s`.
+- `./.venv/bin/python scripts/smoke_agent_runtime.py` -> `ok=true`; 기본 경로는 `read_only_health_check`만 성공하고 `reindex` mutation apply는 `MUTATION_APPLY_NOT_ENABLED`로 차단된다.
+- tracked dirty 없음. 남은 untracked 파일은 `.DS_Store`, `TRUNK_RAG_LINKS.md`이며 이번 현행화 범위에는 포함하지 않는다.
+- 다음 행동은 여전히 `git push`/draft PR publication, 다른 MVP/V1/V1.5 track 선택, 또는 대기 유지 중 하나다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

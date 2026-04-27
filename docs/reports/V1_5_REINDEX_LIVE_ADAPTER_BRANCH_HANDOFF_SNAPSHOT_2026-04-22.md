@@ -13,6 +13,20 @@ Loop: `LOOP-084`
 - commits ahead of `main`: `46`
 - diff size from `main...HEAD`: `73 files changed`, `12680 insertions`, `41 deletions`
 
+## Restart Sync Note (2026-04-27)
+
+The branch state above is the original LOOP-084 handoff snapshot. At the 2026-04-27 sync start:
+
+- branch: `codex/loop-034-go-no-go-review`
+- upstream: none configured
+- head at sync start: `540128a`
+- commits ahead of `main`: `49`
+- diff size from `main...HEAD`: `75 files changed`, `12940 insertions`, `41 deletions`
+- validation: `roadmap_harness.py validate -> ready`, full pytest `239 passed`, default `smoke_agent_runtime.py -> ok=true`
+- untracked unrelated files remain `.DS_Store`, `TRUNK_RAG_LINKS.md`
+
+This does not change the handoff scope: publication/PR remains a separate explicit decision, and default/public mutation promotion remains blocked.
+
 ## Scope Summary
 
 The branch completes the V1.5 `reindex` live adapter local-only track.

@@ -615,7 +615,8 @@ npm start
 - 2026-04-22 local-only closeout은 `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_LOCAL_ONLY_CLOSEOUT_2026-04-22.md`를 기준으로 `reindex` explicit local-only operator/test surface `Go`, default/public top-level promotion `No-Go`, upload review live execution `No-Go`를 terminal scope로 고정했다. 다음 단계는 post-closeout next-track selection이다.
 - 2026-04-22 post-closeout next-track selection은 `docs/reports/V1_5_POST_CLOSEOUT_NEXT_TRACK_SELECTION_2026-04-22.md`를 기준으로 public blocker implementation 대신 branch handoff snapshot을 선택했다. 다음 단계는 branch handoff snapshot이다.
 - 2026-04-22 branch handoff snapshot은 `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BRANCH_HANDOFF_SNAPSHOT_2026-04-22.md`를 기준으로 branch `codex/loop-034-go-no-go-review`, `main` 대비 `46` commits ahead, `73 files changed`, latest rollback drill `ok=true`, untracked unrelated `.DS_Store`/`TRUNK_RAG_LINKS.md` 상태를 기록했다. 다음 단계는 branch publication decision이다.
-- 2026-04-22 branch publication decision은 `docs/reports/V1_5_BRANCH_PUBLICATION_DECISION_2026-04-22.md`를 기준으로 local branch handoff `Go`, automatic remote push/PR `No-Go`, head `b086055` 기준 `main` 대비 `47` commits ahead 상태를 기록했다. 다음 단계는 explicit publication 또는 next-track instruction 대기다.
+- 2026-04-22 branch publication decision은 `docs/reports/V1_5_BRANCH_PUBLICATION_DECISION_2026-04-22.md`를 기준으로 local branch handoff `Go`, automatic remote push/PR `No-Go`, 당시 head `b086055`와 `main` 대비 `47` commits ahead 상태를 snapshot으로 기록했다. 다음 단계는 explicit publication 또는 next-track instruction 대기다.
+- 2026-04-27 현행화 시작 시점에는 같은 branch가 head `540128a`, upstream 없음, `main` 대비 `49` commits ahead, `75 files changed`, `12940 insertions`, `41 deletions` 상태였다. 현행화 검증은 `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `./.venv/bin/python -m pytest -q -> 239 passed`, `./.venv/bin/python scripts/smoke_agent_runtime.py -> ok=true`이며, 기본 경로의 `reindex` mutation apply는 계속 `MUTATION_APPLY_NOT_ENABLED`로 차단된다.
 
 ### 3순위
 - 보류 항목 유지
