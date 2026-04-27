@@ -174,7 +174,8 @@
 | LOOP-083 | done | V1.5 post-closeout next-track selection | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-084 | done | V1.5 reindex live adapter branch handoff snapshot | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-085 | done | V1.5 branch publication decision | `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-086 | active | Await PR review/merge or next-track instruction | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-086 | done | V1.5 handoff PR review/merge follow-up | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-087 | active | Await next-track instruction after V1.5 merge | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -2379,7 +2380,7 @@ closeout 메모 (2026-04-20):
 - 같은 시점 `main...HEAD` diff는 `75 files changed`, `12940 insertions`, `41 deletions`다.
 - remote publication/PR 생성은 여전히 명시 지시 후 별도 수행한다.
 
-## 현재 Active Loop (LOOP-086)
+## 완료 Loop (LOOP-086)
 
 목표:
 - draft PR publication 이후 PR review/merge 또는 다른 next-track으로 이동한다.
@@ -2420,6 +2421,32 @@ publication 결과 (2026-04-27):
 - PR head는 `1292d30`, base는 `main`, draft 상태이며 `50` commits, `75` changed files로 생성됐다.
 - PR 본문에는 local-only `reindex` operator/test surface `Go`, default/public top-level promotion `No-Go`, upload review live execution `No-Go`, rollback drill evidence를 기록했다.
 - 다음 행동은 PR review/merge 후속, 다른 MVP/V1/V1.5 track 선택, 또는 대기 유지 중 하나다.
+
+merge closeout (2026-04-27):
+- PR `https://github.com/redsunjin/trunk_rag/pull/5`는 `MERGED` 상태로 확인했다.
+- merge commit은 `537ab29cb6728aa7f1a27099e974688f7aa4cf37`이며, 로컬 `main`은 `git pull --ff-only`로 해당 merge commit까지 fast-forward 됐다.
+- `LOOP-086` 완료 기준인 PR 후속 결과 기록을 충족했고, 다음 active는 `LOOP-087`로 승격한다.
+
+## 현재 Active Loop (LOOP-087)
+
+목표:
+- V1.5 handoff merge 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
+
+범위:
+- 포함: 다음 트랙 선택, 필요 시 새 작업 브랜치 생성, TODO/NEXT active 재정렬
+- 제외: 명시 지시 없는 public blocker 구현, upload review live execution 구현, GraphRAG 재개, 데스크톱 패키징 재착수
+
+완료 기준:
+- 사용자가 다음 MVP/V1/V1.5 track, PR 후속 정리, 또는 대기 유지를 명시해야 한다.
+- 새 track을 진행한다면 TODO/NEXT active가 해당 track으로 재정렬되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-27):
+- `LOOP-086`에서 V1.5 handoff PR merge까지 완료됐다.
+- 현재 선택지는 다음 track 지시, 병합된 작업 브랜치 정리, 또는 대기 유지다.
+- default/public top-level promotion과 upload review live execution은 계속 `No-Go`다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
