@@ -1,21 +1,16 @@
-/* 
- * LLM Performance Calculator Pro
- * Copyright ⓒ 2026 Selim. All rights reserved.
- * Unauthorized reproduction or distribution is prohibited.
- */
-
 :root {
-    --bg-color: #f8f9fa;
+    --bg-color: #f7f9f6;
     --sidebar-bg: #ffffff;
-    --text-primary: #212529;
-    --text-secondary: #6c757d;
-    --border-color: #dee2e6;
-    --primary-color: #0d6efd;
-    --primary-hover: #0b5ed7;
-    --secondary-color: #f1f3f5;
+    --text-primary: #0f1f1a;
+    --text-secondary: #5d6b65;
+    --border-color: #d9e2dd;
+    --primary-color: #1f6f5b;
+    --primary-hover: #175746;
+    --accent-color: #d39b37;
+    --secondary-color: #eef3f0;
     --card-bg: #ffffff;
-    --bot-msg-bg: #f8f9fa;
-    --user-msg-bg: #e7f1ff;
+    --bot-msg-bg: #f5f8f6;
+    --user-msg-bg: #e3f1ec;
     --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
@@ -62,6 +57,69 @@ body {
     font-weight: 600;
 }
 
+.brand-lockup {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-mark {
+    width: 56px;
+    height: 56px;
+    flex: 0 0 auto;
+}
+
+.brand-mark.small {
+    width: 40px;
+    height: 40px;
+}
+
+.brand-kicker {
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+.intro-brand {
+    margin-bottom: 18px;
+}
+
+.intro-brand h1,
+.page-brand h1 {
+    font-size: 1.55rem;
+    line-height: 1.15;
+}
+
+.sidebar-brand h2 {
+    line-height: 1.1;
+}
+
+.intro-panel {
+    width: 100%;
+    max-width: 720px;
+    padding: 28px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: var(--shadow);
+}
+
+.intro-copy {
+    margin-bottom: 18px;
+    color: var(--text-secondary);
+}
+
+.info-panel {
+    padding: 16px;
+    background: #f8faf7;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
 .close-btn {
     display: none;
     background: none;
@@ -82,7 +140,7 @@ body {
 
 .chat-message {
     padding: 12px 16px;
-    border-radius: 12px;
+    border-radius: 8px;
     font-size: 0.9rem;
     max-width: 85%;
 }
@@ -100,7 +158,7 @@ body {
 .chat-message.user {
     background-color: var(--user-msg-bg);
     align-self: flex-end;
-    color: #084298;
+    color: #123d33;
 }
 
 .chat-input-area {
@@ -120,7 +178,7 @@ body {
     margin-bottom: 20px;
     padding: 12px;
     border: 1px solid var(--border-color);
-    border-radius: 10px;
+    border-radius: 8px;
     background-color: #fff;
 }
 
@@ -159,7 +217,7 @@ body {
 }
 
 .doc-item-btn:hover {
-    background: #f8f9fa;
+    background: #f8faf7;
 }
 
 .doc-name {
@@ -218,7 +276,7 @@ textarea {
     flex: 1;
     overflow-y: auto;
     border: 1px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: 8px;
     background-color: #fff;
     padding: 16px;
     display: flex;
@@ -248,7 +306,7 @@ textarea {
     max-height: 320px;
     overflow-y: auto;
     border: 1px solid var(--border-color);
-    border-radius: 10px;
+    border-radius: 8px;
     padding: 12px;
     background: #fff;
     line-height: 1.6;
@@ -287,7 +345,7 @@ textarea {
     margin-top: 8px;
     font-size: 0.78rem;
     color: var(--text-secondary);
-    background: #f8f9fa;
+    background: #f8faf7;
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 8px 10px;
@@ -342,7 +400,7 @@ textarea {
     flex-direction: column;
     gap: 2px;
     padding: 8px;
-    background: #f8f9fa;
+    background: #f8faf7;
     border: 1px solid var(--border-color);
     border-radius: 8px;
 }
@@ -424,7 +482,7 @@ button.secondary-btn {
 .card {
     background-color: var(--card-bg);
     padding: 24px;
-    border-radius: 16px;
+    border-radius: 8px;
     box-shadow: var(--shadow);
     border: 1px solid rgba(0, 0, 0, 0.02);
 }
@@ -566,12 +624,12 @@ button.secondary-btn {
 }
 
 .status-indicator.ok {
-    background-color: #d1e7dd;
-    color: #0f5132;
+    background-color: #dcefe8;
+    color: #124538;
 }
 
 .status-indicator.ok .status-dot {
-    background-color: #198754;
+    background-color: var(--primary-color);
 }
 
 .status-indicator.warn {
@@ -580,7 +638,7 @@ button.secondary-btn {
 }
 
 .status-indicator.warn .status-dot {
-    background-color: #ffc107;
+    background-color: var(--accent-color);
 }
 
 .status-indicator.error {
@@ -626,9 +684,8 @@ button.secondary-btn {
 .app-footer {
     margin-top: 40px;
     padding: 32px;
-    background-color: #f8f9fa;
-    /* Light subtle gray */
-    border-radius: 16px;
+    background-color: #f8faf7;
+    border-radius: 8px;
     border: 1px solid var(--border-color);
 }
 
@@ -664,7 +721,7 @@ button.secondary-btn {
     flex: 1;
     background-color: white;
     padding: 16px;
-    border-radius: 12px;
+    border-radius: 8px;
     border: 1px solid #fee2e2;
     /* Subtle red alert border */
     line-height: 1.6;

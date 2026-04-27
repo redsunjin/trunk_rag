@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-087`
-- current_active_title: `Await next-track instruction after V1.5 merge`
+- current_active_id: `LOOP-088`
+- current_active_title: `Await next-track instruction after brand pass`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -2126,16 +2126,18 @@ merge closeout (2026-04-27):
 - merge commit은 `537ab29cb6728aa7f1a27099e974688f7aa4cf37`이며, 로컬 `main`은 `git pull --ff-only`로 해당 merge commit까지 fast-forward 됐다.
 - `LOOP-086` 완료 기준인 PR 후속 결과 기록을 충족했고, 다음 active는 `LOOP-087`로 승격한다.
 
-### A-Next80. Await next-track instruction after V1.5 merge (현재 active)
-1. V1.5 handoff merge 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
-2. 다음 track이 정해지면 필요 시 새 작업 브랜치를 만들고 TODO/NEXT active를 재정렬한다.
-3. 명시 지시 없는 public blocker 구현, upload review live execution, GraphRAG 재개, 데스크톱 패키징 재착수는 수행하지 않는다.
+### A-Next80. V1 product identity/icon pass (완료: 2026-04-27)
+1. V1 웹 MVP에 맞는 최소 제품 정체성, SVG 브랜드 자산, 웹 UI 헤더 적용을 완료한다.
+2. Trunk RAG mark/wordmark/favicon을 로컬 자산으로 제공하고 intro/app/admin에 일관되게 적용한다.
+3. 대규모 UI 리디자인, 랜딩 페이지 전환, 제품명 변경, public blocker 구현, upload review live execution은 수행하지 않는다.
 
 완료 기준:
-- 사용자가 다음 MVP/V1/V1.5 track, PR 후속 정리, 또는 대기 유지를 명시해야 한다.
-- 새 track을 진행한다면 TODO/NEXT active가 해당 track으로 재정렬되어야 한다.
+- 브랜드 자산이 로컬 서버에서 제공되어야 한다.
+- intro/app/admin 첫 화면에서 Trunk RAG 정체성이 일관되게 보여야 한다.
+- README/SPEC/TODO/NEXT가 변경 범위와 검증 결과를 반영해야 한다.
 
 검증:
+- `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 진행 메모 (2026-04-27):
@@ -2147,6 +2149,39 @@ branch cleanup (2026-04-27):
 - local branch `codex/loop-034-go-no-go-review`는 `main` 병합 확인 후 삭제했다.
 - remote branch `origin/codex/loop-034-go-no-go-review`는 조회되지 않아 별도 삭제가 필요 없었다.
 - 현재 선택지는 다음 track 지시 또는 대기 유지다.
+
+진행 메모 (2026-04-27):
+- 사용자 지시에 따라 다음 track을 `V1 product identity/icon pass`로 선택했다.
+- 구현 브랜치는 `codex/loop-087-brand-identity`다.
+- 시각 방향은 폐쇄망/로컬 운영툴에 맞춘 차분한 Trunk RAG mark/wordmark/favicon으로 제한한다.
+
+closeout 메모 (2026-04-27):
+- `web/assets/trunk-rag-mark.svg`, `web/assets/trunk-rag-wordmark.svg`, `web/assets/favicon.svg`를 추가했다.
+- `/assets/{file_name}` 정적 라우트를 추가해 SVG/PNG/ICO 브랜드 자산을 로컬 서버에서 제공한다.
+- `/intro`, `/app`, `/admin`에 Trunk RAG 브랜드 lockup과 favicon을 적용했다.
+- `README.md` 상단에 wordmark를 추가했고, `SPEC.md`에 브랜드 자산/API/UI 범위를 반영했다.
+- 검증은 `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py -> 11 passed`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과로 마감한다.
+
+### A-Next81. Await next-track instruction after brand pass (현재 active)
+1. V1 brand pass 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
+2. 다음 track이 정해지면 필요 시 새 작업 브랜치를 만들고 TODO/NEXT active를 재정렬한다.
+3. 명시 지시 없는 public blocker 구현, upload review live execution, GraphRAG 재개, 데스크톱 패키징 재착수는 수행하지 않는다.
+
+완료 기준:
+- 사용자가 다음 MVP/V1/V1.5 track, PR 후속 정리, 또는 대기 유지를 명시해야 한다.
+- 새 track을 진행한다면 TODO/NEXT active가 해당 track으로 재정렬되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-27):
+- `LOOP-087`에서 최소 브랜드/아이콘 패스를 완료했다.
+- 현재 선택지는 다음 track 지시 또는 대기 유지다.
+
+sync/next-track review (2026-04-27):
+- `codex/loop-087-brand-identity`를 `origin/codex/loop-087-brand-identity`로 push하고 upstream을 연결했다.
+- 추천 즉시 작업은 새 기능 착수보다 브랜드 브랜치 PR 생성/리뷰/merge로 `main` 기준선을 먼저 맞추는 것이다.
+- 브랜드 merge 이후 다음 구현 후보는 user-facing release polish 또는 첫 실행/복구 가이드 실사용 점검이며, public promotion blocker 구현, upload review live execution, GraphRAG, 데스크톱 패키징은 별도 명시 전까지 계속 제외한다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색
