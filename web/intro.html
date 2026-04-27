@@ -20,7 +20,7 @@
           </div>
         </div>
         <p class="intro-copy">
-          폐쇄망/로컬 환경용 경량 RAG 웹 서버입니다. 검증된 기본 경로는 `run_doc_rag.bat`로 시작해 `/intro`에서 상태를 확인한 뒤 `/app` 또는 `/admin`으로 진입하는 흐름입니다.
+          문서를 검색하고 질문하는 로컬 RAG 작업 공간입니다. 상태가 준비되면 사용자 모드로 바로 시작할 수 있습니다.
         </p>
 
         <div id="statusIndicator" class="status-indicator" style="margin-bottom:10px;">
@@ -28,30 +28,33 @@
           <span class="status-text">Checking...</span>
         </div>
         <p id="statusMsg" class="status-msg" style="margin-bottom:18px;">서버 상태 확인 중입니다.</p>
-        <p id="runtimeProfileMsg" class="status-msg" style="margin-bottom:18px;">런타임 프로파일을 확인 중입니다.</p>
-        <p id="releaseGuideMsg" class="status-msg" style="margin-bottom:18px;">기본 복구 경로를 확인 중입니다.</p>
 
-        <div class="recovery-panel" aria-labelledby="introRecoveryTitle">
-          <div class="panel-heading">
-            <h3 id="introRecoveryTitle">첫 실행 체크</h3>
-            <span id="releaseStatusBadge" class="status-badge">checking</span>
+        <details class="disclosure-panel">
+          <summary>첫 실행/복구 안내</summary>
+          <div class="recovery-panel flat" aria-labelledby="introRecoveryTitle">
+            <div class="panel-heading">
+              <h3 id="introRecoveryTitle">필요한 경우만 확인하세요</h3>
+              <span id="releaseStatusBadge" class="status-badge">checking</span>
+            </div>
+            <ol id="releaseStepsList" class="recovery-steps">
+              <li>run_doc_rag.bat 실행 상태를 확인 중입니다.</li>
+            </ol>
+            <p id="recoveryHintMsg" class="helper-text">상태 확인 후 필요한 다음 행동만 표시합니다.</p>
           </div>
-          <ol id="releaseStepsList" class="recovery-steps">
-            <li>run_doc_rag.bat 실행 상태를 확인 중입니다.</li>
-          </ol>
-          <p id="recoveryHintMsg" class="helper-text">상태 확인 후 필요한 다음 행동만 표시합니다.</p>
-        </div>
+        </details>
 
         <div class="info-panel">
-          <h3 style="margin-bottom:10px;">현재 운영 범위</h3>
-          <p class="status-msg" style="margin-bottom:8px;">포함: 인덱싱, 질의, 업로드 요청, 관리자 승인, 운영 게이트</p>
-          <p class="status-msg">제외: GraphRAG 운영, 무거운 rerank, 설치형 데스크톱 제품화</p>
+          <h3 style="margin-bottom:10px;">기본 기능</h3>
+          <p class="status-msg" style="margin-bottom:8px;">문서 검색 질의, 문서 추가/갱신 요청, 관리자 승인 흐름을 제공합니다.</p>
+          <p class="status-msg">고급 검색 확장과 데스크톱 패키징은 현재 기본 화면 범위 밖입니다.</p>
         </div>
 
-        <div class="info-panel">
-          <h3 style="margin-bottom:10px;">최근 Ops Baseline</h3>
+        <details class="disclosure-panel">
+          <summary>운영 진단 상세</summary>
+          <p id="runtimeProfileMsg" class="status-msg">런타임 프로파일을 확인 중입니다.</p>
+          <p id="releaseGuideMsg" class="status-msg">기본 복구 경로를 확인 중입니다.</p>
           <p id="opsBaselineMsg" class="status-msg">최근 ops-baseline 게이트 상태를 확인 중입니다.</p>
-        </div>
+        </details>
 
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
           <button id="refreshBtn" class="secondary-btn">상태 새로고침</button>
@@ -106,11 +109,6 @@
       statusMsg.textContent = detail || "";
     }
 
-    function joinReleaseSteps(data) {
-      const steps = Array.isArray(data.release_web_steps) ? data.release_web_steps : [];
-      return steps.join(" | ");
-    }
-
     function renderReleaseSteps(steps) {
       const items = Array.isArray(steps) && steps.length ? steps : offlineRecoverySteps;
       releaseStepsList.replaceChildren();
@@ -146,25 +144,17 @@
       releaseStatusBadge.className = "status-badge " + status;
       renderReleaseSteps(data?.release_web_steps);
       recoveryHintMsg.textContent = recoveryHintFor(data);
-      releaseGuideMsg.textContent = `기본 복구: ${headline}`;
+      releaseGuideMsg.textContent = `상태 요약: ${headline}`;
     }
 
     function formatRuntimeProfile(data) {
       const status = data.runtime_profile_status || "unknown";
       const scope = data.runtime_profile_scope || "-";
-      const message = data.runtime_profile_message || "";
-      const recommendation = data.runtime_profile_recommendation || "";
-      const budgetProfile = data.runtime_query_budget_profile || "-";
-      const budgetSummary = data.runtime_query_budget_summary || "";
+      const provider = data.default_llm_provider || "-";
+      const model = data.default_llm_model || "-";
       const embeddingStatus = data.embedding_fingerprint_status || "-";
-      const embeddingMessage = data.embedding_fingerprint_message || "";
-      return (
-        `runtime=${status} (${scope}) | budget=${budgetProfile} | ${message}` +
-        `${recommendation ? ` | next: ${recommendation}` : ""}` +
-        `${budgetSummary ? ` | budget_summary: ${budgetSummary}` : ""}` +
-        `${embeddingStatus ? ` | embedding=${embeddingStatus}` : ""}` +
-        `${embeddingMessage ? ` | embedding_next: ${embeddingMessage}` : ""}`
-      );
+      const vectors = data.vectors ?? "-";
+      return `런타임: ${status} (${scope}) | ${provider}/${model} | 문서 벡터=${vectors} | 인덱스=${embeddingStatus}`;
     }
 
     function parseApiError(data, fallbackMessage) {
@@ -234,18 +224,16 @@
         const llmSummary = data.default_llm_provider && data.default_llm_model
           ? `${data.default_llm_provider} / ${data.default_llm_model}`
           : "-";
-        const releaseHeadline = data.release_web_headline || "";
-        const releaseSteps = joinReleaseSteps(data);
         runtimeProfileMsg.textContent = formatRuntimeProfile(data);
         renderRecoveryGuide(data);
         if ((data.vectors ?? 0) <= 0) {
-          setStatus("warn", "Ready", `${releaseHeadline} | llm=${llmSummary} | ${releaseSteps}`);
+          setStatus("warn", "Ready", "문서 인덱스가 비어 있습니다. /app에서 Reindex를 먼저 실행하세요.");
           return true;
         }
         setStatus(
           "ok",
-          "Online",
-          `default=${data.collection_key} vectors=${data.vectors ?? "-"} llm=${llmSummary} | ${releaseHeadline} | ${releaseSteps}`,
+          "Ready",
+          `문서 ${data.vectors ?? "-"}개 벡터와 ${llmSummary} 런타임을 사용할 수 있습니다.`,
         );
         return true;
       } catch (error) {

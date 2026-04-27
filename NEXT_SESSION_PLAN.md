@@ -1,4 +1,4 @@
-# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-04-27 기준)
+# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-04-28 기준)
 
 기준 문서:
 - `SPEC.md`
@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-091`
-- current_active_title: `Await next-track after app UI polish`
+- current_active_id: `LOOP-092`
+- current_active_title: `Await next-track after UI copy/disclosure polish`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -102,6 +102,15 @@
 - progress_sync_rule: 범위 변경, 구현 메모, 검증 결과, blocker, 다음 액션이 생기면 `TODO.md` 현재 `active` 메모와 본 문서의 현재 스냅샷을 같은 작업 단위에서 함께 갱신한다.
 - commit_sync_rule: 커밋 전과 세션 pause 전에는 `TODO.md`/`NEXT_SESSION_PLAN.md`가 모두 최신 진행 상태를 반영한 뒤 `./.venv/bin/python scripts/roadmap_harness.py status`로 handoff 상태를 확인한다.
 - legacy_gate_note: 역사 메모의 `ops-baseline` 표기는 `generic-baseline`/`sample-pack-baseline` 분리 이전 명칭이며, 현재 본체 기본 gate는 `generic-baseline`이다.
+
+## 2026-04-28 UI Copy/Disclosure Snapshot
+
+- 현재 브랜치: `codex/loop-089-first-run-recovery-check`
+- 완료 루프: `LOOP-091 Intro/app diagnostics disclosure and document workflow copy polish`
+- 기본 화면 기준: `/intro`와 `/app`는 일반 사용자용 상태/문서 흐름을 먼저 보여 주고, runtime/release/ops 세부 진단은 접힘 패널에서 확인한다.
+- 문서 기준: 현재 기본 문서는 유럽 과학사 `sample-pack` 데모/부트스트랩 문서이며, 제품 본체 도메인 데이터가 아니다.
+- 문서 반영 흐름: 사용자는 `/app` 왼쪽 `문서 추가/갱신 요청`으로 요청을 만들고, 관리자 승인 후 검색 문서에 반영한다. 삭제/비활성화는 기본 MVP 화면에서 제공하지 않는다.
+- 검증: `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py -> 11 passed`; `/intro`, `/app` 1394x625 및 390x844 Playwright render check에서 `overflow=false`, `has_budget_summary=false`, `has_profile_summary=false`.
 
 ## 0. 2026-03-13 우선순위 재정렬
 

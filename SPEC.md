@@ -111,7 +111,8 @@
 ### UI/UX
 - 공통 `styles.css` 스타일 패턴을 현재 `web/index.html`에 반영
 - Trunk RAG SVG 브랜드 마크/워드마크/favicon 추가 및 intro/app/admin 헤더에 적용
-- `/health` release guidance 기반 첫 실행/복구 체크리스트를 intro/app에 노출
+- `/health` release guidance 기반 첫 실행/복구 체크리스트를 intro/app의 접힘 패널에서 제공
+- `/intro`와 `/app` 기본 화면은 일반 사용자용 상태/문서 흐름을 우선하고, runtime/release/ops 진단 장문은 접힘 패널로 숨긴다.
 - `/app` 사이드바는 설정 아이콘을 사용하고, 제품 로고는 메인 헤더 브랜드 lockup에만 둔다.
 - 공통 레이아웃 클래스 적용(`app-container`, `sidebar`, `main-content`, `card`)
 - 화면 구성: 좌측(설정/헬스/문서목록), 우측(채팅/MD 뷰어)
@@ -522,8 +523,8 @@ cd <repo>
 ```
 - 런처는 `.venv\Scripts\python.exe` 우선, 없으면 시스템 `python`을 사용한다.
 - 런처는 `/health`가 200 응답이 될 때까지 최대 45초 대기한 뒤 `/intro`를 연다.
-- `/intro`는 release status badge, 첫 실행 체크리스트, 런타임 프로파일, ops-baseline 상태를 함께 보여 준다.
-- `/app`는 현재 런타임 요약과 복구 체크를 유지해 질의 실패 전후의 다음 행동을 바로 확인할 수 있게 한다.
+- `/intro`는 기본 상태를 먼저 보여 주고, release status badge, 첫 실행 체크리스트, 런타임 프로파일, ops-baseline 상태는 접힘 패널에서 확인하게 한다.
+- `/app`는 sample-pack 데모 문서와 사용자 문서 추가/갱신 요청 흐름을 먼저 설명하고, 복구/ops 상세는 접힘 패널에서 확인하게 한다.
 - 서버 실행(수동):
 ```powershell
 cd <repo>

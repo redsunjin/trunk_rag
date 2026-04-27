@@ -24,7 +24,8 @@
 - 검증된 기본 경로: `run_doc_rag.bat` -> `/intro` -> `/app`
 - 현재 중심 기능: 인덱싱, 질의, 업로드 요청, 관리자 승인, 운영 게이트
 - 현재 제품 표기: Trunk RAG SVG mark/wordmark/favicon을 `/intro`, `/app`, `/admin`, README에 적용
-- 현재 복구 안내: `/intro`와 `/app`는 `/health`의 release guidance를 첫 실행/복구 체크리스트로 표시
+- 현재 복구 안내: `/intro`와 `/app`는 기본 화면에 간단 상태를 표시하고, release/runtime/ops 세부 진단은 접힘 패널에서 표시
+- 현재 문서 흐름: 기본 번들 문서는 유럽 과학사 sample-pack 데모이며, 사용자 문서는 업로드 요청과 관리자 승인 후 반영
 - 현재 범위 밖: GraphRAG 운영, 무거운 rerank, 설치형 데스크톱 제품화
 
 현재 문서는 과장된 성능 약속보다 "지금 무엇이 준비돼 있고 어떤 경로가 검증됐는지"를 우선 보여 주는 기준으로 유지합니다.
@@ -199,7 +200,7 @@ cd <repo>
    - `.env`가 없으면 `.env.example`을 복사합니다.
    - 런타임 패키지가 없으면 `requirements.txt` 설치를 시도합니다.
    - `/health`가 준비될 때까지 최대 45초 대기한 뒤 `http://127.0.0.1:8000/intro`를 엽니다.
-   - `/intro`는 `release_web_status`, 런타임 프로파일, 임베딩 fingerprint, 첫 실행 체크리스트를 함께 보여 줍니다.
+   - `/intro`는 기본 상태를 먼저 보여 주고, `release_web_status`, 런타임 프로파일, 임베딩 fingerprint, 첫 실행 체크리스트는 접힘 패널에서 확인할 수 있습니다.
    - 완전 오프라인 환경에서는 임베딩 모델 `BAAI/bge-m3`를 사전에 로컬 캐시에 준비하거나 `DOC_RAG_EMBEDDING_MODEL`로 로컬 경로를 지정해야 합니다.
 3. 첫 실행이거나 상태 메시지에 `vectors=0`이 보이면 먼저 인덱싱:
    - 브라우저 왼쪽 메뉴에서 `Reindex`를 실행하거나
@@ -524,8 +525,11 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 
 - 기본 질의 모드에서는 `/health`의 런타임 기본 LLM 설정을 자동 사용합니다.
 - `고급 설정 펼치기`를 눌러야 provider/model/base URL/API key를 직접 수정할 수 있습니다.
+- `/intro`와 `/app`의 release/runtime/ops 진단 상세는 기본 화면을 방해하지 않도록 접힘 패널로 표시합니다.
+- 기본 문서 목록에는 첫 실행 확인용 유럽 과학사 sample-pack 데모 문서와 승인된 사용자 문서가 함께 표시될 수 있습니다.
 - `vectors=0`이면 질문 전 `Reindex`를 먼저 실행하라는 안내가 표시됩니다.
 - 업로드 요청에서 `Source Name`은 비워둘 수 있고, `country`/`doc_type`은 `/collections`가 내려주는 manifest 기반 컬렉션 기본값을 따를 수 있습니다.
+- 문서 추가/갱신은 `/app`의 업로드 요청과 관리자 승인 흐름을 사용하며, 삭제/비활성화는 기본 MVP 화면에서 제공하지 않습니다.
 
 ## Testing
 

@@ -179,7 +179,8 @@
 | LOOP-088 | done | Brand PR merge/branch cleanup follow-up | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-089 | done | First-run recovery guide usability check | `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-090 | done | App sidebar/header UI polish | `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-091 | active | Await next-track after app UI polish | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-091 | done | Intro/app diagnostics disclosure and document workflow copy polish | `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py` + visual render check + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-092 | active | Await next-track after UI copy/disclosure polish | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -2567,24 +2568,57 @@ closeout 메모 (2026-04-28):
 - 실제 `/app` 1394x625 렌더링에서 `sidebar_brand_marks=0`, `settings_icons=1`, `has_horizontal_overflow=false`를 확인했다.
 - 검증은 `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py -> 11 passed`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과로 마감한다.
 
-## 현재 Active Loop (LOOP-091)
+## 완료 Loop (LOOP-091)
 
 목표:
-- app UI polish 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
+- `/intro`와 `/app`의 운영 진단 장문을 기본 화면에서 줄이고, 필요한 세부 정보는 접힘 패널로 정리한다.
+
+범위:
+- 포함: intro/app 설명문 정리, 런타임/복구/ops 진단 접힘 처리, 유럽 과학사 sample-pack 데모 문서 안내, 문서 추가/갱신 요청 흐름 안내, e2e/문서 현행화
+- 제외: 문서 삭제/비활성화 UI 구현, upload review live execution 구현, GraphRAG 재개, 데스크톱 패키징 재착수
+
+완료 기준:
+- 기본 화면에는 `budget_summary`, `profile=verified...` 같은 운영 진단 문자열이 노출되지 않아야 한다.
+- 런타임/복구/ops 세부 정보는 `/intro`와 `/app`에서 접힘 패널로 열어 확인할 수 있어야 한다.
+- 기본 문서가 유럽 과학사 sample-pack 데모임을 UI에서 설명해야 한다.
+- 문서 추가/갱신 요청 경로와 삭제 미지원 범위가 UI에서 드러나야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py`
+- `/intro`, `/app` 1394x625 및 390x844 Playwright render check
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-28):
+- `LOOP-090`에서 `/app` 사이드바/헤더 UI polish와 visual render check를 완료했다.
+- 사용자 피드백에 따라 release/runtime/budget/ops 설명이 기본 화면에서 과하게 보이는 문제와 sample-pack 문서/문서 반영 흐름이 불명확한 문제를 정리한다.
+- 같은 `codex/loop-089-first-run-recovery-check` 브랜치에서 app UI polish 후속 커밋으로 진행한다.
+
+closeout 메모 (2026-04-28):
+- `/intro`의 첫 실행/복구 체크리스트와 운영 진단 상세를 접힘 패널로 이동하고, 기본 설명은 로컬 RAG 작업 공간 중심으로 줄였다.
+- `/app` overview는 sample-pack 데모 문서와 사용자 문서 추가/갱신 요청 흐름을 먼저 설명하도록 바꿨다.
+- `/app` 사이드바 런타임 프로파일은 `런타임 상세` 접힘 패널로 숨기고, RAG Documents/업로드 영역에는 유럽 과학사 sample-pack 데모와 삭제 미지원 범위를 명시했다.
+- e2e는 접힘 진단 계약, sample-pack 안내, 문서 반영 방식, `budget_summary` 미노출을 확인하도록 갱신했다.
+- 실제 `/intro`, `/app` 1394x625 및 390x844 렌더링에서 `has_budget_summary=false`, `has_profile_summary=false`, `has_run_bat_visible=false`, `overflow=false`를 확인했다.
+- 검증은 `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py -> 11 passed`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과로 마감한다.
+
+## 현재 Active Loop (LOOP-092)
+
+목표:
+- UI copy/disclosure polish 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
 
 범위:
 - 포함: 다음 track 선택, 필요 시 새 작업 브랜치 생성, TODO/NEXT active 재정렬
 - 제외: 명시 지시 없는 public blocker 구현, upload review live execution 구현, GraphRAG 재개, 데스크톱 패키징 재착수
 
 완료 기준:
-- 사용자가 릴리즈 체크리스트 실측, PR/merge 후속, 다른 MVP/V1/V1.5 track, 또는 대기 유지를 명시해야 한다.
+- 사용자가 PR/merge 후속, 릴리즈 체크리스트 실측, 다른 MVP/V1/V1.5 track, 또는 대기 유지를 명시해야 한다.
 - 새 track을 진행한다면 TODO/NEXT active가 해당 track으로 재정렬되어야 한다.
 
 검증:
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 진행 메모 (2026-04-28):
-- `LOOP-090`에서 `/app` 사이드바/헤더 UI polish와 visual render check를 완료했다.
+- `LOOP-091`에서 `/intro`와 `/app`의 기본 설명/진단 노출/문서 workflow copy를 정리했다.
 - 다음 추천 후보는 이 브랜치 PR 생성/merge 후 릴리즈 체크리스트 실측이다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)

@@ -227,24 +227,21 @@ function formatRuntimeProfile(data) {
   const status = data.runtime_profile_status || "unknown";
   const scope = data.runtime_profile_scope || "-";
   const recommendation = data.runtime_profile_recommendation || "";
-  const budgetProfile = data.runtime_query_budget_profile || "-";
   const embeddingStatus = data.embedding_fingerprint_status || "-";
   const timeout = data.query_timeout_seconds ?? "-";
   const model = data.default_llm_model || "-";
   const needsAction = status !== "verified" && recommendation;
   return (
-    `런타임: ${status} (${scope}) | model=${model} | timeout=${timeout}s | ` +
-    `budget=${budgetProfile} | embedding=${embeddingStatus}` +
+    `런타임: ${status} (${scope}) | model=${model} | timeout=${timeout}s | 인덱스=${embeddingStatus}` +
     `${needsAction ? ` | next: ${recommendation}` : ""}`
   );
 }
 
 function formatAppOverview(data) {
-  const headline = data.release_web_headline || "기본 경로 점검 필요";
   const runtime = data.runtime_profile_status || "unknown";
   const embedding = data.embedding_fingerprint_status || "-";
   const vectors = data.vectors ?? "-";
-  return `운영 경로: ${headline} | runtime=${runtime} | embedding=${embedding} | vectors=${vectors}`;
+  return `상태: 문서 벡터=${vectors} | 런타임=${runtime} | 인덱스=${embedding}`;
 }
 
 function renderRecoverySteps(target, steps) {

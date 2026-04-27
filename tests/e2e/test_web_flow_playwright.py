@@ -96,9 +96,9 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     page.route("**/ops-baseline/latest", ops_baseline_latest)
     page.goto(f"{live_server_url}/intro", wait_until="domcontentloaded")
     expect(page.locator("#statusIndicator .status-text")).to_have_text(re.compile(r"Online|Ready"), timeout=15000)
-    expect(page.locator("#statusMsg")).to_contain_text("llm=", timeout=15000)
-    expect(page.locator("#runtimeProfileMsg")).to_contain_text("runtime=", timeout=15000)
-    expect(page.locator("#releaseGuideMsg")).to_contain_text("기본 복구", timeout=15000)
+    expect(page.locator("#statusMsg")).to_contain_text("문서", timeout=15000)
+    expect(page.locator("#runtimeProfileMsg")).to_contain_text("런타임:", timeout=15000)
+    expect(page.locator("#releaseGuideMsg")).to_contain_text("상태 요약", timeout=15000)
     expect(page.locator("#releaseStatusBadge")).to_have_text(
         re.compile(r"ready|needs_reindex|runtime_warning|needs_verified_runtime"),
         timeout=15000,
@@ -109,7 +109,10 @@ def test_intro_app_flow(page: Page, live_server_url: str):
 
     page.click("#userStartBtn")
     expect(page).to_have_url(re.compile(r".*/app$"), timeout=10000)
-    expect(page.locator(".app-overview-card")).to_contain_text("현재 운영 기준")
+    expect(page.locator(".app-overview-card")).to_contain_text("로컬 RAG 작업 공간")
+    expect(page.locator(".app-overview-card")).to_contain_text("유럽 과학사 샘플 데모")
+    expect(page.locator(".sidebar-section").filter(has_text="RAG Documents")).to_contain_text("샘플 데모")
+    expect(page.locator(".sidebar-section").filter(has_text="문서 추가/갱신 요청")).to_contain_text("문서 반영 방식")
     expect(page.locator("#appOpsBaselineMsg")).to_contain_text("최근 ops-baseline")
     expect(page.locator("#appRecoverySteps")).to_contain_text("run_doc_rag.bat", timeout=10000)
     expect(page.locator(".sidebar-header .brand-mark")).to_have_count(0)
@@ -117,6 +120,7 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     expect(page.locator(".sidebar-header")).to_contain_text("Settings")
     expect(page.locator("#runtimeSummary")).to_contain_text("기본 질의 설정", timeout=10000)
     expect(page.locator("#runtimeSummary")).not_to_contain_text("localhost")
+    expect(page.locator("#runtimeProfileMsg")).not_to_contain_text("budget_summary")
     expect(page.locator("#advancedSettings")).to_be_hidden()
     expect(page.locator("#uploadMetadataFields")).to_be_hidden()
     expect(page.locator("#uploadDefaultsSummary")).to_contain_text("source=auto")
@@ -179,7 +183,7 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     page.click("#healthBtn")
     expect(page.locator("#statusMsg")).to_contain_text("vectors=37")
     expect(page.locator("#runtimeProfileMsg")).to_contain_text("verified")
-    expect(page.locator("#appOverviewRuntime")).to_contain_text("vectors=37")
+    expect(page.locator("#appOverviewRuntime")).to_contain_text("문서 벡터=37")
     expect(page.locator("#appRecoverySteps")).to_contain_text("/intro 확인")
 
     query_payload: dict[str, object] = {}
