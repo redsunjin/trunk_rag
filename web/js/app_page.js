@@ -12,6 +12,7 @@ const apiKey = document.getElementById("apiKey");
 const runtimeSummary = document.getElementById("runtimeSummary");
 const runtimeProfileMsg = document.getElementById("runtimeProfileMsg");
 const appOverviewRuntime = document.getElementById("appOverviewRuntime");
+const appRecoverySteps = document.getElementById("appRecoverySteps");
 const appOpsBaselineMsg = document.getElementById("appOpsBaselineMsg");
 const advancedSettings = document.getElementById("advancedSettings");
 const advancedSettingsToggle = document.getElementById("advancedSettingsToggle");
@@ -48,6 +49,13 @@ let lastHealth = null;
 let advancedSettingsOpen = false;
 let runtimeDefaultsLoaded = false;
 let uploadMetadataOpen = false;
+
+const offlineRecoverySteps = [
+  "run_doc_rag.bat 또는 app_api.py로 서버를 다시 시작합니다.",
+  "Ollama/LLM 서버와 기본 모델 준비 상태를 확인합니다.",
+  "vectors=0 또는 fingerprint 문제가 보이면 Reindex를 실행합니다.",
+  "/intro에서 상태를 다시 확인한 뒤 질문을 재시도합니다.",
+];
 
 function renderMarkdownBasic(markdown) {
   const lines = markdown.split("\n");
@@ -235,10 +243,21 @@ function formatRuntimeProfile(data) {
 
 function formatAppOverview(data) {
   const headline = data.release_web_headline || "기본 경로 점검 필요";
-  const steps = Array.isArray(data.release_web_steps) ? data.release_web_steps.join(" -> ") : "";
   const runtime = data.runtime_profile_status || "unknown";
   const embedding = data.embedding_fingerprint_status || "-";
-  return `운영 경로: ${headline} | runtime=${runtime} | embedding=${embedding}${steps ? ` | next: ${steps}` : ""}`;
+  const vectors = data.vectors ?? "-";
+  return `운영 경로: ${headline} | runtime=${runtime} | embedding=${embedding} | vectors=${vectors}`;
+}
+
+function renderRecoverySteps(target, steps) {
+  if (!target) return;
+  const items = Array.isArray(steps) && steps.length ? steps : offlineRecoverySteps;
+  target.replaceChildren();
+  items.forEach((step) => {
+    const item = document.createElement("li");
+    item.textContent = step;
+    target.appendChild(item);
+  });
 }
 
 function formatOpsBaseline(data) {
@@ -339,6 +358,7 @@ function applyRuntimeDefaults(data, force = false) {
   if (appOverviewRuntime) {
     appOverviewRuntime.textContent = formatAppOverview(data);
   }
+  renderRecoverySteps(appRecoverySteps, data.release_web_steps);
 }
 
 function buildGuidedErrorMessage(rawError, parsedError) {
@@ -504,6 +524,7 @@ async function healthCheck() {
       if (runtimeProfileMsg) {
         runtimeProfileMsg.textContent = "런타임 프로파일 정보를 가져오지 못했습니다.";
       }
+      renderRecoverySteps(appRecoverySteps, null);
       return;
     }
 
@@ -530,6 +551,7 @@ async function healthCheck() {
     if (runtimeProfileMsg) {
       runtimeProfileMsg.textContent = "런타임 프로파일을 확인할 수 없습니다.";
     }
+    renderRecoverySteps(appRecoverySteps, null);
   }
 }
 

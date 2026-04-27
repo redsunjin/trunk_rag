@@ -34,6 +34,15 @@ def test_health_returns_200(client):
     assert isinstance(body["runtime_query_budget_summary"], str)
     assert body["embedding_fingerprint_status"] in {"ready", "missing", "mismatch", "empty"}
     assert body["compatibility_bundle_embedding_fingerprint_status"] in {"ready", "missing", "mismatch", "empty"}
+    assert body["release_web_status"] in {
+        "ready",
+        "runtime_warning",
+        "needs_verified_runtime",
+        "needs_reindex",
+    }
+    assert isinstance(body["release_web_headline"], str)
+    assert isinstance(body["release_web_steps"], list)
+    assert any("run_doc_rag.bat" in step for step in body["release_web_steps"])
 
 
 def test_collections_returns_200(client):

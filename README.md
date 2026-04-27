@@ -24,6 +24,7 @@
 - 검증된 기본 경로: `run_doc_rag.bat` -> `/intro` -> `/app`
 - 현재 중심 기능: 인덱싱, 질의, 업로드 요청, 관리자 승인, 운영 게이트
 - 현재 제품 표기: Trunk RAG SVG mark/wordmark/favicon을 `/intro`, `/app`, `/admin`, README에 적용
+- 현재 복구 안내: `/intro`와 `/app`는 `/health`의 release guidance를 첫 실행/복구 체크리스트로 표시
 - 현재 범위 밖: GraphRAG 운영, 무거운 rerank, 설치형 데스크톱 제품화
 
 현재 문서는 과장된 성능 약속보다 "지금 무엇이 준비돼 있고 어떤 경로가 검증됐는지"를 우선 보여 주는 기준으로 유지합니다.
@@ -198,6 +199,7 @@ cd <repo>
    - `.env`가 없으면 `.env.example`을 복사합니다.
    - 런타임 패키지가 없으면 `requirements.txt` 설치를 시도합니다.
    - `/health`가 준비될 때까지 최대 45초 대기한 뒤 `http://127.0.0.1:8000/intro`를 엽니다.
+   - `/intro`는 `release_web_status`, 런타임 프로파일, 임베딩 fingerprint, 첫 실행 체크리스트를 함께 보여 줍니다.
    - 완전 오프라인 환경에서는 임베딩 모델 `BAAI/bge-m3`를 사전에 로컬 캐시에 준비하거나 `DOC_RAG_EMBEDDING_MODEL`로 로컬 경로를 지정해야 합니다.
 3. 첫 실행이거나 상태 메시지에 `vectors=0`이 보이면 먼저 인덱싱:
    - 브라우저 왼쪽 메뉴에서 `Reindex`를 실행하거나
@@ -235,8 +237,10 @@ cd <repo>
 실패 시 기본 복구:
 - Python 자체가 없으면 Python 3 설치 후 다시 `.\run_doc_rag.bat`
 - requirements 설치가 실패하면 네트워크 또는 사내 패키지 미러 접근 상태 확인
-- LM Studio/model 미준비 상태면 기본 질의는 실패할 수 있으므로 현재 로드한 모델명을 `LLM_MODEL`과 맞춘 뒤 다시 시도
+- Ollama 기본 경로라면 Ollama 서버, `LLM_MODEL`, 모델 pull/실행 상태를 확인한 뒤 다시 시도
+- LM Studio 경로라면 현재 로드한 모델명을 `LLM_MODEL`과 맞춘 뒤 다시 시도
 - 임베딩 모델 캐시가 없으면 `DOC_RAG_EMBEDDING_MODEL`에 로컬 경로 지정
+- `vectors=0`, `embedding_fingerprint_status=missing|mismatch`이면 `/app`의 `Reindex` 또는 `build_index.py --reset`을 먼저 실행
 
 릴리즈 직전에는 [RELEASE_WEB_MVP_CHECKLIST.md](/Users/Agent/ps-workspace/trunk_rag/docs/RELEASE_WEB_MVP_CHECKLIST.md)를 기준으로 점검합니다.
 

@@ -177,7 +177,8 @@
 | LOOP-086 | done | V1.5 handoff PR review/merge follow-up | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-087 | done | V1 product identity/icon pass | `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-088 | done | Brand PR merge/branch cleanup follow-up | `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-089 | active | Await next-track after brand merge cleanup | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-089 | done | First-run recovery guide usability check | `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-090 | active | Await next-track after first-run recovery polish | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -2501,25 +2502,57 @@ closeout 메모 (2026-04-27):
 - stale local branch `docs/version-roadmap-v2-architecture`, `feature/loop-007-manifest-decouple`, `feature/loop-017-tool-registry-skeleton`, `feature/loop-027-actor-policy-source`, `feature/loop-028-actor-policy-resolver`, `feature/loop-029-admin-auth-gate`, `feature/loop-030-preview-audit-contract`, `feature/loop-031-preview-seed-sink`, `feature/v1.5-agent-ready-runtime`을 정리했다.
 - 원격 `feature/loop-007-manifest-decouple`은 `origin/main`에 병합된 상태로 삭제했고, 원격 `feature/v1.5-agent-ready-runtime`은 `git cherry` 기준 patch-equivalent 반영을 확인한 뒤 삭제했다.
 
-## 현재 Active Loop (LOOP-089)
+## 완료 Loop (LOOP-089)
 
 목표:
-- brand PR merge/branch cleanup 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
+- brand merge 이후 `/intro -> /app` 첫 실행 경로에서 사용자가 다음 행동과 복구 방법을 더 쉽게 확인하도록 한다.
+
+범위:
+- 포함: `/intro` 첫 실행 체크리스트, `/app` 복구 체크 표시, `/health` release guidance 사용성 검증, README/SPEC/TODO/NEXT 현행화
+- 제외: 명시 지시 없는 public blocker 구현, upload review live execution 구현, GraphRAG 재개, 데스크톱 패키징 재착수
+
+완료 기준:
+- `/intro`에서 `release_web_status`와 `release_web_steps`가 스캔 가능한 체크리스트로 보여야 한다.
+- `/app`에서 런타임 요약과 복구 체크가 유지되어야 한다.
+- 첫 실행/복구 안내 변경을 e2e/API 테스트가 확인해야 한다.
+- README/SPEC/TODO/NEXT가 변경 범위와 검증 결과를 반영해야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-28):
+- `LOOP-088`에서 브랜드 PR merge와 stale branch cleanup을 완료했다.
+- 사용자 지시에 따라 다음 track을 첫 실행/복구 가이드 실사용 점검으로 선택했다.
+- 구현 브랜치는 `codex/loop-089-first-run-recovery-check`다.
+- 큰 UI 리디자인 없이 `/health`의 release guidance를 intro/app에서 더 읽기 쉬운 체크리스트로 노출한다.
+
+closeout 메모 (2026-04-28):
+- `/intro`에 release status badge, 첫 실행 체크리스트, recovery hint를 추가했다.
+- `/app` overview에 복구 체크 목록을 추가하고 런타임 요약을 `vectors`까지 포함해 더 짧게 정리했다.
+- `/health`의 `release_web_status`, `release_web_headline`, `release_web_steps` 계약을 API/e2e 테스트에서 확인하도록 보강했다.
+- README/SPEC에 첫 실행/복구 체크리스트와 Ollama/임베딩/Reindex 복구 경로를 반영했다.
+- 검증은 `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py -> 11 passed`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과로 마감한다.
+
+## 현재 Active Loop (LOOP-090)
+
+목표:
+- first-run recovery polish 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
 
 범위:
 - 포함: 다음 track 선택, 필요 시 새 작업 브랜치 생성, TODO/NEXT active 재정렬
 - 제외: 명시 지시 없는 public blocker 구현, upload review live execution 구현, GraphRAG 재개, 데스크톱 패키징 재착수
 
 완료 기준:
-- 사용자가 user-facing release polish, 첫 실행/복구 가이드 실사용 점검, 다른 MVP/V1/V1.5 track, 또는 대기 유지를 명시해야 한다.
+- 사용자가 user-facing release polish, 릴리즈 체크리스트 실측, 다른 MVP/V1/V1.5 track, 또는 대기 유지를 명시해야 한다.
 - 새 track을 진행한다면 TODO/NEXT active가 해당 track으로 재정렬되어야 한다.
 
 검증:
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
-진행 메모 (2026-04-27):
-- `LOOP-088`에서 브랜드 PR merge와 stale branch cleanup을 완료했다.
-- 현재 추천 후보는 user-facing release polish 또는 첫 실행/복구 가이드 실사용 점검이다.
+진행 메모 (2026-04-28):
+- `LOOP-089`에서 첫 실행/복구 체크리스트 UI와 문서/테스트 보강을 완료했다.
+- 다음 추천 후보는 릴리즈 체크리스트 실측 또는 남은 user-facing copy polish다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

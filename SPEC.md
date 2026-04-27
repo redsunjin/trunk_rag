@@ -111,6 +111,7 @@
 ### UI/UX
 - 공통 `styles.css` 스타일 패턴을 현재 `web/index.html`에 반영
 - Trunk RAG SVG 브랜드 마크/워드마크/favicon 추가 및 intro/app/admin 헤더에 적용
+- `/health` release guidance 기반 첫 실행/복구 체크리스트를 intro/app에 노출
 - 공통 레이아웃 클래스 적용(`app-container`, `sidebar`, `main-content`, `card`)
 - 화면 구성: 좌측(설정/헬스/문서목록), 우측(채팅/MD 뷰어)
 - 인트로/관리자 페이지 분리(`web/intro.html`, `web/admin.html`)
@@ -208,6 +209,7 @@
 ```
 - 메인 UI 기본 모드는 `default_llm_*` 값을 자동 사용한다.
 - `vectors=0`이면 사용자가 질의하기 전에 `Reindex`를 먼저 실행하도록 안내한다.
+- `release_web_status`, `release_web_headline`, `release_web_steps`는 intro/app의 첫 실행/복구 체크리스트에 그대로 사용한다.
 - `default_runtime_collection_keys`와 `compatibility_bundle_*`는 core 기본 경로와 sample-pack compatibility 범위를 함께 보여 준다.
 - `seed_corpus_*`는 기본 `all` 컬렉션에 적재되는 번들 seed 문서가 첫 실행 demo/bootstrap corpus이며 제품 본체 도메인 데이터가 아님을 보여 준다.
 - `embedding_fingerprint_status`는 core 기본 컬렉션 기준이고, `compatibility_bundle_embedding_fingerprint_*`는 sample-pack compatibility bundle 상태를 따로 보여 준다.
@@ -519,6 +521,8 @@ cd <repo>
 ```
 - 런처는 `.venv\Scripts\python.exe` 우선, 없으면 시스템 `python`을 사용한다.
 - 런처는 `/health`가 200 응답이 될 때까지 최대 45초 대기한 뒤 `/intro`를 연다.
+- `/intro`는 release status badge, 첫 실행 체크리스트, 런타임 프로파일, ops-baseline 상태를 함께 보여 준다.
+- `/app`는 현재 런타임 요약과 복구 체크를 유지해 질의 실패 전후의 다음 행동을 바로 확인할 수 있게 한다.
 - 서버 실행(수동):
 ```powershell
 cd <repo>

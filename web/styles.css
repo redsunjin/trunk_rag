@@ -120,6 +120,71 @@ body {
     margin-bottom: 16px;
 }
 
+.recovery-panel {
+    padding: 16px;
+    background: #f8faf7;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.recovery-panel.compact {
+    margin: 12px 0;
+}
+
+.panel-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.panel-heading h3 {
+    font-size: 0.95rem;
+    line-height: 1.2;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--secondary-color);
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.status-badge.ready {
+    background: #dcefe8;
+    color: #124538;
+}
+
+.status-badge.needs_reindex,
+.status-badge.runtime_warning {
+    background: #fff3cd;
+    color: #664d03;
+}
+
+.status-badge.needs_verified_runtime,
+.status-badge.error,
+.status-badge.offline {
+    background: #f8d7da;
+    color: #842029;
+}
+
+.recovery-steps {
+    margin-left: 18px;
+    color: var(--text-primary);
+    font-size: 0.88rem;
+}
+
+.recovery-steps li + li {
+    margin-top: 6px;
+}
+
 .close-btn {
     display: none;
     background: none;

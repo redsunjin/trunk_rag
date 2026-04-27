@@ -31,6 +31,17 @@
         <p id="runtimeProfileMsg" class="status-msg" style="margin-bottom:18px;">런타임 프로파일을 확인 중입니다.</p>
         <p id="releaseGuideMsg" class="status-msg" style="margin-bottom:18px;">기본 복구 경로를 확인 중입니다.</p>
 
+        <div class="recovery-panel" aria-labelledby="introRecoveryTitle">
+          <div class="panel-heading">
+            <h3 id="introRecoveryTitle">첫 실행 체크</h3>
+            <span id="releaseStatusBadge" class="status-badge">checking</span>
+          </div>
+          <ol id="releaseStepsList" class="recovery-steps">
+            <li>run_doc_rag.bat 실행 상태를 확인 중입니다.</li>
+          </ol>
+          <p id="recoveryHintMsg" class="helper-text">상태 확인 후 필요한 다음 행동만 표시합니다.</p>
+        </div>
+
         <div class="info-panel">
           <h3 style="margin-bottom:10px;">현재 운영 범위</h3>
           <p class="status-msg" style="margin-bottom:8px;">포함: 인덱싱, 질의, 업로드 요청, 관리자 승인, 운영 게이트</p>
@@ -78,6 +89,16 @@
     const adminMsg = document.getElementById("adminMsg");
     const releaseGuideMsg = document.getElementById("releaseGuideMsg");
     const opsBaselineMsg = document.getElementById("opsBaselineMsg");
+    const releaseStatusBadge = document.getElementById("releaseStatusBadge");
+    const releaseStepsList = document.getElementById("releaseStepsList");
+    const recoveryHintMsg = document.getElementById("recoveryHintMsg");
+
+    const offlineRecoverySteps = [
+      "run_doc_rag.bat를 다시 실행합니다.",
+      "Python 3, requirements 설치, 포트 8000 사용 가능 여부를 확인합니다.",
+      "Ollama 또는 선택한 LLM 서버와 모델 준비 상태를 확인합니다.",
+      "서버가 뜬 뒤 /intro를 새로고침합니다."
+    ];
 
     function setStatus(type, text, detail) {
       statusIndicator.className = "status-indicator " + type;
@@ -88,6 +109,44 @@
     function joinReleaseSteps(data) {
       const steps = Array.isArray(data.release_web_steps) ? data.release_web_steps : [];
       return steps.join(" | ");
+    }
+
+    function renderReleaseSteps(steps) {
+      const items = Array.isArray(steps) && steps.length ? steps : offlineRecoverySteps;
+      releaseStepsList.replaceChildren();
+      items.forEach((step) => {
+        const item = document.createElement("li");
+        item.textContent = step;
+        releaseStepsList.appendChild(item);
+      });
+    }
+
+    function recoveryHintFor(data) {
+      if (!data || typeof data !== "object") {
+        return "서버에 연결되지 않으면 런처 터미널의 오류와 Python/LLM 준비 상태를 먼저 확인하세요.";
+      }
+      if ((data.vectors ?? 0) <= 0) {
+        return "질의 전에 /app의 Reindex를 실행해 core 기본 컬렉션을 먼저 채우세요.";
+      }
+      const embeddingStatus = data.embedding_fingerprint_status || "";
+      if (embeddingStatus === "mismatch" || embeddingStatus === "missing") {
+        return "임베딩 fingerprint가 맞지 않으면 Reindex 후 다시 상태를 확인하세요.";
+      }
+      const runtimeStatus = data.runtime_profile_status || "";
+      if (runtimeStatus === "experimental" || runtimeStatus === "not_recommended") {
+        return "운영 게이트 재현이 필요하면 검증된 기본 모델과 timeout 설정으로 맞추세요.";
+      }
+      return "상태가 ready이면 사용자 모드로 진입해 첫 질의를 진행하세요.";
+    }
+
+    function renderRecoveryGuide(data, fallbackStatus = "offline") {
+      const status = data?.release_web_status || fallbackStatus;
+      const headline = data?.release_web_headline || "서버 상태 확인이 필요합니다.";
+      releaseStatusBadge.textContent = status;
+      releaseStatusBadge.className = "status-badge " + status;
+      renderReleaseSteps(data?.release_web_steps);
+      recoveryHintMsg.textContent = recoveryHintFor(data);
+      releaseGuideMsg.textContent = `기본 복구: ${headline}`;
     }
 
     function formatRuntimeProfile(data) {
@@ -169,7 +228,7 @@
           const error = parseApiError(data, "health check 실패");
           setStatus("error", "Error", formatApiError(error));
           runtimeProfileMsg.textContent = "런타임 프로파일 정보를 가져오지 못했습니다.";
-          releaseGuideMsg.textContent = "기본 복구 경로를 가져오지 못했습니다.";
+          renderRecoveryGuide(null, "error");
           return false;
         }
         const llmSummary = data.default_llm_provider && data.default_llm_model
@@ -178,7 +237,7 @@
         const releaseHeadline = data.release_web_headline || "";
         const releaseSteps = joinReleaseSteps(data);
         runtimeProfileMsg.textContent = formatRuntimeProfile(data);
-        releaseGuideMsg.textContent = `기본 복구: ${releaseHeadline} | ${releaseSteps}`;
+        renderRecoveryGuide(data);
         if ((data.vectors ?? 0) <= 0) {
           setStatus("warn", "Ready", `${releaseHeadline} | llm=${llmSummary} | ${releaseSteps}`);
           return true;
@@ -196,7 +255,7 @@
           `run_doc_rag.bat로 다시 시작하거나 Python/requirements/Ollama 준비 상태를 확인하세요. | ${String(error)}`,
         );
         runtimeProfileMsg.textContent = "런타임 프로파일을 확인할 수 없습니다.";
-        releaseGuideMsg.textContent = "기본 복구 경로를 확인할 수 없습니다.";
+        renderRecoveryGuide(null, "offline");
         return false;
       }
     }
