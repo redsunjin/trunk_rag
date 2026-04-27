@@ -2488,6 +2488,11 @@ closeout 메모 (2026-04-27):
 - `LOOP-087`에서 최소 브랜드/아이콘 패스를 완료했다.
 - 현재 선택지는 다음 track 지시 또는 대기 유지다.
 
+sync/next-track review (2026-04-27):
+- `codex/loop-087-brand-identity`를 `origin/codex/loop-087-brand-identity`로 push하고 upstream을 연결했다.
+- 추천 즉시 작업은 새 기능 착수보다 브랜드 브랜치 PR 생성/리뷰/merge로 `main` 기준선을 먼저 맞추는 것이다.
+- 브랜드 merge 이후 다음 구현 후보는 user-facing release polish 또는 첫 실행/복구 가이드 실사용 점검이며, public promotion blocker 구현, upload review live execution, GraphRAG, 데스크톱 패키징은 별도 명시 전까지 계속 제외한다.
+
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
 목표:
