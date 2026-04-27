@@ -174,7 +174,7 @@
 | LOOP-083 | done | V1.5 post-closeout next-track selection | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-084 | done | V1.5 reindex live adapter branch handoff snapshot | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-085 | done | V1.5 branch publication decision | `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-086 | active | Await explicit publication or next-track instruction | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-086 | active | Await PR review/merge or next-track instruction | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -2382,15 +2382,15 @@ closeout 메모 (2026-04-20):
 ## 현재 Active Loop (LOOP-086)
 
 목표:
-- 사용자의 명시 지시에 따라 publication 또는 다른 next-track으로 이동한다.
+- draft PR publication 이후 PR review/merge 또는 다른 next-track으로 이동한다.
 
 범위:
-- 포함: push/PR 지시 수신 시 publication 수행, 또는 새 MVP/V1/V1.5 track 선택
+- 포함: PR review/merge 후속 조치, 또는 새 MVP/V1/V1.5 track 선택
 - 제외: 명시 지시 없는 GitHub push/PR, public blocker 구현, upload review live execution 구현
 
 완료 기준:
-- 사용자가 publication, 다른 track, 또는 중단을 명시해야 한다.
-- publication을 진행한다면 push/PR 결과가 기록되어야 한다.
+- 사용자가 PR review/merge, 다른 track, 또는 중단을 명시해야 한다.
+- PR 후속을 진행한다면 push/PR 결과가 기록되어야 한다.
 - 다른 track을 진행한다면 TODO/NEXT active가 해당 track으로 재정렬되어야 한다.
 
 검증:
@@ -2413,6 +2413,13 @@ closeout 메모 (2026-04-20):
 - `./.venv/bin/python scripts/smoke_agent_runtime.py` -> `ok=true`; 기본 경로는 `read_only_health_check`만 성공하고 `reindex` mutation apply는 `MUTATION_APPLY_NOT_ENABLED`로 차단된다.
 - tracked dirty 없음. 남은 untracked 파일은 `.DS_Store`, `TRUNK_RAG_LINKS.md`이며 이번 현행화 범위에는 포함하지 않는다.
 - 다음 행동은 여전히 `git push`/draft PR publication, 다른 MVP/V1/V1.5 track 선택, 또는 대기 유지 중 하나다.
+
+publication 결과 (2026-04-27):
+- 사용자 지시에 따라 branch `codex/loop-034-go-no-go-review`를 `origin/codex/loop-034-go-no-go-review`로 push했다.
+- Draft PR: `https://github.com/redsunjin/trunk_rag/pull/5`.
+- PR head는 `1292d30`, base는 `main`, draft 상태이며 `50` commits, `75` changed files로 생성됐다.
+- PR 본문에는 local-only `reindex` operator/test surface `Go`, default/public top-level promotion `No-Go`, upload review live execution `No-Go`, rollback drill evidence를 기록했다.
+- 다음 행동은 PR review/merge 후속, 다른 MVP/V1/V1.5 track 선택, 또는 대기 유지 중 하나다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

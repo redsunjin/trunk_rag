@@ -39,6 +39,19 @@ The 2026-04-22 basis above is preserved as the publication decision snapshot. At
 
 The decision does not change: automatic remote push/PR remains `No-Go` until an explicit publication instruction is given.
 
+## Explicit Publication Result (2026-04-27)
+
+The user explicitly requested proceeding with the proposed branch cleanup/publication flow.
+
+- pushed branch: `origin/codex/loop-034-go-no-go-review`
+- draft PR: https://github.com/redsunjin/trunk_rag/pull/5
+- PR base: `main`
+- PR head at creation: `1292d30`
+- PR state: draft/open
+- PR size at creation: `50` commits, `75` changed files
+
+The PR was intentionally opened as draft. Default/public top-level mutation promotion and upload review live execution remain `No-Go`.
+
 ## If Publication Is Requested
 
 Use a separate explicit instruction before running remote actions such as:

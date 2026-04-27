@@ -83,7 +83,8 @@
 - 현재: post-closeout next-track selection은 public blocker implementation 대신 branch handoff snapshot을 선택했다
 - 현재: branch handoff snapshot과 branch publication decision은 2026-04-22 당시 snapshot으로 보존한다
 - 현재: 2026-04-27 현행화 시작 시점의 branch는 `codex/loop-034-go-no-go-review`, head `540128a`, `main` 대비 `49` commits ahead였고, 전체 테스트 `239 passed`, 기본 agent runtime smoke `ok=true`를 확인했다
-- 다음 우선순위: explicit publication 또는 next-track instruction 대기이며, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
+- 현재: 사용자 지시에 따라 branch를 remote에 push하고 draft PR `https://github.com/redsunjin/trunk_rag/pull/5`를 열었다
+- 다음 우선순위: PR review/merge 후속 또는 next-track instruction 대기이며, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
 
 비목표(현재 단계):
 - 원본 수집/크롤링
