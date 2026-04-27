@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from services import tool_audit_sink_service, tool_trace_service
 
 
@@ -52,6 +54,31 @@ def test_append_persisted_audit_record_accepts_valid_record_with_memory_sink():
     assert sink.list_records() == [_sample_persisted_audit_record()]
 
 
+def test_append_persisted_audit_record_accepts_post_executor_audit_metadata():
+    sink = tool_audit_sink_service.InMemoryAppendOnlyAuditSink()
+    record = _sample_persisted_audit_record()
+    record["source_schema_version"] = "v1.5.mutation_executor_post_execution_audit.v1"
+    record["outcome"] = {
+        "ok": False,
+        "error": {"code": "REINDEX_RUNTIME_EXECUTION_FAILED"},
+    }
+    record["mutation_executor_audit"] = {
+        "schema_version": "v1.5.mutation_executor_post_execution_audit.v1",
+        "pre_executor_audit_sequence_id": 18,
+        "executor_name": "reindex_mutation_adapter_live",
+        "selection_state": "guarded_live_executor",
+        "error": {
+            "code": "REINDEX_RUNTIME_EXECUTION_FAILED",
+            "exception_type": "ValueError",
+        },
+    }
+
+    receipt = tool_audit_sink_service.append_persisted_audit_record(record, sink=sink)
+
+    assert receipt["sequence_id"] == 1
+    assert sink.list_records() == [record]
+
+
 def test_append_persisted_audit_record_rejects_sensitive_fields():
     record = _sample_persisted_audit_record()
     record["actor"] = "admin@example.test"
@@ -62,3 +89,82 @@ def test_append_persisted_audit_record_rejects_sensitive_fields():
         assert "must not contain raw actor" in str(exc)
     else:
         raise AssertionError("expected sensitive actor field to be rejected")
+
+
+def test_local_file_append_only_audit_sink_persists_sequence_and_metadata(tmp_path):
+    sink = tool_audit_sink_service.LocalFileAppendOnlyAuditSink(root_dir=tmp_path / "mutation_audit")
+
+    first = tool_audit_sink_service.append_persisted_audit_record(
+        _sample_persisted_audit_record(),
+        sink=sink,
+    )
+    second = tool_audit_sink_service.append_persisted_audit_record(
+        _sample_persisted_audit_record(),
+        sink=sink,
+    )
+
+    assert first["accepted"] is True
+    assert first["sink_type"] == "local_file_append_only"
+    assert first["record_schema_version"] == tool_trace_service.PERSISTED_AUDIT_RECORD_SCHEMA_VERSION
+    assert first["sequence_id"] == 1
+    assert Path(str(first["storage_path"])).exists() is True
+    assert first["rotation_unit"] == "day"
+    assert first["prune_policy"] == "rolling_window"
+    assert first["retention_days"] == 90
+    assert first["ops"] == {
+        "storage_scope": "local_runtime_tree",
+        "storage_root_dir": str(tmp_path / "mutation_audit"),
+        "retention_days": 90,
+        "rotation_unit": "day",
+        "prune_policy": "rolling_window",
+        "prune_owner": "local_operator",
+        "prune_mode": "explicit_manual",
+        "runbook_required": True,
+        "activation_dependency": "retention_ops_documented",
+    }
+    assert second["sequence_id"] == 2
+    assert second["sink_type"] == "local_file_append_only"
+    entries = sink.list_entries()
+    assert [entry["sequence_id"] for entry in entries] == [1, 2]
+    assert all(entry["record"]["request_id"] == "req-1" for entry in entries)
+    assert all(
+        entry["ops"]
+        == {
+            "storage_scope": "local_runtime_tree",
+            "storage_root_dir": str(tmp_path / "mutation_audit"),
+            "retention_days": 90,
+            "rotation_unit": "day",
+            "prune_policy": "rolling_window",
+            "prune_owner": "local_operator",
+            "prune_mode": "explicit_manual",
+            "runbook_required": True,
+            "activation_dependency": "retention_ops_documented",
+        }
+        for entry in entries
+    )
+
+
+def test_append_persisted_audit_record_uses_local_file_backend_when_configured(tmp_path, monkeypatch):
+    monkeypatch.setenv(tool_audit_sink_service.AUDIT_SINK_BACKEND_ENV_KEY, "local_file")
+    monkeypatch.setenv(tool_audit_sink_service.AUDIT_SINK_DIR_ENV_KEY, str(tmp_path / "configured_audit"))
+
+    receipt = tool_audit_sink_service.append_persisted_audit_record(_sample_persisted_audit_record())
+
+    assert receipt["accepted"] is True
+    assert receipt["sink_type"] == "local_file_append_only"
+    assert receipt["sequence_id"] == 1
+    assert receipt["rotation_unit"] == "day"
+    assert receipt["prune_policy"] == "rolling_window"
+    assert receipt["retention_days"] == 90
+    assert receipt["ops"] == {
+        "storage_scope": "local_runtime_tree",
+        "storage_root_dir": str(tmp_path / "configured_audit"),
+        "retention_days": 90,
+        "rotation_unit": "day",
+        "prune_policy": "rolling_window",
+        "prune_owner": "local_operator",
+        "prune_mode": "explicit_manual",
+        "runbook_required": True,
+        "activation_dependency": "retention_ops_documented",
+    }
+    assert Path(str(receipt["storage_path"])).exists() is True

@@ -17,6 +17,7 @@ class AgentRuntimeRequest:
     admin_code: str | None = None
     mutation_intent: str | None = None
     apply_envelope: dict[str, object] | None = None
+    executor_binding: dict[str, object] | None = None
     allowed_tools: tuple[str, ...] | None = None
     timeout_seconds: float | None = None
 
@@ -90,6 +91,7 @@ def run_agent_entry(request: AgentRuntimeRequest) -> dict[str, object]:
     admin_code = _normalize_optional_text(request.admin_code) or _normalize_optional_text(payload.get("admin_code")) or _normalize_optional_text(payload.get("code"))
     mutation_intent = _normalize_optional_text(request.mutation_intent) or _normalize_optional_text(payload.get("mutation_intent"))
     apply_envelope = _normalize_optional_object(request.apply_envelope) or _normalize_optional_object(payload.get("apply_envelope"))
+    executor_binding = _normalize_optional_object(request.executor_binding)
     context = ToolContext(
         request_id=request.request_id,
         actor=request.actor,
@@ -98,6 +100,7 @@ def run_agent_entry(request: AgentRuntimeRequest) -> dict[str, object]:
         admin_code=admin_code,
         mutation_intent=mutation_intent,
         apply_envelope=apply_envelope,
+        executor_binding=executor_binding,
     )
     tool_call = tool_middleware_service.invoke_tool_with_middlewares(
         tool_name,
@@ -122,6 +125,7 @@ def run_agent_entry(request: AgentRuntimeRequest) -> dict[str, object]:
             "admin_code_present": admin_code is not None,
             "mutation_intent_present": mutation_intent is not None,
             "apply_envelope_present": apply_envelope is not None,
+            "executor_binding_present": executor_binding is not None,
             "policy_flags": {
                 "requires_admin_auth": policy_decision.requires_admin_auth,
                 "requires_mutation_intent": policy_decision.requires_mutation_intent,

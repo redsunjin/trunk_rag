@@ -66,7 +66,14 @@ write tool을 agent runtime에 열기 전 필요한 조건:
 - 2026-04-12에는 `docs/reports/V1_5_PREVIEW_AUDIT_CONTRACT_2026-04-12.md`와 `services/tool_trace_service.py`의 `build_preview_contract()`/`build_persisted_audit_record()`로 preview payload contract와 persisted audit record contract를 고정했다.
 - 같은 날짜 후속으로 `docs/reports/V1_5_PREVIEW_SEED_AUDIT_SINK_2026-04-12.md`, `services/tool_preview_service.py`, `services/tool_audit_sink_service.py`를 추가해 preview seed builder와 append-only audit sink interface를 연결했다.
 - preview-confirmed apply envelope와 apply handshake guard까지는 반영됐다.
-- 아직 충족되지 않은 조건은 실제 mutation execution go/no-go, 저장소 backend 선택, retention 경계다.
+- `docs/reports/V1_5_MUTATION_EXECUTION_GO_NO_GO_REVIEW_2026-04-17.md`에서 실제 mutation execution `No-Go`, local append-only backend 방향, retention/activation ownership, `reindex` 우선 live scope를 고정했다.
+- `docs/reports/V1_5_REINDEX_EXECUTOR_ACTIVATION_SEAM_DRAFT_2026-04-18.md`에서 `reindex` activation request, durable audit readiness, noop fallback/candidate stub selection 기준을 고정했다.
+- `docs/reports/V1_5_UPLOAD_REVIEW_EXECUTOR_BOUNDARY_REVIEW_2026-04-18.md`에서 upload review execution을 `reindex`와 분리된 `boundary_noop`/rollback-audit precondition 기준으로 고정했다.
+- `docs/reports/V1_5_MUTATION_AUDIT_RETENTION_OPS_DRAFT_2026-04-18.md`에서 `90일 rolling_window`, explicit local-operator prune ownership, nested `ops` receipt contract를 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_READINESS_CHECKLIST_DRAFT_2026-04-19.md`에서 `reindex` live enablement 전 필요한 checklist/evidence 항목을 고정했다.
+- `docs/reports/V1_5_MUTATION_ACTIVATION_SMOKE_EVIDENCE_2026-04-19.md`에서 blocked flow smoke output과 `mutation_executor`/`audit_sink` evidence mapping을 고정했다.
+- `docs/reports/V1_5_REINDEX_ACTIVATION_CHECKPOINT_REVIEW_2026-04-19.md`에서 activation-on local-file smoke까지 포함한 checkpoint verdict를 다시 `No-Go`로 고정했다.
+- `docs/reports/V1_5_REINDEX_ACTIVATION_OPERATOR_RUNBOOK_DRAFT_2026-04-19.md`에서 baseline smoke, activation-on local-file smoke, deactivation, abort condition을 local operator 절차로 고정했다.
 
 ### 4. Branch Cleanup and Publish
 
@@ -81,7 +88,7 @@ write tool을 agent runtime에 열기 전 필요한 조건:
 1. Public API는 만들지 않는다.
 2. V1 기본 `/query` 경로는 유지한다.
 3. agent runtime은 내부 service + unit test + smoke script 기준으로만 유지한다.
-4. 다음 구현 후보는 `mutation execution go/no-go review`, 그다음 `mutation executor interface draft`로 제한한다.
+4. 다음 구현 후보는 `reindex live adapter outline draft`로 제한한다.
 
 ## Smoke Check
 
@@ -105,7 +112,7 @@ Trace 저장/노출 전 redaction 기준은 `docs/reports/V1_5_TRACE_REDACTION_P
 - raw input, retrieved context, document content, local path, admin code, credential은 저장/노출 기본 대상에서 제외한다.
 - 기본 저장 후보는 request id, tool name, side effect, runtime elapsed, route seed, outcome code, middleware blocked_by 같은 diagnostic seed로 제한한다.
 - `redact_execution_trace()` 순수 함수와 `internal/public/persisted` audience별 단위 테스트를 추가했다.
-- 이후 구현은 actor policy source, mutation gate, preview/audit contract 순서로 진행됐고 현재 다음 후보는 `preview seed + audit sink skeleton`이다.
+- 이후 구현은 actor policy source, mutation gate, preview/audit contract, preview seed/audit sink, mutation apply guard, execution go/no-go review, mutation executor interface draft, durable mutation audit backend skeleton, reindex executor activation seam, upload review executor boundary review, mutation audit retention ops draft, reindex live readiness checklist draft, mutation activation smoke evidence draft, reindex activation checkpoint review, reindex activation operator runbook draft 순서로 진행됐고 현재 다음 후보는 `reindex live adapter outline draft`다.
 
 ## Deferred
 

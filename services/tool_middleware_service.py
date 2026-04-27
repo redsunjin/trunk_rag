@@ -7,6 +7,7 @@ from uuid import uuid4
 
 from services import (
     actor_policy_service,
+    mutation_executor_service,
     runtime_service,
     tool_apply_service,
     tool_audit_sink_service,
@@ -18,6 +19,7 @@ from services.tool_registry_service import ToolContext, ToolInputError, ToolPayl
 
 ToolExecutionResult = dict[str, object]
 ToolMiddleware = Callable[["ToolExecutionState"], None]
+MUTATION_EXECUTOR_POST_AUDIT_SCHEMA_VERSION = "v1.5.mutation_executor_post_execution_audit.v1"
 
 
 @dataclass
@@ -38,6 +40,13 @@ class ToolExecutionState:
     apply_envelope: dict[str, object] | None = None
     persisted_audit_record: dict[str, object] | None = None
     audit_sink_receipt: dict[str, object] | None = None
+    mutation_executor_contract: dict[str, object] | None = None
+    mutation_executor_result: dict[str, object] | None = None
+    mutation_executor_error: dict[str, object] | None = None
+    mutation_executor_audit_receipt: dict[str, object] | None = None
+    mutation_success_promotion: dict[str, object] | None = None
+    mutation_top_level_promotion_router: dict[str, object] | None = None
+    mutation_apply_router_dry_run: dict[str, object] | None = None
 
     @property
     def side_effect(self) -> str:
@@ -66,6 +75,18 @@ def _normalize_optional_text(value: object) -> str | None:
         return None
     normalized = str(value).strip()
     return normalized or None
+
+
+def _safe_dict(value: object) -> dict[str, object]:
+    return dict(value) if isinstance(value, dict) else {}
+
+
+def _coerce_bool(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _resolve_request_id(request_id: str) -> str:
@@ -169,6 +190,70 @@ def _attach_middleware_metadata(
     audit_sink_receipt = state.audit_sink_receipt or tool_audit_sink_service.append_persisted_audit_record(
         persisted_audit_record
     )
+    mutation_executor_contract = state.mutation_executor_contract
+    mutation_executor_result = state.mutation_executor_result
+    mutation_executor_error = state.mutation_executor_error
+    mutation_executor_audit_receipt = state.mutation_executor_audit_receipt
+    mutation_success_promotion = state.mutation_success_promotion
+    mutation_top_level_promotion_router = state.mutation_top_level_promotion_router
+    mutation_apply_router_dry_run = state.mutation_apply_router_dry_run
+    if isinstance(enriched.get("error"), dict):
+        error = dict(enriched["error"])
+        if error.get("code") == tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED:
+            if mutation_executor_contract is None:
+                mutation_request = _build_mutation_execution_request(
+                    state,
+                    persisted_audit_record=persisted_audit_record,
+                    audit_sink_receipt=audit_sink_receipt,
+                )
+                if mutation_request is not None:
+                    executor_result = mutation_executor_service.execute_mutation_request(mutation_request)
+                    executor_error = executor_result.get("error")
+                    if isinstance(executor_error, dict):
+                        mutation_executor_error = dict(executor_error)
+                    executor_contract = executor_result.get("executor")
+                    if isinstance(executor_contract, dict):
+                        mutation_executor_contract = dict(executor_contract)
+                    executor_payload = executor_result.get("result")
+                    if isinstance(executor_payload, dict):
+                        mutation_executor_result = dict(executor_payload)
+            if mutation_success_promotion is None:
+                mutation_success_promotion = mutation_executor_service.build_reindex_live_success_promotion_contract(
+                    executor_contract=mutation_executor_contract,
+                    executor_result=mutation_executor_result,
+                )
+            if mutation_top_level_promotion_router is None:
+                mutation_top_level_promotion_router = (
+                    mutation_executor_service.build_reindex_top_level_promotion_router_contract(
+                        executor_contract=mutation_executor_contract,
+                        executor_result=mutation_executor_result,
+                        executor_error=mutation_executor_error,
+                        mutation_success_promotion=mutation_success_promotion,
+                    )
+                )
+            if mutation_apply_router_dry_run is None:
+                mutation_apply_router_dry_run = (
+                    mutation_executor_service.build_reindex_mutation_apply_router_dry_run_contract(
+                        executor_contract=mutation_executor_contract,
+                        executor_result=mutation_executor_result,
+                        mutation_success_promotion=mutation_success_promotion,
+                    )
+                )
+            if mutation_executor_contract is not None:
+                error["mutation_executor"] = mutation_executor_contract
+            if mutation_executor_result is not None:
+                error["mutation_executor_result"] = mutation_executor_result
+            if mutation_executor_error is not None:
+                error["mutation_executor_error"] = mutation_executor_error
+            if mutation_executor_audit_receipt is not None:
+                error["mutation_executor_audit_receipt"] = mutation_executor_audit_receipt
+            if mutation_success_promotion is not None:
+                error["mutation_success_promotion"] = mutation_success_promotion
+            if mutation_top_level_promotion_router is not None:
+                error["mutation_top_level_promotion_router"] = mutation_top_level_promotion_router
+            if mutation_apply_router_dry_run is not None:
+                error["mutation_apply_router_dry_run"] = mutation_apply_router_dry_run
+            enriched["error"] = error
     mutation_intent_summary = _resolve_mutation_intent(state)
     apply_envelope_draft = tool_apply_service.build_mutation_apply_envelope(
         preview_seed=preview_seed,
@@ -185,13 +270,41 @@ def _attach_middleware_metadata(
         contracts["preview_seed"] = preview_seed
     if apply_envelope_draft is not None:
         contracts["apply_envelope"] = apply_envelope_draft
+    if mutation_executor_contract is not None:
+        contracts["mutation_executor"] = mutation_executor_contract
+    if mutation_executor_result is not None:
+        contracts["mutation_executor_result"] = mutation_executor_result
+    if mutation_executor_error is not None:
+        contracts["mutation_executor_error"] = mutation_executor_error
+    if mutation_executor_audit_receipt is not None:
+        contracts["mutation_executor_audit_receipt"] = mutation_executor_audit_receipt
+    if mutation_success_promotion is not None:
+        contracts["mutation_success_promotion"] = mutation_success_promotion
+    if mutation_top_level_promotion_router is not None:
+        contracts["mutation_top_level_promotion_router"] = mutation_top_level_promotion_router
+    if mutation_apply_router_dry_run is not None:
+        contracts["mutation_apply_router_dry_run"] = mutation_apply_router_dry_run
     middleware_metadata["contracts"] = contracts
     execution_trace["contracts"] = contracts
-    if isinstance(enriched.get("error"), dict) and apply_envelope_draft is not None:
-        enriched["error"] = {
-            **dict(enriched["error"]),
-            "apply_envelope": apply_envelope_draft,
-        }
+    if isinstance(enriched.get("error"), dict):
+        updated_error = dict(enriched["error"])
+        if apply_envelope_draft is not None:
+            updated_error["apply_envelope"] = apply_envelope_draft
+        if mutation_executor_contract is not None:
+            updated_error["mutation_executor"] = mutation_executor_contract
+        if mutation_executor_result is not None:
+            updated_error["mutation_executor_result"] = mutation_executor_result
+        if mutation_executor_error is not None:
+            updated_error["mutation_executor_error"] = mutation_executor_error
+        if mutation_executor_audit_receipt is not None:
+            updated_error["mutation_executor_audit_receipt"] = mutation_executor_audit_receipt
+        if mutation_success_promotion is not None:
+            updated_error["mutation_success_promotion"] = mutation_success_promotion
+        if mutation_top_level_promotion_router is not None:
+            updated_error["mutation_top_level_promotion_router"] = mutation_top_level_promotion_router
+        if mutation_apply_router_dry_run is not None:
+            updated_error["mutation_apply_router_dry_run"] = mutation_apply_router_dry_run
+        enriched["error"] = updated_error
     enriched["middleware"] = middleware_metadata
     enriched["execution_trace"] = execution_trace
     return enriched
@@ -286,6 +399,327 @@ def _resolve_apply_envelope(state: ToolExecutionState) -> dict[str, object] | No
     if isinstance(payload_apply_envelope, dict):
         return dict(payload_apply_envelope)
     return None
+
+
+def _resolve_executor_binding(state: ToolExecutionState) -> dict[str, object] | None:
+    if isinstance(state.context.executor_binding, dict):
+        return dict(state.context.executor_binding)
+    return None
+
+
+def _top_level_promotion_requested(state: ToolExecutionState) -> bool:
+    binding = _safe_dict(_resolve_executor_binding(state))
+    value = binding.get(mutation_executor_service.REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_BINDING_FIELD)
+    return _coerce_bool(value) or value == mutation_executor_service.REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_MODE
+
+
+def _build_mutation_execution_request(
+    state: ToolExecutionState,
+    *,
+    persisted_audit_record: dict[str, object],
+    audit_sink_receipt: dict[str, object],
+) -> mutation_executor_service.MutationExecutionRequest | None:
+    actor_category = state.policy_decision.actor_category if state.policy_decision else None
+    return mutation_executor_service.build_mutation_execution_request(
+        request_id=state.context.request_id,
+        tool_name=state.tool_name,
+        payload=state.payload,
+        apply_envelope=state.apply_envelope,
+        preview_seed=state.preview_seed,
+        persisted_audit_record=persisted_audit_record,
+        audit_sink_receipt=audit_sink_receipt,
+        actor=state.context.actor,
+        actor_category=actor_category,
+        allow_mutation=state.context.allow_mutation,
+        timeout_seconds=state.timeout_seconds,
+        executor_binding=_resolve_executor_binding(state),
+    )
+
+
+def _summarize_executor_result_for_audit(executor_result: dict[str, object] | None) -> dict[str, object]:
+    result = _safe_dict(executor_result)
+    reindex_summary = _safe_dict(result.get("reindex_summary"))
+    audit_receipt_ref = _safe_dict(result.get("audit_receipt_ref"))
+    return {
+        "schema_version": result.get("schema_version"),
+        "collection_key": reindex_summary.get("collection_key"),
+        "operation": reindex_summary.get("operation"),
+        "runtime_chunks": reindex_summary.get("runtime_chunks"),
+        "runtime_vectors": reindex_summary.get("runtime_vectors"),
+        "audit_sequence_id": audit_receipt_ref.get("sequence_id"),
+    }
+
+
+def _summarize_executor_error_for_audit(executor_error: dict[str, object] | None) -> dict[str, object]:
+    error = _safe_dict(executor_error)
+    return {
+        "code": error.get("code"),
+        "exception_type": error.get("exception_type"),
+    }
+
+
+def _build_mutation_executor_post_audit_record(state: ToolExecutionState) -> dict[str, object] | None:
+    pre_executor_audit_receipt = _safe_dict(state.audit_sink_receipt)
+    pre_executor_sequence_id = pre_executor_audit_receipt.get("sequence_id")
+    executor_contract = _safe_dict(state.mutation_executor_contract)
+    executor_result = _safe_dict(state.mutation_executor_result)
+    executor_error = _safe_dict(state.mutation_executor_error)
+    if not executor_contract or (not executor_result and not executor_error):
+        return None
+    ok = bool(executor_result) and not bool(executor_error)
+    error_code = executor_error.get("code") if executor_error else None
+    event: dict[str, object] = {
+        "event": "mutation_executor.completed" if ok else "mutation_executor.failed",
+        "elapsed_ms": state.elapsed_ms,
+        "tool": state.tool_name,
+        "pre_executor_audit_sequence_id": pre_executor_sequence_id,
+    }
+    if error_code is not None:
+        event["code"] = error_code
+    policy_decision = state.policy_decision
+    record: dict[str, object] = {
+        "schema_version": tool_trace_service.PERSISTED_AUDIT_RECORD_SCHEMA_VERSION,
+        "source_schema_version": MUTATION_EXECUTOR_POST_AUDIT_SCHEMA_VERSION,
+        "request_id": state.context.request_id,
+        "actor_category": policy_decision.actor_category if policy_decision else None,
+        "audit_scope": policy_decision.audit_scope if policy_decision else "request_only",
+        "tool": {
+            "name": state.tool_name,
+            "side_effect": state.side_effect or "unknown",
+        },
+        "blocked_by": "mutation_apply_guard",
+        "runtime": {
+            "elapsed_ms": state.elapsed_ms,
+        },
+        "outcome": {
+            "ok": ok,
+            "error": {"code": error_code} if error_code is not None else None,
+        },
+        "audit": {
+            "events": [event],
+        },
+        "mutation_executor_audit": {
+            "schema_version": MUTATION_EXECUTOR_POST_AUDIT_SCHEMA_VERSION,
+            "pre_executor_audit_sequence_id": pre_executor_sequence_id,
+            "executor_name": executor_contract.get("executor_name"),
+            "selection_state": executor_contract.get("selection_state"),
+            "actual_runtime_handler": executor_contract.get("actual_runtime_handler"),
+            "actual_runtime_handler_invoked": executor_contract.get("actual_runtime_handler_invoked"),
+            "result": _summarize_executor_result_for_audit(executor_result) if executor_result else None,
+            "error": _summarize_executor_error_for_audit(executor_error) if executor_error else None,
+        },
+    }
+    return record
+
+
+def _append_mutation_executor_post_audit_record(state: ToolExecutionState) -> None:
+    if state.mutation_executor_audit_receipt is not None:
+        return
+    record = _build_mutation_executor_post_audit_record(state)
+    if record is None:
+        return
+    receipt = tool_audit_sink_service.append_persisted_audit_record(record)
+    state.mutation_executor_audit_receipt = {
+        **dict(receipt),
+        "record_kind": "mutation_executor_post_execution",
+        "record_schema_version": MUTATION_EXECUTOR_POST_AUDIT_SCHEMA_VERSION,
+        "pre_executor_audit_sequence_id": _safe_dict(state.audit_sink_receipt).get("sequence_id"),
+    }
+
+
+def _has_linked_mutation_executor_audit_receipt(state: ToolExecutionState) -> bool:
+    receipt = _safe_dict(state.mutation_executor_audit_receipt)
+    pre_executor_sequence_id = _safe_dict(state.audit_sink_receipt).get("sequence_id")
+    return (
+        receipt.get("record_kind") == "mutation_executor_post_execution"
+        and receipt.get("record_schema_version") == MUTATION_EXECUTOR_POST_AUDIT_SCHEMA_VERSION
+        and receipt.get("pre_executor_audit_sequence_id") == pre_executor_sequence_id
+        and receipt.get("sequence_id") is not None
+    )
+
+
+def _has_guarded_executor_contract(state: ToolExecutionState) -> bool:
+    executor = _safe_dict(state.mutation_executor_contract)
+    return (
+        executor.get("tool_name") == mutation_executor_service.REINDEX_FIRST_LIVE_SCOPE
+        and executor.get("executor_name") == mutation_executor_service.REINDEX_LIVE_ADAPTER_EXECUTOR_NAME
+        and executor.get("selection_state")
+        == mutation_executor_service.REINDEX_LIVE_ADAPTER_BINDING_STAGE_GUARDED_LIVE_EXECUTOR
+        and executor.get("execution_enabled") is True
+        and executor.get("actual_runtime_handler_invoked") is True
+    )
+
+
+def _mark_top_level_promotion_router_enabled(
+    router: dict[str, object] | None,
+    *,
+    route: str,
+    state: ToolExecutionState,
+) -> dict[str, object] | None:
+    if not isinstance(router, dict):
+        return None
+    enabled_router = dict(router)
+    gate = _safe_dict(enabled_router.get("promotion_gate"))
+    gate.update(
+        {
+            "top_level_promotion_enabled": True,
+            "actual_side_effect_enabled": True,
+            "enabled_by": "executor_binding.top_level_promotion_enabled",
+            "enabled_scope": "explicit_local_only_guarded",
+            "post_executor_audit_receipt_required": True,
+            "post_executor_audit_sequence_id": _safe_dict(state.mutation_executor_audit_receipt).get("sequence_id"),
+        }
+    )
+    enabled_router["promotion_gate"] = gate
+    enabled_router["router_state"] = "enabled_explicit_local_only"
+    enabled_router["enabled_route"] = route
+    return enabled_router
+
+
+def _promote_mutation_apply_result_if_requested(state: ToolExecutionState) -> ToolExecutionResult | None:
+    blocked_result = state.blocked_result
+    if not isinstance(blocked_result, dict):
+        return None
+    error = _safe_dict(blocked_result.get("error"))
+    if error.get("code") != tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED:
+        return None
+    if not _top_level_promotion_requested(state):
+        return None
+    if not _has_guarded_executor_contract(state) or not _has_linked_mutation_executor_audit_receipt(state):
+        return None
+
+    router = _safe_dict(state.mutation_top_level_promotion_router)
+    success_route = _safe_dict(router.get("success_route"))
+    failure_route = _safe_dict(router.get("failure_route"))
+    if state.mutation_executor_result is not None and success_route.get("eligible") is True:
+        state.mutation_top_level_promotion_router = _mark_top_level_promotion_router_enabled(
+            state.mutation_top_level_promotion_router,
+            route="success",
+            state=state,
+        )
+        _append_trace(
+            state,
+            "mutation_top_level_promotion_gate",
+            "ok",
+            detail={"route": "success", "scope": "explicit_local_only_guarded"},
+        )
+        _append_audit(
+            state,
+            "mutation.apply.promoted",
+            route="success",
+            post_executor_audit_sequence_id=_safe_dict(state.mutation_executor_audit_receipt).get("sequence_id"),
+        )
+        return {
+            "tool": state.tool_name,
+            "ok": True,
+            "result": state.mutation_executor_result,
+            "error": None,
+        }
+
+    if state.mutation_executor_error is not None and failure_route.get("eligible") is True:
+        state.mutation_top_level_promotion_router = _mark_top_level_promotion_router_enabled(
+            state.mutation_top_level_promotion_router,
+            route="failure",
+            state=state,
+        )
+        executor_error = _safe_dict(state.mutation_executor_error)
+        _append_trace(
+            state,
+            "mutation_top_level_promotion_gate",
+            "ok",
+            detail={"route": "failure", "scope": "explicit_local_only_guarded"},
+        )
+        _append_audit(
+            state,
+            "mutation.apply.promoted",
+            route="failure",
+            code=executor_error.get("code"),
+            post_executor_audit_sequence_id=_safe_dict(state.mutation_executor_audit_receipt).get("sequence_id"),
+        )
+        return {
+            "tool": state.tool_name,
+            "ok": False,
+            "result": None,
+            "error": {
+                "schema_version": mutation_executor_service.REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION,
+                "code": executor_error.get("code"),
+                "message": executor_error.get("message"),
+                "exception_type": executor_error.get("exception_type"),
+            },
+        }
+    return None
+
+
+def _route_pre_side_effect_mutation_executor_dry_run(state: ToolExecutionState) -> None:
+    blocked_result = state.blocked_result
+    if not isinstance(blocked_result, dict):
+        return
+    error = blocked_result.get("error")
+    if not isinstance(error, dict) or error.get("code") != tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED:
+        return
+    if state.mutation_executor_contract is not None:
+        return
+
+    allowed_tools = list(state.allowed_tools) if state.allowed_tools is not None else None
+    policy_details = state.policy_decision.as_dict() if state.policy_decision else None
+    execution_trace = tool_trace_service.build_execution_trace(
+        request_id=state.context.request_id,
+        actor=state.context.actor,
+        tool_name=state.tool_name,
+        side_effect=state.side_effect,
+        allow_mutation=state.context.allow_mutation,
+        allowed_tools=allowed_tools,
+        policy_details=policy_details,
+        timeout_seconds=state.timeout_seconds,
+        elapsed_ms=state.elapsed_ms,
+        middleware_steps=list(state.middleware_trace),
+        audit_events=list(state.audit_log),
+        result=blocked_result,
+    )
+    persisted_audit_record = state.persisted_audit_record or tool_trace_service.build_persisted_audit_record(
+        execution_trace
+    )
+    audit_sink_receipt = state.audit_sink_receipt or tool_audit_sink_service.append_persisted_audit_record(
+        persisted_audit_record
+    )
+    state.persisted_audit_record = persisted_audit_record
+    state.audit_sink_receipt = audit_sink_receipt
+
+    mutation_request = _build_mutation_execution_request(
+        state,
+        persisted_audit_record=persisted_audit_record,
+        audit_sink_receipt=audit_sink_receipt,
+    )
+    if mutation_request is None:
+        return
+
+    executor_result = mutation_executor_service.execute_mutation_request(mutation_request)
+    executor_contract = executor_result.get("executor")
+    if isinstance(executor_contract, dict):
+        state.mutation_executor_contract = dict(executor_contract)
+    executor_payload = executor_result.get("result")
+    if isinstance(executor_payload, dict):
+        state.mutation_executor_result = dict(executor_payload)
+    executor_error = executor_result.get("error")
+    if isinstance(executor_error, dict):
+        state.mutation_executor_error = dict(executor_error)
+    _append_mutation_executor_post_audit_record(state)
+    state.mutation_success_promotion = mutation_executor_service.build_reindex_live_success_promotion_contract(
+        executor_contract=state.mutation_executor_contract,
+        executor_result=state.mutation_executor_result,
+    )
+    state.mutation_top_level_promotion_router = mutation_executor_service.build_reindex_top_level_promotion_router_contract(
+        executor_contract=state.mutation_executor_contract,
+        executor_result=state.mutation_executor_result,
+        executor_error=state.mutation_executor_error,
+        mutation_success_promotion=state.mutation_success_promotion,
+    )
+    state.mutation_apply_router_dry_run = mutation_executor_service.build_reindex_mutation_apply_router_dry_run_contract(
+        executor_contract=state.mutation_executor_contract,
+        executor_result=state.mutation_executor_result,
+        mutation_success_promotion=state.mutation_success_promotion,
+        route_location="mutation_apply_guard_pre_side_effect_router",
+    )
 
 
 def mutation_policy_guard_middleware(state: ToolExecutionState) -> None:
@@ -567,7 +1001,9 @@ def invoke_tool_with_middlewares(
                 "tool.invoke.blocked",
                 code=str(state.blocked_result.get("error", {}).get("code", "BLOCKED")),
             )
-            return _attach_middleware_metadata(state.blocked_result, state)
+            _route_pre_side_effect_mutation_executor_dry_run(state)
+            promoted_result = _promote_mutation_apply_result_if_requested(state)
+            return _attach_middleware_metadata(promoted_result or state.blocked_result, state)
 
     result = tool_registry_service.invoke_tool(name, resolved_payload, context=state.context)
     if result.get("ok") is True:

@@ -137,7 +137,47 @@
 - `services/tool_trace_service.py`는 `build_preview_contract()`와 `build_persisted_audit_record()`로 preview/audit contract를 순수 함수로 고정하고, `PREVIEW_REQUIRED` 응답과 execution trace contract seed에 이를 포함한다.
 - `services/tool_preview_service.py`는 contract를 실제 preview seed로 채우고, `services/tool_audit_sink_service.py`는 persisted record만 받는 append-only sink protocol/null-memory sink를 제공한다.
 - `services/tool_apply_service.py`는 preview-confirmed mutation apply envelope draft와 validation error taxonomy를 제공하고, `services/tool_middleware_service.py`는 `mutation_apply_guard`로 preview-confirmed apply path를 `MUTATION_APPLY_NOT_ENABLED`까지 차단한다.
-- 다음 구현은 mutation execution go/no-go review를 고정하는 `LOOP-034`이다.
+- `docs/reports/V1_5_MUTATION_EXECUTION_GO_NO_GO_REVIEW_2026-04-17.md`는 실제 execution `No-Go`, local append-only backend/retention/operator activation 조건, `reindex` 우선 live scope를 고정했다.
+- `docs/reports/V1_5_MUTATION_EXECUTOR_INTERFACE_DRAFT_2026-04-18.md`는 `MutationExecutionRequest`, `NoopMutationExecutor`, `ReindexMutationExecutorAdapter`, `mutation_executor` contract seed를 고정했다.
+- `docs/reports/V1_5_DURABLE_MUTATION_AUDIT_BACKEND_SKELETON_2026-04-18.md`는 default null sink 유지, `local_file_append_only` opt-in, `90일 rolling_window`, stable `sequence_id` receipt를 고정했다.
+- `docs/reports/V1_5_REINDEX_EXECUTOR_ACTIVATION_SEAM_DRAFT_2026-04-18.md`는 `reindex` activation guard, noop fallback, candidate stub selection contract를 고정했다.
+- `docs/reports/V1_5_UPLOAD_REVIEW_EXECUTOR_BOUNDARY_REVIEW_2026-04-18.md`는 upload review execution을 `boundary_noop` selection과 rollback/audit/document binding precondition으로 분리했다.
+- `docs/reports/V1_5_MUTATION_AUDIT_RETENTION_OPS_DRAFT_2026-04-18.md`는 `90일 rolling_window`, explicit local-operator prune ownership, nested `ops` receipt contract를 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_READINESS_CHECKLIST_DRAFT_2026-04-19.md`는 `reindex` live enablement 전 필요한 checklist/evidence 항목을 고정했다.
+- `docs/reports/V1_5_MUTATION_ACTIVATION_SMOKE_EVIDENCE_2026-04-19.md`는 blocked flow smoke output을 readiness evidence와 `mutation_executor` summary 기준으로 고정했다.
+- `docs/reports/V1_5_REINDEX_ACTIVATION_CHECKPOINT_REVIEW_2026-04-19.md`는 default blocked path와 activation-on local-file candidate stub path를 함께 점검해 live enablement verdict를 다시 `No-Go`로 고정했다.
+- `docs/reports/V1_5_REINDEX_ACTIVATION_OPERATOR_RUNBOOK_DRAFT_2026-04-19.md`는 baseline smoke, activation-on local-file smoke, audit receipt 확인, deactivation, abort condition을 local operator 절차로 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_EXECUTOR_INJECTION_PROTOCOL_DRAFT_2026-04-20.md`는 `AgentRuntimeRequest -> ToolContext -> MutationExecutionRequest` binding carrier chain과 request contract signal을 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BINDING_SELECTION_STUB_DRAFT_2026-04-20.md`는 valid explicit binding일 때만 `reindex_mutation_adapter_live` `live_binding_stub` selection으로 승격되는 안전 stub를 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_COMMAND_DRAFT_2026-04-20.md`는 `scripts/smoke_agent_runtime.py --opt-in-live-binding`와 `DOC_RAG_MUTATION_SMOKE_LIVE_BINDING=1` opt-in command surface를 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_EVIDENCE_DRAFT_2026-04-20.md`는 activation/local-file/live-binding 조합에서 `reindex_mutation_adapter_live`, `live_binding_stub` evidence를 실제 smoke output으로 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_CONCRETE_EXECUTOR_SKELETON_DRAFT_2026-04-21.md`는 `concrete_executor_skeleton` stage, `live_result_skeleton` selection, `mutation_executor_result` sidecar contract를 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_CONCRETE_SMOKE_EVIDENCE_DRAFT_2026-04-21.md`는 `--opt-in-live-binding-stage-concrete`와 `DOC_RAG_MUTATION_SMOKE_LIVE_BINDING_STAGE` command/env surface, `live_result_skeleton` smoke evidence를 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_DRAFT_2026-04-21.md`는 blocked-success sidecar를 future top-level apply success surface로 옮기는 promotion contract를 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_FAILURE_TAXONOMY_DRAFT_2026-04-21.md`는 adapter-specific runtime failure taxonomy를 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PRE_SIDE_EFFECT_EXECUTOR_ROUTER_IMPLEMENTATION_DRAFT_2026-04-22.md`와 `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_ROUTER_IMPLEMENTATION_DRAFT_2026-04-22.md`는 blocked apply path 안에서 durable audit receipt, executor router, future top-level success/failure surface mapping evidence를 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_IMPLEMENTATION_DRAFT_2026-04-22.md`는 explicit local-only `binding_stage=guarded_live_executor`에서만 `index_service.reindex()` 호출 seam을 여는 구현 초안을 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_SMOKE_COMMAND_DRAFT_2026-04-22.md`는 `--opt-in-live-binding-stage-guarded` command surface와 guarded runtime sidecar summary를 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_SMOKE_EVIDENCE_DRAFT_2026-04-22.md`는 explicit local-only guarded command가 `runtime_chunks=37`, `runtime_vectors=37` sidecar evidence를 남기고 top-level은 `MUTATION_APPLY_NOT_ENABLED` blocked surface를 유지함을 확인했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_SMOKE_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`는 guarded local execution evidence `Go`, top-level apply success promotion `No-Go`, next implementation planning `Go`로 판정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_EXECUTOR_ERROR_SIDECAR_DRAFT_2026-04-22.md`는 guarded executor failure를 `mutation_executor_error` sidecar와 promotion router failure route evidence로 노출한다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ERROR_SIDECAR_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`는 success/failure sidecar readiness `Go`, top-level apply success/failure promotion `No-Go`, next implementation planning `Go`로 판정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_EXECUTOR_AUDIT_EVIDENCE_DRAFT_2026-04-22.md`는 guarded executor success/failure 후 `mutation_executor_post_execution` audit record와 `mutation_executor_audit_receipt` sidecar를 남기고 pre-executor audit sequence id와 연결한다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_AUDIT_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`는 post-audit readiness `Go`, default/public top-level promotion `No-Go`, explicit local-only guarded promotion gate implementation planning `Go`로 판정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_TOP_LEVEL_PROMOTION_GATE_DRAFT_2026-04-22.md`는 extra opt-in이 있는 explicit local-only guarded path만 top-level success/failure로 승격하고, 기본 guarded path는 `MUTATION_APPLY_NOT_ENABLED` blocked surface로 유지한다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_PROMOTION_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`는 extra opt-in local-only top-level promotion `Go`, default/public promotion `No-Go`, operator runbook update `Go`로 판정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_OPERATOR_RUNBOOK_UPDATE_2026-04-22.md`는 default blocked, activation check, guarded blocked, guarded top-level promotion command와 audit linkage 확인 절차를 operator runbook에 반영했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_RUNBOOK_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`는 local-only operator surface `Go`, default/public promotion `No-Go`, rollback drill planning `Go`로 판정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_PLAN_DRAFT_2026-04-22.md`는 local-only rollback drill을 pre-state capture, guarded promotion, audit linkage, rebuild-from-source recovery, post-recovery health/vector check 순서로 정의했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_HARNESS_DRAFT_2026-04-22.md`는 explicit env guard와 pre/post/recovery evidence report를 갖춘 local-only rollback drill harness를 추가했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_EXECUTION_EVIDENCE_2026-04-22.md`는 rollback drill이 explicit local env에서 `ok=true`, audit linkage `6 -> 7`, recovery rebuild `37/37`, post-recovery vector count `37`로 통과했음을 기록했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ROLLBACK_DRILL_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`는 local-only rollback-drilled operator surface `Go`, extra opt-in local-only top-level promotion `Go`, default/public top-level promotion `No-Go`, upload review live execution `No-Go`로 판정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PUBLIC_PROMOTION_BLOCKER_REGISTER_2026-04-22.md`는 product/API contract, authorization, production audit backend, recovery model, concurrency/job lifecycle, upload review boundary, observability/support, regression scope를 default/public blocker로 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_LOCAL_ONLY_CLOSEOUT_2026-04-22.md`는 `reindex` explicit local-only operator/test surface `Go`, default/public top-level promotion `No-Go`, upload review live execution `No-Go`를 terminal scope로 고정했다.
+- `docs/reports/V1_5_POST_CLOSEOUT_NEXT_TRACK_SELECTION_2026-04-22.md`는 public blocker implementation 대신 branch handoff snapshot을 다음 track으로 선택했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BRANCH_HANDOFF_SNAPSHOT_2026-04-22.md`는 branch `codex/loop-034-go-no-go-review`, `main` 대비 `46` commits ahead, `73 files changed`, latest rollback drill `ok=true`, untracked unrelated `.DS_Store`/`TRUNK_RAG_LINKS.md` 상태를 기록했다.
+- `docs/reports/V1_5_BRANCH_PUBLICATION_DECISION_2026-04-22.md`는 local branch handoff `Go`, automatic remote push/PR `No-Go`, head `b086055` 기준 `main` 대비 `47` commits ahead 상태를 기록했다.
+- 다음 구현은 `LOOP-086 Await explicit publication or next-track instruction`이며, 이 단계에서는 사용자 명시 지시에 따라 publication 또는 다른 track으로 이동한다.
 - raw input, retrieved context, document content, local path, admin code, credential은 저장/노출 기본 대상에서 제외한다.
 - `services/tool_trace_service.py`는 `redact_execution_trace()`로 `internal`, `public`, `persisted` audience별 trace 정규화를 제공한다.
 

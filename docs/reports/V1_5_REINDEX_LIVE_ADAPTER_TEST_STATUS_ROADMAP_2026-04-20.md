@@ -1,0 +1,219 @@
+# V1.5 Reindex Live Adapter Test Status Roadmap - 2026-04-20
+
+## Current Status
+
+현재 `reindex` live adapter 관련 테스트 상태는 아래와 같다.
+
+### Completed
+
+1. blocked-flow smoke evidence
+   - 문서: `docs/reports/V1_5_MUTATION_ACTIVATION_SMOKE_EVIDENCE_2026-04-19.md`
+   - 핵심: default path는 계속 `MUTATION_APPLY_NOT_ENABLED`
+2. activation checkpoint / operator runbook
+   - 문서: `docs/reports/V1_5_REINDEX_ACTIVATION_CHECKPOINT_REVIEW_2026-04-19.md`
+   - 문서: `docs/reports/V1_5_REINDEX_ACTIVATION_OPERATOR_RUNBOOK_DRAFT_2026-04-19.md`
+3. live adapter outline
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OUTLINE_DRAFT_2026-04-20.md`
+4. live adapter test plan
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TEST_PLAN_DRAFT_2026-04-20.md`
+5. live adapter success/failure contract
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_SUCCESS_CONTRACT_DRAFT_2026-04-20.md`
+6. explicit local-only opt-in binding seam
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_BINDING_SEAM_DRAFT_2026-04-20.md`
+7. opt-in smoke harness separation draft
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_HARNESS_DRAFT_2026-04-20.md`
+8. concrete executor skeleton
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_CONCRETE_EXECUTOR_SKELETON_DRAFT_2026-04-21.md`
+9. concrete smoke evidence
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_CONCRETE_SMOKE_EVIDENCE_DRAFT_2026-04-21.md`
+10. top-level success promotion rule
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_DRAFT_2026-04-21.md`
+11. adapter-specific failure taxonomy seam
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_FAILURE_TAXONOMY_DRAFT_2026-04-21.md`
+12. execution enablement go/no-go review
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_GO_NO_GO_REVIEW_2026-04-21.md`
+   - 핵심: actual execution `No-Go`, next planning `Go` for pre-execution handoff seam
+13. pre-execution audit/executor handoff seam
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PRE_EXECUTION_HANDOFF_SEAM_DRAFT_2026-04-21.md`
+   - 핵심: actual side effect 전 durable audit receipt, mutation executor router, explicit binding, success/failure promotion handoff 순서 고정
+14. fake/sandboxed executor smoke seam
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_FAKE_EXECUTOR_SMOKE_SEAM_DRAFT_2026-04-21.md`
+   - 핵심: actual index mutation 없이 success/failure promotion smoke evidence 고정
+15. mutation apply executor router dry-run seam
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_MUTATION_APPLY_ROUTER_DRY_RUN_SEAM_DRAFT_2026-04-22.md`
+   - 핵심: blocked apply path에서 direct `_tool_reindex`/`index_service.reindex` 호출 없이 mutation executor router dry-run evidence 고정
+16. execution enablement checkpoint review
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+   - 핵심: actual execution `No-Go`, next planning `Go` for pre-side-effect executor router implementation draft
+17. pre-side-effect executor router implementation draft
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PRE_SIDE_EFFECT_EXECUTOR_ROUTER_IMPLEMENTATION_DRAFT_2026-04-22.md`
+   - 핵심: valid apply 이후 direct tool handler 전에 durable audit receipt와 mutation executor router dry-run 실행
+18. top-level promotion router implementation draft
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_ROUTER_IMPLEMENTATION_DRAFT_2026-04-22.md`
+   - 핵심: executor success/failure sidecar를 future top-level apply `result`/`error` surface로 매핑하는 router evidence 고정
+19. execution enablement final checkpoint review
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_FINAL_CHECKPOINT_REVIEW_2026-04-22.md`
+   - 핵심: actual execution `No-Go`, guarded live executor implementation planning `Go`
+20. guarded live executor implementation draft
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_IMPLEMENTATION_DRAFT_2026-04-22.md`
+   - 핵심: explicit local-only `binding_stage=guarded_live_executor`에서만 `index_service.reindex()` 호출 seam 검증
+21. guarded live executor smoke command draft
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_SMOKE_COMMAND_DRAFT_2026-04-22.md`
+   - 핵심: `--opt-in-live-binding-stage-guarded` command surface와 guarded runtime sidecar summary 고정
+22. guarded live executor smoke evidence draft
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_SMOKE_EVIDENCE_DRAFT_2026-04-22.md`
+   - 핵심: actual guarded local execution smoke에서 `runtime_chunks=37`, `runtime_vectors=37` sidecar evidence와 blocked top-level surface 동시 확인
+23. post-smoke enablement checkpoint review
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_SMOKE_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+   - 핵심: guarded local execution evidence `Go`, top-level success promotion `No-Go`, executor error sidecar implementation planning `Go`
+24. executor error sidecar draft
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_EXECUTOR_ERROR_SIDECAR_DRAFT_2026-04-22.md`
+   - 핵심: guarded executor failure를 `mutation_executor_error` sidecar와 promotion router failure route eligibility로 노출
+25. post-error-sidecar enablement checkpoint review
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ERROR_SIDECAR_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+   - 핵심: success/failure sidecar readiness `Go`, top-level promotion `No-Go`, post-executor audit evidence planning `Go`
+26. post-executor audit evidence draft
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_EXECUTOR_AUDIT_EVIDENCE_DRAFT_2026-04-22.md`
+   - 핵심: guarded executor success/failure 후 `mutation_executor_post_execution` audit record와 `mutation_executor_audit_receipt` sidecar를 남기고 pre-executor audit sequence id와 연결
+27. post-audit enablement checkpoint review
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_AUDIT_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+   - 핵심: post-audit readiness `Go`, default/public top-level promotion `No-Go`, explicit local-only guarded promotion gate implementation planning `Go`
+28. guarded top-level promotion gate draft
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_TOP_LEVEL_PROMOTION_GATE_DRAFT_2026-04-22.md`
+   - 핵심: extra opt-in이 있는 explicit local-only guarded path만 linked post-executor audit receipt를 조건으로 top-level success/failure 승격
+29. post-promotion enablement checkpoint review
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_PROMOTION_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+   - 핵심: extra opt-in local-only promotion `Go`, default/public promotion `No-Go`, operator runbook update `Go`
+30. top-level promotion operator runbook update
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_OPERATOR_RUNBOOK_UPDATE_2026-04-22.md`
+   - 핵심: default blocked, activation check, guarded blocked, guarded top-level promotion command와 audit linkage 확인 절차를 operator runbook에 반영
+31. post-runbook enablement checkpoint review
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_RUNBOOK_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+   - 핵심: local-only operator surface `Go`, default/public promotion `No-Go`, rollback drill planning `Go`
+32. rollback drill plan draft
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_PLAN_DRAFT_2026-04-22.md`
+   - 핵심: pre-state capture, guarded promotion, audit linkage, rebuild-from-source recovery, post-recovery health/vector check 순서 고정
+33. rollback drill harness draft
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_HARNESS_DRAFT_2026-04-22.md`
+   - 핵심: explicit local env guard, pre-state capture, guarded promotion smoke, audit linkage check, rebuild-from-source recovery, post-recovery vector evidence report를 제공
+34. rollback drill execution evidence
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_EXECUTION_EVIDENCE_2026-04-22.md`
+   - 핵심: explicit local env에서 `ok=true`, audit linkage `6 -> 7`, recovery rebuild `37/37`, post-recovery vector count `37` 확인
+35. post-rollback-drill enablement checkpoint review
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ROLLBACK_DRILL_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+   - 핵심: local-only rollback-drilled operator surface `Go`, extra opt-in local-only top-level promotion `Go`, default/public top-level promotion `No-Go`, upload review live execution `No-Go`
+36. public promotion blocker register
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PUBLIC_PROMOTION_BLOCKER_REGISTER_2026-04-22.md`
+   - 핵심: product/API contract, authorization, production audit backend, recovery model, concurrency/job lifecycle, upload review boundary, observability/support, regression scope를 default/public blocker로 고정
+37. local-only closeout
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_LOCAL_ONLY_CLOSEOUT_2026-04-22.md`
+   - 핵심: `reindex` explicit local-only operator/test surface `Go`, default/public top-level promotion `No-Go`, upload review live execution `No-Go`를 terminal scope로 고정
+38. post-closeout next-track selection
+   - 문서: `docs/reports/V1_5_POST_CLOSEOUT_NEXT_TRACK_SELECTION_2026-04-22.md`
+   - 핵심: public blocker implementation 대신 branch handoff snapshot을 다음 track으로 선택
+39. branch handoff snapshot
+   - 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BRANCH_HANDOFF_SNAPSHOT_2026-04-22.md`
+   - 핵심: branch `codex/loop-034-go-no-go-review`, `main` 대비 `46` commits ahead, `73 files changed`, latest rollback drill `ok=true` 상태 기록
+40. branch publication decision
+   - 문서: `docs/reports/V1_5_BRANCH_PUBLICATION_DECISION_2026-04-22.md`
+   - 핵심: local branch handoff `Go`, automatic remote push/PR `No-Go`, head `b086055` 기준 `main` 대비 `47` commits ahead 상태 기록
+
+### Verified Repeatedly
+
+반복적으로 유지 중인 공통 검증:
+
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python -m pytest -q tests/test_smoke_reindex_rollback_drill.py`
+- `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag-rollback-drill ./.venv/bin/python scripts/smoke_reindex_rollback_drill.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+- `git diff --check`
+
+최근 루프들(`LOOP-045` ~ `LOOP-085`)은 타깃 pytest 스택을 유지한 채 단계적으로 확장됐다. 최신 `LOOP-085` 기준 local branch handoff는 `Go`, automatic remote push/PR은 `No-Go`다.
+
+## Test Matrix
+
+### Current Guaranteed Paths
+
+1. default blocked path
+   - 기대: `noop_fallback`
+   - 기대 에러: `MUTATION_APPLY_NOT_ENABLED`
+2. activation-on + durable audit ready path
+   - 기대: `candidate_stub`
+   - 기대 에러: `MUTATION_APPLY_NOT_ENABLED`
+3. upload review path
+   - 기대: `boundary_noop`
+4. explicit live binding concrete skeleton path
+   - 기대: `live_result_skeleton`
+   - 기대 에러: `MUTATION_APPLY_NOT_ENABLED`
+   - 기대 sidecar: `mutation_executor_result`, `mutation_success_promotion`, `mutation_top_level_promotion_router`
+5. explicit guarded live executor path
+   - 기대: `guarded_live_executor`
+   - 기대: direct tool handler bypass, `index_service.reindex()` 호출 seam evidence
+   - 기대 top-level: `MUTATION_APPLY_NOT_ENABLED` blocked surface 유지
+6. explicit guarded top-level promotion path
+   - 기대: `guarded_live_executor`
+   - 기대: linked `mutation_executor_post_execution` audit receipt가 있을 때만 top-level `ok=true` 승격
+   - 기대: local-only extra opt-in 없이는 default/public top-level surface 비활성 유지
+
+### Future Paths
+
+1. explicit publication or next-track instruction
+   - 기대: 사용자 명시 지시에 따라 publication 또는 다른 track으로 이동
+   - 상태: waiting
+
+## Recommended Testing Order
+
+다음 검증 순서는 아래로 고정한다.
+
+1. default blocked-flow smoke 유지 확인
+2. activation-on local-file candidate stub 유지 확인
+3. explicit local-only opt-in smoke harness 정의
+4. concrete executor skeleton smoke evidence 검증
+5. top-level success promotion 규칙 정리
+6. adapter-specific runtime failure taxonomy 검증
+7. pre-execution audit/executor handoff seam 검증
+8. fake/sandboxed executor smoke seam 검증
+9. mutation apply executor router dry-run seam 검증
+10. execution enablement checkpoint review
+11. pre-side-effect executor router implementation draft 검증
+12. top-level promotion router implementation draft 검증
+13. execution enablement final checkpoint review
+14. guarded live executor implementation draft 검증
+15. guarded live executor smoke command draft 검증
+16. guarded live executor smoke evidence draft 검증
+17. post-smoke enablement checkpoint review
+18. executor error sidecar draft 검증
+19. post-error-sidecar enablement checkpoint review
+20. post-executor audit evidence draft 검증
+21. post-audit enablement checkpoint review
+22. guarded top-level promotion gate draft 검증
+23. post-promotion enablement checkpoint review
+24. top-level promotion operator runbook update 검증
+25. post-runbook enablement checkpoint review
+26. rollback drill plan draft 검증
+27. rollback drill harness draft 검증
+28. rollback drill execution evidence 검증
+29. post-rollback-drill enablement checkpoint review
+30. public promotion blocker register
+31. local-only closeout
+32. post-closeout next-track selection
+33. branch handoff snapshot
+34. branch publication decision
+35. explicit publication or next-track instruction
+
+## Open Testing Gaps
+
+아직 남아 있는 테스트 갭:
+
+1. explicit publication or next-track instruction
+2. broader/public top-level apply success/failure enablement 기준
+3. upload review live execution precondition 재검토
+
+## Notes
+
+- 현재는 설계/contract 단계라서 전체 pytest나 live gate보다 타깃 mutation/runtime/smoke suite가 우선이다.
+- 실제 execution을 열기 전까지는 default smoke가 계속 실패 아닌 “blocked success” 성격으로 유지되는 것이 맞다.
+
+## Next Step
+
+다음 작업은 `LOOP-086 Await explicit publication or next-track instruction`이다. 이 문서는 이후 loop들의 테스트 상태/로드맵 기준 요약본으로 재사용한다.

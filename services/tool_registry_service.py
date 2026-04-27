@@ -27,6 +27,7 @@ class ToolContext:
     admin_code: str | None = None
     mutation_intent: str | None = None
     apply_envelope: dict[str, object] | None = None
+    executor_binding: dict[str, object] | None = None
 
 
 @dataclass(frozen=True)

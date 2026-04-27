@@ -60,10 +60,31 @@
 - 현재: `services/tool_middleware_service.py`는 request id, timeout budget, tool allowlist, mutation policy guard, mutation apply guard, unsafe action guard, audit log를 순차 적용하는 internal middleware 실행기 skeleton을 제공하고, explicit allowlist가 없으면 actor policy source를 기본값으로 읽는다
 - 현재: `services/tool_trace_service.py`는 tool/middleware 실행 결과를 `v1.5.tool_execution_trace.v1` schema로 고정하고 `actor_category`, `mutation_candidate_tools`, policy flag seed와 `internal/public/persisted` audience별 redaction 함수를 제공한다
 - 현재: `PREVIEW_REQUIRED` 응답은 `v1.5.mutation_preview_contract.v1` 기준 `preview_contract`, `v1.5.mutation_preview_seed.v1` 기준 `preview_seed`, `v1.5.mutation_apply_envelope.v1` 기준 draft `apply_envelope`를 함께 반환하고, execution trace는 `v1.5.mutation_audit_record.v1` persisted audit contract와 append-only sink receipt를 함께 남긴다
-- 현재: `services/agent_runtime_service.py`는 단일 입력을 actor policy source 기반 allowlist/middleware/trace가 붙은 내부 single-tool runtime 흐름으로 실행하고, mutation candidate에 대해서는 `admin_code`/`mutation_intent`/`apply_envelope` 신호를 middleware gate에 전달한다
+- 현재: `services/agent_runtime_service.py`는 단일 입력을 actor policy source 기반 allowlist/middleware/trace가 붙은 내부 single-tool runtime 흐름으로 실행하고, mutation candidate에 대해서는 `admin_code`/`mutation_intent`/`apply_envelope`와 local-only `executor_binding` 신호를 middleware gate에 전달한다
+- 현재: `services/mutation_executor_service.py`는 preview-confirmed apply 이후에 붙는 executor activation/boundary seam을 제공하고, `reindex`는 operator activation request + durable local audit receipt가 함께 맞을 때 기본 `candidate_stub`, valid explicit binding이 추가되면 `live_binding_stub`, `binding_stage=concrete_executor_skeleton`까지 주어지면 `live_result_skeleton`을 선택한다. `binding_stage=guarded_live_executor`는 explicit local-only path에서만 `index_service.reindex()` 호출 seam을 열고, current top-level runtime은 계속 blocked surface로 유지한다. 이 skeleton/guarded result는 `mutation_executor_result` sidecar로 `reindex_summary`, `audit_receipt_ref`, `rollback_hint`를 고정하고, `mutation_success_promotion` contract로 current blocked-success sidecar와 future top-level apply success surface의 mapping을 남기며, adapter-specific failure taxonomy helper는 future top-level failure surface mapping을 고정한다. pre-execution handoff contract는 actual side effect 전 durable audit receipt, executor router, explicit binding, promotion handoff 순서를 고정하고, fake executor smoke contract는 actual index mutation 없는 success/failure promotion evidence를 고정한다. mutation apply router dry-run contract는 direct `_tool_reindex`와 `index_service.reindex`를 호출하지 않는 blocked apply router evidence를 남기며, `services/tool_middleware_service.py`는 blocked apply result 이후 direct tool handler 전 `mutation_apply_guard_pre_side_effect_router` 위치에서 audit receipt를 먼저 만들고 executor router dry-run을 실행한다. top-level promotion router contract는 executor success/failure sidecar를 future top-level apply `result`/`error` surface로 옮기는 draft evidence를 남기되 current runtime은 계속 blocked surface로 유지한다. upload review는 별도 `boundary_noop`로 유지한다
 - 현재: actor별 allowlist/mutation 정책 초안은 `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`에 고정했고, resolver skeleton과 admin auth + mutation intent gate, preview/audit contract, preview seed + audit sink skeleton, mutation apply draft/guard까지 반영됐다
 - 현재: `mutation_apply_guard`는 preview-confirmed envelope를 검증하고 `PREVIEW_REFERENCE_MISMATCH`, `AUDIT_SINK_RECEIPT_REQUIRED`, `AUDIT_SINK_RECEIPT_INVALID`, `MUTATION_INTENT_SUMMARY_REQUIRED`, `MUTATION_APPLY_NOT_ENABLED`를 분리해 차단한다
-- 다음 우선순위: V1 회귀 게이트를 유지하면서 V1.5 mutation execution go/no-go review, 이후 mutation executor interface draft를 순차 정리한다
+- 현재: `services/tool_audit_sink_service.py`는 default `null_append_only`를 유지한 채 `DOC_RAG_MUTATION_AUDIT_BACKEND=local_file`일 때만 local append-only file backend와 stable `sequence_id` receipt를 제공하고, receipt/entry에 `90일` rolling retention과 explicit local-operator prune를 드러내는 nested `ops` contract를 남긴다
+- 현재: `scripts/smoke_agent_runtime.py`는 `--opt-in-live-binding`, `--opt-in-live-binding-stage-concrete`, `--opt-in-live-binding-stage-guarded`, `DOC_RAG_MUTATION_SMOKE_LIVE_BINDING=1`, `DOC_RAG_MUTATION_SMOKE_LIVE_BINDING_STAGE`를 지원한다. concrete stage smoke에서는 side-effect-free `live_result_skeleton` evidence를 남기고, guarded stage smoke에서는 explicit local-only `guarded_live_executor` binding으로 `index_service.reindex()`를 호출해 runtime sidecar evidence를 남긴다. guarded stage에서는 runtime sidecar가 없으면 smoke check가 실패한다
+- 현재: `services/index_service.py`는 source metadata의 list/dict 값을 보존하되 Chroma ingest 직전에는 JSON 문자열로 정규화해 vectorstore metadata 제약을 만족시킨다
+- 현재: guarded executor failure는 `mutation_executor_error` sidecar로 blocked apply response와 `execution_trace.contracts`에 남고, promotion router failure route는 supported reindex error code 기준으로 eligible evidence를 남긴다
+- 현재: guarded executor success/failure 이후 `mutation_executor_post_execution` audit record와 `mutation_executor_audit_receipt` sidecar가 남아 pre-executor audit sequence id와 post-executor outcome을 연결한다
+- 현재: post-audit checkpoint 결론은 default/public top-level promotion `No-Go`, explicit local-only guarded top-level promotion gate implementation planning `Go`다
+- 현재: `executor_binding.top_level_promotion_enabled` 추가 opt-in이 있는 explicit local-only guarded path만 top-level `ok=true` success 또는 eligible failure로 승격할 수 있고, 기본 guarded path는 계속 `MUTATION_APPLY_NOT_ENABLED` blocked surface를 유지한다
+- 현재: post-promotion checkpoint 결론은 extra opt-in local-only top-level promotion `Go`, default/public promotion `No-Go`, operator runbook update `Go`다
+- 현재: operator runbook은 default blocked, activation check, guarded blocked, guarded top-level promotion command와 pre/post audit sequence 확인 절차를 구분한다
+- 현재: post-runbook checkpoint 결론은 local-only operator surface `Go`, default/public promotion `No-Go`, rollback drill planning `Go`다
+- 현재: rollback drill plan은 pre-state capture, guarded top-level promotion, audit linkage 확인, rebuild-from-source recovery, post-recovery health/vector check 순서로 고정됐다
+- 현재: `scripts/smoke_reindex_rollback_drill.py`는 explicit local env guard, pre-state capture, guarded promotion smoke, rebuild-from-source recovery, post-recovery vector capture를 구조화해 출력한다
+- 현재: rollback drill execution evidence는 explicit local env에서 `ok=true`, audit linkage `6 -> 7`, recovery rebuild `37/37`, post-recovery vector count `37`을 확인했다
+- 현재: post-rollback-drill checkpoint 결론은 local-only rollback-drilled operator surface `Go`, extra opt-in local-only top-level promotion `Go`, default/public top-level promotion `No-Go`, upload review live execution `No-Go`다
+- 현재: public promotion blocker register는 product/API contract, authorization, production audit backend, recovery model, concurrency/job lifecycle, upload review boundary, observability/support, regression scope를 default/public blocker로 고정했다
+- 현재: local-only closeout 기준 terminal scope는 `reindex` explicit local-only operator/test surface `Go`, default/public top-level promotion `No-Go`, upload review live execution `No-Go`다
+- 현재: post-closeout next-track selection은 public blocker implementation 대신 branch handoff snapshot을 선택했다
+- 현재: branch handoff snapshot과 branch publication decision은 2026-04-22 당시 snapshot으로 보존한다
+- 현재: 2026-04-27 현행화 시작 시점의 branch는 `codex/loop-034-go-no-go-review`, head `540128a`, `main` 대비 `49` commits ahead였고, 전체 테스트 `239 passed`, 기본 agent runtime smoke `ok=true`를 확인했다
+- 현재: 사용자 지시에 따라 branch를 remote에 push하고 draft PR `https://github.com/redsunjin/trunk_rag/pull/5`를 열었다
+- 다음 우선순위: PR review/merge 후속 또는 next-track instruction 대기이며, live scope는 여전히 `reindex` 단일 tool 후보로만 다룬다
 
 비목표(현재 단계):
 - 원본 수집/크롤링
@@ -83,6 +104,7 @@
 - `services/tool_trace_service.py`: V1.5 internal tool execution trace contract
 - `services/tool_preview_service.py`: V1.5 preview seed helper
 - `services/tool_audit_sink_service.py`: V1.5 append-only audit sink protocol/null-memory sink
+- `services/mutation_executor_service.py`: V1.5 mutation executor selection seam/noop fallback/reindex candidate stub/upload review boundary noop
 - `services/agent_runtime_service.py`: V1.5 internal agent runtime entry draft
 - `core/actor_policy_manifest.py`: V1.5 actor policy manifest loader/normalizer
 - `core/*.py`: 설정/에러/HTTP 유틸
@@ -110,6 +132,17 @@
 - `docs/reports/V1_5_ACTOR_ALLOWLIST_POLICY_SOURCE_2026-04-11.md`: V1.5 actor category/tool group/mutation gate 정책 초안
 - `docs/reports/V1_5_PREVIEW_AUDIT_CONTRACT_2026-04-12.md`: V1.5 preview payload/persisted audit contract 기준
 - `docs/reports/V1_5_PREVIEW_SEED_AUDIT_SINK_2026-04-12.md`: V1.5 preview seed helper/append-only audit sink skeleton 기준
+- `docs/reports/V1_5_MUTATION_EXECUTION_GO_NO_GO_REVIEW_2026-04-17.md`: V1.5 mutation execution activation go/no-go와 executor follow-up 기준
+- `docs/reports/V1_5_MUTATION_EXECUTOR_INTERFACE_DRAFT_2026-04-18.md`: V1.5 mutation executor request/contract/noop default/reindex stub 기준
+- `docs/reports/V1_5_DURABLE_MUTATION_AUDIT_BACKEND_SKELETON_2026-04-18.md`: V1.5 local append-only audit backend/stable sequence id 기준
+- `docs/reports/V1_5_REINDEX_EXECUTOR_ACTIVATION_SEAM_DRAFT_2026-04-18.md`: V1.5 reindex activation guard/noop fallback/candidate stub 기준
+- `docs/reports/V1_5_UPLOAD_REVIEW_EXECUTOR_BOUNDARY_REVIEW_2026-04-18.md`: V1.5 upload review boundary/rollback-audit precondition 기준
+- `docs/reports/V1_5_MUTATION_AUDIT_RETENTION_OPS_DRAFT_2026-04-18.md`: V1.5 audit retention/prune operator ownership 기준
+- `docs/reports/V1_5_REINDEX_LIVE_READINESS_CHECKLIST_DRAFT_2026-04-19.md`: V1.5 reindex live readiness checklist 기준
+- `docs/reports/V1_5_MUTATION_ACTIVATION_SMOKE_EVIDENCE_2026-04-19.md`: V1.5 mutation activation blocked-flow smoke evidence 기준
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TEST_STATUS_ROADMAP_2026-04-20.md`: V1.5 reindex live adapter 테스트 현황/로드맵 요약
+- `docs/reports/V1_5_REINDEX_ACTIVATION_CHECKPOINT_REVIEW_2026-04-19.md`: V1.5 reindex activation checkpoint verdict 기준
+- `docs/reports/V1_5_REINDEX_ACTIVATION_OPERATOR_RUNBOOK_DRAFT_2026-04-19.md`: V1.5 reindex activation local operator runbook 기준
 - `scripts/diagnose_ollama_runtime.py`: Ollama 직접 호출 기준 `eval_tokens_per_second`/wall time 진단 스크립트
 - `chroma_db/embedding_fingerprints.json`: 컬렉션별 임베딩 fingerprint 메타데이터
 - `run_doc_rag.bat`: 배포형 웹 MVP 기준 단일 부트스트랩/실행 엔트리포인트

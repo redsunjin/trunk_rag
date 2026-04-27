@@ -1,4 +1,4 @@
-# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-04-12 기준)
+# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-04-27 기준)
 
 기준 문서:
 - `SPEC.md`
@@ -28,6 +28,59 @@
 - `docs/reports/V1_5_PREVIEW_SEED_AUDIT_SINK_2026-04-12.md`
 - `docs/reports/V1_5_MUTATION_APPLY_DRAFT_2026-04-12.md`
 - `docs/reports/V1_5_MUTATION_APPLY_GUARD_2026-04-12.md`
+- `docs/reports/V1_5_MUTATION_EXECUTION_GO_NO_GO_REVIEW_2026-04-17.md`
+- `docs/reports/V1_5_MUTATION_EXECUTOR_INTERFACE_DRAFT_2026-04-18.md`
+- `docs/reports/V1_5_DURABLE_MUTATION_AUDIT_BACKEND_SKELETON_2026-04-18.md`
+- `docs/reports/V1_5_REINDEX_EXECUTOR_ACTIVATION_SEAM_DRAFT_2026-04-18.md`
+- `docs/reports/V1_5_UPLOAD_REVIEW_EXECUTOR_BOUNDARY_REVIEW_2026-04-18.md`
+- `docs/reports/V1_5_MUTATION_AUDIT_RETENTION_OPS_DRAFT_2026-04-18.md`
+- `docs/reports/V1_5_REINDEX_LIVE_READINESS_CHECKLIST_DRAFT_2026-04-19.md`
+- `docs/reports/V1_5_MUTATION_ACTIVATION_SMOKE_EVIDENCE_2026-04-19.md`
+- `docs/reports/V1_5_REINDEX_ACTIVATION_CHECKPOINT_REVIEW_2026-04-19.md`
+- `docs/reports/V1_5_REINDEX_ACTIVATION_OPERATOR_RUNBOOK_DRAFT_2026-04-19.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OUTLINE_DRAFT_2026-04-20.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TEST_PLAN_DRAFT_2026-04-20.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_SUCCESS_CONTRACT_DRAFT_2026-04-20.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_BINDING_SEAM_DRAFT_2026-04-20.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_HARNESS_DRAFT_2026-04-20.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TEST_STATUS_ROADMAP_2026-04-20.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_EXECUTOR_INJECTION_PROTOCOL_DRAFT_2026-04-20.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BINDING_SELECTION_STUB_DRAFT_2026-04-20.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_COMMAND_DRAFT_2026-04-20.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_EVIDENCE_DRAFT_2026-04-20.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_CONCRETE_EXECUTOR_SKELETON_DRAFT_2026-04-21.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_CONCRETE_SMOKE_EVIDENCE_DRAFT_2026-04-21.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_DRAFT_2026-04-21.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_FAILURE_TAXONOMY_DRAFT_2026-04-21.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_GO_NO_GO_REVIEW_2026-04-21.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PRE_EXECUTION_HANDOFF_SEAM_DRAFT_2026-04-21.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_FAKE_EXECUTOR_SMOKE_SEAM_DRAFT_2026-04-21.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_MUTATION_APPLY_ROUTER_DRY_RUN_SEAM_DRAFT_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PRE_SIDE_EFFECT_EXECUTOR_ROUTER_IMPLEMENTATION_DRAFT_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_ROUTER_IMPLEMENTATION_DRAFT_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_FINAL_CHECKPOINT_REVIEW_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_IMPLEMENTATION_DRAFT_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_SMOKE_COMMAND_DRAFT_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_SMOKE_EVIDENCE_DRAFT_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_SMOKE_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_EXECUTOR_ERROR_SIDECAR_DRAFT_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ERROR_SIDECAR_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_EXECUTOR_AUDIT_EVIDENCE_DRAFT_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_AUDIT_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_TOP_LEVEL_PROMOTION_GATE_DRAFT_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_PROMOTION_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_OPERATOR_RUNBOOK_UPDATE_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_RUNBOOK_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_PLAN_DRAFT_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_HARNESS_DRAFT_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_EXECUTION_EVIDENCE_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ROLLBACK_DRILL_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PUBLIC_PROMOTION_BLOCKER_REGISTER_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_LOCAL_ONLY_CLOSEOUT_2026-04-22.md`
+- `docs/reports/V1_5_POST_CLOSEOUT_NEXT_TRACK_SELECTION_2026-04-22.md`
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BRANCH_HANDOFF_SNAPSHOT_2026-04-22.md`
+- `docs/reports/V1_5_BRANCH_PUBLICATION_DECISION_2026-04-22.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -35,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-034`
-- current_active_title: `V1.5 mutation execution go/no-go review`
+- current_active_id: `LOOP-086`
+- current_active_title: `Await PR review/merge or next-track instruction`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -867,7 +920,7 @@ closeout 메모 (2026-04-12):
 - `scripts/smoke_agent_runtime.py`, `tests/test_smoke_agent_runtime.py`는 preview-confirmed apply path가 `mutation_apply_guard`에서 `MUTATION_APPLY_NOT_ENABLED`로 차단되는 smoke를 추가했다.
 - 검증은 타깃 `40 passed`, 전체 `193 passed`, `./.venv/bin/python scripts/smoke_agent_runtime.py -> ok=true`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과 기준으로 마감한다.
 
-### A-Next27. V1.5 mutation execution go/no-go review (현재 active)
+### A-Next27. V1.5 mutation execution go/no-go review (완료: 2026-04-17)
 1. 실제 mutation execution을 열기 전에 필요한 사용자 결정 항목과 운영 전제조건을 문서로 고정한다.
 2. audit backend, retention, activation ownership, public surface 변경 여부를 decision matrix로 정리한다.
 3. 실제 write adapter 호출은 여전히 열지 않고, 후속 executor interface draft loop만 정의한다.
@@ -883,7 +936,13 @@ closeout 메모 (2026-04-12):
 진행 메모 (2026-04-12):
 - `LOOP-033` closeout 이후 실제 mutation apply를 열기 전 필요한 go/no-go 판단과 backend 조건을 우선 정리한다.
 
-### A-Next28. V1.5 mutation executor interface draft (pending)
+closeout 메모 (2026-04-17):
+- `docs/reports/V1_5_MUTATION_EXECUTION_GO_NO_GO_REVIEW_2026-04-17.md`를 추가해 mutation execution `No-Go` 결론, decision matrix, activation precondition, `LOOP-035` 입력 계약을 고정했다.
+- 실제 execution은 여전히 닫아 두고, public `/agent/*` 미개방, durable append-only audit backend 필요, `90일 rolling retention`, local operator explicit activation, 첫 live scope `reindex` 우선이라는 기준을 문서로 승격했다.
+- upload review execution은 managed markdown active 상태를 직접 바꾸므로 `reindex`와 분리된 후속 go/no-go 대상으로 남긴다.
+- 검증은 `./.venv/bin/python scripts/roadmap_harness.py validate -> ready` 기준으로 마감한다.
+
+### A-Next28. V1.5 mutation executor interface draft (완료: 2026-04-18)
 1. `LOOP-034`에서 고정한 go/no-go 기준을 바탕으로 실제 write adapter를 아직 열지 않는 executor interface draft를 설계한다.
 2. preview-confirmed apply request와 execution backend를 잇는 최소 protocol과 noop/default adapter 경계를 정의한다.
 3. public `/agent/*` endpoint와 persistence backend 활성화는 여전히 제외한다.
@@ -896,6 +955,1171 @@ closeout 메모 (2026-04-12):
 검증:
 - `./.venv/bin/python -m pytest -q tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_tool_trace_service.py tests/test_tool_preview_service.py tests/test_tool_audit_sink_service.py tests/test_tool_apply_service.py tests/test_smoke_agent_runtime.py`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-17):
+- `LOOP-034` closeout으로 실제 execution activation은 아직 `No-Go`로 유지한다.
+- 이번 단계는 live write를 붙이지 않고 `MutationExecutor` protocol, `NoopMutationExecutor`, tool adapter registry 경계를 먼저 고정하는 것이다.
+
+closeout 메모 (2026-04-18):
+- `docs/reports/V1_5_MUTATION_EXECUTOR_INTERFACE_DRAFT_2026-04-18.md`를 추가해 executor request/contract, noop default, `reindex` stub binding 기준을 고정했다.
+- `services/mutation_executor_service.py`를 추가해 `MutationExecutionRequest`, `MutationExecutor` protocol, `NoopMutationExecutor`, `ReindexMutationExecutorAdapter`, executor binding lookup을 구현했다.
+- `services/tool_middleware_service.py`는 valid apply가 `MUTATION_APPLY_NOT_ENABLED`로 막힐 때 `mutation_executor` contract를 middleware metadata / execution trace / error payload에 함께 남기도록 확장했다.
+- `tests/test_mutation_executor_service.py`를 추가했고, 타깃 회귀 `43 passed`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과 기준으로 마감한다.
+
+### A-Next29. V1.5 durable mutation audit backend skeleton (완료: 2026-04-18)
+1. `LOOP-034`에서 고정한 backend/retention 결정을 기준으로 local append-only audit backend skeleton을 추가한다.
+2. stable `sequence_id`, rotation/prune metadata, config seam을 정리하되 실제 mutation execution activation은 여전히 제외한다.
+3. default sink는 보수적으로 유지하고, durable backend는 explicit local config가 있을 때만 선택되게 만든다.
+
+완료 기준:
+- local append-only audit backend skeleton이 문서와 테스트 기준으로 정리된다.
+- persisted audit receipt가 stable `sequence_id`와 backend metadata를 가질 수 있다.
+- execution activation 없이도 이후 live adapter 단계가 기대할 audit backend seam이 고정된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_tool_audit_sink_service.py tests/test_tool_trace_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-18):
+- `LOOP-035` closeout으로 executor protocol/noop fallback/tool adapter seam은 고정됐다.
+- 이번 단계는 live activation이 아니라 durable append-only file sink, stable `sequence_id`, rotation/prune metadata seam을 추가하는 것이다.
+
+closeout 메모 (2026-04-18):
+- `docs/reports/V1_5_DURABLE_MUTATION_AUDIT_BACKEND_SKELETON_2026-04-18.md`를 추가해 local append-only file backend, `90일 rolling_window`, day rotation, stable `sequence_id` 규칙을 고정했다.
+- `services/tool_audit_sink_service.py`는 `LocalFileAppendOnlyAuditSink`, env 기반 backend selection, default null sink 유지, `sequence_state.json` 기반 stable sequence 발급을 구현했다.
+- `.env.example`에는 `DOC_RAG_MUTATION_AUDIT_BACKEND`, `DOC_RAG_MUTATION_AUDIT_DIR`를 추가해 explicit local config seam을 드러냈다.
+- `tests/test_tool_audit_sink_service.py`는 local file sink receipt/entry/config selection을 검증하도록 확장했고, 타깃 회귀 `40 passed`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과 기준으로 마감한다.
+
+### A-Next30. V1.5 reindex executor activation seam draft (완료: 2026-04-18)
+1. `LOOP-035`, `LOOP-036` 결과를 바탕으로 `reindex` 전용 live executor activation seam을 문서/코드 기준으로 정리한다.
+2. operator explicit activation, durable audit backend readiness, noop fallback 전환 조건을 한 군데로 모은다.
+3. 실제 live reindex 실행은 아직 열지 않고 activation guard와 selection 규칙만 고정한다.
+
+완료 기준:
+- `reindex` live executor activation seam이 문서와 테스트 기준으로 정리된다.
+- noop fallback에서 live candidate로 넘어갈 조건이 분리된다.
+- upload review execution은 계속 범위 밖으로 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-18):
+- `LOOP-036` closeout으로 durable audit backend skeleton은 준비됐다.
+- 이번 단계는 `reindex`에 한해서 activation request, durable backend readiness, noop fallback 전환 조건을 먼저 고정하는 것이다.
+
+closeout 메모 (2026-04-18):
+- `docs/reports/V1_5_REINDEX_EXECUTOR_ACTIVATION_SEAM_DRAFT_2026-04-18.md`를 추가해 `reindex` activation guard, durable audit readiness, noop fallback/candidate stub selection 규칙을 고정했다.
+- `services/mutation_executor_service.py`는 `resolve_mutation_executor(request)` 기준 selection seam을 중앙화하고, `selection_state`, `selection_reason`, `registered_executor_name`, nested `activation` contract를 추가했다.
+- `tests/test_mutation_executor_service.py`, `tests/test_tool_middleware_service.py`, `tests/test_agent_runtime_service.py`는 activation off/null sink/local file ready 경로를 각각 검증하도록 확장했다.
+- 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py -> 35 passed`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과로 마감했다.
+
+### A-Next31. V1.5 upload review executor boundary review (완료: 2026-04-18)
+1. `reindex` activation seam 이후에도 upload review execution은 별도 위험도로 유지하도록 boundary를 정리한다.
+2. managed markdown active 상태 변경에 필요한 추가 rollback/audit 조건을 분리한다.
+3. upload review live execution을 아직 열지 않고 required precondition만 고정한다.
+
+완료 기준:
+- upload review execution의 별도 위험 경계가 문서와 테스트 기준으로 정리된다.
+- `reindex` activation seam과 upload review boundary가 섞이지 않는다.
+- write tool별 단계적 activation 원칙이 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-18):
+- `LOOP-037` closeout으로 `reindex` activation request/durable audit readiness/noop fallback 전환 조건은 고정됐다.
+- 이번 단계는 upload review execution을 `reindex` candidate seam과 섞지 않고 별도 rollback/audit boundary로 분리하는 것이다.
+
+closeout 메모 (2026-04-18):
+- `docs/reports/V1_5_UPLOAD_REVIEW_EXECUTOR_BOUNDARY_REVIEW_2026-04-18.md`를 추가해 upload review execution을 `reindex` activation seam과 분리된 별도 boundary로 고정했다.
+- `services/mutation_executor_service.py`는 upload review tool을 `boundary_noop` selection과 nested `boundary` contract로 분리해 rollback/audit/document binding precondition을 드러내도록 확장했다.
+- `tests/test_mutation_executor_service.py`, `tests/test_tool_middleware_service.py`, `tests/test_agent_runtime_service.py`는 activation on + durable local audit ready 조건에서도 upload review가 candidate stub로 올라가지 않는지 검증하도록 확장했다.
+- 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py -> 38 passed`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과로 마감했다.
+
+### A-Next32. V1.5 mutation audit retention ops draft (완료: 2026-04-18)
+1. `90일 rolling_window` retention과 explicit prune 책임을 operator-facing 문서 기준으로 정리한다.
+2. `reindex` activation seam과 upload review boundary를 깨지 않도록 audit ops precondition을 별도 축으로 분리한다.
+3. live execution 이전에 필요한 retention/prune 문구만 고정하고 자동 prune job은 계속 범위 밖으로 둔다.
+
+완료 기준:
+- mutation audit retention/prune 운영 경계가 문서와 테스트 기준으로 정리된다.
+- local operator activation ownership과 retention 책임 문구가 충돌 없이 고정된다.
+- 자동 prune job 없이도 current `No-Go`/staged activation 판단이 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-18):
+- `LOOP-038` closeout으로 upload review execution은 `reindex` activation seam과 분리된 별도 boundary로 고정됐다.
+- 이번 단계는 live execution을 열지 않고, `90일 rolling_window` retention과 explicit prune ownership 문구를 operator-facing 기준으로 정리하는 것이다.
+
+closeout 메모 (2026-04-18):
+- `docs/reports/V1_5_MUTATION_AUDIT_RETENTION_OPS_DRAFT_2026-04-18.md`를 추가해 `90일 rolling_window`, `local_operator` prune ownership, `explicit_manual` prune mode를 operator-facing 기준으로 고정했다.
+- `services/tool_audit_sink_service.py`는 local file receipt와 stored entry에 nested `ops` 계약을 남기도록 확장했고, 여기에는 `storage_scope`, `prune_owner`, `prune_mode`, `runbook_required`, `activation_dependency`가 포함된다.
+- `.env.example`에는 local file audit가 `90일` rolling retention과 explicit local-operator prune를 전제로 한다는 주석을 추가했다.
+- `tests/test_tool_audit_sink_service.py`는 local file receipt/entry가 operator prune ownership과 retention ops contract를 함께 노출하는지 검증하도록 확장했다.
+- 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py -> 38 passed`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과로 마감했다.
+
+### A-Next33. V1.5 reindex live readiness checklist draft (완료: 2026-04-19)
+1. `reindex` activation seam, upload review boundary, retention ops 문구를 합쳐 live enablement readiness checklist를 정리한다.
+2. 실제 live execution을 열지 않고 required smoke/runbook evidence만 정리한다.
+3. staged activation 원칙이 write tool별로 어떻게 유지되는지 final checklist로 고정한다.
+
+완료 기준:
+- `reindex` live enablement readiness checklist가 문서와 테스트 기준으로 정리된다.
+- staged activation 원칙과 upload review boundary가 같은 체크리스트에서 충돌 없이 유지된다.
+- live execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-18):
+- `LOOP-039` closeout으로 retention/prune operator ownership과 staged activation dependency 문구는 고정됐다.
+- 이번 단계는 실제 live execution을 열지 않고, `reindex` live enablement에 필요한 checklist와 evidence 항목을 한 문서로 정리하는 것이다.
+
+closeout 메모 (2026-04-19):
+- `docs/reports/V1_5_REINDEX_LIVE_READINESS_CHECKLIST_DRAFT_2026-04-19.md`를 추가해 activation seam, upload review boundary, retention ops, required smoke evidence를 한 체크리스트로 고정했다.
+- 체크리스트는 internal-only surface, operator explicit activation 기본값 `off`, durable local audit receipt, retention/prune ownership, upload review separate boundary, `MUTATION_APPLY_NOT_ENABLED` 유지 여부를 모두 같은 readiness 표에서 추적하도록 정리했다.
+- smoke evidence 자체는 아직 별도 문서로 패키징하지 않았고, 그 항목은 다음 active loop `LOOP-041`에서 닫는다.
+
+### A-Next34. V1.5 mutation activation smoke evidence draft (완료: 2026-04-19)
+1. `reindex` live readiness checklist에서 요구하는 smoke evidence 항목을 문서/스크립트 기준으로 정리한다.
+2. 실제 live execution을 열지 않고 existing blocked flow/smoke 결과를 activation evidence 형태로 묶는다.
+3. staged activation 원칙을 깨지 않는 최소 smoke/runbook evidence만 남긴다.
+
+완료 기준:
+- mutation activation smoke evidence 항목이 문서와 테스트 기준으로 정리된다.
+- blocked apply flow와 readiness checklist 사이의 증빙 관계가 명확해진다.
+- live execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-19):
+- `LOOP-040` closeout으로 `reindex` live readiness checklist와 required smoke evidence 항목은 문서화됐다.
+- 이번 단계는 existing `scripts/smoke_agent_runtime.py` 결과를 readiness evidence 형태로 고정하는 것이다.
+
+closeout 메모 (2026-04-19):
+- `scripts/smoke_agent_runtime.py`에 `v1.5.mutation_activation_smoke.v1` schema와 `apply_envelope`, `audit_sink`, `mutation_executor` summary가 추가돼 smoke 결과가 readiness evidence로 재사용 가능해졌다.
+- `docs/reports/V1_5_MUTATION_ACTIVATION_SMOKE_EVIDENCE_2026-04-19.md`를 통해 blocked apply flow와 checklist 항목의 연결, default `null_append_only`/`activation_not_requested` 상태가 공식화됐다.
+- 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`, `./.venv/bin/python scripts/smoke_agent_runtime.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 통과로 마감한다.
+
+### A-Next35. V1.5 reindex activation checkpoint review (완료: 2026-04-19)
+1. readiness checklist와 smoke evidence를 바탕으로 `reindex` activation checkpoint 판단 기준을 정리한다.
+2. 실제 live execution 개방 여부는 아직 결정하지 않고, 추가로 남은 blocker와 go/no-go 질문만 고정한다.
+3. upload review boundary가 checkpoint 판단에 섞이지 않도록 별도 보류 항목으로 유지한다.
+
+완료 기준:
+- `reindex` activation checkpoint 판단 기준이 문서와 테스트 기준으로 정리된다.
+- staged activation 원칙과 upload review separate boundary가 다시 흐려지지 않는다.
+- live execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-19):
+- `LOOP-041` closeout으로 smoke evidence 문서와 script output schema는 고정됐다.
+- 이번 단계는 실제 enablement가 아니라 `reindex` activation에 남은 checkpoint 질문과 blocker를 정리하는 review loop다.
+
+closeout 메모 (2026-04-19):
+- `docs/reports/V1_5_REINDEX_ACTIVATION_CHECKPOINT_REVIEW_2026-04-19.md`를 추가해 readiness checklist, default blocked-path smoke, activation-on local-file smoke를 한 checkpoint 문서에 묶었다.
+- checkpoint review는 `reindex`가 `candidate_stub`까지는 승격되더라도 실제 live adapter/operator runbook 부재 때문에 live enablement verdict는 여전히 `No-Go`라고 고정했다.
+- 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`, `./.venv/bin/python scripts/smoke_agent_runtime.py`, `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag_mutation_audit_checkpoint ./.venv/bin/python scripts/smoke_agent_runtime.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 통과로 마감한다.
+
+### A-Next36. V1.5 reindex activation operator runbook draft (완료: 2026-04-19)
+1. checkpoint review에서 남긴 `reindex` staged activation precondition을 operator runbook 형태로 정리한다.
+2. 실제 live enablement를 열지 않고, local activation/audit/rollback awareness만 단계별로 문서화한다.
+3. upload review boundary와 별도 보류 원칙을 runbook에도 그대로 유지한다.
+
+완료 기준:
+- `reindex` activation operator runbook 초안이 문서와 테스트 기준으로 정리된다.
+- staged activation precondition과 local operator ownership 문구가 실제 실행 절차 관점에서 모순 없이 이어진다.
+- live execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-19):
+- `LOOP-042` closeout으로 `reindex` staged activation checkpoint verdict와 remaining blockers는 고정됐다.
+- 이번 단계는 enablement를 여는 문서가 아니라 local operator 관점의 staged activation runbook 초안을 정리하는 것이다.
+
+closeout 메모 (2026-04-19):
+- `docs/reports/V1_5_REINDEX_ACTIVATION_OPERATOR_RUNBOOK_DRAFT_2026-04-19.md`를 추가해 baseline default smoke, activation-on local-file smoke, audit receipt 확인, deactivation, abort condition을 local operator 절차로 고정했다.
+- runbook은 `reindex` 단일 tool만 다루고, apply가 끝까지 `MUTATION_APPLY_NOT_ENABLED`로 남아야 한다는 guardrail을 명시했다.
+- 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`, `./.venv/bin/python scripts/smoke_agent_runtime.py`, `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag_mutation_audit_checkpoint ./.venv/bin/python scripts/smoke_agent_runtime.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 통과로 마감한다.
+
+### A-Next37. V1.5 reindex live adapter outline draft (완료: 2026-04-20)
+1. operator runbook 이후에도 live execution은 열지 않고, 필요한 `reindex` live adapter 책임과 경계만 outline으로 정리한다.
+2. noop fallback/candidate stub에서 실제 adapter로 넘어갈 때 필요한 입력/출력/rollback awareness를 문서화한다.
+3. upload review boundary와 public surface 비목표를 다시 고정한다.
+
+완료 기준:
+- `reindex` live adapter outline 초안이 문서와 테스트 기준으로 정리된다.
+- current noop fallback/candidate stub contract와 future live adapter 책임 경계가 충돌 없이 이어진다.
+- live execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-19):
+- `LOOP-043` closeout으로 local operator runbook은 고정됐다.
+- 이번 단계는 future live adapter 책임을 outline 수준으로만 정리하고, actual enablement/implementation은 계속 deferred 상태로 둔다.
+
+closeout 메모 (2026-04-20):
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OUTLINE_DRAFT_2026-04-20.md`를 추가해 `reindex` future live adapter의 target executor identity, required inputs, expected outputs, rollback awareness, non-goals를 outline 수준으로 고정했다.
+- `services/mutation_executor_service.py`는 `reindex` boundary contract에 `live_adapter_outline`를 추가해 current noop fallback/candidate stub seam 뒤에 붙을 future live adapter handoff를 execution shape 수준으로 남겼다.
+- `tests/test_mutation_executor_service.py`, `tests/test_tool_middleware_service.py`, `tests/test_agent_runtime_service.py`는 reindex boundary contract에 `live_adapter_outline`가 포함된 상태에서도 blocked/candidate path가 유지되는지 검증하도록 갱신됐다.
+- 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 통과로 마감한다.
+
+### A-Next38. V1.5 reindex live adapter test plan draft (완료: 2026-04-20)
+1. live adapter outline 다음 단계로 필요한 test plan과 smoke 범위를 문서화한다.
+2. actual live execution을 열지 않고, noop fallback/candidate stub/live adapter 경계별 검증 항목만 정리한다.
+3. upload review boundary와 public surface 비목표를 test plan에도 그대로 유지한다.
+
+완료 기준:
+- `reindex` live adapter test plan 초안이 문서와 테스트 기준으로 정리된다.
+- current smoke/test contract와 future live adapter verification 범위가 충돌 없이 이어진다.
+- live execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-20):
+- `LOOP-044` closeout으로 future live adapter outline은 문서와 executor boundary contract에 함께 고정됐다.
+- 이번 단계는 actual execution을 열지 않고, outline contract가 요구하는 noop fallback/candidate stub/future live adapter smoke 범위를 test plan으로 정리하는 것이다.
+
+closeout 메모 (2026-04-20):
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TEST_PLAN_DRAFT_2026-04-20.md`를 추가해 executor unit, middleware integration, agent runtime integration, smoke layer별 유지 케이스와 future opt-in smoke 범위를 고정했다.
+- test plan은 `future_live_adapter_opt_in_smoke`를 default smoke 세트와 분리하고, success path 검증을 explicit local-only seam으로만 다루도록 정리했다.
+- 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 통과로 마감한다.
+
+### A-Next39. V1.5 reindex live adapter success contract draft (완료: 2026-04-20)
+1. future `reindex` live adapter success/failure result shape를 draft 수준으로 정리한다.
+2. actual live execution을 열지 않고, audit receipt linkage와 rollback hint contract만 고정한다.
+3. upload review separate boundary와 public surface 비목표를 그대로 유지한다.
+
+완료 기준:
+- `reindex` live adapter success contract 초안이 문서와 테스트 기준으로 정리된다.
+- current noop fallback/candidate stub/test plan과 future success-path contract가 충돌 없이 이어진다.
+- live execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-20):
+- `LOOP-045` closeout으로 future live adapter의 verification matrix와 smoke 분리 원칙은 고정됐다.
+- 이번 단계는 actual execution을 열지 않고, future success path가 반환해야 할 result/error contract를 draft 수준으로 정리하는 것이다.
+
+closeout 메모 (2026-04-20):
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_SUCCESS_CONTRACT_DRAFT_2026-04-20.md`를 추가해 future `reindex` live adapter의 success result shape, failure taxonomy, boundary invariants를 draft 수준으로 고정했다.
+- `services/mutation_executor_service.py`는 `boundary.live_adapter_outline`에 `success_contract`, `failure_taxonomy` metadata를 추가해 future opt-in smoke와 adapter-specific test가 기대할 result/error shape를 코드 계약에도 심었다.
+- `tests/test_mutation_executor_service.py`, `tests/test_tool_middleware_service.py`, `tests/test_agent_runtime_service.py`는 expanded boundary contract가 추가돼도 current blocked/candidate path가 유지되는지 검증하도록 갱신됐다.
+- 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 통과로 마감한다.
+
+### A-Next40. V1.5 reindex live adapter opt-in binding seam draft (완료: 2026-04-20)
+1. future `reindex` live adapter를 default path를 바꾸지 않은 채 explicit local-only binding으로만 주입하는 selection seam을 정리한다.
+2. actual live execution을 열지 않고, binding source와 selection precedence만 고정한다.
+3. upload review separate boundary와 public surface 비목표를 그대로 유지한다.
+
+완료 기준:
+- `reindex` live adapter opt-in binding seam 초안이 문서와 테스트 기준으로 정리된다.
+- current noop fallback/candidate stub/success contract와 future opt-in binding 경계가 충돌 없이 이어진다.
+- live execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-20):
+- `LOOP-046` closeout으로 future live adapter의 success/failure result contract와 error taxonomy는 고정됐다.
+- 이번 단계는 actual execution을 열지 않고, future adapter binding이 default blocked/candidate path를 깨지 않도록 explicit local-only seam을 정리하는 것이다.
+
+closeout 메모 (2026-04-20):
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_BINDING_SEAM_DRAFT_2026-04-20.md`를 추가해 future live adapter가 `runtime_injected_executor_binding` 성격의 explicit local-only override로만 주입되도록 selection seam을 고정했다.
+- `services/mutation_executor_service.py`는 `boundary.live_adapter_outline`에 `opt_in_binding` metadata를 추가해 binding source, selection precedence, required signals, guardrail을 코드 계약에도 반영했다.
+- `tests/test_mutation_executor_service.py`, `tests/test_tool_middleware_service.py`, `tests/test_agent_runtime_service.py`는 opt-in binding seam metadata가 추가돼도 current blocked/candidate path가 유지되는지 검증하도록 갱신됐다.
+- 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 통과로 마감한다.
+
+### A-Next41. V1.5 reindex live adapter opt-in smoke harness draft (완료: 2026-04-20)
+1. future `reindex` live adapter opt-in smoke를 default smoke와 분리된 별도 harness/command 관점으로 정리한다.
+2. actual live execution을 열지 않고, local-only prerequisites와 output evidence만 고정한다.
+3. upload review separate boundary와 public surface 비목표를 그대로 유지한다.
+
+완료 기준:
+- `reindex` live adapter opt-in smoke harness 초안이 문서와 테스트 기준으로 정리된다.
+- current default smoke/candidate stub path와 future opt-in smoke 경계가 충돌 없이 이어진다.
+- live execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-20):
+- `LOOP-047` closeout으로 future live adapter의 explicit local-only binding seam은 문서와 boundary metadata에 함께 고정됐다.
+- 이번 단계는 actual execution을 열지 않고, future opt-in smoke를 default smoke와 분리된 harness/command 기준으로 정리하는 것이다.
+
+closeout 메모 (2026-04-20):
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_HARNESS_DRAFT_2026-04-20.md`를 추가해 opt-in smoke를 default smoke와 분리된 별도 harness/command 관점으로 고정했다.
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TEST_STATUS_ROADMAP_2026-04-20.md`를 추가해 현재까지의 검증 이력, 반복 검증 명령, 남은 테스트 갭, 권장 순서를 한 문서에 요약했다.
+- `services/mutation_executor_service.py`는 `boundary.live_adapter_outline`에 `opt_in_smoke_harness` metadata를 추가해 prerequisites, expected evidence, isolation rule을 코드 계약에도 반영했다.
+- `tests/test_mutation_executor_service.py`, `tests/test_tool_middleware_service.py`, `tests/test_agent_runtime_service.py`는 smoke harness metadata가 추가돼도 current blocked/candidate path가 유지되는지 검증하도록 갱신됐다.
+- 공식 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check` 통과로 마감한다.
+
+### A-Next42. V1.5 reindex live adapter executor injection protocol draft (완료: 2026-04-20)
+1. explicit local-only binding carrier를 runtime/test harness에서 mutation executor request까지 전달하는 protocol을 고정했다.
+2. payload channel 없이 `AgentRuntimeRequest -> ToolContext -> MutationExecutionRequest` chain을 문서와 코드에 같이 반영했다.
+3. executor contract request metadata는 binding presence/source/kind/executor name signal을 남기게 됐다.
+
+완료 기준:
+- `reindex` live adapter executor injection protocol 초안이 문서와 테스트 기준으로 정리된다.
+- current opt-in binding seam/opt-in smoke harness와 future injection protocol 경계가 충돌 없이 이어진다.
+- live execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-20):
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_EXECUTOR_INJECTION_PROTOCOL_DRAFT_2026-04-20.md`를 추가했다.
+- `services/agent_runtime_service.py`, `services/tool_registry_service.py`, `services/tool_middleware_service.py`, `services/mutation_executor_service.py`에 `executor_binding` carrier를 추가했다.
+
+### A-Next43. V1.5 reindex live adapter binding selection stub draft (완료: 2026-04-20)
+1. valid explicit binding이 activation guard 뒤에서만 `reindex_mutation_adapter_live` selection stub로 승격되도록 정리했다.
+2. invalid binding은 `candidate_stub_fallback`으로 남기고 actual execution은 계속 닫아 둔다.
+3. live binding stub contract는 `registered_executor_name`과 `delegate_executor_name`으로 defer 상태를 유지한다.
+
+완료 기준:
+- live binding selection stub 초안이 문서와 테스트 기준으로 정리된다.
+- invalid binding fallback과 default candidate path가 함께 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-20):
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BINDING_SELECTION_STUB_DRAFT_2026-04-20.md`를 추가했다.
+- `services/mutation_executor_service.py`는 `REINDEX_LIVE_ADAPTER_BINDING_KIND`, `_resolve_reindex_live_binding()`, `ReindexLiveMutationExecutorBindingStub`를 제공한다.
+
+### A-Next44. V1.5 reindex live adapter opt-in smoke command draft (완료: 2026-04-20)
+1. default blocked smoke와 분리된 opt-in live binding command surface를 script 차원에서 concrete화했다.
+2. `--opt-in-live-binding` 또는 `DOC_RAG_MUTATION_SMOKE_LIVE_BINDING=1`일 때만 apply request에 live binding이 주입된다.
+3. default smoke semantics는 그대로 유지된다.
+
+완료 기준:
+- opt-in smoke command 초안이 문서와 테스트 기준으로 정리된다.
+- default smoke와 opt-in smoke의 분리 원칙이 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-20):
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_COMMAND_DRAFT_2026-04-20.md`를 추가했다.
+- `scripts/smoke_agent_runtime.py`는 `requested_live_binding` top-level signal과 opt-in binding injection helper를 제공한다.
+
+### A-Next45. V1.5 reindex live adapter opt-in smoke evidence draft (완료: 2026-04-20)
+1. activation/local-file backend/live binding을 함께 켠 실제 smoke output을 evidence로 고정했다.
+2. apply step에서 `reindex_mutation_adapter_live`, `live_binding_stub`, `explicit_live_binding_requested`가 확인됐다.
+3. smoke overall은 `ok=true`로 완료됐다.
+
+완료 기준:
+- opt-in smoke evidence가 문서와 command output 기준으로 정리된다.
+- live binding stub path가 default blocked path와 분리된 별도 evidence로 남는다.
+
+검증:
+- `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag-live-binding-smoke ./.venv/bin/python scripts/smoke_agent_runtime.py --opt-in-live-binding`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-20):
+- `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_OPT_IN_SMOKE_EVIDENCE_DRAFT_2026-04-20.md`를 추가했다.
+- 실측에서는 `requested_live_binding=true`, `mutation_executor.executor_name=reindex_mutation_adapter_live`, `selection_state=live_binding_stub`가 확인됐다.
+
+### A-Next46. V1.5 reindex live adapter concrete executor skeleton draft (완료: 2026-04-21)
+1. future `reindex` live adapter의 concrete executor skeleton을 actual result shape draft 수준까지 정리한다.
+2. current live binding stub 다음에 오는 success payload assembly와 rollback hint 연결 지점을 정리한다.
+3. actual side effect와 public surface는 계속 열지 않는다.
+
+완료 기준:
+- concrete live executor skeleton 초안이 문서와 테스트 기준으로 정리된다.
+- current live binding stub/smoke evidence와 future success contract가 충돌 없이 이어진다.
+- actual execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-20):
+- `LOOP-052` closeout으로 opt-in live binding smoke evidence까지 확보됐다.
+- 다음 단계는 live binding stub 이후의 concrete executor/result skeleton이다.
+
+진행 메모 (2026-04-21 closeout):
+- `services/mutation_executor_service.py`에 `concrete_executor_skeleton` stage와 `ReindexLiveMutationExecutorSkeleton`을 추가했다.
+- `services/tool_middleware_service.py`, `services/agent_runtime_service.py`는 `mutation_executor_result` sidecar를 blocked-success path에서도 함께 전달하도록 확장했다.
+- closeout 검증은 `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py -> 49 passed`로 마감했다.
+
+### A-Next47. V1.5 reindex live adapter concrete executor smoke evidence draft (완료: 2026-04-21)
+1. `live_result_skeleton` stage를 별도 smoke opt-in path로 노출한다.
+2. smoke summary가 `mutation_executor_result` evidence를 함께 남기도록 확장한다.
+3. blocked-success smoke 성격은 유지한다.
+
+완료 기준:
+- concrete executor skeleton stage가 smoke command/env 기준으로 재현된다.
+- `mutation_executor_result` evidence가 smoke output 기준으로 남는다.
+- default/live-binding-stub path와 concrete stage path가 분리된다.
+
+검증:
+- `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag-live-binding-concrete-smoke ./.venv/bin/python scripts/smoke_agent_runtime.py --opt-in-live-binding --opt-in-live-binding-stage-concrete`
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+
+진행 메모 (2026-04-21 closeout):
+- `scripts/smoke_agent_runtime.py`는 `--opt-in-live-binding-stage-concrete`와 `DOC_RAG_MUTATION_SMOKE_LIVE_BINDING_STAGE`를 지원한다.
+- 실측에서는 `requested_live_binding_stage=concrete_executor_skeleton`, `selection_state=live_result_skeleton`, `mutation_executor_result.schema_version=v1.5.reindex_live_adapter_result.v1`가 확인됐다.
+
+### A-Next48. V1.5 reindex live adapter top-level success promotion draft (완료: 2026-04-21)
+1. current `mutation_executor_result` sidecar와 future top-level apply success 응답 사이의 승격 규칙을 정리한다.
+2. blocked-success smoke/runtime evidence와 actual success surface의 경계를 문서/contract로 고정한다.
+3. actual side effect enablement는 계속 별도 단계로 남긴다.
+
+완료 기준:
+- success promotion rule이 current sidecar contract와 충돌 없이 정리된다.
+- future apply success 응답에서 무엇이 top-level로 승격되고 무엇이 trace/contracts에 남는지 고정된다.
+- actual execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-21 closeout):
+- `services/mutation_executor_service.py`에 `v1.5.reindex_live_adapter_success_promotion.v1` contract builder를 추가했다.
+- `services/tool_middleware_service.py`는 concrete skeleton path에서 `mutation_success_promotion`을 error payload와 execution trace contracts에 함께 남긴다.
+- current surface는 계속 `ok=false`, `error.code=MUTATION_APPLY_NOT_ENABLED`, `error.mutation_executor_result` 위치를 유지한다.
+- future success surface는 같은 payload를 top-level `result`로 승격하고, `mutation_executor`/`mutation_executor_result`/`mutation_success_promotion` contracts를 retained contracts로 남기는 규칙으로 고정했다.
+- `scripts/smoke_agent_runtime.py`는 concrete opt-in smoke summary에 `mutation_success_promotion` evidence를 요약할 수 있게 됐다.
+- 기준 문서는 `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_DRAFT_2026-04-21.md`다.
+- 1차 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` -> `46 passed in 0.17s`.
+- 최종 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` -> `50 passed in 0.10s`; `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`; `git diff --check` -> pass.
+
+### A-Next49. V1.5 reindex live adapter runtime failure taxonomy draft (완료: 2026-04-21)
+1. adapter-specific runtime failure taxonomy deep cases를 테스트 seam으로 정리한다.
+2. `REINDEX_TARGET_MISMATCH`, `REINDEX_AUDIT_LINKAGE_INVALID`, `REINDEX_RUNTIME_EXECUTION_FAILED`, `REINDEX_ROLLBACK_HINT_UNAVAILABLE`의 발생 단계와 future failure surface mapping을 고정한다.
+3. default blocked path와 success promotion contract는 계속 회귀 없이 유지한다.
+
+완료 기준:
+- failure taxonomy 각 코드의 contract validation/runtime/post-execution 경계가 문서와 테스트 기준으로 정리된다.
+- current blocked-success surface와 future failure surface가 충돌하지 않는다.
+- actual execution off-by-default 정책이 계속 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-21 closeout):
+- `services/mutation_executor_service.py`에 `REINDEX_ERROR_*` constants, ordered taxonomy metadata, `build_reindex_live_failure_contract()`, `list_reindex_live_failure_contracts()`를 추가했다.
+- `boundary.live_adapter_outline.failure_taxonomy`는 같은 ordered metadata helper를 사용한다.
+- current surface는 계속 `draft_only_not_runtime_reachable` / `MUTATION_APPLY_NOT_ENABLED` / `mutation_apply_guard`로 남기고, future failure surface는 top-level `error`로 승격하는 mapping을 고정했다.
+- 기준 문서는 `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_FAILURE_TAXONOMY_DRAFT_2026-04-21.md`다.
+- 1차 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py` -> `14 passed in 0.07s`.
+- 최종 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_audit_sink_service.py tests/test_agent_runtime_service.py tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py` -> `53 passed in 0.10s`; `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`; `git diff --check` -> pass.
+
+### A-Next50. V1.5 reindex live adapter execution enablement go/no-go review (완료: 2026-04-21)
+1. actual execution enablement를 바로 열지 않고 go/no-go 조건을 재검토한다.
+2. `mutation_apply_guard_execution_enabled`, operator activation, durable audit, explicit binding, success/failure contract 준비도를 함께 평가한다.
+3. blocker가 있으면 재개 조건과 후속 loop를 문서화한다.
+
+완료 기준:
+- actual execution enablement 가능 여부가 go/no-go로 판정된다.
+- local-only opt-in 범위와 default/public surface 비개방 조건이 유지된다.
+- blocker가 있으면 재개 조건이 명확하다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-21 closeout):
+- actual execution enablement 판정은 `No-Go`다.
+- 다음 planning step은 `Go`이며, 대상은 pre-execution audit/executor handoff seam이다.
+- 핵심 blocker는 `mutation_apply_guard`를 열 경우 current runtime이 `mutation_executor_service`가 아니라 `tool_registry_service._tool_reindex -> index_service.reindex()` direct side effect path로 갈 수 있다는 점이다.
+- durable audit receipt는 현재 blocked result metadata enrichment 과정에서 생성되므로, actual side effect 이전 receipt handoff가 아직 보장되지 않는다.
+- 기준 문서는 `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_GO_NO_GO_REVIEW_2026-04-21.md`다.
+- 검증: `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`; `git diff --check` -> pass.
+
+### A-Next51. V1.5 reindex live adapter pre-execution handoff seam draft (완료: 2026-04-21)
+1. actual side effect를 열지 않고 pre-execution audit/executor handoff seam을 고정한다.
+2. durable audit receipt, executor selection, top-level result/error promotion이 side effect 이전에 한 흐름으로 묶이는지 테스트 가능한 계약으로 정리한다.
+3. direct tool invocation 경로가 actual mutation execution을 우회하지 못하게 할 조건을 정리한다.
+
+완료 기준:
+- `mutation_apply_guard` 이후 write path가 mutation executor handoff를 통과해야 한다는 계약이 문서/테스트 기준으로 고정된다.
+- durable audit receipt가 side effect 이전에 준비되어야 한다는 조건이 테스트 가능한 seam으로 정리된다.
+- default blocked path와 concrete skeleton smoke가 회귀하지 않는다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-21 closeout):
+- `services/mutation_executor_service.py`에 `v1.5.reindex_live_adapter_pre_execution_handoff.v1` contract builder를 추가했다.
+- contract는 valid apply 이후 current runtime이 여전히 blocked result metadata enrichment에서 executor sidecar를 붙이고, guard를 단순히 열면 direct `_tool_reindex -> index_service.reindex()` path가 가능하다는 위험을 명시한다.
+- required pre-execution order는 apply envelope validation, persisted audit record, durable audit receipt, mutation execution request, executor resolution/execution, result/error promotion 순서로 고정했다.
+- side-effect barrier는 actual reindex side effect를 아직 `false`로 유지하고, `mutation_executor_service.execute_mutation_request` router가 side effect 전 필수임을 명시한다.
+- 기준 문서는 `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PRE_EXECUTION_HANDOFF_SEAM_DRAFT_2026-04-21.md`다.
+- 1차 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py` -> `15 passed in 0.07s`.
+- 최종 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` -> `50 passed in 0.09s`; `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`; `git diff --check` -> pass.
+
+### A-Next52. V1.5 reindex live adapter fake executor smoke seam draft (완료: 2026-04-21)
+1. actual `index_service.reindex()` side effect를 열지 않고 fake/sandboxed executor smoke seam을 고정한다.
+2. success/failure promotion을 실제 index mutation 없이 검증할 수 있는 smoke evidence 기준을 정리한다.
+3. pre-execution handoff contract와 smoke summary를 연결한다.
+
+완료 기준:
+- future runtime router가 실제 index mutation 없이 success/failure promotion을 검증할 수 있는 smoke seam이 문서/테스트 기준으로 정리된다.
+- default blocked path와 concrete skeleton smoke가 회귀하지 않는다.
+- local-only opt-in 범위가 유지된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-21):
+- `LOOP-058` closeout으로 side effect 이전 handoff order와 barrier contract가 고정됐다.
+- `services/mutation_executor_service.py`에 `v1.5.reindex_live_adapter_fake_executor_smoke.v1` contract builder를 추가했다.
+- fake smoke contract는 `calls_index_service_reindex=false`, `sandboxed_executor_only=true`, `public_surface_allowed=false`를 고정한다.
+- success evidence는 `fake_executor_smoke_success` selection state, `v1.5.reindex_live_adapter_result.v1`, `mutation_success_promotion` mapping을 함께 남긴다.
+- failure evidence는 `fake_executor_smoke_failure` selection state와 `REINDEX_RUNTIME_EXECUTION_FAILED` future failure surface를 함께 남긴다.
+- 기준 문서는 `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_FAKE_EXECUTOR_SMOKE_SEAM_DRAFT_2026-04-21.md`다.
+- 1차 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py` -> `16 passed in 0.07s`.
+- 최종 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` -> `51 passed in 0.09s`; `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`; `git diff --check` -> pass.
+
+### A-Next53. V1.5 reindex live adapter mutation apply executor router dry-run seam draft (완료: 2026-04-22)
+1. actual `index_service.reindex()` side effect를 열지 않고 `mutation_apply_guard` 이후 write path가 mutation executor router dry-run으로 넘어가는 seam을 고정한다.
+2. direct tool handler 우회 차단 조건과 fake smoke contract 연결을 테스트 가능한 계약으로 정리한다.
+3. future enablement 전에 router 위치와 promotion handoff를 다시 확인할 수 있게 한다.
+
+완료 기준:
+- preview-confirmed apply가 direct `_tool_reindex -> index_service.reindex()` path로 열리지 않고 executor router dry-run을 통과해야 한다는 조건이 문서/테스트 기준으로 정리된다.
+- fake success/failure smoke seam과 pre-execution handoff contract가 같은 router 기준으로 연결된다.
+- default blocked path와 concrete skeleton smoke가 회귀하지 않는다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-21):
+- `LOOP-059` closeout으로 실제 index mutation 없는 fake success/failure smoke contract가 고정됐다.
+- `services/mutation_executor_service.py`에 `v1.5.reindex_live_adapter_mutation_apply_router_dry_run.v1` contract builder를 추가했다.
+- `services/tool_middleware_service.py`는 `MUTATION_APPLY_NOT_ENABLED` blocked apply metadata에 `mutation_apply_router_dry_run` contract를 붙인다.
+- contract는 route location을 `blocked_result_metadata_enrichment`, router를 `mutation_executor_service.execute_mutation_request`로 고정하고, direct `_tool_reindex`와 `index_service.reindex` 호출 여부를 모두 `false`로 명시한다.
+- middleware test는 direct reindex tool handler가 apply dry-run 중 호출되지 않는 것을 monkeypatch로 고정했다.
+- 기준 문서는 `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_MUTATION_APPLY_ROUTER_DRY_RUN_SEAM_DRAFT_2026-04-22.md`다.
+- 1차 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py` -> `34 passed in 0.13s`.
+- 최종 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` -> `52 passed in 0.10s`; `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`; `git diff --check` -> pass.
+
+### A-Next54. V1.5 reindex live adapter execution enablement checkpoint review (완료: 2026-04-22)
+1. actual `index_service.reindex()` side effect를 열기 전 enablement checkpoint를 다시 검토한다.
+2. `LOOP-058` pre-execution handoff, `LOOP-059` fake smoke, `LOOP-060` router dry-run 이후 남은 blocker를 재평가한다.
+3. Go/No-Go와 후속 loop를 문서화한다.
+
+완료 기준:
+- actual execution enablement가 가능한지 또는 추가 blocker가 남았는지 checkpoint verdict로 판정된다.
+- enablement가 가능하더라도 default/public surface를 열지 않고 local-only opt-in 범위를 유지하는 조건이 문서화된다.
+- blocker가 있으면 재개 조건과 후속 loop가 명확해진다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-060` closeout으로 apply guard 이후 executor router dry-run evidence가 error payload와 execution trace contract에 함께 고정됐다.
+- 판정은 actual execution enablement `No-Go`, 다음 planning step `Go`다.
+- 핵심 blocker는 dry-run evidence가 blocked apply metadata enrichment에 남을 뿐, valid apply가 side effect 전에 executor router로 들어가는 non-blocking runtime path가 아직 없다는 점이다.
+- `mutation_apply_guard`를 단순히 열면 middleware tail이 기존 `tool_registry_service.invoke_tool()` direct path로 진행할 수 있으므로 actual side effect는 계속 닫아 둔다.
+- 기준 문서는 `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`다.
+
+### A-Next55. V1.5 reindex live adapter pre-side-effect executor router implementation draft (완료: 2026-04-22)
+1. actual `index_service.reindex()` side effect를 열지 않고 valid apply 이후 direct tool handler 대신 mutation executor router로 들어가는 runtime seam을 구현 초안 수준으로 고정한다.
+2. durable audit receipt precondition, direct tool handler bypass, local-only explicit binding을 같은 path에서 확인한다.
+3. default blocked path와 smoke suite 회귀를 막는다.
+
+완료 기준:
+- valid apply 이후 direct `_tool_reindex -> index_service.reindex()` path가 열리지 않고 executor router path가 우선된다는 조건이 코드/테스트 기준으로 정리된다.
+- actual execution은 여전히 disabled/dry-run 상태로 유지된다.
+- default blocked path와 smoke suite가 회귀하지 않는다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-061` checkpoint는 actual execution `No-Go`로 닫고, 다음 단계는 side effect를 열지 않는 pre-side-effect executor router implementation draft로 잡았다.
+- `services/tool_middleware_service.py`가 blocked apply result를 만든 뒤 direct tool handler로 내려가기 전 `_route_pre_side_effect_mutation_executor_dry_run()`을 실행하도록 바꿨다.
+- pre-side-effect router는 persisted audit record와 append-only receipt를 먼저 만들고 `mutation_executor_service.execute_mutation_request()`를 호출하며, `_attach_middleware_metadata()`는 같은 receipt/executor result/promotion/router dry-run evidence를 재사용한다.
+- `mutation_apply_router_dry_run.router_handoff.route_location`은 runtime path에서 `mutation_apply_guard_pre_side_effect_router`로 고정했다.
+- 검증: `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` (`35 passed`), `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check`.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PRE_SIDE_EFFECT_EXECUTOR_ROUTER_IMPLEMENTATION_DRAFT_2026-04-22.md`.
+- 다음 단계는 actual side effect를 열지 않는 top-level promotion router implementation draft다.
+
+### A-Next56. V1.5 reindex live adapter top-level promotion router implementation draft (완료: 2026-04-22)
+1. actual `index_service.reindex()` side effect를 열지 않고 executor result/error sidecar를 future top-level apply success/failure surface로 승격하는 promotion router implementation draft를 코드/테스트 기준으로 고정한다.
+2. concrete skeleton success sidecar, adapter failure contract, execution trace retained contracts를 같은 promotion seam에서 확인한다.
+3. default blocked path와 smoke suite 회귀를 막는다.
+
+완료 기준:
+- concrete skeleton success sidecar와 adapter failure contract가 future top-level success/failure surface로 어떻게 이동할지 코드/테스트 기준으로 재현 가능해야 한다.
+- actual execution은 여전히 disabled/dry-run 상태로 유지된다.
+- default blocked path와 smoke suite가 회귀하지 않는다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-062` closeout으로 valid apply 이후 direct `_tool_reindex`/`index_service.reindex`로 내려가지 않고 pre-side-effect executor router dry-run이 먼저 실행되는 runtime path가 고정됐다.
+- 다음 blocker는 executor sidecar를 top-level apply result/error로 승격하는 router가 아직 실제 runtime path에 없다는 점이다.
+- `services/mutation_executor_service.py`에 `v1.5.reindex_live_adapter_top_level_promotion_router.v1` contract builder를 추가해 success sidecar와 adapter failure taxonomy를 future top-level apply surface로 매핑했다.
+- `services/tool_middleware_service.py`는 `mutation_top_level_promotion_router`를 error payload와 execution trace contracts에 함께 남긴다.
+- `scripts/smoke_agent_runtime.py`는 concrete opt-in smoke summary에 top-level promotion router evidence를 요약한다.
+- current runtime surface는 계속 `ok=false`, `error.code=MUTATION_APPLY_NOT_ENABLED`이며 `promotion_gate.top_level_promotion_enabled=false`, `actual_side_effect_enabled=false`로 유지한다.
+- 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` (`53 passed`), `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check`.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_ROUTER_IMPLEMENTATION_DRAFT_2026-04-22.md`.
+- 다음 단계는 actual execution enablement final checkpoint review다.
+
+### A-Next57. V1.5 reindex live adapter execution enablement final checkpoint review (완료: 2026-04-22)
+1. `LOOP-062` pre-side-effect router와 `LOOP-063` top-level promotion router 구현 이후에도 `reindex` actual execution을 열 수 있는지 최종 checkpoint로 재판정한다.
+2. direct tool handler bypass, durable audit receipt before side effect, explicit local-only binding, top-level promotion router, default smoke 유지 조건을 함께 재검토한다.
+3. 필요하면 다음 implementation loop의 범위와 검증 방법을 정한다.
+
+완료 기준:
+- actual execution enablement `Go`/`No-Go`와 남은 blocker가 문서 기준으로 명확해야 한다.
+- 다음 implementation loop가 필요하면 범위와 검증 방법이 이어져야 한다.
+- default blocked path와 current smoke/test 기준이 유지되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-063` closeout으로 executor result/error sidecar를 top-level apply success/failure surface로 옮기는 deterministic router draft evidence가 고정됐다.
+- 남은 핵심 판단은 top-level promotion gate와 actual side effect gate를 열 수 있는지, 또는 smoke/rollback evidence를 더 보강해야 하는지다.
+- 판정은 actual execution enablement `No-Go`, next implementation planning `Go`다.
+- 남은 blocker는 실제 `index_service.reindex()`를 호출하는 guarded live executor가 아직 skeleton이라는 점, actual side effect smoke가 없다는 점, promotion gate가 아직 닫혀 있다는 점이다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ENABLEMENT_FINAL_CHECKPOINT_REVIEW_2026-04-22.md`.
+- 검증: `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check`.
+- 다음 단계는 actual top-level enablement를 계속 닫은 상태에서 guarded live executor implementation draft를 진행하는 것이다.
+
+### A-Next58. V1.5 reindex live adapter guarded live executor implementation draft (완료: 2026-04-22)
+1. actual top-level apply enablement는 계속 닫아 둔 채, explicit local-only binding stage로만 도달 가능한 guarded `reindex` live executor seam을 구현 초안 수준으로 고정한다.
+2. `index_service.reindex()` 호출 seam은 monkeypatch 기반 test proof로만 검증하고 default/public path는 닫아 둔다.
+3. executor result, success promotion, top-level promotion router evidence가 계속 이어지는지 확인한다.
+
+완료 기준:
+- explicit guarded live executor stage에서만 `index_service.reindex()` 호출 seam이 재현 가능해야 한다.
+- 기본 path, candidate stub, live binding stub, concrete skeleton blocked-success path는 회귀하지 않아야 한다.
+- current top-level runtime은 계속 `MUTATION_APPLY_NOT_ENABLED` blocked surface를 유지해야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-064` final checkpoint는 actual execution enablement `No-Go`지만 guarded live executor implementation planning은 `Go`로 판정했다.
+- 이번 단계도 default/public side effect는 열지 않는다.
+- `services/mutation_executor_service.py`에 `binding_stage=guarded_live_executor`와 `ReindexGuardedLiveMutationExecutor`를 추가했다.
+- guarded stage에서만 `index_service.reindex()` 호출 seam이 열리고, executor contract에는 `actual_runtime_handler_invoked=true` evidence가 남는다.
+- middleware integration은 direct `_tool_reindex` handler를 계속 우회하며, guarded executor result를 blocked apply sidecar와 promotion router evidence로 남긴다.
+- 검증: `./.venv/bin/python -m pytest -q tests/test_mutation_executor_service.py tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py` (`55 passed`), `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check`.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_IMPLEMENTATION_DRAFT_2026-04-22.md`.
+- 다음 단계는 guarded live executor stage를 smoke harness에서 명시적으로 선택하는 command draft다.
+
+### A-Next59. V1.5 reindex live adapter guarded live executor smoke command draft (완료: 2026-04-22)
+1. default smoke와 concrete skeleton smoke는 side effect 없이 유지하면서, guarded live executor stage를 명시적으로 선택하는 smoke command seam을 추가한다.
+2. smoke CLI/env stage selection과 request binding 전달을 fake smoke test로 검증한다.
+3. 실제 guarded command가 explicit local-only opt-in임을 문서에 남긴다.
+
+완료 기준:
+- smoke harness가 `guarded_live_executor` stage를 명시적으로 전달할 수 있어야 한다.
+- 기본 smoke와 concrete skeleton smoke는 기존 side-effect-free behavior를 유지해야 한다.
+- 실제 guarded command는 explicit local-only opt-in임이 문서에 남아야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_smoke_agent_runtime.py tests/test_mutation_executor_service.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-065` closeout으로 guarded executor stage 자체는 구현됐지만 smoke harness는 아직 해당 stage를 명시적으로 선택하는 dedicated flag/summary를 갖지 않는다.
+- `scripts/smoke_agent_runtime.py`에 `--opt-in-live-binding-stage-guarded`를 추가해 `binding_stage=guarded_live_executor`를 request-scoped executor binding으로 전달할 수 있게 했다.
+- CLI에서 concrete/guarded stage flag 동시 지정은 실패하도록 막아, side-effect-free concrete evidence와 guarded runtime execution이 한 명령에서 섞이지 않게 했다.
+- env 기반 opt-in은 `DOC_RAG_MUTATION_SMOKE_LIVE_BINDING=1`, stage override는 `DOC_RAG_MUTATION_SMOKE_LIVE_BINDING_STAGE=guarded_live_executor`로 유지한다.
+- smoke summary는 guarded result가 있을 때 `actual_runtime_handler`, `actual_runtime_handler_invoked`, runtime chunks/vectors/scope evidence를 노출한다.
+- 검증: `./.venv/bin/python -m pytest -q tests/test_smoke_agent_runtime.py tests/test_mutation_executor_service.py` (`24 passed`), `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check`.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_SMOKE_COMMAND_DRAFT_2026-04-22.md`.
+- 다음 단계는 explicit local-only guarded command를 실제 local-file audit config로 실행해 smoke evidence를 남기는 것이다.
+
+### A-Next60. V1.5 reindex live adapter guarded live executor smoke evidence draft (완료: 2026-04-22)
+1. guarded live executor smoke command를 explicit local-only activation/audit config로 실행해 실제 `index_service.reindex()` sidecar evidence를 남긴다.
+2. smoke summary에서 blocked top-level surface와 runtime sidecar evidence를 함께 확인한다.
+3. audit receipt 위치와 실제 reindex side effect를 문서에 기록한다.
+
+완료 기준:
+- guarded smoke command가 `ok=true` smoke suite로 완료되고 apply check는 계속 `MUTATION_APPLY_NOT_ENABLED` blocked surface여야 한다.
+- smoke summary에 `guarded_live_executor`, `actual_runtime_handler_invoked=true`, runtime chunks/vectors evidence가 남아야 한다.
+- 실제 reindex side effect와 audit receipt 위치가 문서에 남아야 한다.
+
+검증:
+- `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag-guarded-live-smoke ./.venv/bin/python scripts/smoke_agent_runtime.py --opt-in-live-binding --opt-in-live-binding-stage-guarded`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-066`에서 guarded stage 선택 command seam은 준비됐다.
+- 이번 단계는 local-only runtime state를 실제로 갱신하므로 smoke output, audit path, blocked top-level 상태를 함께 캡처한다.
+- 첫 guarded smoke 실행은 `guarded_live_executor` 선택과 `index_service.reindex()` 호출까지는 도달했지만, Chroma가 seed metadata의 list 값(`tags`)을 거부해 `mutation_executor_result`가 생기지 않았다.
+- `services/index_service.py`는 source record metadata를 유지하되 vectorstore ingest 직전 list/dict metadata를 JSON 문자열로 정규화하도록 보강했다.
+- `scripts/smoke_agent_runtime.py`는 guarded stage에서 runtime sidecar가 없으면 apply check를 실패로 처리하도록 강화했다.
+- 최종 guarded smoke는 `ok=true`, apply check `MUTATION_APPLY_NOT_ENABLED`, `selection_state=guarded_live_executor`, `actual_runtime_handler_invoked=true`, `runtime_chunks=37`, `runtime_vectors=37`, `audit_sequence_id=18`, `audit_storage_path=/tmp/trunk_rag-guarded-live-smoke/audit-20260422.jsonl`로 통과했다.
+- 검증: guarded smoke command, `./.venv/bin/python -m pytest -q tests/test_index_service.py tests/test_smoke_agent_runtime.py tests/test_mutation_executor_service.py` (`36 passed`), `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check`.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_LIVE_EXECUTOR_SMOKE_EVIDENCE_DRAFT_2026-04-22.md`.
+- 다음 단계는 actual guarded smoke evidence 이후 top-level promotion/enablement 가능 여부를 다시 판정하는 checkpoint review다.
+
+### A-Next61. V1.5 reindex live adapter post-smoke enablement checkpoint review (완료: 2026-04-22)
+1. guarded live executor smoke evidence 이후 top-level apply success promotion과 actual execution enablement의 Go/No-Go를 재판정한다.
+2. runtime sidecar, audit receipt, metadata normalization fix, rollback/promotion blocker를 함께 점검한다.
+3. 다음 implementation loop가 필요하면 범위와 검증 방법을 확정한다.
+
+완료 기준:
+- top-level promotion/actual execution enablement 판단과 남은 blocker가 문서 기준으로 명확해야 한다.
+- 다음 implementation loop가 필요하면 범위와 검증 방법이 이어져야 한다.
+- default blocked path와 guarded local-only scope가 유지되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-067` closeout으로 actual guarded local execution evidence는 확보됐다.
+- 아직 top-level promotion gate는 닫혀 있고, 다음 판단은 success surface를 열 수 있는지와 추가 audit/rollback evidence가 필요한지다.
+- 판정: guarded local execution evidence는 `Go`, top-level apply success promotion은 `No-Go`, next implementation planning은 `Go`.
+- top-level promotion을 열기 전 blocker는 executor failure detail이 아직 first-class blocked apply sidecar로 남지 않는 점, durable audit이 post-executor result/error를 아직 별도 evidence로 남기지 않는 점, rollback drill이 advisory hint 수준인 점이다.
+- 다음 단계는 executor가 호출됐지만 result를 만들지 못했을 때 `mutation_executor_error` sidecar와 failure route evidence를 deterministic하게 남기는 것이다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_SMOKE_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`.
+
+### A-Next62. V1.5 reindex live adapter executor error sidecar draft (완료: 2026-04-22)
+1. guarded executor가 실패할 때 `mutation_executor_error` sidecar와 promotion router failure route evidence를 blocked apply response에 남긴다.
+2. supported reindex error code가 있으면 top-level promotion router failure route eligibility를 명시한다.
+3. smoke summary와 monkeypatch failure tests로 failure evidence를 검증한다.
+
+완료 기준:
+- `execute_mutation_request()`가 `ok=false`와 supported reindex error code를 반환하면 middleware blocked apply response에 `mutation_executor_error`가 포함되어야 한다.
+- top-level promotion router failure route가 supported executor error code 기준으로 eligible evidence를 남겨야 한다.
+- smoke summary가 executor error sidecar를 요약할 수 있어야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py tests/test_mutation_executor_service.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-068` 판정상 success promotion gate를 열기 전 실패 sidecar/audit evidence 보강이 우선이다.
+- `ToolExecutionState.mutation_executor_error`를 추가해 guarded executor failure를 blocked apply response와 `execution_trace.contracts`에 남기도록 했다.
+- `build_reindex_top_level_promotion_router_contract()`는 supported executor error code를 받으면 failure route를 eligible로 표시하고 `failure_error_preview`를 남긴다.
+- smoke summary는 `mutation_executor_error`와 failure route eligibility/error code를 요약한다.
+- 검증: `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_smoke_agent_runtime.py tests/test_mutation_executor_service.py` (`46 passed`).
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_EXECUTOR_ERROR_SIDECAR_DRAFT_2026-04-22.md`.
+- 다음 단계는 success/failure sidecar 보강 이후 top-level promotion 가능 여부를 다시 판정하는 checkpoint review다.
+
+### A-Next63. V1.5 reindex live adapter post-error-sidecar enablement checkpoint review (완료: 2026-04-22)
+1. success/failure sidecar가 모두 확보된 후 top-level apply success/failure promotion gate를 열 수 있는지 재판정한다.
+2. durable audit/post-executor evidence gap과 rollback blocker를 함께 점검한다.
+3. 다음 implementation loop가 필요하면 범위와 검증 방법을 확정한다.
+
+완료 기준:
+- top-level success/failure promotion enablement 판단과 남은 blocker가 문서 기준으로 명확해야 한다.
+- 다음 implementation loop가 필요하면 범위와 검증 방법이 이어져야 한다.
+- default blocked path와 guarded local-only scope가 유지되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-069` closeout으로 executor success result sidecar와 failure error sidecar가 모두 blocked apply surface에서 관측 가능해졌다.
+- 아직 top-level promotion gate는 닫혀 있고, 남은 판단은 post-executor durable audit evidence와 rollback drill을 gate 전 필수로 볼지 여부다.
+- 판정: success/failure sidecar readiness는 `Go`, top-level apply success/failure promotion은 `No-Go`, next implementation planning은 `Go`.
+- blocker는 side effect 이후 result/error가 아직 별도 append-only audit record로 남지 않고, pre-executor audit receipt와 post-executor outcome linkage가 없다는 점이다.
+- 다음 단계는 guarded executor success/failure 후 post-executor audit record와 linked receipt sidecar를 남기는 것이다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ERROR_SIDECAR_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`.
+
+### A-Next64. V1.5 reindex live adapter post-executor audit evidence draft (완료: 2026-04-22)
+1. guarded executor success/failure 이후 post-executor audit evidence를 append-only sink에 남기고, pre-executor audit receipt와 연결한다.
+2. blocked apply response/contracts에 linked audit receipt sidecar를 노출한다.
+3. success/failure tests로 durable evidence를 검증한다.
+
+완료 기준:
+- guarded executor success와 failure 모두 post-executor audit receipt를 남겨야 한다.
+- post-executor audit receipt는 pre-executor audit sequence id와 executor result/error summary를 연결해야 한다.
+- blocked apply response/contracts에 linked audit receipt sidecar가 포함되어야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_tool_audit_sink_service.py tests/test_smoke_agent_runtime.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-070` 판정상 top-level promotion 전 post-executor durable audit evidence가 필요하다.
+- `mutation_executor_post_execution` audit record와 `mutation_executor_audit_receipt` sidecar를 추가했다.
+- guarded executor success/failure 이후 append-only sink에 post-executor audit record를 남기고, pre-executor audit sequence id를 연결한다.
+- 실제 guarded smoke에서는 apply pre-executor audit sequence `24`, post-executor audit sequence `25`, `runtime_chunks=37`, `runtime_vectors=37` evidence가 남았다.
+- 검증: guarded smoke command, `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_tool_audit_sink_service.py tests/test_smoke_agent_runtime.py` (`31 passed`).
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_EXECUTOR_AUDIT_EVIDENCE_DRAFT_2026-04-22.md`.
+- 다음 단계는 post-executor durable audit evidence 이후 top-level promotion 가능 여부를 다시 판정하는 checkpoint review다.
+
+### A-Next65. V1.5 reindex live adapter post-audit enablement checkpoint review (완료: 2026-04-22)
+1. response sidecar와 durable post-executor audit evidence가 모두 확보된 상태에서 top-level apply success/failure promotion gate를 열 수 있는지 재판정한다.
+2. rollback blocker와 guarded local-only scope를 함께 점검한다.
+3. 다음 implementation loop가 필요하면 범위와 검증 방법을 확정한다.
+
+완료 기준:
+- top-level success/failure promotion enablement 판단과 남은 blocker가 문서 기준으로 명확해야 한다.
+- 다음 implementation loop가 필요하면 범위와 검증 방법이 이어져야 한다.
+- default blocked path와 guarded local-only scope가 유지되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-071` closeout으로 post-executor durable audit evidence가 확보됐다.
+- post-audit readiness는 `Go`다.
+- default/public top-level promotion은 rollback drill 부재와 public scope 때문에 계속 `No-Go`다.
+- explicit local-only guarded top-level promotion gate implementation planning은 `Go`다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_AUDIT_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`.
+- 다음 단계는 추가 opt-in으로 묶은 guarded top-level promotion gate draft다.
+
+### A-Next66. V1.5 reindex live adapter guarded top-level promotion gate draft (완료: 2026-04-22)
+1. default/public blocked behavior를 유지하면서 explicit local-only guarded path에서만 top-level success/failure promotion gate를 여는 초안을 구현한다.
+2. 추가 promotion opt-in이 없으면 guarded smoke도 계속 `MUTATION_APPLY_NOT_ENABLED` blocked surface를 유지한다.
+3. success/failure promotion에는 linked post-executor audit receipt를 필수 조건으로 둔다.
+
+완료 기준:
+- 기본 guarded smoke는 extra promotion opt-in 없이는 계속 `MUTATION_APPLY_NOT_ENABLED` blocked surface를 유지해야 한다.
+- extra promotion opt-in이 있을 때 success는 linked post-executor audit receipt와 함께 top-level `ok=true` result로 승격되어야 한다.
+- eligible executor failure는 linked post-executor audit receipt가 있을 때 top-level failure code로 승격될 수 있어야 한다.
+- trace/contracts에는 executor sidecar와 audit receipt evidence가 유지되어야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py tests/test_mutation_executor_service.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-072`에서 post-audit readiness는 `Go`, default/public promotion은 `No-Go`, explicit local-only guarded promotion gate implementation planning은 `Go`로 판정했다.
+- rollback drill은 계속 broader/public gate blocker로 남긴다.
+- `executor_binding.top_level_promotion_enabled` 추가 opt-in으로만 guarded top-level success/failure promotion을 열었다.
+- 기본 guarded path는 extra promotion opt-in 없이는 계속 `MUTATION_APPLY_NOT_ENABLED` blocked surface를 유지한다.
+- 실제 guarded top-level promotion smoke에서 apply `ok=true`, pre-executor audit sequence `6`, post-executor audit sequence `7`, `runtime_chunks=37`, `runtime_vectors=37` evidence가 남았다.
+- 검증: `./.venv/bin/python -m pytest -q tests/test_tool_middleware_service.py tests/test_agent_runtime_service.py tests/test_smoke_agent_runtime.py tests/test_mutation_executor_service.py` -> `64 passed`.
+- 검증: `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag-guarded-top-level-smoke ./.venv/bin/python scripts/smoke_agent_runtime.py --opt-in-live-binding --opt-in-live-binding-stage-guarded --opt-in-top-level-promotion` -> `ok=true`.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_GUARDED_TOP_LEVEL_PROMOTION_GATE_DRAFT_2026-04-22.md`.
+- 다음 단계는 post-promotion enablement checkpoint review다.
+
+### A-Next67. V1.5 reindex live adapter post-promotion enablement checkpoint review (완료: 2026-04-22)
+1. guarded top-level promotion gate 구현 이후 default/public enablement, local-only operator surface, rollback/runbook blocker를 재판정한다.
+2. extra opt-in local-only promotion을 유지할지, operator runbook 보강이 필요한지, broader/public gate를 계속 닫을지 판단한다.
+3. 다음 implementation loop가 필요하면 범위와 검증 방법을 확정한다.
+
+완료 기준:
+- extra opt-in local-only promotion을 유지할지, operator runbook 보강이 필요한지, broader/public gate를 계속 닫을지 판단이 문서화되어야 한다.
+- 다음 implementation loop가 필요하면 범위와 검증 방법이 이어져야 한다.
+- default blocked path와 `reindex` 단일 live scope가 유지되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-073`에서 explicit local-only guarded top-level promotion gate가 구현됐다.
+- rollback drill은 여전히 broader/public gate blocker로 남아 있다.
+- extra opt-in local-only top-level promotion은 internal operator/test surface로 `Go`다.
+- default/public top-level promotion은 계속 `No-Go`다.
+- 기존 operator runbook은 activation-only 기준이라 top-level promotion command/abort condition을 반영해야 한다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_PROMOTION_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`.
+- 다음 단계는 top-level promotion operator runbook update다.
+
+### A-Next68. V1.5 reindex live adapter top-level promotion operator runbook update (완료: 2026-04-22)
+1. operator runbook에 default blocked, guarded blocked, guarded top-level promotion path를 구분해 반영한다.
+2. `--opt-in-top-level-promotion` command와 `DOC_RAG_MUTATION_SMOKE_TOP_LEVEL_PROMOTION=1` env surface를 문서화한다.
+3. pre/post audit sequence 확인과 abort condition을 업데이트한다.
+
+완료 기준:
+- top-level success가 허용되는 조건이 explicit promotion command로만 제한되어야 한다.
+- default smoke와 guarded blocked smoke의 기대값은 계속 `MUTATION_APPLY_NOT_ENABLED`로 남아야 한다.
+- runbook이 post-executor audit receipt sequence linkage 확인 절차를 포함해야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-074`에서 extra opt-in local-only top-level promotion은 `Go`, default/public promotion은 `No-Go`, operator runbook update는 `Go`로 판정했다.
+- operator runbook에 default blocked, activation check, guarded blocked, guarded top-level promotion command를 구분해 반영했다.
+- `--opt-in-top-level-promotion` 및 `DOC_RAG_MUTATION_SMOKE_TOP_LEVEL_PROMOTION=1` env surface를 추가했다.
+- abort condition에 explicit promotion command 외 top-level success, post-executor audit receipt 누락, pre/post sequence linkage 불일치를 추가했다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_OPERATOR_RUNBOOK_UPDATE_2026-04-22.md`.
+- 다음 단계는 post-runbook enablement checkpoint review다.
+
+### A-Next69. V1.5 reindex live adapter post-runbook enablement checkpoint review (완료: 2026-04-22)
+1. runbook 보강 이후 local-only operator surface가 충분한지, rollback drill planning을 다음 범위로 올릴지 재판정한다.
+2. default/public No-Go와 upload review boundary 상태를 확인한다.
+3. 다음 loop 범위와 검증 방법을 확정한다.
+
+완료 기준:
+- local-only operator surface를 현 상태로 유지할지 판단해야 한다.
+- rollback drill planning이 다음 active로 필요한지 판단해야 한다.
+- default/public gate와 upload review boundary 상태가 명확해야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-075`에서 operator runbook이 top-level promotion command와 audit linkage 확인 절차를 포함하도록 갱신됐다.
+- local-only operator surface는 `Go`다.
+- default/public top-level promotion과 upload review live execution은 계속 `No-Go`다.
+- broader/default/public gate의 다음 blocker는 rollback drill plan이다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_RUNBOOK_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`.
+- 다음 단계는 rollback drill plan draft다.
+
+### A-Next70. V1.5 reindex live adapter rollback drill plan draft (완료: 2026-04-22)
+1. `reindex` guarded live adapter의 local-only rollback drill 계획을 정의한다.
+2. drill precondition, capture-before/capture-after evidence, audit linkage, rebuild-from-source recovery verification, abort condition을 고정한다.
+3. 실제 drill execution을 별도 loop로 열지, 즉시 실행 가능한지 판단 가능하게 만든다.
+
+완료 기준:
+- rollback drill 실행 전 필요한 데이터/환경/증거와 성공 기준이 문서화되어야 한다.
+- 실제 drill execution을 별도 loop로 열지, 즉시 실행 가능한지 판단이 가능해야 한다.
+- local-only scope와 default/public No-Go가 유지되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-076`에서 local-only operator surface는 충분하지만 rollback drill planning이 broader gate의 다음 blocker로 판정됐다.
+- local-only rollback drill 계획을 문서화했다.
+- drill은 pre-state capture, guarded top-level promotion, post-executor audit linkage 확인, rebuild-from-source recovery, post-recovery health/vector check 순서로 정의했다.
+- 실제 drill 실행은 별도 harness draft loop로 분리한다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_PLAN_DRAFT_2026-04-22.md`.
+- 다음 단계는 rollback drill harness draft다.
+
+### A-Next71. V1.5 reindex live adapter rollback drill harness draft (완료: 2026-04-22)
+1. rollback drill 계획을 실행 가능한 local-only harness 초안으로 만든다.
+2. pre-state capture, guarded top-level promotion invocation, rebuild-from-source recovery invocation, compact report output, explicit env guard를 구현한다.
+3. harness test가 command orchestration과 guard behavior를 검증해야 한다.
+
+완료 기준:
+- harness가 explicit local audit/mutation env 없이는 실행을 거부해야 한다.
+- harness가 pre/post/recovery evidence를 구조화된 report로 출력해야 한다.
+- harness test가 command orchestration과 guard behavior를 검증해야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_smoke_reindex_rollback_drill.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-077`에서 rollback drill plan이 local-only, source-document rebuild recovery 기준으로 정리됐다.
+- `scripts/smoke_reindex_rollback_drill.py` harness를 추가했다.
+- harness는 explicit local mutation/local-file audit env 없이는 실행을 거부한다.
+- harness는 pre-state capture, guarded top-level promotion smoke, post-executor audit linkage 확인, rebuild-from-source recovery, post-recovery vector count capture를 구조화해 출력한다.
+- 검증: `./.venv/bin/python -m pytest -q tests/test_smoke_reindex_rollback_drill.py` -> `2 passed`.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_HARNESS_DRAFT_2026-04-22.md`.
+- 다음 단계는 rollback drill execution evidence다.
+
+### A-Next72. V1.5 reindex live adapter rollback drill execution evidence (완료: 2026-04-22)
+1. rollback drill harness를 explicit local env로 실행하고 evidence를 문서화한다.
+2. pre/post/recovery vector evidence, audit linkage evidence, pass/fail 판정을 기록한다.
+3. default/public No-Go를 유지한다.
+
+완료 기준:
+- rollback drill harness가 `ok=true`로 종료하거나, 실패 시 blocker와 영향 범위가 문서화되어야 한다.
+- pre/post executor audit linkage와 recovery rebuild result가 evidence로 남아야 한다.
+- default/public No-Go가 유지되어야 한다.
+
+검증:
+- `env DOC_RAG_AGENT_MUTATION_EXECUTION=1 DOC_RAG_MUTATION_AUDIT_BACKEND=local_file DOC_RAG_MUTATION_AUDIT_DIR=/tmp/trunk_rag-rollback-drill ./.venv/bin/python scripts/smoke_reindex_rollback_drill.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-078`에서 rollback drill harness가 추가됐고 unit guard/orchestration test가 통과했다.
+- rollback drill harness를 explicit local env로 실행했고 exit code `0`, top-level `ok=true`를 확인했다.
+- pre-state vector count는 `37`, guarded runtime chunks/vectors는 `37/37`, recovery rebuild chunks/vectors는 `37/37`, post-recovery vector count는 `37`이다.
+- post-executor audit linkage는 pre-executor audit sequence `6`, post-executor audit sequence `7`, record kind `mutation_executor_post_execution`으로 확인했다.
+- audit file `/tmp/trunk_rag-rollback-drill/audit-20260422.jsonl`은 drill 후 `7` entries를 포함했고 final event는 `mutation_executor.completed`다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_ROLLBACK_DRILL_EXECUTION_EVIDENCE_2026-04-22.md`.
+- 다음 단계는 post-rollback-drill enablement checkpoint review다.
+
+### A-Next73. V1.5 reindex live adapter post-rollback-drill enablement checkpoint review (완료: 2026-04-22)
+1. rollback drill execution evidence 이후 enablement 상태를 재판정한다.
+2. local-only operator surface Go/No-Go, default/public top-level promotion Go/No-Go, 다음 작업을 정한다.
+3. default/public promotion 구현은 checkpoint 결과 없이 열지 않는다.
+
+완료 기준:
+- rollback drill evidence에 기반한 checkpoint decision이 문서화되어야 한다.
+- default/public promotion 상태가 명시적으로 유지되거나 변경 사유가 기록되어야 한다.
+- 다음 loop가 구현/문서/blocked 중 하나로 정리되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-079`에서 rollback drill이 `ok=true`로 통과했고 audit linkage `6 -> 7`, recovery rebuild `37/37`, post-recovery vector count `37` evidence를 남겼다.
+- checkpoint 결론: local-only rollback-drilled operator surface `Go`, extra opt-in local-only top-level promotion `Go`.
+- checkpoint 결론: default/public top-level promotion `No-Go`, upload review live execution `No-Go`.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_POST_ROLLBACK_DRILL_ENABLEMENT_CHECKPOINT_REVIEW_2026-04-22.md`.
+- 다음 단계는 public promotion blocker register다.
+
+### A-Next74. V1.5 reindex live adapter public promotion blocker register (완료: 2026-04-22)
+1. default/public top-level promotion을 막는 blocker를 명시적으로 정리한다.
+2. local-only에서 충족된 조건과 public/default에서 아직 필요한 조건을 분리한다.
+3. future evidence minimum을 정의한다.
+
+완료 기준:
+- public promotion blocker register가 문서화되어야 한다.
+- local-only Go와 default/public No-Go 기준이 분리되어야 한다.
+- 다음 loop가 local-only closeout, blocker implementation, 또는 blocked 상태 중 하나로 정리되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-080`에서 rollback drill 이후에도 default/public top-level promotion은 No-Go로 유지하기로 판정했다.
+- public promotion blocker register를 문서화했다.
+- local-only에서 충족된 조건은 explicit activation, policy gates, executor evidence, audit evidence, operator evidence로 분리했다.
+- public blocker는 product/API contract, authorization, audit backend, recovery model, concurrency/job lifecycle, upload review boundary, observability/support, regression scope로 정리했다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_PUBLIC_PROMOTION_BLOCKER_REGISTER_2026-04-22.md`.
+- 다음 단계는 local-only live adapter closeout이다.
+
+### A-Next75. V1.5 reindex live adapter local-only closeout (완료: 2026-04-22)
+1. `reindex` live adapter의 현재 terminal scope를 local-only operator/test surface로 closeout한다.
+2. local-only Go 상태, default/public No-Go 상태, upload review No-Go 상태, evidence index를 정리한다.
+3. 다음 loop가 없거나 blocked/future로 명확히 정리되도록 한다.
+
+완료 기준:
+- local-only closeout 문서가 생성되어야 한다.
+- TODO/NEXT/README/SPEC/roadmap이 closeout 기준을 반영해야 한다.
+- 다음 loop가 없거나 blocked/future로 명확히 정리되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-081`에서 public promotion blocker register가 작성됐고 default/public promotion은 계속 No-Go다.
+- local-only closeout 문서를 생성했다.
+- terminal scope는 `reindex` explicit local-only operator/test surface `Go`, extra opt-in local-only top-level promotion `Go`, default/public top-level promotion `No-Go`, upload review live execution `No-Go`로 고정했다.
+- evidence index와 final local rollback drill evidence를 closeout에 정리했다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_LOCAL_ONLY_CLOSEOUT_2026-04-22.md`.
+- 다음 단계는 post-closeout next-track selection이다.
+
+### A-Next76. V1.5 post-closeout next-track selection (완료: 2026-04-22)
+1. V1.5 `reindex` live adapter local-only closeout 이후 다음 track을 선택한다.
+2. merge/PR handoff, public blocker 구현, 다른 MVP/V1 항목 복귀 중 다음 진행 방향을 정한다.
+3. 선택 전 default/public promotion 구현은 열지 않는다.
+
+완료 기준:
+- 다음 track이 하나로 정해져야 한다.
+- 구현이 필요한 경우 새 loop로 분리되어야 한다.
+- public/default promotion이 선택되지 않으면 blocked 상태가 유지되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-082`에서 local-only closeout이 완료됐고 broader public/default behavior는 blocker register에 따라 계속 막혀 있다.
+- 선택된 다음 track은 branch handoff snapshot이다.
+- public blocker implementation, upload review live execution, 새 live adapter candidate는 이번 세션에서 시작하지 않는다.
+- 기준 문서: `docs/reports/V1_5_POST_CLOSEOUT_NEXT_TRACK_SELECTION_2026-04-22.md`.
+- 다음 단계는 branch handoff snapshot이다.
+
+### A-Next77. V1.5 reindex live adapter branch handoff snapshot (완료: 2026-04-22)
+1. V1.5 `reindex` live adapter local-only track의 branch handoff snapshot을 작성한다.
+2. commit range, key report index, validation outcome, dirty/untracked 상태, reviewer handoff를 정리한다.
+3. PR 생성/푸시는 별도 지시 전까지 제외한다.
+
+완료 기준:
+- branch handoff snapshot 문서가 생성되어야 한다.
+- 검증 결과와 남은 blocker가 요약되어야 한다.
+- TODO/NEXT가 다음 행동 또는 사용자 결정 대기 상태를 명확히 반영해야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-083`에서 다음 track은 branch handoff snapshot으로 선택됐다.
+- branch handoff snapshot을 작성했다.
+- branch는 `codex/loop-034-go-no-go-review`, upstream 없음, `main` 대비 `46` commits ahead 상태다.
+- `main...HEAD` diff는 `73 files changed`, `12680 insertions`, `41 deletions`다.
+- untracked `.DS_Store`, `TRUNK_RAG_LINKS.md`는 handoff 범위와 무관한 파일로 기록했다.
+- 기준 문서: `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BRANCH_HANDOFF_SNAPSHOT_2026-04-22.md`.
+- 다음 단계는 branch publication decision이다.
+
+### A-Next78. V1.5 branch publication decision (완료: 2026-04-22)
+1. local-only handoff branch를 remote publication/PR로 넘길지 결정한다.
+2. push/PR 여부, PR 초안 필요성, publish 전 추가 검증 여부를 정한다.
+3. 사용자 확인 없이 GitHub push/PR은 수행하지 않는다.
+
+완료 기준:
+- branch publication 여부가 명확히 정해져야 한다.
+- publish를 진행한다면 별도 지시 또는 승인 후 수행해야 한다.
+- publish하지 않는다면 handoff 상태와 blocker가 유지되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-084`에서 branch handoff snapshot이 작성됐고 remote publication은 별도 결정으로 분리됐다.
+- publication decision 결론: local branch handoff `Go`, automatic remote push/PR `No-Go`.
+- 2026-04-22 decision snapshot은 head `b086055`, `main` 대비 `47` commits ahead, `74 files changed`, `12824 insertions`, `41 deletions`다.
+- remote publication/PR 생성은 명시 지시 후 별도 수행한다.
+- 기준 문서: `docs/reports/V1_5_BRANCH_PUBLICATION_DECISION_2026-04-22.md`.
+- 다음 단계는 explicit publication 또는 next-track instruction 대기다.
+
+현행화 메모 (2026-04-27):
+- 위 branch publication decision은 2026-04-22 당시 snapshot으로 유지한다.
+- 2026-04-27 현행화 시작 시점의 branch는 `codex/loop-034-go-no-go-review`, head `540128a`, upstream 없음, `main` 대비 `49` commits ahead 상태다.
+- 같은 시점 `main...HEAD` diff는 `75 files changed`, `12940 insertions`, `41 deletions`다.
+- remote publication/PR 생성은 여전히 명시 지시 후 별도 수행한다.
+
+### A-Next79. Await PR review/merge or next-track instruction (현재 active)
+1. draft PR publication 이후 PR review/merge 또는 다른 next-track으로 이동한다.
+2. PR 후속 지시 수신 시 review/merge 관련 조치를 수행하거나, 새 MVP/V1/V1.5 track으로 재정렬한다.
+3. 명시 지시 없는 public blocker 구현이나 upload review live execution은 수행하지 않는다.
+
+완료 기준:
+- 사용자가 PR review/merge, 다른 track, 또는 중단을 명시해야 한다.
+- PR 후속을 진행한다면 push/PR 결과가 기록되어야 한다.
+- 다른 track을 진행한다면 TODO/NEXT active가 해당 track으로 재정렬되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-22):
+- `LOOP-085`에서 remote publication은 자동 진행하지 않고 명시 지시 대기로 분리했다.
+
+재시작 handoff (2026-04-23):
+- `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`.
+- tracked dirty 없음.
+- 남은 untracked 파일은 `.DS_Store`, `TRUNK_RAG_LINKS.md`이며, V1.5 `reindex` live adapter handoff 범위와 무관하다.
+- 다음 세션은 `LOOP-086`에서 시작한다.
+- 선택지는 `git push`/draft PR publication 지시, 다른 MVP/V1/V1.5 track 지시, 또는 대기 유지다.
+- 명시 지시 전에는 remote push/PR, public blocker 구현, upload review live execution을 시작하지 않는다.
+
+현행화 handoff (2026-04-27):
+- `./.venv/bin/python scripts/roadmap_harness.py validate` -> `ready`.
+- `./.venv/bin/python -m pytest -q` -> `239 passed in 7.87s`.
+- `./.venv/bin/python scripts/smoke_agent_runtime.py` -> `ok=true`; 기본 경로는 `read_only_health_check`만 성공하고 `reindex` mutation apply는 `MUTATION_APPLY_NOT_ENABLED`로 차단된다.
+- tracked dirty 없음. 남은 untracked 파일은 `.DS_Store`, `TRUNK_RAG_LINKS.md`이며 이번 현행화 범위에는 포함하지 않는다.
+- 다음 행동은 여전히 `git push`/draft PR publication, 다른 MVP/V1/V1.5 track 선택, 또는 대기 유지 중 하나다.
+
+publication 결과 (2026-04-27):
+- 사용자 지시에 따라 branch `codex/loop-034-go-no-go-review`를 `origin/codex/loop-034-go-no-go-review`로 push했다.
+- Draft PR: `https://github.com/redsunjin/trunk_rag/pull/5`.
+- PR head는 `1292d30`, base는 `main`, draft 상태이며 `50` commits, `75` changed files로 생성됐다.
+- PR 본문에는 local-only `reindex` operator/test surface `Go`, default/public top-level promotion `No-Go`, upload review live execution `No-Go`, rollback drill evidence를 기록했다.
+- 다음 행동은 PR review/merge 후속, 다른 MVP/V1/V1.5 track 선택, 또는 대기 유지 중 하나다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

@@ -4,6 +4,8 @@ import json
 import time
 from pathlib import Path
 
+from langchain_core.documents import Document
+
 from services import index_service
 
 
@@ -106,6 +108,32 @@ def test_build_collection_source_records_uses_manifest_seed_metadata(monkeypatch
     assert record["metadata"]["country"] == "france"
     assert record["metadata"]["doc_type"] == "country"
     assert record["metadata"]["tags"] == ["sample-pack", "country:france"]
+
+
+def test_prepare_vectorstore_documents_serializes_complex_metadata():
+    docs = [
+        Document(
+            page_content="sample",
+            metadata={
+                "source": "all.md",
+                "tags": ["sample-pack", "summary"],
+                "nested": {"dataset": "sample"},
+                "rank": 1,
+                "empty": None,
+            },
+        )
+    ]
+
+    prepared = index_service._prepare_vectorstore_documents(docs)
+
+    assert prepared[0].page_content == "sample"
+    assert prepared[0].metadata == {
+        "source": "all.md",
+        "tags": '["sample-pack", "summary"]',
+        "nested": '{"dataset": "sample"}',
+        "rank": 1,
+    }
+    assert docs[0].metadata["tags"] == ["sample-pack", "summary"]
 
 
 def test_record_collection_embedding_fingerprint_persists_manifest(monkeypatch, tmp_path: Path):

@@ -1,0 +1,1316 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Protocol
+
+from services import index_service, runtime_service, tool_apply_service
+
+MUTATION_EXECUTOR_CONTRACT_SCHEMA_VERSION = "v1.5.mutation_executor_contract.v1"
+REINDEX_LIVE_ADAPTER_OUTLINE_SCHEMA_VERSION = "v1.5.reindex_live_adapter_outline.v1"
+REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION = "v1.5.reindex_live_adapter_result.v1"
+REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION = "v1.5.reindex_live_adapter_error.v1"
+REINDEX_LIVE_ADAPTER_BINDING_SCHEMA_VERSION = "v1.5.reindex_live_adapter_binding.v1"
+REINDEX_LIVE_ADAPTER_INJECTION_PROTOCOL_SCHEMA_VERSION = "v1.5.reindex_live_adapter_injection_protocol.v1"
+REINDEX_LIVE_ADAPTER_SMOKE_HARNESS_SCHEMA_VERSION = "v1.5.reindex_live_adapter_smoke_harness.v1"
+REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_SCHEMA_VERSION = "v1.5.reindex_live_adapter_success_promotion.v1"
+REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_ROUTER_SCHEMA_VERSION = (
+    "v1.5.reindex_live_adapter_top_level_promotion_router.v1"
+)
+REINDEX_LIVE_ADAPTER_PRE_EXECUTION_HANDOFF_SCHEMA_VERSION = "v1.5.reindex_live_adapter_pre_execution_handoff.v1"
+REINDEX_LIVE_ADAPTER_FAKE_SMOKE_SCHEMA_VERSION = "v1.5.reindex_live_adapter_fake_executor_smoke.v1"
+REINDEX_MUTATION_APPLY_ROUTER_DRY_RUN_SCHEMA_VERSION = "v1.5.reindex_live_adapter_mutation_apply_router_dry_run.v1"
+MUTATION_EXECUTION_ENV_KEY = "DOC_RAG_AGENT_MUTATION_EXECUTION"
+REINDEX_MUTATION_EXECUTOR_NAME = "reindex_mutation_adapter_stub"
+REINDEX_LIVE_ADAPTER_EXECUTOR_NAME = "reindex_mutation_adapter_live"
+REINDEX_LIVE_ADAPTER_BINDING_KIND = "explicit_live_adapter"
+REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD = "binding_stage"
+REINDEX_LIVE_ADAPTER_BINDING_STAGE_SELECTION_STUB = "selection_stub"
+REINDEX_LIVE_ADAPTER_BINDING_STAGE_CONCRETE_SKELETON = "concrete_executor_skeleton"
+REINDEX_LIVE_ADAPTER_BINDING_STAGE_GUARDED_LIVE_EXECUTOR = "guarded_live_executor"
+REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_BINDING_FIELD = "top_level_promotion_enabled"
+REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_MODE = "explicit_local_only_guarded"
+REINDEX_FAKE_EXECUTOR_SMOKE_SUCCESS_SELECTION_STATE = "fake_executor_smoke_success"
+REINDEX_FAKE_EXECUTOR_SMOKE_FAILURE_SELECTION_STATE = "fake_executor_smoke_failure"
+NOOP_MUTATION_EXECUTOR_NAME = "noop_mutation_executor"
+REINDEX_FIRST_LIVE_SCOPE = "reindex"
+LOCAL_FILE_APPEND_ONLY_SINK_TYPE = "local_file_append_only"
+APPROVE_UPLOAD_REQUEST_TOOL = "approve_upload_request"
+REJECT_UPLOAD_REQUEST_TOOL = "reject_upload_request"
+UPLOAD_REVIEW_MUTATION_TOOLS = frozenset({APPROVE_UPLOAD_REQUEST_TOOL, REJECT_UPLOAD_REQUEST_TOOL})
+REINDEX_ERROR_TARGET_MISMATCH = "REINDEX_TARGET_MISMATCH"
+REINDEX_ERROR_AUDIT_LINKAGE_INVALID = "REINDEX_AUDIT_LINKAGE_INVALID"
+REINDEX_ERROR_RUNTIME_EXECUTION_FAILED = "REINDEX_RUNTIME_EXECUTION_FAILED"
+REINDEX_ERROR_ROLLBACK_HINT_UNAVAILABLE = "REINDEX_ROLLBACK_HINT_UNAVAILABLE"
+REINDEX_LIVE_ADAPTER_FAILURE_ORDER = (
+    REINDEX_ERROR_TARGET_MISMATCH,
+    REINDEX_ERROR_AUDIT_LINKAGE_INVALID,
+    REINDEX_ERROR_RUNTIME_EXECUTION_FAILED,
+    REINDEX_ERROR_ROLLBACK_HINT_UNAVAILABLE,
+)
+REINDEX_LIVE_ADAPTER_FAILURE_TAXONOMY = {
+    REINDEX_ERROR_TARGET_MISMATCH: {
+        "stage": "contract_validation",
+        "retryable": False,
+        "trigger": "payload_apply_preview_target_mismatch",
+        "message": "Reindex target fields do not agree across payload, preview, and apply envelope.",
+    },
+    REINDEX_ERROR_AUDIT_LINKAGE_INVALID: {
+        "stage": "audit_linkage",
+        "retryable": False,
+        "trigger": "append_only_receipt_unlinkable",
+        "message": "Append-only audit receipt cannot be linked to the reindex adapter result.",
+    },
+    REINDEX_ERROR_RUNTIME_EXECUTION_FAILED: {
+        "stage": "executor_runtime",
+        "retryable": True,
+        "trigger": "reindex_runtime_failed",
+        "message": "Reindex runtime execution failed after the adapter contract was accepted.",
+    },
+    REINDEX_ERROR_ROLLBACK_HINT_UNAVAILABLE: {
+        "stage": "post_execution",
+        "retryable": True,
+        "trigger": "operator_restore_hint_missing",
+        "message": "Reindex finished or partially finished, but an operator restore hint was not available.",
+    },
+}
+
+
+@dataclass(frozen=True)
+class MutationExecutionRequest:
+    request_id: str
+    tool_name: str
+    payload: dict[str, object]
+    apply_envelope: dict[str, object]
+    preview_seed: dict[str, object]
+    persisted_audit_record: dict[str, object]
+    audit_sink_receipt: dict[str, object]
+    actor: str
+    actor_category: str | None
+    allow_mutation: bool
+    timeout_seconds: float | None
+    executor_binding: dict[str, object] | None = None
+
+
+class MutationExecutor(Protocol):
+    executor_name: str
+    binding_kind: str
+
+    def supports(self, tool_name: str) -> bool:
+        ...
+
+    def execute(self, request: MutationExecutionRequest) -> dict[str, object]:
+        ...
+
+
+def _safe_dict(value: object) -> dict[str, object]:
+    return dict(value) if isinstance(value, dict) else {}
+
+
+def _normalize_optional_text(value: object) -> str | None:
+    if value is None:
+        return None
+    normalized = str(value).strip()
+    return normalized or None
+
+
+def _safe_positive_int(value: object) -> int | None:
+    try:
+        normalized = int(value)
+    except (TypeError, ValueError):
+        return None
+    if normalized <= 0:
+        return None
+    return normalized
+
+
+def _normalize_bool(value: object, *, default: bool) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return default
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _build_reindex_failure_taxonomy() -> dict[str, object]:
+    return {
+        "schema_version": REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION,
+        "codes": [
+            {
+                "code": code,
+                "stage": str(REINDEX_LIVE_ADAPTER_FAILURE_TAXONOMY[code]["stage"]),
+                "retryable": bool(REINDEX_LIVE_ADAPTER_FAILURE_TAXONOMY[code]["retryable"]),
+            }
+            for code in REINDEX_LIVE_ADAPTER_FAILURE_ORDER
+        ],
+    }
+
+
+def _build_activation_contract(request: MutationExecutionRequest) -> dict[str, object]:
+    activation_requested = is_mutation_execution_requested()
+    audit_sink_receipt = _safe_dict(request.audit_sink_receipt)
+    audit_sink_type = _normalize_optional_text(audit_sink_receipt.get("sink_type"))
+    audit_sequence_id = _safe_positive_int(audit_sink_receipt.get("sequence_id"))
+    audit_storage_path = _normalize_optional_text(audit_sink_receipt.get("storage_path"))
+    durable_audit_required = request.tool_name == REINDEX_FIRST_LIVE_SCOPE
+    durable_audit_ready = False
+    blocked_by: list[str] = []
+    if durable_audit_required:
+        durable_audit_ready = (
+            audit_sink_type == LOCAL_FILE_APPEND_ONLY_SINK_TYPE
+            and audit_sequence_id is not None
+            and audit_storage_path is not None
+        )
+        if not activation_requested:
+            blocked_by.append("activation_not_requested")
+        if not durable_audit_ready:
+            blocked_by.append("durable_audit_not_ready")
+    return {
+        "surface_scope": "internal_service_only",
+        "activation_source": "local_env_flag",
+        "ownership": "operator_local_config",
+        "env_key": MUTATION_EXECUTION_ENV_KEY,
+        "requested": activation_requested,
+        "first_live_tool_scope": REINDEX_FIRST_LIVE_SCOPE,
+        "durable_audit_required": durable_audit_required,
+        "durable_audit_ready": durable_audit_ready,
+        "audit_sink_type": audit_sink_type,
+        "audit_sequence_id": audit_sequence_id,
+        "audit_storage_path": audit_storage_path,
+        "blocked_by": blocked_by,
+    }
+
+
+def _build_boundary_contract(request: MutationExecutionRequest) -> dict[str, object]:
+    if request.tool_name == REINDEX_FIRST_LIVE_SCOPE:
+        return {
+            "family": "reindex",
+            "classification": "derivative_runtime_state",
+            "live_candidate_allowed": True,
+            "managed_state_write": False,
+            "approval_state_write": False,
+            "requires_durable_audit_receipt": True,
+            "requires_rollback_plan": False,
+            "requires_managed_state_snapshot": False,
+            "requires_document_version_binding": False,
+            "requires_decision_audit": False,
+            "required_preconditions": ["operator_activation", "durable_audit_ready"],
+            "blocked_by": [],
+            "live_adapter_outline": {
+                "schema_version": REINDEX_LIVE_ADAPTER_OUTLINE_SCHEMA_VERSION,
+                "status": "outline_only_deferred",
+                "target_executor_name": REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+                "current_executor_name": REINDEX_MUTATION_EXECUTOR_NAME,
+                "handoff_from_selection_state": "candidate_stub",
+                "execution_mode": "off_by_default",
+                "required_inputs": [
+                    "payload.collection",
+                    "preview_seed.target.collection_key",
+                    "apply_envelope.preview_ref",
+                    "apply_envelope.intent.summary",
+                    "persisted_audit_record.request_id",
+                    "audit_sink_receipt.sequence_id",
+                ],
+                "expected_outputs": [
+                    "result.reindex_summary",
+                    "result.audit_receipt_ref",
+                    "result.rollback_hint",
+                ],
+                "success_contract": {
+                    "schema_version": REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION,
+                    "status": "succeeded",
+                    "required_fields": [
+                        "result.reindex_summary.collection_key",
+                        "result.reindex_summary.operation",
+                        "result.reindex_summary.source_basis",
+                        "result.audit_receipt_ref.sequence_id",
+                        "result.rollback_hint.mode",
+                    ],
+                    "reindex_summary": {
+                        "operation": "rebuild_vector_index",
+                        "source_basis": "source_documents_snapshot",
+                        "reset_allowed": True,
+                        "compatibility_bundle_optional": True,
+                    },
+                    "audit_receipt_ref": {
+                        "source": "append_only_receipt",
+                        "sequence_id_required": True,
+                        "storage_path_required": True,
+                    },
+                    "rollback_hint": {
+                        "mode": "rebuild_from_source_documents",
+                        "operator_action_required": True,
+                    },
+                },
+                "failure_taxonomy": _build_reindex_failure_taxonomy(),
+                "opt_in_binding": {
+                    "schema_version": REINDEX_LIVE_ADAPTER_BINDING_SCHEMA_VERSION,
+                    "mode": "explicit_local_only",
+                    "binding_source": "runtime_injected_executor_binding",
+                    "binding_owner": "local_operator_or_test_harness",
+                    "default_executor_name": REINDEX_MUTATION_EXECUTOR_NAME,
+                    "opt_in_executor_name": REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+                    "binding_kind": REINDEX_LIVE_ADAPTER_BINDING_KIND,
+                    "binding_contract_fields": [
+                        "binding_kind",
+                        "binding_source",
+                        "executor_name",
+                        REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD,
+                    ],
+                    "binding_stage_field": REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD,
+                    "default_binding_stage": REINDEX_LIVE_ADAPTER_BINDING_STAGE_SELECTION_STUB,
+                    "concrete_executor_stage": REINDEX_LIVE_ADAPTER_BINDING_STAGE_CONCRETE_SKELETON,
+                    "guarded_live_executor_stage": REINDEX_LIVE_ADAPTER_BINDING_STAGE_GUARDED_LIVE_EXECUTOR,
+                    "selection_precedence": [
+                        "tool_registration_boundary",
+                        "activation_guard",
+                        "candidate_stub_default",
+                        "explicit_live_binding_override",
+                    ],
+                    "invalid_binding_behavior": "candidate_stub_fallback",
+                    "live_selection_state": "live_binding_stub",
+                    "required_signals": [
+                        "activation_requested",
+                        "durable_audit_ready",
+                        "explicit_live_adapter_binding",
+                    ],
+                    "public_surface_allowed": False,
+                    "shared_with_upload_review": False,
+                },
+                "executor_injection_protocol": {
+                    "schema_version": REINDEX_LIVE_ADAPTER_INJECTION_PROTOCOL_SCHEMA_VERSION,
+                    "mode": "request_scoped_local_only",
+                    "carrier_chain": [
+                        "agent_runtime_request.executor_binding",
+                        "tool_context.executor_binding",
+                        "mutation_execution_request.executor_binding",
+                    ],
+                    "direct_entrypoints": [
+                        "agent_runtime_service.run_agent_entry",
+                        "tool_middleware_service.invoke_tool_with_middlewares",
+                        "mutation_executor_service.build_mutation_execution_request",
+                    ],
+                    "payload_channel_allowed": False,
+                    "binding_owner": "local_runtime_or_test_harness",
+                    "default_behavior": "absent_binding_keeps_candidate_stub",
+                    "contract_signal_fields": [
+                        "request.executor_binding_present",
+                        "request.executor_binding_kind",
+                        "request.executor_binding_source",
+                        "request.executor_binding_executor_name",
+                    ],
+                    "required_guards": [
+                        "activation_requested",
+                        "durable_audit_ready",
+                        "explicit_live_adapter_binding",
+                    ],
+                },
+                "opt_in_smoke_harness": {
+                    "schema_version": REINDEX_LIVE_ADAPTER_SMOKE_HARNESS_SCHEMA_VERSION,
+                    "mode": "separate_from_default_smoke",
+                    "default_command": "./.venv/bin/python scripts/smoke_agent_runtime.py",
+                    "future_command_kind": "explicit_live_adapter_binding_required",
+                    "prerequisites": [
+                        "activation_requested",
+                        "durable_audit_ready",
+                        "explicit_live_adapter_binding",
+                        "local_only_runtime_context",
+                    ],
+                    "expected_evidence": [
+                        "result.ok=true",
+                        "result.mutation_executor.executor_name=reindex_mutation_adapter_live",
+                        "result.result.reindex_summary",
+                        "result.result.audit_receipt_ref",
+                        "result.result.rollback_hint",
+                    ],
+                    "isolation": {
+                        "shares_default_smoke_suite": False,
+                        "upload_review_included": False,
+                        "public_surface_allowed": False,
+                    },
+                },
+                "rollback_awareness": {
+                    "mode": "rebuild_from_source_documents",
+                    "managed_state_rollback_required": False,
+                    "operator_restore_hint_required": True,
+                },
+                "test_seams": [
+                    "noop_fallback_contract",
+                    "candidate_stub_contract",
+                    "future_live_adapter_opt_in_smoke",
+                ],
+                "non_goals": [
+                    "managed_state_write_rollback",
+                    "upload_review_execution",
+                    "public_agent_endpoint",
+                ],
+            },
+        }
+    if request.tool_name == APPROVE_UPLOAD_REQUEST_TOOL:
+        return {
+            "family": "upload_review",
+            "classification": "managed_doc_activation",
+            "live_candidate_allowed": False,
+            "managed_state_write": True,
+            "approval_state_write": True,
+            "requires_durable_audit_receipt": True,
+            "requires_rollback_plan": True,
+            "requires_managed_state_snapshot": True,
+            "requires_document_version_binding": True,
+            "requires_decision_audit": True,
+            "required_preconditions": [
+                "separate_upload_review_go_no_go",
+                "decision_audit_contract",
+                "managed_state_snapshot",
+                "document_version_binding",
+                "rollback_plan",
+            ],
+            "blocked_by": [
+                "upload_review_scope_deferred",
+                "managed_state_rollback_not_ready",
+                "document_version_binding_not_reviewed",
+            ],
+        }
+    if request.tool_name == REJECT_UPLOAD_REQUEST_TOOL:
+        return {
+            "family": "upload_review",
+            "classification": "request_decision_only",
+            "live_candidate_allowed": False,
+            "managed_state_write": False,
+            "approval_state_write": True,
+            "requires_durable_audit_receipt": True,
+            "requires_rollback_plan": False,
+            "requires_managed_state_snapshot": False,
+            "requires_document_version_binding": False,
+            "requires_decision_audit": True,
+            "required_preconditions": [
+                "separate_upload_review_go_no_go",
+                "decision_audit_contract",
+            ],
+            "blocked_by": [
+                "upload_review_scope_deferred",
+                "decision_audit_contract_not_reviewed",
+            ],
+        }
+    return {
+        "family": "unregistered_mutation",
+        "classification": "no_registered_boundary",
+        "live_candidate_allowed": False,
+        "managed_state_write": False,
+        "approval_state_write": False,
+        "requires_durable_audit_receipt": False,
+        "requires_rollback_plan": False,
+        "requires_managed_state_snapshot": False,
+        "requires_document_version_binding": False,
+        "requires_decision_audit": False,
+        "required_preconditions": [],
+        "blocked_by": ["tool_not_registered"],
+    }
+
+
+def _build_executor_contract(
+    *,
+    request: MutationExecutionRequest,
+    executor_name: str,
+    binding_kind: str,
+    tool_registered: bool,
+    execution_enabled: bool,
+    activation_contract: dict[str, object],
+    boundary_contract: dict[str, object],
+    selection_state: str,
+    selection_reason: str,
+    registered_executor_name: str | None = None,
+    delegate_executor_name: str | None = None,
+) -> dict[str, object]:
+    executor_binding = _safe_dict(request.executor_binding)
+    contract = {
+        "schema_version": MUTATION_EXECUTOR_CONTRACT_SCHEMA_VERSION,
+        "executor_name": executor_name,
+        "binding_kind": binding_kind,
+        "tool_name": request.tool_name,
+        "tool_registered": tool_registered,
+        "activation_requested": bool(activation_contract.get("requested")),
+        "execution_enabled": execution_enabled,
+        "selection_state": selection_state,
+        "selection_reason": selection_reason,
+        "activation": dict(activation_contract),
+        "boundary": dict(boundary_contract),
+        "request": {
+            "request_id": request.request_id,
+            "actor_category": request.actor_category,
+            "allow_mutation": request.allow_mutation,
+            "timeout_seconds": request.timeout_seconds,
+            "apply_schema_version": _safe_dict(request.apply_envelope).get("schema_version"),
+            "preview_schema_version": _safe_dict(request.preview_seed).get("schema_version"),
+            "audit_record_schema_version": _safe_dict(request.persisted_audit_record).get("schema_version"),
+            "audit_sink_type": _safe_dict(request.audit_sink_receipt).get("sink_type"),
+            "executor_binding_present": bool(executor_binding),
+            "executor_binding_kind": _normalize_optional_text(executor_binding.get("binding_kind")),
+            "executor_binding_source": _normalize_optional_text(executor_binding.get("binding_source")),
+            "executor_binding_executor_name": _normalize_optional_text(executor_binding.get("executor_name")),
+            "executor_binding_stage": _normalize_optional_text(executor_binding.get(REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD)),
+        },
+    }
+    if registered_executor_name:
+        contract["registered_executor_name"] = registered_executor_name
+    if delegate_executor_name:
+        contract["delegate_executor_name"] = delegate_executor_name
+    return contract
+
+
+def build_mutation_execution_request(
+    *,
+    request_id: str,
+    tool_name: str,
+    payload: dict[str, object] | None,
+    apply_envelope: dict[str, object] | None,
+    preview_seed: dict[str, object] | None,
+    persisted_audit_record: dict[str, object] | None,
+    audit_sink_receipt: dict[str, object] | None,
+    actor: str,
+    actor_category: str | None,
+    allow_mutation: bool,
+    timeout_seconds: float | None,
+    executor_binding: dict[str, object] | None = None,
+) -> MutationExecutionRequest | None:
+    if not (
+        isinstance(payload, dict)
+        and isinstance(apply_envelope, dict)
+        and isinstance(preview_seed, dict)
+        and isinstance(persisted_audit_record, dict)
+        and isinstance(audit_sink_receipt, dict)
+    ):
+        return None
+    return MutationExecutionRequest(
+        request_id=request_id,
+        tool_name=tool_name,
+        payload=dict(payload),
+        apply_envelope=dict(apply_envelope),
+        preview_seed=dict(preview_seed),
+        persisted_audit_record=dict(persisted_audit_record),
+        audit_sink_receipt=dict(audit_sink_receipt),
+        actor=actor,
+        actor_category=actor_category,
+        allow_mutation=allow_mutation,
+        timeout_seconds=timeout_seconds,
+        executor_binding=dict(executor_binding) if isinstance(executor_binding, dict) else None,
+    )
+
+
+def is_mutation_execution_requested() -> bool:
+    return runtime_service.parse_bool_env(MUTATION_EXECUTION_ENV_KEY, default=False)
+
+
+def _resolve_reindex_live_binding(request: MutationExecutionRequest) -> dict[str, str] | None:
+    binding = _safe_dict(request.executor_binding)
+    binding_kind = _normalize_optional_text(binding.get("binding_kind"))
+    binding_source = _normalize_optional_text(binding.get("binding_source"))
+    executor_name = _normalize_optional_text(binding.get("executor_name"))
+    binding_stage = _normalize_optional_text(binding.get(REINDEX_LIVE_ADAPTER_BINDING_STAGE_FIELD))
+    if (
+        binding_kind != REINDEX_LIVE_ADAPTER_BINDING_KIND
+        or binding_source is None
+        or executor_name != REINDEX_LIVE_ADAPTER_EXECUTOR_NAME
+    ):
+        return None
+    return {
+        "binding_kind": binding_kind,
+        "binding_source": binding_source,
+        "executor_name": executor_name,
+        "binding_stage": binding_stage or REINDEX_LIVE_ADAPTER_BINDING_STAGE_SELECTION_STUB,
+    }
+
+
+def _resolve_reindex_collection_key(request: MutationExecutionRequest) -> str:
+    payload_collection = _normalize_optional_text(_safe_dict(request.payload).get("collection"))
+    if payload_collection is not None:
+        return payload_collection
+    preview_target = _safe_dict(_safe_dict(request.preview_seed).get("target"))
+    preview_collection = _normalize_optional_text(preview_target.get("collection_key"))
+    if preview_collection is not None:
+        return preview_collection
+    apply_preview_ref = _safe_dict(_safe_dict(request.apply_envelope).get("preview_ref"))
+    apply_target = _safe_dict(apply_preview_ref.get("target"))
+    apply_collection = _normalize_optional_text(apply_target.get("collection_key"))
+    if apply_collection is not None:
+        return apply_collection
+    return REINDEX_FIRST_LIVE_SCOPE
+
+
+def _build_reindex_live_result(
+    request: MutationExecutionRequest,
+    *,
+    runtime_result: dict[str, object] | None = None,
+) -> dict[str, object]:
+    audit_sink_receipt = _safe_dict(request.audit_sink_receipt)
+    collection_key = _resolve_reindex_collection_key(request)
+    requested_reset = request.payload.get("reset")
+    include_compatibility_bundle = request.payload.get("include_compatibility_bundle")
+    result = {
+        "schema_version": REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION,
+        "reindex_summary": {
+            "collection_key": collection_key,
+            "operation": "rebuild_vector_index",
+            "source_basis": "source_documents_snapshot",
+            "requested_reset": requested_reset is not False,
+            "requested_compatibility_bundle": bool(include_compatibility_bundle),
+        },
+        "audit_receipt_ref": {
+            "source": "append_only_receipt",
+            "sequence_id": audit_sink_receipt.get("sequence_id"),
+            "storage_path": audit_sink_receipt.get("storage_path"),
+        },
+        "rollback_hint": {
+            "mode": "rebuild_from_source_documents",
+            "operator_action_required": True,
+            "collection_key": collection_key,
+        },
+    }
+    runtime_payload = _safe_dict(runtime_result)
+    if runtime_payload:
+        result["reindex_summary"] = {
+            **_safe_dict(result.get("reindex_summary")),
+            "runtime_chunks": runtime_payload.get("chunks"),
+            "runtime_vectors": runtime_payload.get("vectors"),
+            "runtime_scope": runtime_payload.get("reindex_scope"),
+        }
+        result["runtime_result"] = {
+            "collection_key": runtime_payload.get("collection_key"),
+            "collection": runtime_payload.get("collection"),
+            "chunks": runtime_payload.get("chunks"),
+            "vectors": runtime_payload.get("vectors"),
+            "related_collection_keys": runtime_payload.get("related_collection_keys"),
+            "reindex_scope": runtime_payload.get("reindex_scope"),
+        }
+    return result
+
+
+def build_reindex_live_success_promotion_contract(
+    *,
+    executor_contract: dict[str, object] | None,
+    executor_result: dict[str, object] | None,
+) -> dict[str, object] | None:
+    executor = _safe_dict(executor_contract)
+    result = _safe_dict(executor_result)
+    selection_state = _normalize_optional_text(executor.get("selection_state"))
+    if (
+        executor.get("tool_name") != REINDEX_FIRST_LIVE_SCOPE
+        or executor.get("executor_name") != REINDEX_LIVE_ADAPTER_EXECUTOR_NAME
+        or selection_state not in {
+            "live_result_skeleton",
+            "guarded_live_executor",
+            REINDEX_FAKE_EXECUTOR_SMOKE_SUCCESS_SELECTION_STATE,
+        }
+        or result.get("schema_version") != REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION
+    ):
+        return None
+
+    reindex_summary = _safe_dict(result.get("reindex_summary"))
+    audit_receipt_ref = _safe_dict(result.get("audit_receipt_ref"))
+    rollback_hint = _safe_dict(result.get("rollback_hint"))
+    return {
+        "schema_version": REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_SCHEMA_VERSION,
+        "tool_name": REINDEX_FIRST_LIVE_SCOPE,
+        "promotion_state": "draft_ready_not_enabled",
+        "selection_state": selection_state,
+        "selection_reason": executor.get("selection_reason"),
+        "current_surface": {
+            "kind": "blocked_success_sidecar",
+            "top_level_ok": False,
+            "top_level_error_code": tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED,
+            "result_location": "error.mutation_executor_result",
+            "contract_location": "execution_trace.contracts.mutation_executor_result",
+            "blocked_by": "mutation_apply_guard",
+        },
+        "future_success_surface": {
+            "kind": "top_level_apply_success",
+            "top_level_ok": True,
+            "top_level_error": None,
+            "result_location": "result",
+            "result_schema_version": REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION,
+            "promoted_fields": [
+                "reindex_summary",
+                "audit_receipt_ref",
+                "rollback_hint",
+            ],
+            "retained_contracts": [
+                "mutation_executor",
+                "mutation_executor_result",
+                "mutation_success_promotion",
+            ],
+        },
+        "promotion_gate": {
+            "default_behavior": "remain_blocked_success_sidecar",
+            "actual_side_effect_enabled": False,
+            "requires": [
+                "mutation_apply_guard_execution_enabled",
+                "executor_result_ok",
+                selection_state,
+                "durable_audit_ready",
+                "explicit_live_adapter_binding",
+            ],
+        },
+        "result_summary": {
+            "collection_key": reindex_summary.get("collection_key"),
+            "operation": reindex_summary.get("operation"),
+            "requested_reset": reindex_summary.get("requested_reset"),
+            "requested_compatibility_bundle": reindex_summary.get("requested_compatibility_bundle"),
+            "audit_sequence_id": audit_receipt_ref.get("sequence_id"),
+            "rollback_mode": rollback_hint.get("mode"),
+        },
+    }
+
+
+def build_reindex_live_failure_contract(
+    code: str,
+    *,
+    details: dict[str, object] | None = None,
+) -> dict[str, object] | None:
+    taxonomy = REINDEX_LIVE_ADAPTER_FAILURE_TAXONOMY.get(str(code or "").strip())
+    if taxonomy is None:
+        return None
+    normalized_details = dict(details) if isinstance(details, dict) else {}
+    return {
+        "schema_version": REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION,
+        "tool_name": REINDEX_FIRST_LIVE_SCOPE,
+        "code": str(code).strip(),
+        "stage": str(taxonomy["stage"]),
+        "retryable": bool(taxonomy["retryable"]),
+        "trigger": str(taxonomy["trigger"]),
+        "message": str(taxonomy["message"]),
+        "current_surface": {
+            "kind": "draft_only_not_runtime_reachable",
+            "top_level_ok": False,
+            "top_level_error_code": tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED,
+            "blocked_by": "mutation_apply_guard",
+        },
+        "future_failure_surface": {
+            "kind": "top_level_apply_failure",
+            "top_level_ok": False,
+            "error_location": "error",
+            "error_schema_version": REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION,
+            "retained_contracts": [
+                "mutation_executor",
+                "mutation_failure_taxonomy",
+            ],
+        },
+        "default_behavior": "not_emitted_until_actual_live_adapter_execution",
+        "details": normalized_details,
+    }
+
+
+def list_reindex_live_failure_contracts() -> tuple[dict[str, object], ...]:
+    contracts = [
+        build_reindex_live_failure_contract(code)
+        for code in REINDEX_LIVE_ADAPTER_FAILURE_ORDER
+    ]
+    return tuple(contract for contract in contracts if contract is not None)
+
+
+def build_reindex_top_level_promotion_router_contract(
+    *,
+    executor_contract: dict[str, object] | None,
+    executor_result: dict[str, object] | None = None,
+    executor_error: dict[str, object] | None = None,
+    mutation_success_promotion: dict[str, object] | None = None,
+) -> dict[str, object] | None:
+    executor = _safe_dict(executor_contract)
+    if executor.get("tool_name") != REINDEX_FIRST_LIVE_SCOPE:
+        return None
+
+    result = _safe_dict(executor_result)
+    error = _safe_dict(executor_error)
+    success_promotion = _safe_dict(mutation_success_promotion)
+    future_success_surface = _safe_dict(success_promotion.get("future_success_surface"))
+    success_eligible = (
+        success_promotion.get("schema_version") == REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_SCHEMA_VERSION
+        and result.get("schema_version") == REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION
+        and future_success_surface.get("kind") == "top_level_apply_success"
+    )
+    failure_contracts = list_reindex_live_failure_contracts()
+    supported_failure_codes = [str(contract.get("code")) for contract in failure_contracts]
+    failure_error_code = str(error.get("code")) if error.get("code") is not None else None
+    failure_eligible = failure_error_code in supported_failure_codes
+    failure_routes = []
+    for contract in failure_contracts:
+        future_failure_surface = _safe_dict(contract.get("future_failure_surface"))
+        failure_routes.append(
+            {
+                "code": contract.get("code"),
+                "stage": contract.get("stage"),
+                "retryable": contract.get("retryable"),
+                "target_error_location": future_failure_surface.get("error_location"),
+                "target_top_level_ok": future_failure_surface.get("top_level_ok"),
+            }
+        )
+
+    contract: dict[str, object] = {
+        "schema_version": REINDEX_LIVE_ADAPTER_TOP_LEVEL_PROMOTION_ROUTER_SCHEMA_VERSION,
+        "tool_name": REINDEX_FIRST_LIVE_SCOPE,
+        "router_state": "draft_ready_not_enabled",
+        "surface_scope": "internal_service_only",
+        "current_runtime_surface": {
+            "top_level_ok": False,
+            "top_level_error_code": tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED,
+            "result_location": "error.mutation_executor_result" if result else None,
+            "blocked_by": "mutation_apply_guard",
+        },
+        "success_route": {
+            "eligible": success_eligible,
+            "source_result_location": "error.mutation_executor_result",
+            "target_result_location": future_success_surface.get("result_location"),
+            "target_top_level_ok": future_success_surface.get("top_level_ok"),
+            "result_schema_version": result.get("schema_version"),
+            "selection_state": executor.get("selection_state"),
+            "promoted_fields": future_success_surface.get("promoted_fields") or [],
+        },
+        "failure_route": {
+            "eligible": failure_eligible,
+            "source_error_location": "error.mutation_executor_error",
+            "target_error_location": "error",
+            "error_schema_version": REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION,
+            "error_code": failure_error_code,
+            "supported_codes": [route["code"] for route in failure_routes],
+            "routes": failure_routes,
+        },
+        "retained_contracts": [
+            "mutation_executor",
+            "mutation_executor_result",
+            "mutation_executor_error",
+            "mutation_success_promotion",
+            "mutation_top_level_promotion_router",
+        ],
+        "promotion_gate": {
+            "default_behavior": "remain_blocked_sidecar",
+            "top_level_promotion_enabled": False,
+            "actual_side_effect_enabled": False,
+            "requires": [
+                "mutation_apply_guard_execution_enabled",
+                "executor_router_result_available",
+                "durable_audit_ready",
+                "explicit_live_adapter_binding",
+                "actual_execution_go_no_go_review",
+            ],
+        },
+    }
+    if success_eligible:
+        contract["success_result_preview"] = {
+            "schema_version": result.get("schema_version"),
+            "reindex_summary": _safe_dict(result.get("reindex_summary")),
+            "audit_receipt_ref": _safe_dict(result.get("audit_receipt_ref")),
+            "rollback_hint": _safe_dict(result.get("rollback_hint")),
+        }
+        runtime_result = _safe_dict(result.get("runtime_result"))
+        if runtime_result:
+            contract["success_result_preview"]["runtime_result"] = runtime_result
+    if failure_eligible:
+        contract["failure_error_preview"] = {
+            "schema_version": REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION,
+            "code": failure_error_code,
+            "message": error.get("message"),
+            "exception_type": error.get("exception_type"),
+        }
+    return contract
+
+
+def build_reindex_pre_execution_handoff_contract() -> dict[str, object]:
+    return {
+        "schema_version": REINDEX_LIVE_ADAPTER_PRE_EXECUTION_HANDOFF_SCHEMA_VERSION,
+        "tool_name": REINDEX_FIRST_LIVE_SCOPE,
+        "handoff_state": "draft_ready_not_enabled",
+        "surface_scope": "internal_service_only",
+        "current_runtime": {
+            "apply_guard_behavior": "always_block_after_valid_envelope",
+            "top_level_error_code": tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED,
+            "executor_invocation_location": "blocked_result_metadata_enrichment",
+            "direct_tool_invocation_possible_if_guard_is_opened": True,
+        },
+        "required_pre_execution_order": [
+            "validate_apply_envelope",
+            "build_persisted_audit_record",
+            "append_durable_audit_receipt",
+            "build_mutation_execution_request",
+            "resolve_mutation_executor",
+            "execute_mutation_executor",
+            "promote_executor_result_or_error",
+        ],
+        "side_effect_barrier": {
+            "actual_reindex_side_effect_allowed": False,
+            "direct_tool_handler": "tool_registry_service._tool_reindex",
+            "direct_tool_handler_policy": "must_not_be_invoked_for_preview_confirmed_mutation_apply",
+            "actual_runtime_handler": "index_service.reindex",
+            "router_required_before_side_effect": "mutation_executor_service.execute_mutation_request",
+        },
+        "audit_handoff": {
+            "receipt_required_before_executor": True,
+            "required_sink_type": LOCAL_FILE_APPEND_ONLY_SINK_TYPE,
+            "required_receipt_fields": [
+                "sink_type",
+                "sequence_id",
+                "storage_path",
+            ],
+            "null_sink_allows_actual_execution": False,
+        },
+        "executor_selection": {
+            "first_live_tool_scope": REINDEX_FIRST_LIVE_SCOPE,
+            "default_selection_without_binding": "candidate_stub_or_noop_fallback",
+            "actual_executor_requires_explicit_binding": True,
+            "required_binding_kind": REINDEX_LIVE_ADAPTER_BINDING_KIND,
+            "required_executor_name": REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+        },
+        "promotion_handoff": {
+            "success_contract_schema_version": REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION,
+            "failure_contract_schema_version": REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION,
+            "success_source": "mutation_executor_result",
+            "failure_source": "mutation_executor_error",
+            "top_level_success_location": "result",
+            "top_level_failure_location": "error",
+        },
+        "blocked_until": [
+            "mutation_apply_guard_routes_to_executor_instead_of_tool_handler",
+            "durable_audit_receipt_created_before_side_effect",
+            "explicit_live_adapter_binding_validated_before_side_effect",
+            "top_level_promotion_router_enabled",
+            "fake_executor_smoke_added",
+        ],
+    }
+
+
+def build_reindex_fake_executor_smoke_contract() -> dict[str, object]:
+    pre_execution_handoff = build_reindex_pre_execution_handoff_contract()
+    side_effect_barrier = _safe_dict(pre_execution_handoff.get("side_effect_barrier"))
+    success_executor_contract = {
+        "tool_name": REINDEX_FIRST_LIVE_SCOPE,
+        "executor_name": REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+        "selection_state": REINDEX_FAKE_EXECUTOR_SMOKE_SUCCESS_SELECTION_STATE,
+        "selection_reason": "sandboxed_success_path",
+    }
+    success_executor_result = {
+        "schema_version": REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION,
+        "reindex_summary": {
+            "collection_key": "all",
+            "operation": "rebuild_vector_index",
+            "source_basis": "source_documents_snapshot",
+            "requested_reset": True,
+            "requested_compatibility_bundle": False,
+        },
+        "audit_receipt_ref": {
+            "source": "append_only_receipt",
+            "sequence_id": 1,
+            "storage_path": "sandbox://mutation-audit/reindex-fake-smoke.jsonl",
+        },
+        "rollback_hint": {
+            "mode": "rebuild_from_source_documents",
+            "operator_action_required": True,
+            "collection_key": "all",
+        },
+    }
+    success_promotion = build_reindex_live_success_promotion_contract(
+        executor_contract=success_executor_contract,
+        executor_result=success_executor_result,
+    )
+    failure_contract = build_reindex_live_failure_contract(
+        REINDEX_ERROR_RUNTIME_EXECUTION_FAILED,
+        details={
+            "smoke_mode": "sandboxed_no_side_effect",
+            "simulated": True,
+            "calls_index_service_reindex": False,
+        },
+    )
+    return {
+        "schema_version": REINDEX_LIVE_ADAPTER_FAKE_SMOKE_SCHEMA_VERSION,
+        "tool_name": REINDEX_FIRST_LIVE_SCOPE,
+        "smoke_state": "draft_ready_not_enabled",
+        "surface_scope": "internal_service_only",
+        "side_effect_policy": {
+            "actual_reindex_side_effect_allowed": False,
+            "calls_index_service_reindex": False,
+            "sandboxed_executor_only": True,
+            "public_surface_allowed": False,
+        },
+        "pre_execution_handoff": {
+            "schema_version": pre_execution_handoff.get("schema_version"),
+            "required_pre_execution_order": pre_execution_handoff.get("required_pre_execution_order"),
+            "router_required_before_side_effect": side_effect_barrier.get("router_required_before_side_effect"),
+        },
+        "fake_executor_modes": {
+            "success": {
+                "selection_state": REINDEX_FAKE_EXECUTOR_SMOKE_SUCCESS_SELECTION_STATE,
+                "executor_name": REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+                "result_schema_version": REINDEX_LIVE_ADAPTER_RESULT_SCHEMA_VERSION,
+                "promotion_schema_version": REINDEX_LIVE_ADAPTER_SUCCESS_PROMOTION_SCHEMA_VERSION,
+                "top_level_surface": "blocked_success_sidecar",
+            },
+            "failure": {
+                "selection_state": REINDEX_FAKE_EXECUTOR_SMOKE_FAILURE_SELECTION_STATE,
+                "executor_name": REINDEX_LIVE_ADAPTER_EXECUTOR_NAME,
+                "error_schema_version": REINDEX_LIVE_ADAPTER_ERROR_SCHEMA_VERSION,
+                "failure_codes": list(REINDEX_LIVE_ADAPTER_FAILURE_ORDER),
+                "future_surface": "top_level_apply_failure",
+            },
+        },
+        "success_evidence": {
+            "executor_contract": success_executor_contract,
+            "executor_result": success_executor_result,
+            "mutation_success_promotion": success_promotion,
+        },
+        "failure_evidence": {
+            "mutation_failure_contract": failure_contract,
+        },
+        "smoke_summary_contract": {
+            "success_required_summary_fields": [
+                "mutation_executor",
+                "mutation_executor_result",
+                "mutation_success_promotion",
+            ],
+            "failure_required_summary_fields": [
+                "mutation_executor",
+                "mutation_failure_contract",
+            ],
+            "default_smoke_must_remain_blocked": True,
+        },
+        "blocked_until": [
+            "fake_executor_success_smoke_command_added",
+            "fake_executor_failure_smoke_command_added",
+            "top_level_success_failure_promotion_router_enabled",
+        ],
+    }
+
+
+def build_reindex_mutation_apply_router_dry_run_contract(
+    *,
+    executor_contract: dict[str, object] | None,
+    executor_result: dict[str, object] | None = None,
+    mutation_success_promotion: dict[str, object] | None = None,
+    route_location: str = "blocked_result_metadata_enrichment",
+) -> dict[str, object] | None:
+    executor = _safe_dict(executor_contract)
+    if executor.get("tool_name") != REINDEX_FIRST_LIVE_SCOPE:
+        return None
+
+    result = _safe_dict(executor_result)
+    success_promotion = _safe_dict(mutation_success_promotion)
+    pre_execution_handoff = build_reindex_pre_execution_handoff_contract()
+    side_effect_barrier = _safe_dict(pre_execution_handoff.get("side_effect_barrier"))
+    fake_smoke = build_reindex_fake_executor_smoke_contract()
+    fake_modes = _safe_dict(fake_smoke.get("fake_executor_modes"))
+    success_mode = _safe_dict(fake_modes.get("success"))
+    failure_mode = _safe_dict(fake_modes.get("failure"))
+    return {
+        "schema_version": REINDEX_MUTATION_APPLY_ROUTER_DRY_RUN_SCHEMA_VERSION,
+        "tool_name": REINDEX_FIRST_LIVE_SCOPE,
+        "dry_run_state": "draft_ready_not_enabled",
+        "surface_scope": "internal_service_only",
+        "apply_guard": {
+            "validated_apply_envelope": True,
+            "blocked_error_code": tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED,
+            "blocked_by": "mutation_apply_guard",
+            "blocks_before_tool_handler": True,
+        },
+        "router_handoff": {
+            "route_location": route_location,
+            "request_builder": "tool_middleware_service._build_mutation_execution_request",
+            "router": "mutation_executor_service.execute_mutation_request",
+            "dry_run_only": True,
+            "direct_tool_handler": side_effect_barrier.get("direct_tool_handler"),
+            "actual_runtime_handler": side_effect_barrier.get("actual_runtime_handler"),
+            "direct_tool_handler_invoked": False,
+            "actual_runtime_handler_invoked": False,
+        },
+        "pre_execution_handoff": {
+            "schema_version": pre_execution_handoff.get("schema_version"),
+            "required_pre_execution_order": pre_execution_handoff.get("required_pre_execution_order"),
+            "router_required_before_side_effect": side_effect_barrier.get("router_required_before_side_effect"),
+        },
+        "fake_smoke_link": {
+            "schema_version": fake_smoke.get("schema_version"),
+            "success_selection_state": success_mode.get("selection_state"),
+            "failure_selection_state": failure_mode.get("selection_state"),
+            "calls_index_service_reindex": _safe_dict(fake_smoke.get("side_effect_policy")).get(
+                "calls_index_service_reindex"
+            ),
+        },
+        "executor_evidence": {
+            "executor_name": executor.get("executor_name"),
+            "selection_state": executor.get("selection_state"),
+            "selection_reason": executor.get("selection_reason"),
+            "execution_enabled": executor.get("execution_enabled"),
+            "result_schema_version": result.get("schema_version"),
+            "success_promotion_schema_version": success_promotion.get("schema_version"),
+        },
+        "promotion_policy": {
+            "top_level_result_promoted": False,
+            "top_level_failure_promoted": False,
+            "actual_side_effect_enabled": False,
+        },
+        "blocked_until": [
+            "mutation_apply_guard_execution_enabled",
+            "dry_run_promoted_to_pre_execution_router",
+            "durable_audit_receipt_created_before_side_effect",
+            "direct_tool_handler_bypass_test_promoted_to_runtime",
+            "actual_execution_go_no_go_review",
+        ],
+    }
+
+
+@dataclass(frozen=True)
+class NoopMutationExecutor:
+    executor_name: str = NOOP_MUTATION_EXECUTOR_NAME
+    binding_kind: str = "default_noop"
+    tool_registered: bool = False
+    selection_state: str = "default_noop"
+    selection_reason: str = "tool_not_registered"
+    activation_contract: dict[str, object] | None = None
+    boundary_contract: dict[str, object] | None = None
+    registered_executor_name: str | None = None
+
+    def supports(self, tool_name: str) -> bool:
+        return True
+
+    def execute(self, request: MutationExecutionRequest) -> dict[str, object]:
+        activation_contract = dict(self.activation_contract) if isinstance(self.activation_contract, dict) else _build_activation_contract(request)
+        boundary_contract = dict(self.boundary_contract) if isinstance(self.boundary_contract, dict) else _build_boundary_contract(request)
+        return {
+            "ok": False,
+            "error": {
+                "code": tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED,
+                "message": "Mutation apply handshake validated, but execution is not enabled yet.",
+            },
+            "executor": _build_executor_contract(
+                request=request,
+                executor_name=self.executor_name,
+                binding_kind=self.binding_kind,
+                tool_registered=self.tool_registered,
+                execution_enabled=False,
+                activation_contract=activation_contract,
+                boundary_contract=boundary_contract,
+                selection_state=self.selection_state,
+                selection_reason=self.selection_reason,
+                registered_executor_name=self.registered_executor_name,
+            ),
+        }
+
+
+@dataclass(frozen=True)
+class ReindexMutationExecutorAdapter:
+    executor_name: str = REINDEX_MUTATION_EXECUTOR_NAME
+    binding_kind: str = "tool_adapter_stub"
+    selection_state: str = "candidate_stub"
+    selection_reason: str = "activation_guard_satisfied"
+    activation_contract: dict[str, object] | None = None
+    boundary_contract: dict[str, object] | None = None
+
+    def supports(self, tool_name: str) -> bool:
+        return tool_name == "reindex"
+
+    def execute(self, request: MutationExecutionRequest) -> dict[str, object]:
+        activation_contract = dict(self.activation_contract) if isinstance(self.activation_contract, dict) else _build_activation_contract(request)
+        boundary_contract = dict(self.boundary_contract) if isinstance(self.boundary_contract, dict) else _build_boundary_contract(request)
+        return {
+            "ok": False,
+            "error": {
+                "code": tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED,
+                "message": "Mutation apply handshake validated, but execution is not enabled yet.",
+            },
+            "executor": _build_executor_contract(
+                request=request,
+                executor_name=self.executor_name,
+                binding_kind=self.binding_kind,
+                tool_registered=True,
+                execution_enabled=False,
+                activation_contract=activation_contract,
+                boundary_contract=boundary_contract,
+                selection_state=self.selection_state,
+                selection_reason=self.selection_reason,
+                delegate_executor_name=NOOP_MUTATION_EXECUTOR_NAME,
+            ),
+        }
+
+
+@dataclass(frozen=True)
+class ReindexLiveMutationExecutorBindingStub:
+    executor_name: str = REINDEX_LIVE_ADAPTER_EXECUTOR_NAME
+    binding_kind: str = REINDEX_LIVE_ADAPTER_BINDING_KIND
+    selection_state: str = "live_binding_stub"
+    selection_reason: str = "explicit_live_binding_requested"
+    activation_contract: dict[str, object] | None = None
+    boundary_contract: dict[str, object] | None = None
+
+    def supports(self, tool_name: str) -> bool:
+        return tool_name == "reindex"
+
+    def execute(self, request: MutationExecutionRequest) -> dict[str, object]:
+        activation_contract = dict(self.activation_contract) if isinstance(self.activation_contract, dict) else _build_activation_contract(request)
+        boundary_contract = dict(self.boundary_contract) if isinstance(self.boundary_contract, dict) else _build_boundary_contract(request)
+        return {
+            "ok": False,
+            "error": {
+                "code": tool_apply_service.ERROR_MUTATION_APPLY_NOT_ENABLED,
+                "message": "Mutation apply handshake validated, but execution is not enabled yet.",
+            },
+            "executor": _build_executor_contract(
+                request=request,
+                executor_name=self.executor_name,
+                binding_kind=self.binding_kind,
+                tool_registered=True,
+                execution_enabled=False,
+                activation_contract=activation_contract,
+                boundary_contract=boundary_contract,
+                selection_state=self.selection_state,
+                selection_reason=self.selection_reason,
+                registered_executor_name=REINDEX_MUTATION_EXECUTOR_NAME,
+                delegate_executor_name=NOOP_MUTATION_EXECUTOR_NAME,
+            ),
+        }
+
+
+@dataclass(frozen=True)
+class ReindexLiveMutationExecutorSkeleton:
+    executor_name: str = REINDEX_LIVE_ADAPTER_EXECUTOR_NAME
+    binding_kind: str = REINDEX_LIVE_ADAPTER_BINDING_KIND
+    selection_state: str = "live_result_skeleton"
+    selection_reason: str = "explicit_live_result_contract_requested"
+    activation_contract: dict[str, object] | None = None
+    boundary_contract: dict[str, object] | None = None
+
+    def supports(self, tool_name: str) -> bool:
+        return tool_name == "reindex"
+
+    def execute(self, request: MutationExecutionRequest) -> dict[str, object]:
+        activation_contract = dict(self.activation_contract) if isinstance(self.activation_contract, dict) else _build_activation_contract(request)
+        boundary_contract = dict(self.boundary_contract) if isinstance(self.boundary_contract, dict) else _build_boundary_contract(request)
+        return {
+            "ok": True,
+            "result": _build_reindex_live_result(request),
+            "error": None,
+            "executor": _build_executor_contract(
+                request=request,
+                executor_name=self.executor_name,
+                binding_kind=self.binding_kind,
+                tool_registered=True,
+                execution_enabled=True,
+                activation_contract=activation_contract,
+                boundary_contract=boundary_contract,
+                selection_state=self.selection_state,
+                selection_reason=self.selection_reason,
+                registered_executor_name=REINDEX_MUTATION_EXECUTOR_NAME,
+                delegate_executor_name=NOOP_MUTATION_EXECUTOR_NAME,
+            ),
+        }
+
+
+@dataclass(frozen=True)
+class ReindexGuardedLiveMutationExecutor:
+    executor_name: str = REINDEX_LIVE_ADAPTER_EXECUTOR_NAME
+    binding_kind: str = REINDEX_LIVE_ADAPTER_BINDING_KIND
+    selection_state: str = "guarded_live_executor"
+    selection_reason: str = "explicit_guarded_live_executor_requested"
+    activation_contract: dict[str, object] | None = None
+    boundary_contract: dict[str, object] | None = None
+
+    def supports(self, tool_name: str) -> bool:
+        return tool_name == "reindex"
+
+    def execute(self, request: MutationExecutionRequest) -> dict[str, object]:
+        activation_contract = dict(self.activation_contract) if isinstance(self.activation_contract, dict) else _build_activation_contract(request)
+        boundary_contract = dict(self.boundary_contract) if isinstance(self.boundary_contract, dict) else _build_boundary_contract(request)
+        collection_key = _resolve_reindex_collection_key(request)
+        reset = _normalize_bool(_safe_dict(request.payload).get("reset"), default=True)
+        include_compatibility_bundle = _normalize_bool(
+            _safe_dict(request.payload).get("include_compatibility_bundle"),
+            default=False,
+        )
+        executor_contract = _build_executor_contract(
+            request=request,
+            executor_name=self.executor_name,
+            binding_kind=self.binding_kind,
+            tool_registered=True,
+            execution_enabled=True,
+            activation_contract=activation_contract,
+            boundary_contract=boundary_contract,
+            selection_state=self.selection_state,
+            selection_reason=self.selection_reason,
+            registered_executor_name=REINDEX_MUTATION_EXECUTOR_NAME,
+            delegate_executor_name=NOOP_MUTATION_EXECUTOR_NAME,
+        )
+        executor_contract["actual_runtime_handler"] = "index_service.reindex"
+        executor_contract["actual_runtime_handler_invoked"] = True
+        try:
+            runtime_result = index_service.reindex(
+                reset=reset,
+                collection_key=collection_key,
+                include_compatibility_bundle=include_compatibility_bundle,
+            )
+        except Exception as exc:
+            return {
+                "ok": False,
+                "result": None,
+                "error": {
+                    "code": REINDEX_ERROR_RUNTIME_EXECUTION_FAILED,
+                    "message": "Guarded reindex live executor failed.",
+                    "exception_type": type(exc).__name__,
+                },
+                "executor": executor_contract,
+            }
+        return {
+            "ok": True,
+            "result": _build_reindex_live_result(request, runtime_result=runtime_result),
+            "error": None,
+            "executor": executor_contract,
+        }
+
+
+def list_registered_mutation_executor_bindings() -> dict[str, str]:
+    return {
+        "reindex": REINDEX_MUTATION_EXECUTOR_NAME,
+    }
+
+
+def resolve_mutation_executor(request: MutationExecutionRequest) -> MutationExecutor:
+    activation_contract = _build_activation_contract(request)
+    boundary_contract = _build_boundary_contract(request)
+    if request.tool_name in UPLOAD_REVIEW_MUTATION_TOOLS:
+        return NoopMutationExecutor(
+            selection_state="boundary_noop",
+            selection_reason="upload_review_scope_deferred",
+            activation_contract=activation_contract,
+            boundary_contract=boundary_contract,
+        )
+    if request.tool_name != REINDEX_FIRST_LIVE_SCOPE:
+        return NoopMutationExecutor(
+            activation_contract=activation_contract,
+            boundary_contract=boundary_contract,
+        )
+    if list(activation_contract.get("blocked_by") or []):
+        return NoopMutationExecutor(
+            tool_registered=True,
+            selection_state="noop_fallback",
+            selection_reason="activation_guard_blocked",
+            activation_contract=activation_contract,
+            boundary_contract=boundary_contract,
+            registered_executor_name=REINDEX_MUTATION_EXECUTOR_NAME,
+        )
+    live_binding = _resolve_reindex_live_binding(request)
+    if isinstance(live_binding, dict):
+        if live_binding.get("binding_stage") == REINDEX_LIVE_ADAPTER_BINDING_STAGE_GUARDED_LIVE_EXECUTOR:
+            return ReindexGuardedLiveMutationExecutor(
+                activation_contract=activation_contract,
+                boundary_contract=boundary_contract,
+            )
+        if live_binding.get("binding_stage") == REINDEX_LIVE_ADAPTER_BINDING_STAGE_CONCRETE_SKELETON:
+            return ReindexLiveMutationExecutorSkeleton(
+                activation_contract=activation_contract,
+                boundary_contract=boundary_contract,
+            )
+        return ReindexLiveMutationExecutorBindingStub(
+            activation_contract=activation_contract,
+            boundary_contract=boundary_contract,
+        )
+    return ReindexMutationExecutorAdapter(
+        activation_contract=activation_contract,
+        boundary_contract=boundary_contract,
+    )
+
+
+def execute_mutation_request(request: MutationExecutionRequest) -> dict[str, object]:
+    executor = resolve_mutation_executor(request)
+    return executor.execute(request)
