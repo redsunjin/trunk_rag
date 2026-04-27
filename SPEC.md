@@ -112,6 +112,7 @@
 - 공통 `styles.css` 스타일 패턴을 현재 `web/index.html`에 반영
 - Trunk RAG SVG 브랜드 마크/워드마크/favicon 추가 및 intro/app/admin 헤더에 적용
 - `/health` release guidance 기반 첫 실행/복구 체크리스트를 intro/app에 노출
+- `/app` 사이드바는 설정 아이콘을 사용하고, 제품 로고는 메인 헤더 브랜드 lockup에만 둔다.
 - 공통 레이아웃 클래스 적용(`app-container`, `sidebar`, `main-content`, `card`)
 - 화면 구성: 좌측(설정/헬스/문서목록), 우측(채팅/MD 뷰어)
 - 인트로/관리자 페이지 분리(`web/intro.html`, `web/admin.html`)

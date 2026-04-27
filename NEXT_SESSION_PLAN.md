@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-090`
-- current_active_title: `Await next-track after first-run recovery polish`
+- current_active_id: `LOOP-091`
+- current_active_title: `Await next-track after app UI polish`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -2218,21 +2218,49 @@ closeout 메모 (2026-04-28):
 - README/SPEC에 첫 실행/복구 체크리스트와 Ollama/임베딩/Reindex 복구 경로를 반영했다.
 - 검증은 `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py -> 11 passed`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과로 마감한다.
 
-### A-Next83. Await next-track after first-run recovery polish (현재 active)
-1. first-run recovery polish 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
+### A-Next83. App sidebar/header UI polish (완료: 2026-04-28)
+1. `/app` 화면에서 사이드바 로고 중복과 좁은 폭 레이아웃 깨짐을 정리해 메인 브랜드와 설정 영역의 역할을 분리한다.
+2. 사이드바 헤더는 제품 로고 대신 설정 아이콘을 사용하고, 메인 헤더만 Trunk RAG 브랜드 lockup을 유지한다.
+3. 명시 지시 없는 public blocker 구현, upload review live execution, GraphRAG 재개, 데스크톱 패키징 재착수는 수행하지 않는다.
+
+완료 기준:
+- 사이드바에는 제품 로고 대신 설정 아이콘이 보여야 한다.
+- 메인 헤더에는 Trunk RAG 브랜드 lockup이 유지되어야 한다.
+- 사이드바 런타임/컬렉션 영역이 좁은 폭에서 겹치거나 넘치지 않아야 한다.
+- 관련 e2e 테스트와 하네스 검증이 통과해야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-28):
+- `A-Next82`에서 첫 실행/복구 체크리스트 UI와 문서/테스트 보강을 완료했다.
+- 사용자 스크린샷 기준으로 사이드바와 메인 헤더의 브랜드 마크 중복, 사이드바 런타임 요약 장문 wrapping, 컬렉션 2열 컨트롤 깨짐을 정리한다.
+- 같은 `codex/loop-089-first-run-recovery-check` 브랜치에서 first-run UI polish 후속 커밋으로 진행한다.
+
+closeout 메모 (2026-04-28):
+- `/app` 사이드바 헤더에서 Trunk RAG 브랜드 마크를 제거하고 설정 아이콘 + `Settings` 구조로 변경했다.
+- 메인 헤더에는 Trunk RAG 브랜드 lockup을 유지해 제품 신호를 한 곳으로 모았다.
+- 사이드바 런타임 요약을 짧게 줄이고, 컬렉션 select와 보조 설명 컨트롤을 1열로 정리해 좁은 폭에서 겹침을 줄였다.
+- e2e는 사이드바 브랜드 마크 부재, 설정 아이콘 존재, 기본 질의 요약의 과도한 URL 노출 방지를 확인하도록 보강했다.
+- 실제 `/app` 1394x625 렌더링에서 `sidebar_brand_marks=0`, `settings_icons=1`, `has_horizontal_overflow=false`를 확인했다.
+- 검증은 `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py -> 11 passed`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과로 마감한다.
+
+### A-Next84. Await next-track after app UI polish (현재 active)
+1. app UI polish 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
 2. 다음 track이 정해지면 필요 시 새 작업 브랜치를 만들고 TODO/NEXT active를 재정렬한다.
 3. 명시 지시 없는 public blocker 구현, upload review live execution, GraphRAG 재개, 데스크톱 패키징 재착수는 수행하지 않는다.
 
 완료 기준:
-- 사용자가 user-facing release polish, 릴리즈 체크리스트 실측, 다른 MVP/V1/V1.5 track, 또는 대기 유지를 명시해야 한다.
+- 사용자가 릴리즈 체크리스트 실측, PR/merge 후속, 다른 MVP/V1/V1.5 track, 또는 대기 유지를 명시해야 한다.
 - 새 track을 진행한다면 TODO/NEXT active가 해당 track으로 재정렬되어야 한다.
 
 검증:
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 진행 메모 (2026-04-28):
-- `A-Next82`에서 첫 실행/복구 체크리스트 UI와 문서/테스트 보강을 완료했다.
-- 다음 추천 후보는 릴리즈 체크리스트 실측 또는 남은 user-facing copy polish다.
+- `A-Next83`에서 `/app` 사이드바/헤더 UI polish와 visual render check를 완료했다.
+- 다음 추천 후보는 이 브랜치 PR 생성/merge 후 릴리즈 체크리스트 실측이다.
 
 ### B. 성능/품질 게이트 (완료: 2026-03-15)
 1. 토큰 청킹 파라미터 재탐색

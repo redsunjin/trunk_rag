@@ -226,18 +226,16 @@ function syncDefaults() {
 function formatRuntimeProfile(data) {
   const status = data.runtime_profile_status || "unknown";
   const scope = data.runtime_profile_scope || "-";
-  const message = data.runtime_profile_message || "";
   const recommendation = data.runtime_profile_recommendation || "";
   const budgetProfile = data.runtime_query_budget_profile || "-";
-  const budgetSummary = data.runtime_query_budget_summary || "";
   const embeddingStatus = data.embedding_fingerprint_status || "-";
-  const embeddingMessage = data.embedding_fingerprint_message || "";
+  const timeout = data.query_timeout_seconds ?? "-";
+  const model = data.default_llm_model || "-";
+  const needsAction = status !== "verified" && recommendation;
   return (
-    `런타임 프로파일: ${status} (${scope}) | budget=${budgetProfile} | ${message}` +
-    `${recommendation ? ` | next: ${recommendation}` : ""}` +
-    `${budgetSummary ? ` | budget_summary: ${budgetSummary}` : ""}` +
-    `${embeddingStatus ? ` | embedding=${embeddingStatus}` : ""}` +
-    `${embeddingMessage ? ` | embedding_next: ${embeddingMessage}` : ""}`
+    `런타임: ${status} (${scope}) | model=${model} | timeout=${timeout}s | ` +
+    `budget=${budgetProfile} | embedding=${embeddingStatus}` +
+    `${needsAction ? ` | next: ${recommendation}` : ""}`
   );
 }
 
@@ -273,7 +271,7 @@ function formatOpsBaseline(data) {
   const missingKeys = Array.isArray(data.missing_keys) && data.missing_keys.length
     ? ` | missing=${data.missing_keys.join(",")}`
     : "";
-  return `최근 ops-baseline: status=${status} ready=${Boolean(data.ready)} generated_at=${generatedAt} | pass_rate=${passRate} | score=${score} | p95_ms=${p95}${missingKeys}${diagnostics}`;
+  return `최근 ops-baseline: ${status} | ready=${Boolean(data.ready)} | pass=${passRate} | score=${score} | p95=${p95}ms | generated=${generatedAt}${missingKeys}${diagnostics}`;
 }
 
 async function loadOpsBaselineStatus() {
@@ -349,8 +347,7 @@ function applyRuntimeDefaults(data, force = false) {
   runtimeDefaultsLoaded = true;
 
   if (runtimeSummary) {
-    const baseUrlText = runtimeBaseUrl ? ` | ${runtimeBaseUrl}` : "";
-    runtimeSummary.textContent = `기본 질의 설정: ${runtimeProvider} / ${runtimeModel}${baseUrlText}`;
+    runtimeSummary.textContent = `기본 질의 설정: ${runtimeProvider} / ${runtimeModel}`;
   }
   if (runtimeProfileMsg) {
     runtimeProfileMsg.textContent = formatRuntimeProfile(data);

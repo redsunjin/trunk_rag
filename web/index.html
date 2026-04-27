@@ -14,10 +14,16 @@
 
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <div class="brand-lockup sidebar-brand">
-          <img class="brand-mark small" src="/assets/trunk-rag-mark.svg" alt="" aria-hidden="true">
-          <div>
-            <p class="brand-kicker">Trunk RAG</p>
+        <div class="sidebar-tool-lockup">
+          <span class="settings-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M4 7h10M18 7h2M4 17h2M10 17h10" />
+              <circle cx="16" cy="7" r="2.5" />
+              <circle cx="8" cy="17" r="2.5" />
+            </svg>
+          </span>
+          <div class="sidebar-title">
+            <p class="brand-kicker">Local controls</p>
             <h2>Settings</h2>
           </div>
         </div>
@@ -47,7 +53,7 @@
             </div>
           </div>
           <small id="collectionHint" class="helper-text">컬렉션 정보를 로딩 중입니다.</small>
-          <div style="display:flex;gap:8px;align-items:center;margin:12px 0 8px;">
+          <div class="sidebar-inline-control">
             <button id="advancedSettingsToggle" class="secondary-btn" type="button">고급 설정 펼치기</button>
             <small class="helper-text" style="margin-top:0;">기본 모드에서는 권장 설정을 자동 사용합니다.</small>
           </div>
@@ -101,7 +107,7 @@
           <p id="uploadDefaultsSummary" class="status-msg" style="margin-bottom:10px;">
             기본 업로드 메타데이터를 계산 중입니다.
           </p>
-          <div style="display:flex;gap:8px;align-items:center;margin:0 0 12px;">
+          <div class="sidebar-inline-control">
             <button id="uploadMetadataToggle" class="secondary-btn" type="button">메타데이터 수정</button>
             <small class="helper-text" style="margin-top:0;">기본 경로에서는 자동 파일명과 컬렉션 기본값을 사용합니다.</small>
           </div>

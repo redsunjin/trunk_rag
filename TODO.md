@@ -178,7 +178,8 @@
 | LOOP-087 | done | V1 product identity/icon pass | `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-088 | done | Brand PR merge/branch cleanup follow-up | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-089 | done | First-run recovery guide usability check | `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-090 | active | Await next-track after first-run recovery polish | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-090 | done | App sidebar/header UI polish | `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-091 | active | Await next-track after app UI polish | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -2534,25 +2535,57 @@ closeout 메모 (2026-04-28):
 - README/SPEC에 첫 실행/복구 체크리스트와 Ollama/임베딩/Reindex 복구 경로를 반영했다.
 - 검증은 `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py -> 11 passed`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과로 마감한다.
 
-## 현재 Active Loop (LOOP-090)
+## 완료 Loop (LOOP-090)
 
 목표:
-- first-run recovery polish 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
+- `/app` 화면에서 사이드바 로고 중복과 좁은 폭 레이아웃 깨짐을 정리해 메인 브랜드와 설정 영역의 역할을 분리한다.
+
+범위:
+- 포함: 사이드바 헤더 설정 아이콘 전환, 중복 브랜드 마크 제거, 사이드바 런타임 요약/컬렉션 컨트롤 레이아웃 정리, UI e2e 확인, TODO/NEXT/SPEC 현행화
+- 제외: 명시 지시 없는 public blocker 구현, upload review live execution 구현, GraphRAG 재개, 데스크톱 패키징 재착수
+
+완료 기준:
+- 사이드바에는 제품 로고 대신 설정 아이콘이 보여야 한다.
+- 메인 헤더에는 Trunk RAG 브랜드 lockup이 유지되어야 한다.
+- 사이드바 런타임/컬렉션 영역이 좁은 폭에서 겹치거나 넘치지 않아야 한다.
+- 관련 e2e 테스트와 하네스 검증이 통과해야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-28):
+- `LOOP-089`에서 첫 실행/복구 체크리스트 UI와 문서/테스트 보강을 완료했다.
+- 사용자 스크린샷 기준으로 사이드바와 메인 헤더의 브랜드 마크 중복, 사이드바 런타임 요약 장문 wrapping, 컬렉션 2열 컨트롤 깨짐을 정리한다.
+- 같은 `codex/loop-089-first-run-recovery-check` 브랜치에서 first-run UI polish 후속 커밋으로 진행한다.
+
+closeout 메모 (2026-04-28):
+- `/app` 사이드바 헤더에서 Trunk RAG 브랜드 마크를 제거하고 설정 아이콘 + `Settings` 구조로 변경했다.
+- 메인 헤더에는 Trunk RAG 브랜드 lockup을 유지해 제품 신호를 한 곳으로 모았다.
+- 사이드바 런타임 요약을 짧게 줄이고, 컬렉션 select와 보조 설명 컨트롤을 1열로 정리해 좁은 폭에서 겹침을 줄였다.
+- e2e는 사이드바 브랜드 마크 부재, 설정 아이콘 존재, 기본 질의 요약의 과도한 URL 노출 방지를 확인하도록 보강했다.
+- 실제 `/app` 1394x625 렌더링에서 `sidebar_brand_marks=0`, `settings_icons=1`, `has_horizontal_overflow=false`를 확인했다.
+- 검증은 `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py -> 11 passed`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과로 마감한다.
+
+## 현재 Active Loop (LOOP-091)
+
+목표:
+- app UI polish 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
 
 범위:
 - 포함: 다음 track 선택, 필요 시 새 작업 브랜치 생성, TODO/NEXT active 재정렬
 - 제외: 명시 지시 없는 public blocker 구현, upload review live execution 구현, GraphRAG 재개, 데스크톱 패키징 재착수
 
 완료 기준:
-- 사용자가 user-facing release polish, 릴리즈 체크리스트 실측, 다른 MVP/V1/V1.5 track, 또는 대기 유지를 명시해야 한다.
+- 사용자가 릴리즈 체크리스트 실측, PR/merge 후속, 다른 MVP/V1/V1.5 track, 또는 대기 유지를 명시해야 한다.
 - 새 track을 진행한다면 TODO/NEXT active가 해당 track으로 재정렬되어야 한다.
 
 검증:
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 진행 메모 (2026-04-28):
-- `LOOP-089`에서 첫 실행/복구 체크리스트 UI와 문서/테스트 보강을 완료했다.
-- 다음 추천 후보는 릴리즈 체크리스트 실측 또는 남은 user-facing copy polish다.
+- `LOOP-090`에서 `/app` 사이드바/헤더 UI polish와 visual render check를 완료했다.
+- 다음 추천 후보는 이 브랜치 PR 생성/merge 후 릴리즈 체크리스트 실측이다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
