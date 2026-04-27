@@ -176,7 +176,8 @@
 | LOOP-085 | done | V1.5 branch publication decision | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-086 | done | V1.5 handoff PR review/merge follow-up | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-087 | done | V1 product identity/icon pass | `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-088 | active | Await next-track instruction after brand pass | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-088 | done | Brand PR merge/branch cleanup follow-up | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-089 | active | Await next-track after brand merge cleanup | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -2468,7 +2469,7 @@ closeout 메모 (2026-04-27):
 - `README.md` 상단에 wordmark를 추가했고, `SPEC.md`에 브랜드 자산/API/UI 범위를 반영했다.
 - 검증은 `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py -> 11 passed`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과로 마감한다.
 
-## 현재 Active Loop (LOOP-088)
+## 완료 Loop (LOOP-088)
 
 목표:
 - V1 brand pass 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
@@ -2492,6 +2493,33 @@ sync/next-track review (2026-04-27):
 - `codex/loop-087-brand-identity`를 `origin/codex/loop-087-brand-identity`로 push하고 upstream을 연결했다.
 - 추천 즉시 작업은 새 기능 착수보다 브랜드 브랜치 PR 생성/리뷰/merge로 `main` 기준선을 먼저 맞추는 것이다.
 - 브랜드 merge 이후 다음 구현 후보는 user-facing release polish 또는 첫 실행/복구 가이드 실사용 점검이며, public promotion blocker 구현, upload review live execution, GraphRAG, 데스크톱 패키징은 별도 명시 전까지 계속 제외한다.
+
+closeout 메모 (2026-04-27):
+- PR `https://github.com/redsunjin/trunk_rag/pull/6`을 생성하고 ready 전환 후 merge했다.
+- merge commit은 `76a20feba56d7c2c82c0cc90cd5a95b3e6151645`이며, 로컬 `main`과 `origin/main`은 해당 커밋에 동기화됐다.
+- 원격 `codex/loop-087-brand-identity`는 PR merge 후 삭제됐고 fetch prune으로 로컬 추적 ref도 정리했다.
+- stale local branch `docs/version-roadmap-v2-architecture`, `feature/loop-007-manifest-decouple`, `feature/loop-017-tool-registry-skeleton`, `feature/loop-027-actor-policy-source`, `feature/loop-028-actor-policy-resolver`, `feature/loop-029-admin-auth-gate`, `feature/loop-030-preview-audit-contract`, `feature/loop-031-preview-seed-sink`, `feature/v1.5-agent-ready-runtime`을 정리했다.
+- 원격 `feature/loop-007-manifest-decouple`은 `origin/main`에 병합된 상태로 삭제했고, 원격 `feature/v1.5-agent-ready-runtime`은 `git cherry` 기준 patch-equivalent 반영을 확인한 뒤 삭제했다.
+
+## 현재 Active Loop (LOOP-089)
+
+목표:
+- brand PR merge/branch cleanup 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
+
+범위:
+- 포함: 다음 track 선택, 필요 시 새 작업 브랜치 생성, TODO/NEXT active 재정렬
+- 제외: 명시 지시 없는 public blocker 구현, upload review live execution 구현, GraphRAG 재개, 데스크톱 패키징 재착수
+
+완료 기준:
+- 사용자가 user-facing release polish, 첫 실행/복구 가이드 실사용 점검, 다른 MVP/V1/V1.5 track, 또는 대기 유지를 명시해야 한다.
+- 새 track을 진행한다면 TODO/NEXT active가 해당 track으로 재정렬되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-27):
+- `LOOP-088`에서 브랜드 PR merge와 stale branch cleanup을 완료했다.
+- 현재 추천 후보는 user-facing release polish 또는 첫 실행/복구 가이드 실사용 점검이다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
