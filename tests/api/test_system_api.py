@@ -109,6 +109,16 @@ def test_rag_docs_returns_200(client):
     assert isinstance(body["docs"], list)
 
 
+def test_brand_assets_are_served(client):
+    response = client.get("/assets/trunk-rag-mark.svg")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("image/svg+xml")
+    assert "Trunk RAG mark" in response.text
+
+    unsupported = client.get("/assets/not-an-image.txt")
+    assert unsupported.status_code == 404
+
+
 def test_rag_doc_success_and_404(client):
     docs = app_api.list_target_docs()
     assert docs, "테스트용 문서가 최소 1개 이상 필요합니다."

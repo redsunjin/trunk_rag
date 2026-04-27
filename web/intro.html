@@ -3,16 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>doc_rag intro</title>
+  <title>Trunk RAG intro</title>
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="light-theme">
   <div class="app-container">
     <main class="main-content" style="display:flex;align-items:center;justify-content:center;">
-      <section class="card" style="max-width:700px;width:100%;">
-        <h2 style="margin-bottom:12px;">doc_rag Local Server</h2>
-        <p class="status-msg" style="margin-bottom:16px;">
+      <section class="intro-panel">
+        <div class="brand-lockup intro-brand">
+          <img class="brand-mark" src="/assets/trunk-rag-mark.svg" alt="" aria-hidden="true">
+          <div>
+            <p class="brand-kicker">Local-first RAG</p>
+            <h1>Trunk RAG</h1>
+          </div>
+        </div>
+        <p class="intro-copy">
           폐쇄망/로컬 환경용 경량 RAG 웹 서버입니다. 검증된 기본 경로는 `run_doc_rag.bat`로 시작해 `/intro`에서 상태를 확인한 뒤 `/app` 또는 `/admin`으로 진입하는 흐름입니다.
         </p>
 
@@ -24,13 +31,13 @@
         <p id="runtimeProfileMsg" class="status-msg" style="margin-bottom:18px;">런타임 프로파일을 확인 중입니다.</p>
         <p id="releaseGuideMsg" class="status-msg" style="margin-bottom:18px;">기본 복구 경로를 확인 중입니다.</p>
 
-        <div class="card" style="padding:16px;background:#f8f9fa;box-shadow:none;border:1px solid #dee2e6;margin-bottom:16px;">
+        <div class="info-panel">
           <h3 style="margin-bottom:10px;">현재 운영 범위</h3>
           <p class="status-msg" style="margin-bottom:8px;">포함: 인덱싱, 질의, 업로드 요청, 관리자 승인, 운영 게이트</p>
           <p class="status-msg">제외: GraphRAG 운영, 무거운 rerank, 설치형 데스크톱 제품화</p>
         </div>
 
-        <div class="card" style="padding:16px;background:#f8f9fa;box-shadow:none;border:1px solid #dee2e6;margin-bottom:16px;">
+        <div class="info-panel">
           <h3 style="margin-bottom:10px;">최근 Ops Baseline</h3>
           <p id="opsBaselineMsg" class="status-msg">최근 ops-baseline 게이트 상태를 확인 중입니다.</p>
         </div>

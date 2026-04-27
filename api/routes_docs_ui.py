@@ -65,6 +65,22 @@ def styles_file() -> FileResponse:
     return FileResponse(css_path, media_type="text/css")
 
 
+@router.get("/assets/{file_name}")
+def asset_file(file_name: str) -> FileResponse:
+    safe_name = file_name.strip()
+    allowed_suffixes = {".svg", ".png", ".ico"}
+    if Path(safe_name).suffix.lower() not in allowed_suffixes:
+        raise HTTPException(status_code=404, detail="asset file not found")
+    asset_path = (_web_dir() / "assets" / safe_name).resolve()
+    asset_root = (_web_dir() / "assets").resolve()
+    if asset_root not in asset_path.parents:
+        raise HTTPException(status_code=404, detail="asset file not found")
+    if not asset_path.exists():
+        raise HTTPException(status_code=404, detail="asset file not found")
+    media_type = "image/svg+xml" if asset_path.suffix.lower() == ".svg" else None
+    return FileResponse(asset_path, media_type=media_type)
+
+
 @router.get("/js/{file_name}")
 def script_file(file_name: str) -> FileResponse:
     safe_name = file_name.strip()

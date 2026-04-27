@@ -83,6 +83,7 @@
 - `/intro` 인트로 페이지, `/app` 메인 RAG UI 제공
 - `/admin` 관리자 상태 페이지 제공(MVP)
 - `/styles.css` 경로에서 공통 스타일 제공
+- `/assets/{file_name}` 경로에서 SVG/PNG/ICO 브랜드 자산 제공
 
 ### RAG 파이프라인
 - Markdown 문서 로딩
@@ -109,6 +110,7 @@
 
 ### UI/UX
 - 공통 `styles.css` 스타일 패턴을 현재 `web/index.html`에 반영
+- Trunk RAG SVG 브랜드 마크/워드마크/favicon 추가 및 intro/app/admin 헤더에 적용
 - 공통 레이아웃 클래스 적용(`app-container`, `sidebar`, `main-content`, `card`)
 - 화면 구성: 좌측(설정/헬스/문서목록), 우측(채팅/MD 뷰어)
 - 인트로/관리자 페이지 분리(`web/intro.html`, `web/admin.html`)
@@ -162,6 +164,7 @@
 - `web/index.html`: 브라우저 UI
 - `web/admin.html`: 관리자 상태 UI
 - `web/styles.css`: 공통 스타일
+- `web/assets/*.svg`: Trunk RAG 브랜드 마크/워드마크/favicon
 - `web/js/*.js`: 프론트 로직 모듈
 - `docs/UPLOAD_ADMIN_WORKFLOW.md`: 업로드/갱신 관리자 운영 설계
 - `docs/RELEASE_WEB_MVP_CHECKLIST.md`: 배포형 웹 MVP 릴리즈 체크리스트

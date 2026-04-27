@@ -1,5 +1,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+<p>
+  <img src="web/assets/trunk-rag-wordmark.svg" alt="Trunk RAG - Local-first retrieval for private documents" width="360">
+</p>
 
 # Trunk RAG (Local Server)
 
@@ -20,6 +23,7 @@
 - 제품 성격: 폐쇄망/로컬 환경용 경량 RAG 웹 서버
 - 검증된 기본 경로: `run_doc_rag.bat` -> `/intro` -> `/app`
 - 현재 중심 기능: 인덱싱, 질의, 업로드 요청, 관리자 승인, 운영 게이트
+- 현재 제품 표기: Trunk RAG SVG mark/wordmark/favicon을 `/intro`, `/app`, `/admin`, README에 적용
 - 현재 범위 밖: GraphRAG 운영, 무거운 rerank, 설치형 데스크톱 제품화
 
 현재 문서는 과장된 성능 약속보다 "지금 무엇이 준비돼 있고 어떤 경로가 검증됐는지"를 우선 보여 주는 기준으로 유지합니다.
@@ -117,6 +121,7 @@
 - `web/admin.html`: 관리자 상태 페이지(MVP)
 - `web/js/*.js`: 프론트엔드 로직 모듈
 - `web/styles.css`: 공통 스타일
+- `web/assets/*.svg`: Trunk RAG 브랜드 마크, 워드마크, favicon
 - `scripts/validate_rag_doc.py`: 등록 전 문서 검증 스크립트
 - `scripts/benchmark_multi_collection.py`: 단일/다중 컬렉션 검색 비교 벤치
 - `scripts/benchmark_token_chunking.py`: char/token 청킹 비교 벤치 스크립트
