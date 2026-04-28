@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-106`
-- current_active_title: `Graph-lite graph-candidate answer quality refinement`
+- current_active_id: `LOOP-107`
+- current_active_title: `Await next-track after graph-lite quality refinement`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -186,7 +186,7 @@
 
 - 완료 루프: `LOOP-103 Await next-track after quality candidate comparison`
 - 완료 루프: `LOOP-104 Graph-lite relation sidecar feasibility gate`
-- 현재 active: `LOOP-106 Graph-lite graph-candidate answer quality refinement`
+- 현재 active: `LOOP-107 Await next-track after graph-lite quality refinement`
 - 선택 이유: 들어오는 문서 데이터에서 인물/기관/국가/사건 간 관계가 RAG 품질을 좌우할 수 있으므로, full GraphRAG 재개 전에 로컬 경량 관계 계층의 품질 개선 가능성을 검증한다.
 - 범위 제한: full Neo4j/GraphRAG 운영 도입이 아니라, 로컬 graph-lite 관계 스냅샷과 관계 검색 PoC로 제한한다. 기존 `/query` 기본 경로는 대체하지 않고 semantic/vector fallback을 유지한다.
 - 병행 작업: 코드/테스트 구현은 별도 브랜치 `codex/loop-104-graph-lite-sidecar`에서 진행한다. 이 정리 브랜치 `codex/loop-103-track-sync`는 TODO/NEXT/README 현행화만 담당한다.
@@ -214,13 +214,23 @@
 - live eval: `qwen3.5:9b-nvfp4`, `quality_mode=quality`, `quality_stage=quality`, `graph-candidate` 기준 `3 cases`, `2 passed`, `pass_rate=0.6667`, `avg_weighted_score=0.8667`, `p95_latency_ms=15272.702`, `support_pass_rate=1.0`, `source_route_pass_rate=1.0`.
 - 판단: graph-lite는 관계 근거 주입 계층으로 동작했고 support/source route는 안정적이지만, `GQ-09`는 답변이 관계 연쇄 표현과 평가 `must_include_any` 일부를 놓쳐 다음 루프에서 보정한다.
 
-## 2026-04-29 Graph-lite Quality Refinement Target
+## 2026-04-29 Graph-lite Quality Refinement Closeout
 
-- 현재 active: `LOOP-106 Graph-lite graph-candidate answer quality refinement`
+- 완료 루프: `LOOP-106 Graph-lite graph-candidate answer quality refinement`
 - 목표: graph-lite context를 받은 Quality 답변이 관계형 질문에서 평가 기준을 더 안정적으로 충족하도록 `GQ-09` 실패 원인을 좁힌다.
 - 범위: 답변 정책/프롬프트/평가 fixture 정합성 점검, graph-candidate live eval 재실행, generic/sample-pack 및 Balanced 비적용 회귀 확인.
 - 제외: full Neo4j/GraphRAG 운영 도입, Balanced 기본 graph-lite 자동 적용, output token 예산 무조건 증가, UI 기본 Quality 모델 고정, 유료 API 호출.
-- 완료 기준: graph-candidate quality eval이 `3/3 pass`로 개선되거나, 남은 실패가 fixture/문서 한계로 명확히 분리되어 go/no-go 판단이 문서화되어야 한다.
+- 구현 결과: 관계형/확산 질문 프롬프트를 보강하고, 명시적으로 `연쇄`/`흐름`을 묻는 답변이 해당 관계 표현을 누락하면 질문 구조 기반의 짧은 관계 lead를 붙이는 후처리 guard를 추가했다.
+- live eval: 재시작한 로컬 서버 기준 `qwen3.5:9b-nvfp4`, `quality_mode=quality`, `quality_stage=quality`, `graph-candidate`가 `3 cases`, `3 passed`, `pass_rate=1.0`, `avg_weighted_score=0.9167`, `p95_latency_ms=12973.058`, `support_pass_rate=1.0`, `source_route_pass_rate=1.0`으로 통과했다.
+- 회귀 결과: `tests/test_query_service.py tests/test_graph_lite_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_compare_rag_quality.py -> 65 passed`.
+- 판단: graph-lite Quality opt-in은 graph-candidate 질문군에서 품질 개선 신호가 확인됐지만, 아직 고급 Quality 경로 전용이다. 기본 Balanced 경로로 승격하지 않는다.
+
+## 2026-04-29 Await Next Track
+
+- 현재 active: `LOOP-107 Await next-track after graph-lite quality refinement`
+- 상태: LOOP-104/105/106 graph-lite 트랙은 relation snapshot PoC, Quality opt-in 통합, graph-candidate 품질 보정까지 완료됐다.
+- 다음 선택지: 실제 사용자 문서 기반 graph-lite snapshot 생성 경로, query feedback fixture 승격, Quality 모델 후보 재비교, 또는 UI에서 Quality/graph-lite 상태 노출 정리 중 하나를 다음 track으로 선택한다.
+- 기본 제한: full GraphRAG/Neo4j 운영 도입과 Balanced 기본 graph-lite 자동 적용은 아직 하지 않는다.
 
 ## 0. 2026-03-13 우선순위 재정렬
 

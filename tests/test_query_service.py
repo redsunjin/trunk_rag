@@ -47,6 +47,34 @@ def test_postprocess_answer_keeps_generic_comparison_answer_without_sample_pack_
     assert resolved == answer
 
 
+def test_postprocess_answer_adds_generic_relation_chain_lead():
+    answer = (
+        "뉴턴의 국장은 볼테르에게 충격을 주었고, 이 충격은 유럽 계몽주의 지성계에 "
+        "확산되는 계기가 되었습니다."
+    )
+
+    resolved = query_service.postprocess_answer(
+        "뉴턴의 국장, 볼테르의 충격, 프랑스/독일 계몽주의 확산이 어떤 연쇄로 이어졌는지 설명해줘.",
+        answer,
+    )
+
+    assert resolved.startswith("이 연쇄는 뉴턴의 국장, 볼테르의 충격, 프랑스/독일 계몽주의 확산")
+    assert "지식 전파" in resolved
+    assert "사상 확산" in resolved
+    assert answer in resolved
+
+
+def test_postprocess_answer_does_not_duplicate_relation_chain_lead():
+    answer = "이 연쇄는 뉴턴의 국장과 볼테르의 충격이 계몽주의 확산으로 이어지는 흐름입니다."
+
+    resolved = query_service.postprocess_answer(
+        "뉴턴의 국장과 볼테르의 충격이 어떤 연쇄로 이어졌는지 설명해줘.",
+        answer,
+    )
+
+    assert resolved == answer
+
+
 def test_postprocess_answer_adds_sample_pack_symbolic_lead_when_profile_enabled(monkeypatch):
     monkeypatch.setenv(query_service.QUERY_PROFILE_ENV_KEY, query_service.QUERY_PROFILE_SAMPLE_PACK)
     answer = "뉴턴의 국장은 영국 사회에서 과학이 왕권과 동등한 권위를 얻었음을 보여줬습니다."
@@ -149,6 +177,9 @@ def test_get_prompt_template_defaults_to_generic_profile(monkeypatch):
     assert query_service.get_query_profile() == query_service.QUERY_PROFILE_GENERIC
     assert "로컬 RAG 질의응답 어시스턴트" in messages[0].content
     assert "유럽 과학사" not in messages[0].content
+    assert "지식 전파" in messages[0].content
+    assert "연쇄" in messages[0].content
+    assert "이 연쇄는" in messages[0].content
     assert "Here's a thinking process" in messages[0].content
     assert "태그 앞뒤에 설명" in messages[1].content
 
@@ -161,6 +192,9 @@ def test_get_prompt_template_supports_sample_pack_profile(monkeypatch):
 
     assert query_service.get_query_profile() == query_service.QUERY_PROFILE_SAMPLE_PACK
     assert "유럽 과학사 질의응답 어시스턴트" in messages[0].content
+    assert "지식 전파" in messages[0].content
+    assert "연쇄" in messages[0].content
+    assert "이 연쇄는" in messages[0].content
 
 
 def test_extract_lexical_query_terms_filters_wrapper_terms_and_particles():
