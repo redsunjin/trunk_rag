@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-099`
-- current_active_title: `Await next-track after query mode/feedback loop`
+- current_active_id: `LOOP-101`
+- current_active_title: `Await next-track after feedback fixture candidate queue`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -155,6 +155,17 @@
 - 피드백: 답변 아래 `좋음`/`부족함`/`정밀 답변` 버튼은 `POST /query-feedback`를 호출하며 기본 저장 위치는 `chroma_db/query_feedback.jsonl`이다. `정밀 답변`은 피드백 저장 후 즉시 quality 단계 답변을 추가 생성한다.
 - 검증: `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_feedback_service.py tests/e2e/test_web_flow_playwright.py -> 22 passed`; `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile api/schemas.py api/routes_query.py services/feedback_service.py app_api.py -> pass`; `node --check web/js/app_page.js -> pass`; `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`.
 - 다음 추천: 피드백 JSONL을 answer-level fixture 후보로 변환하는 작은 큐를 만들거나, quality 모델 후보를 e4b/외부 호환 모델로 비교해 `Quality` 모드 기본 후보를 정한다.
+
+## 2026-04-28 Main Sync and Feedback Fixture Candidate Snapshot
+
+- 완료 루프: `LOOP-100 Query feedback fixture candidate export queue`
+- main 동기화: `codex/loop-089-first-run-recovery-check`가 `origin/main`보다 7커밋 앞서 있었고 behind는 0이었다. `main`을 `9208837`까지 fast-forward 한 뒤 `origin/main`에 푸시해 `main...origin/main`을 `0/0`으로 맞췄다.
+- 작업 브랜치: 이후 새 브랜치 `codex/loop-100-feedback-fixture-candidates`에서 진행했다.
+- 코드 반영: `scripts/export_feedback_fixture_candidates.py`를 추가해 `chroma_db/query_feedback.jsonl`의 `negative`/`quality_request` 피드백을 `feedback-candidate` JSONL과 Markdown 리포트로 내보낸다.
+- 후보 정책: 자동으로 정식 fixture에 넣지 않는다. `suggested_fixture` 초안의 `must_include`/`must_include_any`는 비워 두고 사람이 채운 뒤 `evals/answer_level_eval_fixtures.jsonl`로 승격한다.
+- 현재 실측: 로컬 `chroma_db/query_feedback.jsonl`이 아직 없어 `docs/reports/QUERY_FEEDBACK_FIXTURE_CANDIDATES_2026-04-28.md`는 `feedback_records=0`, `candidates=0`으로 생성됐다.
+- 검증: `./.venv/bin/python -m pytest -q tests/test_export_feedback_fixture_candidates.py -> 6 passed`; `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/export_feedback_fixture_candidates.py -> pass`; `./.venv/bin/python scripts/export_feedback_fixture_candidates.py --output-jsonl docs/reports/query_feedback_fixture_candidates_2026-04-28.jsonl --output-report docs/reports/QUERY_FEEDBACK_FIXTURE_CANDIDATES_2026-04-28.md -> records=0 candidates=0`; `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`.
+- 다음 추천: `Quality` 모드의 기본 후보를 `gemma4:e4b`, 외부 OpenAI 호환 모델, 또는 LM Studio 후보로 비교하거나, 실제 피드백이 쌓인 뒤 후보 중 1-2개를 정식 fixture로 승격한다.
 
 ## 0. 2026-03-13 우선순위 재정렬
 

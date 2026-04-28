@@ -322,6 +322,18 @@ cd <repo>
 - 비교 게이트가 `blocked`이면 종료 코드 `1`을 반환합니다. 이는 모델 전환 보류 신호이며, 리포트 생성 실패와 구분해서 봅니다.
 - 2026-04-28 `gemma4:e2b` 비교 게이트는 `generic-baseline 3/3 pass`였지만 `sample-pack-baseline GQ-05` 실패로 전체 `blocked`였습니다.
 
+답변 피드백은 바로 정식 평가 fixture로 승격하지 않고 후보 큐로 먼저 내보냅니다.
+
+```powershell
+.venv\Scripts\python.exe scripts\export_feedback_fixture_candidates.py `
+  --output-jsonl docs\reports\query_feedback_fixture_candidates_2026-04-28.jsonl `
+  --output-report docs\reports\QUERY_FEEDBACK_FIXTURE_CANDIDATES_2026-04-28.md
+```
+
+- 기본 입력은 `chroma_db/query_feedback.jsonl`입니다.
+- `negative`, `quality_request` 피드백만 후보가 되며, `--include-positive`를 주면 positive 피드백도 낮은 우선순위 후보로 포함합니다.
+- 출력 후보는 `suggested_fixture` 초안을 포함하지만 `must_include`와 `must_include_any`는 사람이 채운 뒤 `evals/answer_level_eval_fixtures.jsonl`로 승격합니다.
+
 기본 회귀 게이트는 아래 한 명령으로 확인할 수 있습니다.
 
 ```powershell

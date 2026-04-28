@@ -187,7 +187,9 @@
 | LOOP-096 | done | RAG quality comparison gate for model decisions | `./.venv/bin/python -m pytest -q tests/test_eval_query_quality.py tests/test_compare_rag_quality.py tests/test_check_ops_baseline_gate.py` + `./.venv/bin/python scripts/eval_query_quality.py --bucket generic-baseline --bucket sample-pack-baseline --llm-provider ollama --llm-model gemma4:e2b --llm-base-url http://localhost:11434 --output-json docs/reports/query_answer_eval_2026-04-28_gemma4_e2b_quality.json --output-report docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-04-28_GEMMA4_E2B_QUALITY.md` + `./.venv/bin/python scripts/compare_rag_quality.py --bucket generic-baseline --bucket sample-pack-baseline --model gemma4:e2b --llm-base-url http://localhost:11434 --output-json docs/reports/rag_quality_model_comparison_2026-04-28_gemma4_e2b.json --output-report docs/reports/RAG_QUALITY_MODEL_COMPARISON_2026-04-28_GEMMA4_E2B.md` expected `blocked` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-097 | done | Await next-track after RAG quality gate introduction | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-098 | done | Semantic/balanced/quality query modes and feedback loop | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_feedback_service.py tests/e2e/test_web_flow_playwright.py` + `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile api/schemas.py api/routes_query.py services/feedback_service.py app_api.py` + `node --check web/js/app_page.js` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-099 | active | Await next-track after query mode/feedback loop | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-099 | done | Await next-track after query mode/feedback loop | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-100 | done | Query feedback fixture candidate export queue | `./.venv/bin/python -m pytest -q tests/test_export_feedback_fixture_candidates.py` + `./.venv/bin/python scripts/export_feedback_fixture_candidates.py --output-jsonl docs/reports/query_feedback_fixture_candidates_2026-04-28.jsonl --output-report docs/reports/QUERY_FEEDBACK_FIXTURE_CANDIDATES_2026-04-28.md` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-101 | active | Await next-track after feedback fixture candidate queue | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -2806,7 +2808,7 @@ closeout 메모 (2026-04-28):
 - 답변 아래 피드백 버튼은 `/query-feedback`를 호출해 `chroma_db/query_feedback.jsonl`에 로컬 JSONL로 저장한다.
 - 검증은 `tests/api/test_query_api.py tests/test_feedback_service.py tests/e2e/test_web_flow_playwright.py -> 22 passed`, `py_compile`, `node --check`, `roadmap_harness validate` 통과로 마감한다.
 
-## 현재 Active Loop (LOOP-099)
+## 완료 Loop (LOOP-099)
 
 목표:
 - query mode/feedback loop 도입 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
@@ -2824,6 +2826,55 @@ closeout 메모 (2026-04-28):
 
 진행 메모 (2026-04-28):
 - `LOOP-098`에서 semantic/balanced/quality 모드와 로컬 피드백 저장 경로를 추가했다.
+- `main`이 작업 브랜치보다 7커밋 뒤처진 상태였으므로 `main`을 `9208837`까지 fast-forward 하고 `origin/main`에 푸시했다.
+- 사용자가 추천 순서 진행을 요청해 다음 작업 트랙을 피드백 JSONL의 fixture 후보 큐로 확정했다.
+
+closeout 메모 (2026-04-28):
+- 다음 작업 트랙을 `Query feedback fixture candidate export queue`로 확정했다.
+
+## 완료 Loop (LOOP-100)
+
+목표:
+- `/app` 답변 피드백 JSONL을 사람이 검토할 수 있는 answer-level fixture 후보 큐로 내보낸다.
+
+범위:
+- 포함: `scripts/export_feedback_fixture_candidates.py`, 후보 JSONL/Markdown 리포트 출력, negative/quality_request 기본 필터, 중복 질문 정리, 테스트, README/SPEC/NEXT 현행화
+- 제외: 자동 fixture 승격, LLM judge, 실제 사용자 문서 fixture 대량 작성, quality 모델 실측 비교, GraphRAG 재개
+
+완료 기준:
+- `chroma_db/query_feedback.jsonl`이 없거나 비어 있어도 스크립트가 빈 후보 리포트를 안정적으로 생성해야 한다.
+- negative/quality_request 피드백은 `feedback-candidate` 항목과 `suggested_fixture` 초안으로 변환되어야 한다.
+- `must_include`와 `must_include_any`는 사람이 채우도록 비워 두어야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_export_feedback_fixture_candidates.py`
+- `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/export_feedback_fixture_candidates.py`
+- `./.venv/bin/python scripts/export_feedback_fixture_candidates.py --output-jsonl docs/reports/query_feedback_fixture_candidates_2026-04-28.jsonl --output-report docs/reports/QUERY_FEEDBACK_FIXTURE_CANDIDATES_2026-04-28.md`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-04-28):
+- `scripts/export_feedback_fixture_candidates.py`는 `negative`/`quality_request` 피드백을 기본 후보로 삼고, `--include-positive`로 positive 피드백도 낮은 우선순위 후보에 포함할 수 있다.
+- 후보는 `status=needs_fixture_review`, `priority`, `query_profile`, `collection_keys`, `observed_runtime`, `suggested_fixture`를 포함한다.
+- 현재 로컬에는 `chroma_db/query_feedback.jsonl`이 없어 `docs/reports/QUERY_FEEDBACK_FIXTURE_CANDIDATES_2026-04-28.md`는 `records=0`, `candidates=0` 상태로 생성됐다.
+
+## 현재 Active Loop (LOOP-101)
+
+목표:
+- feedback fixture candidate queue 도입 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
+
+범위:
+- 포함: 다음 track 선택, 필요 시 새 작업 브랜치 생성, TODO/NEXT active 재정렬
+- 제외: 명시 지시 없는 기본 모델 전환, LLM judge 도입, 사용자 문서 fixture 대량 작성, public blocker 구현, GraphRAG 재개, 데스크톱 패키징 재착수
+
+완료 기준:
+- 사용자가 quality 모델 후보 비교, 피드백 후보의 정식 fixture 승격, e2b 기본값 전환 보류/진행, 사용자 문서 세트 정리, PR/merge 후속, 또는 대기 유지를 명시해야 한다.
+- 새 track을 진행한다면 TODO/NEXT active가 해당 track으로 재정렬되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-28):
+- `LOOP-100`에서 피드백 JSONL을 fixture 후보 큐로 내보내는 스크립트와 빈 후보 리포트를 추가했다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

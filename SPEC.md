@@ -373,6 +373,7 @@
   "storage": "chroma_db/query_feedback.jsonl"
 }
 ```
+- fixture 승격은 자동으로 하지 않는다. `scripts/export_feedback_fixture_candidates.py`가 피드백을 `feedback-candidate` 큐로 내보내고, 사람이 `must_include`/`must_include_any`를 채운 뒤 answer-level fixture로 승격한다.
 
 ### POST `/admin/auth`
 - 목적: 관리자 인증코드 확인(초기 MVP)
