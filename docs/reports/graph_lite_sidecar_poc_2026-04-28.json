@@ -1,0 +1,96 @@
+{
+  "generated_at": "2026-04-28T14:35:27+00:00",
+  "contract_version": "graph_lite.relation_snapshot.v1",
+  "snapshot_dir": "docs/reports/graphrag_snapshot_2026-03-17",
+  "snapshot_stats": {
+    "collection_key": "all",
+    "source_docs": 5,
+    "section_hits": 21,
+    "nodes": 20,
+    "edges": 48,
+    "contract_version": "graph_lite.relation_snapshot.v1"
+  },
+  "fixture_bucket": "graph-candidate",
+  "summary": {
+    "questions": 3,
+    "hits": 3,
+    "fallbacks": 0,
+    "avg_latency_ms": 0.194,
+    "avg_relation_count": 8.0,
+    "max_hops": 2,
+    "limit": 8
+  },
+  "results": [
+    {
+      "id": "GQ-09",
+      "relation_shape": "scientist -> event -> intellectual diffusion",
+      "status": "hit",
+      "fallback_reason": null,
+      "query_entities": [
+        "enlightenment",
+        "newton",
+        "voltaire"
+      ],
+      "matched_entities": [
+        "enlightenment",
+        "helmholtz",
+        "leibniz",
+        "newton",
+        "siemens",
+        "voltaire"
+      ],
+      "relation_count": 8,
+      "latency_ms": 0.199
+    },
+    {
+      "id": "GQ-12",
+      "relation_shape": "lab -> people -> society -> industry",
+      "status": "hit",
+      "fallback_reason": null,
+      "query_entities": [
+        "german_physical_society",
+        "helmholtz",
+        "magnus_lab",
+        "siemens"
+      ],
+      "matched_entities": [
+        "german_physical_society",
+        "helmholtz",
+        "humboldt_university",
+        "magnus_lab",
+        "newton",
+        "siemens"
+      ],
+      "relation_count": 8,
+      "latency_ms": 0.166
+    },
+    {
+      "id": "GQ-15",
+      "relation_shape": "country -> institution -> scientist network",
+      "status": "hit",
+      "fallback_reason": null,
+      "query_entities": [
+        "ecole_polytechnique",
+        "humboldt_university",
+        "padua_university",
+        "royal_society"
+      ],
+      "matched_entities": [
+        "bologna_university",
+        "ecole_polytechnique",
+        "french_revolution",
+        "german_physical_society",
+        "great_fire_london",
+        "helmholtz",
+        "humboldt_university",
+        "magnus_lab",
+        "napoleonic_wars",
+        "padua_university",
+        "royal_society",
+        "siemens"
+      ],
+      "relation_count": 8,
+      "latency_ms": 0.216
+    }
+  ]
+}
