@@ -26,7 +26,8 @@
 - 현재 제품 표기: Trunk RAG SVG mark/wordmark/favicon을 `/intro`, `/app`, `/admin`, README에 적용
 - 현재 복구 안내: `/intro`와 `/app`는 기본 화면에 간단 상태를 표시하고, release/runtime/ops 세부 진단은 접힘 패널에서 표시
 - 현재 문서 흐름: 기본 번들 문서는 유럽 과학사 sample-pack 데모이며, 사용자 문서는 업로드 요청과 관리자 승인 후 반영
-- 현재 범위 밖: GraphRAG 운영, 무거운 rerank, 설치형 데스크톱 제품화
+- 현재 relation PoC: graph-lite JSONL 관계 스냅샷/인메모리 검색 계층을 실험용 내부 helper로 추가했으며, 기본 `/query` 경로에는 자동 연결하지 않음
+- 현재 범위 밖: full Neo4j/GraphRAG 운영, 무거운 rerank, 설치형 데스크톱 제품화
 
 현재 문서는 과장된 성능 약속보다 "지금 무엇이 준비돼 있고 어떤 경로가 검증됐는지"를 우선 보여 주는 기준으로 유지합니다.
 `/intro`, `/app`, `/ops-baseline/latest`는 최신 운영 게이트 상태를 같은 기준으로 보여 주고, `/app` 답변에는 경량 citation/support label을 함께 노출합니다.
@@ -59,6 +60,7 @@
 - 현재: `/query`는 runtime profile 기반 query budget(`single/multi`, `verified/experimental/not_recommended`)을 내부 정책으로 적용한다
 - 현재: `/query` context build는 MMR retrieval 뒤에 collection pool에서 lexical match가 강한 문서를 최대 2개까지 보강하고, 이어서 경량 lexical boost와 multi-collection coverage rerank로 문서 순서를 한 번 더 보정한다
 - 현재: `debug` trace는 `retrieval_strategy`, `lexical_query_terms`, `hybrid_candidate_merge_applied`, `hybrid_candidate_count`, `hybrid_scan_doc_count`, `hybrid_skipped_collections`, `coverage_rerank_applied`, `coverage_rerank_collection_count`를 남겨 경량 보정 적용 여부와 scan 비용을 확인할 수 있다
+- 현재: `services/graph_lite_service.py`는 full GraphRAG를 되살리지 않고 JSONL `entities/relations` 스냅샷을 읽어 relation-heavy 질문 감지, 인메모리 관계 검색, RAG context append contract를 제공한다. 이 helper는 opt-in PoC이며 기본 `/query`에는 자동 적용하지 않는다
 - 현재: `/health`는 `runtime_query_budget_*`, `embedding_fingerprint_*` 상태를 노출해 경량 경로와 인덱스 호환 상태를 먼저 보여 준다
 - 현재: reindex 시 컬렉션별 embedding fingerprint를 저장하고, `/query`는 mismatch를 invoke 전에 먼저 차단한다
 - 현재: `services/tool_registry_service.py`는 `search_docs`, `read_doc`, `list_collections`, `health_check`, `reindex`, upload approval 계열을 internal tool 후보로 등록한다
@@ -97,7 +99,7 @@
 - 원본 수집/크롤링
 - 대규모 자동 재작성 파이프라인
 - 무거운 rerank/multi-vector 파이프라인 기본 탑재
-- GraphRAG 통합/sidecar 운영
+- full Neo4j/GraphRAG 통합/sidecar 운영
 - 사용자용 agent runtime 또는 MCP 외부 tool orchestration
 
 ## Files
@@ -113,6 +115,7 @@
 - `services/tool_audit_sink_service.py`: V1.5 append-only audit sink protocol/null-memory sink
 - `services/mutation_executor_service.py`: V1.5 mutation executor selection seam/noop fallback/reindex candidate stub/upload review boundary noop
 - `services/agent_runtime_service.py`: V1.5 internal agent runtime entry draft
+- `services/graph_lite_service.py`: local JSONL relation snapshot loader/search/context append PoC
 - `core/actor_policy_manifest.py`: V1.5 actor policy manifest loader/normalizer
 - `core/*.py`: 설정/에러/HTTP 유틸
 - `config/actor_policy_manifest.json`: V1.5 actor policy source manifest
@@ -130,6 +133,7 @@
 - `scripts/benchmark_query_e2e.py`: `/query` E2E p95 벤치 스크립트
 - `scripts/eval_query_quality.py`: answer-level `/query` 품질 평가 스크립트
 - `scripts/compare_rag_quality.py`: 모델 후보별 RAG 품질 비교 게이트 스크립트
+- `scripts/benchmark_graph_lite_sidecar.py`: graph-lite relation snapshot retrieval PoC 벤치 스크립트
 - `scripts/check_ops_baseline_gate.py`: core 기본 컬렉션 상태와 `generic-baseline` 회귀 게이트를 한 번에 점검하는 스크립트
 - `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩 스크립트
 - `scripts/roadmap_harness.py`: `TODO.md`/`NEXT_SESSION_PLAN.md`의 루프 상태와 active 항목을 점검하는 스크립트
@@ -177,6 +181,7 @@
 - `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md`: Vector RAG 1차 answer-level baseline 실측 결과
 - `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-19_OPS_ANSWER_COMPLETENESS.md`: 최신 ops-baseline answer completeness 보정 결과
 - `docs/GRAPH_RAG_ARCHIVE_INDEX.md`: GraphRAG archive 문서 진입점
+- `docs/GRAPH_LITE_RELATION_SIDECAR_CONTRACT.md`: graph-lite relation sidecar PoC 계약
 - `docs/VECTORSTORE_POLICY.md`: 벡터스토어 운영/용량 정책
 - `docs/COLLECTION_ROUTING_POLICY.md`: 분야별 컬렉션/라우팅 정책
 - `docs/FUTURE_EXTERNAL_CONSTRAINTS.md`: 외부 제한사항 중 추후 적용 항목

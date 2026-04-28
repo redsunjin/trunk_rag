@@ -9,6 +9,7 @@
 - 본체 기본 answer-level 질문셋: [QUERY_EVAL_QUESTION_SET.md](/Users/Agent/ps-workspace/trunk_rag/docs/QUERY_EVAL_QUESTION_SET.md)
 - 본체 기본 회귀 게이트: `scripts/check_ops_baseline_gate.py` -> `generic-baseline`
 - sample-pack 호환성 평가는 `sample-pack-baseline`으로 별도 유지
+- 현재 graph-lite PoC 계약은 [GRAPH_LITE_RELATION_SIDECAR_CONTRACT.md](/Users/Agent/ps-workspace/trunk_rag/docs/GRAPH_LITE_RELATION_SIDECAR_CONTRACT.md)를 따른다. 이 계약은 full Neo4j/GraphRAG archive를 제품 기본 경로로 되살리는 것이 아니다.
 
 ## 아카이브 문서
 - [GRAPH_RAG_QUESTION_SET.md](/Users/Agent/ps-workspace/trunk_rag/docs/GRAPH_RAG_QUESTION_SET.md)

@@ -52,6 +52,7 @@
 - answer-level 평가 fixture + `/query` 품질 평가 스크립트(`evals/answer_level_eval_fixtures.jsonl`, `scripts/eval_query_quality.py`)
 - Vector RAG answer-level baseline 리포트(`docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md`)
 - GraphRAG 관련 문서/PoC 아카이브 유지
+- graph-lite JSONL 관계 스냅샷 로더/인메모리 검색/context append PoC 유지(기본 `/query` 자동 통합 없음)
 
 ### 제외(현재 단계)
 - 사용자 인증/권한
@@ -62,7 +63,7 @@
 - 원본 소스 자동 수집/크롤링
 - 대규모 자동 전처리(재작성/요약) 파이프라인 내장
 - cross-encoder rerank/multi-vector 기본 탑재
-- GraphRAG 통합/sidecar 운영
+- full Neo4j/GraphRAG 통합/sidecar 운영
 
 ## 완료된 작업
 ### 백엔드
@@ -95,6 +96,7 @@
 - 경량 lexical boost로 context 문서 순서 재조정
 - multi-collection 질문에서 상위 context가 한 컬렉션에 쏠리지 않게 하는 light coverage rerank
 - graph snapshot 기반 entity/relation 추출 PoC(아카이브)
+- graph-lite JSONL 관계 스냅샷 로더/인메모리 검색/context append PoC(기본 `/query` 자동 통합 없음)
 
 ### 품질/검증
 - API 회귀 테스트: `tests/api/test_system_api.py`
@@ -158,8 +160,10 @@
 - `desktop/electron/*`: Electron PoC 런타임/검증 스크립트
 - `desktop/electron/README.md`: 데스크톱 런처 사용 가이드
 - `services/graphrag_poc_service.py`: GraphRAG snapshot/benchmark 보조 서비스
+- `services/graph_lite_service.py`: JSONL `entities/relations` 스냅샷 로딩, relation-heavy detector, 인메모리 relation search, context append helper를 제공하는 graph-lite PoC
 - `scripts/eval_query_quality.py`: answer-level `/query` 품질 평가 하네스. 기본 평가 요청은 `debug=true`로 support/citation/source coverage를 함께 기록한다
 - `scripts/compare_rag_quality.py`: 모델 후보별 RAG 품질 비교 게이트. 동일 fixture/bucket/임계값으로 모델 전환 가능 여부를 판정한다
+- `scripts/benchmark_graph_lite_sidecar.py`: graph-lite relation snapshot retrieval viability 벤치. LLM 호출 없이 graph-candidate fixture의 hit/fallback/latency를 측정한다
 - `scripts/check_ops_baseline_gate.py`: runtime preflight + core 기본 컬렉션 상태 + `generic-baseline` 회귀 게이트/diagnostics 점검
 - `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩
 - `scripts/roadmap_harness.py`: 실행 큐 상태와 현재 active 항목 점검
@@ -175,6 +179,7 @@
 - `docs/RELEASE_WEB_MVP_CHECKLIST.md`: 배포형 웹 MVP 릴리즈 체크리스트
 - `docs/QUERY_EVAL_QUESTION_SET.md`: generic/sample-pack/graph 평가 질문셋
 - `docs/GRAPH_RAG_ARCHIVE_INDEX.md`: GraphRAG archive 문서 진입점
+- `docs/GRAPH_LITE_RELATION_SIDECAR_CONTRACT.md`: full GraphRAG가 아닌 graph-lite relation sidecar PoC 계약
 
 ## API 계약
 ### GET `/health`
