@@ -89,7 +89,7 @@ def query_api_error_handler(request: Request, exc: QueryAPIError) -> JSONRespons
 
 @app.exception_handler(RequestValidationError)
 async def query_validation_exception_handler(request: Request, exc: RequestValidationError):
-    if request.url.path not in {"/query", "/semantic-search"}:
+    if request.url.path not in {"/query", "/semantic-search", "/query-feedback"}:
         return await request_validation_exception_handler(request, exc)
 
     request_id = get_or_create_request_id(request)

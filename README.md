@@ -362,6 +362,7 @@ cd <repo>
 - `POST /reindex`: 문서 재인덱싱
 - `POST /semantic-search`: LLM 호출 없이 Chroma/MMR 기반 빠른 검색 결과 반환
 - `POST /query`: 질의(기본 core 컬렉션 `all`, 필요 시 최대 2개 컬렉션 선택)
+- `POST /query-feedback`: 답변 피드백을 로컬 append-only JSONL로 저장
 - `GET /rag-docs`: RAG 대상 문서 목록
 - `GET /rag-docs/{doc_name}`: 문서 원문(md) 조회
 - `POST /admin/auth`: 관리자 인증 코드 확인
@@ -389,7 +390,12 @@ cd <repo>
 현재 기본 `max_context_chars`는 미설정 시 `1500`입니다.
 `POST /reindex` 응답에는 실제 인덱싱에 사용된 `chunking` 설정이 포함됩니다.
 `POST /semantic-search`는 `/query`와 같은 컬렉션 라우팅과 embedding fingerprint guard를 사용하지만 LLM을 호출하지 않습니다.
-브라우저 `/app`은 질문 시 이 결과를 먼저 표시하고, RAG 답변은 별도 `/query` 요청으로 이어서 생성합니다.
+브라우저 `/app`은 질문 시 이 결과를 먼저 표시하고, 질의 모드에 따라 RAG 답변을 별도 `/query` 요청으로 이어서 생성합니다.
+질의 모드는 `semantic`, `balanced`, `quality`입니다.
+`semantic`은 LLM 없이 검색 결과만 보여 주며 `/query`에는 사용할 수 없습니다.
+`balanced`는 `gemma4:e2b` 빠른 답변을 기본으로 만들고, 복합 비교/근거 부족/문서 미확인 답변은 `quality` 단계로 자동 승격합니다.
+`quality`는 선택한 고급 설정 모델로 최대 120초까지 기다립니다.
+`POST /query-feedback`는 답변 아래 피드백 버튼에서 호출되며 기본 저장 위치는 `chroma_db/query_feedback.jsonl`입니다.
 `POST /query`에서 `collection`/`collections`를 명시하지 않으면 기본적으로 core 컬렉션 `all`을 조회합니다.
 sample-pack 키워드 기반 자동 라우팅은 `query_profile=sample_pack`일 때만 호환 경로로 동작하고,
 복수 국가 키워드가 동시에 감지되면 최대 2개 컬렉션까지 함께 조회합니다.
@@ -555,7 +561,10 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 
 - 기본 질의 모드에서는 `/health`의 런타임 기본 LLM 설정을 자동 사용합니다.
 - `고급 설정 펼치기`를 눌러야 provider/model/base URL/API key를 직접 수정할 수 있습니다.
-- 질문을 보내면 `/semantic-search` 결과를 먼저 보여 주고, `/query` RAG 답변은 별도 메시지에서 최대 60초까지 기다립니다.
+- 질문을 보내면 `/semantic-search` 결과를 먼저 보여 주고, 선택한 `Semantic`/`Balanced`/`Quality` 모드에 따라 RAG 답변을 생성합니다.
+- `Balanced`는 `gemma4:e2b` 빠른 답변을 최대 60초까지 기다린 뒤 필요 시 `Quality` 답변을 추가 생성합니다.
+- `Quality`는 선택한 고급 설정 모델로 최대 120초까지 기다립니다.
+- 답변 아래 피드백 버튼은 로컬 `chroma_db/query_feedback.jsonl`에 평가를 남기고, `정밀 답변` 버튼은 즉시 quality 단계 답변을 추가 생성합니다.
 - RAG timeout이 발생해도 빠른 시맨틱 검색 결과는 화면에 남습니다.
 - `/intro`와 `/app`의 release/runtime/ops 진단 상세는 기본 화면을 방해하지 않도록 접힘 패널로 표시합니다.
 - 기본 문서 목록에는 첫 실행 확인용 유럽 과학사 sample-pack 데모 문서와 승인된 사용자 문서가 함께 표시될 수 있습니다.

@@ -10,6 +10,8 @@ from chromadb.errors import InvalidDimensionException
 
 from api.schemas import (
     QueryMeta,
+    QueryFeedbackRequest,
+    QueryFeedbackResponse,
     QueryRequest,
     QueryResponse,
     QuerySource,
@@ -20,7 +22,7 @@ from api.schemas import (
 )
 from core.errors import QueryAPIError
 from core.settings import DEFAULT_COLLECTION_KEY, MAX_QUERY_COLLECTIONS, SEARCH_FETCH_K, SEARCH_K
-from services import collection_service, index_service, query_service, runtime_service
+from services import collection_service, feedback_service, index_service, query_service, runtime_service
 from common import create_chat_llm, default_llm_model, resolve_llm_config
 
 router = APIRouter()
@@ -46,6 +48,12 @@ def _serialize_stage_timings(
     if invoke_trace:
         payload["invoke"] = invoke_trace
     return json.dumps(payload, ensure_ascii=False, sort_keys=True)
+
+
+def _model_dump(model) -> dict[str, object]:
+    if hasattr(model, "model_dump"):
+        return model.model_dump()
+    return model.dict()
 
 
 def _build_citation_labels(sources: list[dict[str, object]]) -> list[str]:
@@ -131,6 +139,8 @@ def semantic_search(req: SemanticSearchRequest, request: Request, response: Resp
     resolved_query_profile = query_service.normalize_query_profile(req.query_profile)
     stage_timings["query_profile"] = resolved_query_profile
     stage_timings["search_mode"] = "semantic_fallback"
+    stage_timings["quality_mode"] = req.quality_mode
+    response.headers["X-RAG-Quality-Mode"] = req.quality_mode
 
     try:
         try:
@@ -286,8 +296,21 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
     invoke_trace: dict[str, object] = {}
     query_budget: dict[str, object] | None = None
     resolved_query_profile = query_service.QUERY_PROFILE_GENERIC
+    quality_stage = req.quality_stage or req.quality_mode
 
     try:
+        stage_timings["quality_mode"] = req.quality_mode
+        stage_timings["quality_stage"] = quality_stage
+        response.headers["X-RAG-Quality-Mode"] = req.quality_mode
+        response.headers["X-RAG-Quality-Stage"] = quality_stage
+        if req.quality_mode == "semantic":
+            raise QueryAPIError(
+                code="QUALITY_MODE_REQUIRES_SEMANTIC_SEARCH",
+                status_code=400,
+                message="semantic 모드는 LLM 질의 없이 /semantic-search를 사용해야 합니다.",
+                hint="/query에는 balanced 또는 quality 모드를 사용하고, semantic 전용 검색은 /semantic-search로 호출하세요.",
+            )
+
         query_timeout_seconds = req.timeout_seconds or runtime_service.get_query_timeout_seconds()
         stage_timings["timeout_seconds"] = query_timeout_seconds
         try:
@@ -516,6 +539,8 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
                 collections=active_collection_keys,
                 route_reason=route_reason,
                 budget_profile=str(query_budget["profile"]) if query_budget else None,
+                quality_mode=req.quality_mode,
+                quality_stage=quality_stage,
                 support_level=support_level,
                 support_reason=support_reason,
                 citations=citations,
@@ -572,3 +597,31 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
             message="요청 처리 중 내부 오류가 발생했습니다.",
             hint="잠시 후 다시 시도하거나 서버 로그에서 request_id를 확인하세요.",
         ) from exc
+
+
+@router.post("/query-feedback", response_model=QueryFeedbackResponse)
+def query_feedback(
+    req: QueryFeedbackRequest,
+    request: Request,
+    response: Response,
+) -> QueryFeedbackResponse:
+    from core.http import get_or_create_request_id
+
+    request_id = get_or_create_request_id(request)
+    response.headers["X-Request-ID"] = request_id
+    response.headers["X-RAG-Feedback"] = "accepted"
+    try:
+        saved = feedback_service.append_feedback(_model_dump(req))
+    except OSError as exc:
+        raise QueryAPIError(
+            code="FEEDBACK_STORE_FAILED",
+            status_code=500,
+            message="질의 피드백 저장에 실패했습니다.",
+            hint="서버의 chroma_db 쓰기 권한과 디스크 여유 공간을 확인하세요.",
+        ) from exc
+    return QueryFeedbackResponse(
+        accepted=True,
+        feedback_id=str(saved["id"]),
+        request_id=request_id,
+        storage=str(saved["storage"]),
+    )

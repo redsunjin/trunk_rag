@@ -122,6 +122,8 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     expect(page.locator("#runtimeSummary")).not_to_contain_text("localhost")
     expect(page.locator("#runtimeProfileMsg")).not_to_contain_text("budget_summary")
     expect(page.locator("#advancedSettings")).to_be_hidden()
+    expect(page.locator("input[name='qualityMode'][value='balanced']")).to_be_checked()
+    expect(page.locator("#qualityModeHint")).to_contain_text("e2b")
     expect(page.locator("#uploadMetadataFields")).to_be_hidden()
     expect(page.locator("#uploadDefaultsSummary")).to_contain_text("source=auto")
     page.click("#advancedSettingsToggle")
@@ -236,12 +238,14 @@ def test_intro_app_flow(page: Page, live_server_url: str):
                 {
                     "answer": "모킹된 질의 응답",
                     "provider": "ollama",
-                    "model": "llama3.1:8b",
+                    "model": "gemma4:e2b",
                     "meta": {
                         "request_id": "req-e2e-1",
                         "collections": ["fr", "ge"],
                         "route_reason": "explicit_multi",
                         "budget_profile": "verified_local_multi",
+                        "quality_mode": "balanced",
+                        "quality_stage": "fast",
                         "support_level": "supported",
                         "support_reason": "multiple_context_segments",
                         "citations": ["fr_doc.md > 프랑스", "ge_doc.md > 독일"],
@@ -272,10 +276,15 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     assert semantic_payload["body"]["collection"] == "fr"
     assert semantic_payload["body"]["collections"] == ["fr", "ge"]
     assert semantic_payload["body"]["max_results"] == 3
+    assert semantic_payload["body"]["quality_mode"] == "balanced"
     assert query_payload["body"]["collection"] == "fr"
     assert query_payload["body"]["collections"] == ["fr", "ge"]
     assert query_payload["body"]["timeout_seconds"] == 60
     assert query_payload["body"]["debug"] is True
+    assert query_payload["body"]["quality_mode"] == "balanced"
+    assert query_payload["body"]["quality_stage"] == "fast"
+    assert query_payload["body"]["llm_provider"] == "ollama"
+    assert query_payload["body"]["llm_model"] == "gemma4:e2b"
     page.unroute("**/query", query_success)
     page.unroute("**/semantic-search", semantic_success)
 

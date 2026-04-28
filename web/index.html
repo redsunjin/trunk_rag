@@ -234,11 +234,28 @@
             안녕하세요. 문서 기반 RAG 어시스턴트입니다. 질문을 입력해 주세요.
           </div>
         </div>
+        <div class="quality-mode-panel" aria-label="질의 모드 선택">
+          <div class="segmented-control">
+            <label class="segmented-option">
+              <input type="radio" name="qualityMode" value="semantic">
+              <span>Semantic</span>
+            </label>
+            <label class="segmented-option">
+              <input type="radio" name="qualityMode" value="balanced" checked>
+              <span>Balanced</span>
+            </label>
+            <label class="segmented-option">
+              <input type="radio" name="qualityMode" value="quality">
+              <span>Quality</span>
+            </label>
+          </div>
+          <p id="qualityModeHint" class="helper-text">시맨틱 검색 후 e2b 빠른 답변을 만들고, 복합/근거 부족 답변은 quality로 승격합니다.</p>
+        </div>
         <div class="main-chat-input">
           <textarea id="userInput" rows="2" placeholder="질문을 입력하세요..."></textarea>
           <button id="sendBtn" class="primary-btn">Send</button>
         </div>
-        <p class="helper-text" style="margin-top:8px;">질문하면 빠른 시맨틱 검색 결과를 먼저 보여주고, RAG 답변은 이어서 생성합니다. 답변 아래의 `실행 상세 보기`에서 route, budget, stage timing, source 요약을 확인할 수 있습니다.</p>
+        <p class="helper-text" style="margin-top:8px;">답변 아래의 `실행 상세 보기`에서 mode, route, budget, stage timing, source 요약을 확인할 수 있습니다.</p>
       </section>
 
       <section class="doc-viewer-layout">

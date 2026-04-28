@@ -20,6 +20,8 @@ const collection = document.getElementById("collection");
 const collection2 = document.getElementById("collection2");
 const collectionHint = document.getElementById("collectionHint");
 const userInput = document.getElementById("userInput");
+const qualityModeInputs = Array.from(document.querySelectorAll("input[name='qualityMode']"));
+const qualityModeHint = document.getElementById("qualityModeHint");
 
 const sendBtn = document.getElementById("sendBtn");
 const healthBtn = document.getElementById("healthBtn");
@@ -51,6 +53,16 @@ let runtimeDefaultsLoaded = false;
 let uploadMetadataOpen = false;
 
 const LAYERED_RAG_TIMEOUT_SECONDS = 60;
+const QUALITY_RAG_TIMEOUT_SECONDS = 120;
+const FAST_RAG_PROVIDER = "ollama";
+const FAST_RAG_MODEL = "gemma4:e2b";
+const FAST_RAG_BASE_URL = "http://localhost:11434";
+
+const modeHints = {
+  semantic: "LLM 호출 없이 벡터 검색 결과만 빠르게 확인합니다.",
+  balanced: "시맨틱 검색 후 e2b 빠른 답변을 만들고, 복합/근거 부족 답변은 quality로 승격합니다.",
+  quality: "선택한 고급 설정 모델로 더 길게 기다리며 정밀 답변을 생성합니다.",
+};
 
 const offlineRecoverySteps = [
   "run_doc_rag.bat 또는 app_api.py로 서버를 다시 시작합니다.",
@@ -118,6 +130,33 @@ function appendMessage(role, text) {
   return message;
 }
 
+function getQualityMode() {
+  return document.querySelector("input[name='qualityMode']:checked")?.value || "balanced";
+}
+
+function updateQualityModeHint() {
+  if (!qualityModeHint) return;
+  qualityModeHint.textContent = modeHints[getQualityMode()] || modeHints.balanced;
+}
+
+function getQualityModelConfig() {
+  return {
+    provider: provider.value,
+    model: model.value || null,
+    apiKey: apiKey.value || null,
+    baseUrl: baseUrl.value || null,
+  };
+}
+
+function getFastModelConfig() {
+  return {
+    provider: FAST_RAG_PROVIDER,
+    model: FAST_RAG_MODEL,
+    apiKey: null,
+    baseUrl: FAST_RAG_BASE_URL,
+  };
+}
+
 function formatJsonBlock(value) {
   return escapeHtml(JSON.stringify(value || {}, null, 2));
 }
@@ -148,6 +187,8 @@ function buildResponseDetails(meta) {
     <div class="response-detail-section">
       <p class="trace-summary">
         request_id=${escapeHtml(meta.request_id || "-")} |
+        mode=${escapeHtml(meta.quality_mode || "-")} |
+        stage=${escapeHtml(meta.quality_stage || "-")} |
         collections=${escapeHtml((meta.collections || []).join(",") || "-")} |
         route=${escapeHtml(meta.route_reason || "-")} |
         budget=${escapeHtml(meta.budget_profile || "-")}
@@ -182,11 +223,58 @@ function buildSupportSummary(meta) {
   const citations = Array.isArray(meta.citations) && meta.citations.length
     ? meta.citations.join(" | ")
     : "표시할 citation이 없습니다.";
-  support.textContent = `근거 수준=${level} | reason=${reason} | citations=${citations}`;
+  const mode = meta.quality_mode ? `mode=${meta.quality_mode} | ` : "";
+  const stage = meta.quality_stage ? `stage=${meta.quality_stage} | ` : "";
+  support.textContent = `${mode}${stage}근거 수준=${level} | reason=${reason} | citations=${citations}`;
   return support;
 }
 
-function renderBotResponse(messageNode, text, meta) {
+function buildFeedbackControls(context) {
+  if (!context) return null;
+  const wrapper = document.createElement("div");
+  wrapper.className = "response-feedback";
+
+  const label = document.createElement("span");
+  label.className = "response-feedback-label";
+  label.textContent = "답변 피드백";
+  wrapper.appendChild(label);
+
+  const status = document.createElement("small");
+  status.className = "response-feedback-status";
+
+  const makeButton = (text, rating, tags, options = {}) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "feedback-btn";
+    button.textContent = text;
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      status.textContent = "저장 중...";
+      try {
+        await submitFeedback(context, rating, tags);
+        status.textContent = "피드백 저장됨";
+        if (options.escalate) {
+          await runQualityEscalation(context, "feedback_quality_request");
+        }
+      } catch (error) {
+        status.textContent = "피드백 저장 실패: " + String(error);
+      } finally {
+        button.disabled = false;
+      }
+    });
+    return button;
+  };
+
+  wrapper.appendChild(makeButton("좋음", "positive", ["helpful"]));
+  wrapper.appendChild(makeButton("부족함", "negative", ["needs_better_answer"]));
+  if (context.qualityStage !== "quality") {
+    wrapper.appendChild(makeButton("정밀 답변", "quality_request", ["manual_quality"], {escalate: true}));
+  }
+  wrapper.appendChild(status);
+  return wrapper;
+}
+
+function renderBotResponse(messageNode, text, meta, feedbackContext = null) {
   messageNode.replaceChildren();
   const body = document.createElement("div");
   body.className = "message-text";
@@ -200,18 +288,23 @@ function renderBotResponse(messageNode, text, meta) {
   if (details) {
     messageNode.appendChild(details);
   }
+  const feedback = buildFeedbackControls(feedbackContext);
+  if (feedback) {
+    messageNode.appendChild(feedback);
+  }
   chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-function renderSemanticSearchResponse(messageNode, data) {
+function renderSemanticSearchResponse(messageNode, data, options = {}) {
   const results = Array.isArray(data?.results) ? data.results : [];
+  const expectsRag = options.expectsRag !== false;
   messageNode.replaceChildren();
 
   const body = document.createElement("div");
   body.className = "message-text";
   body.textContent = results.length
-    ? "빠른 시맨틱 검색 결과입니다. RAG 답변은 이어서 생성 중입니다."
-    : "빠른 시맨틱 검색에서 관련 문서를 찾지 못했습니다. RAG 답변은 이어서 생성 중입니다.";
+    ? (expectsRag ? "빠른 시맨틱 검색 결과입니다. RAG 답변은 이어서 생성 중입니다." : "시맨틱 검색 결과입니다.")
+    : (expectsRag ? "빠른 시맨틱 검색에서 관련 문서를 찾지 못했습니다. RAG 답변은 이어서 생성 중입니다." : "시맨틱 검색에서 관련 문서를 찾지 못했습니다.");
   messageNode.appendChild(body);
 
   const meta = data?.meta || {};
@@ -245,10 +338,13 @@ function renderSemanticSearchResponse(messageNode, data) {
   chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-function renderSemanticSearchError(messageNode, rawError, parsedError) {
+function renderSemanticSearchError(messageNode, rawError, parsedError, options = {}) {
+  const expectsRag = options.expectsRag !== false;
   const message = rawError?.code === "VECTORSTORE_EMPTY"
     ? `${formatApiError(parsedError)} | 빠른 검색을 위해 Reindex가 필요합니다.`
-    : `${formatApiError(parsedError)} | 빠른 검색은 건너뛰고 RAG 답변 생성을 계속합니다.`;
+    : expectsRag
+      ? `${formatApiError(parsedError)} | 빠른 검색은 건너뛰고 RAG 답변 생성을 계속합니다.`
+      : formatApiError(parsedError);
   renderBotResponse(messageNode, message, null);
 }
 
@@ -600,6 +696,179 @@ async function healthCheck() {
   }
 }
 
+function buildSemanticPayload(question, selectedCollections, qualityMode) {
+  return {
+    query: question,
+    collection: selectedCollections[0] || null,
+    collections: selectedCollections.length ? selectedCollections : null,
+    max_results: 3,
+    quality_mode: qualityMode,
+  };
+}
+
+function buildQueryPayload(question, selectedCollections, config, qualityMode, qualityStage, timeoutSeconds) {
+  return {
+    query: question,
+    llm_provider: config.provider,
+    llm_model: config.model,
+    llm_api_key: config.apiKey,
+    llm_base_url: config.baseUrl,
+    collection: selectedCollections[0] || null,
+    collections: selectedCollections.length ? selectedCollections : null,
+    timeout_seconds: timeoutSeconds,
+    quality_mode: qualityMode,
+    quality_stage: qualityStage,
+    debug: true,
+  };
+}
+
+function isNoAnswerText(answer) {
+  return /제공된 문서에서 확인되지 않습니다|확인되지 않습니다|정보가 부족|근거가 부족|알 수 없습니다|판단하기 어렵/.test(answer || "");
+}
+
+function shouldEscalateBalanced(question, selectedCollections, data) {
+  const answer = data?.answer || "";
+  const meta = data?.meta || {};
+  const supportLevel = meta.support_level || "";
+  const supportReason = meta.support_reason || "";
+  const isComplexQuestion = /비교|차이|종합|관계|원인|왜|어떻게|분석|대조|공통|다른/.test(question);
+  if (isNoAnswerText(answer)) {
+    return {shouldEscalate: true, reason: "no_answer"};
+  }
+  if (supportLevel === "insufficient_context" || supportReason === "retrieved_context_empty") {
+    return {shouldEscalate: true, reason: "weak_support"};
+  }
+  if (isComplexQuestion && selectedCollections.length > 1) {
+    return {shouldEscalate: true, reason: "multi_collection_complex"};
+  }
+  if (isComplexQuestion && answer.trim().length < 80) {
+    return {shouldEscalate: true, reason: "short_complex_answer"};
+  }
+  return {shouldEscalate: false, reason: "not_needed"};
+}
+
+function buildFeedbackContext({question, selectedCollections, config, qualityMode, qualityStage, data}) {
+  return {
+    question,
+    selectedCollections,
+    provider: data?.provider || config.provider,
+    model: data?.model || config.model,
+    answer: data?.answer || "",
+    meta: data?.meta || null,
+    qualityMode,
+    qualityStage,
+  };
+}
+
+async function submitFeedback(context, rating, reasonTags) {
+  const meta = context.meta || {};
+  const payload = {
+    request_id: meta.request_id || null,
+    query: context.question,
+    answer: context.answer || null,
+    rating,
+    reason_tags: reasonTags,
+    quality_mode: context.qualityMode,
+    quality_stage: context.qualityStage,
+    provider: context.provider || null,
+    model: context.model || null,
+    collections: Array.isArray(meta.collections) && meta.collections.length
+      ? meta.collections
+      : (context.selectedCollections || []),
+    sources: Array.isArray(meta.sources) ? meta.sources : [],
+    meta,
+  };
+  const res = await fetch("/query-feedback", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(formatApiError(parseApiError(data, "피드백 저장 실패")));
+  }
+  return data;
+}
+
+async function runSemanticSearch(messageNode, question, selectedCollections, qualityMode, expectsRag) {
+  try {
+    const res = await fetch("/semantic-search", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(buildSemanticPayload(question, selectedCollections, qualityMode)),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      const error = parseApiError(data, "빠른 검색 실패");
+      renderSemanticSearchError(messageNode, data, error, {expectsRag});
+      return {ok: false, data};
+    }
+    renderSemanticSearchResponse(messageNode, data, {expectsRag});
+    return {ok: true, data};
+  } catch (err) {
+    renderBotResponse(messageNode, "빠른 검색 오류: " + err, null);
+    return {ok: false, error: err};
+  }
+}
+
+async function runQueryAnswer({
+  question,
+  selectedCollections,
+  config,
+  qualityMode,
+  qualityStage,
+  timeoutSeconds,
+  pendingText,
+}) {
+  const pending = appendMessage("bot", pendingText);
+  const payload = buildQueryPayload(
+    question,
+    selectedCollections,
+    config,
+    qualityMode,
+    qualityStage,
+    timeoutSeconds,
+  );
+  try {
+    const res = await fetch("/query", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      const error = parseApiError(data, "요청 실패");
+      renderBotResponse(pending, buildGuidedErrorMessage(data, error), null);
+      return {ok: false, data, messageNode: pending};
+    }
+    const feedbackContext = buildFeedbackContext({
+      question,
+      selectedCollections,
+      config,
+      qualityMode,
+      qualityStage,
+      data,
+    });
+    renderBotResponse(pending, data.answer, data.meta || null, feedbackContext);
+    return {ok: true, data, messageNode: pending, feedbackContext};
+  } catch (err) {
+    renderBotResponse(pending, "오류: " + err, null);
+    return {ok: false, error: err, messageNode: pending};
+  }
+}
+
+async function runQualityEscalation(context, reason) {
+  return runQueryAnswer({
+    question: context.question,
+    selectedCollections: context.selectedCollections || [],
+    config: getQualityModelConfig(),
+    qualityMode: "quality",
+    qualityStage: "quality",
+    timeoutSeconds: QUALITY_RAG_TIMEOUT_SECONDS,
+    pendingText: `정밀 답변 생성 중... reason=${reason}, 최대 ${QUALITY_RAG_TIMEOUT_SECONDS}초까지 기다립니다.`,
+  });
+}
+
 async function sendQuestion() {
   const question = userInput.value.trim();
   if (!question) return;
@@ -610,65 +879,48 @@ async function sendQuestion() {
   }
 
   appendMessage("user", question);
-  const semanticPending = appendMessage("bot", "빠른 시맨틱 검색 중...");
-  const pending = appendMessage("bot", `RAG 답변 생성 중... 빠른 검색 결과를 먼저 표시하고 최대 ${LAYERED_RAG_TIMEOUT_SECONDS}초까지 기다립니다.`);
   const selectedCollections = getSelectedCollectionKeys();
+  const qualityMode = getQualityMode();
+  const semanticPending = appendMessage("bot", qualityMode === "semantic" ? "시맨틱 검색 중..." : "빠른 시맨틱 검색 중...");
+  const expectsRag = qualityMode !== "semantic";
 
-  const semanticPayload = {
-    query: question,
-    collection: selectedCollections[0] || null,
-    collections: selectedCollections.length ? selectedCollections : null,
-    max_results: 3,
-  };
-  const payload = {
-    query: question,
-    llm_provider: provider.value,
-    llm_model: model.value || null,
-    llm_api_key: apiKey.value || null,
-    llm_base_url: baseUrl.value || null,
-    collection: selectedCollections[0] || null,
-    collections: selectedCollections.length ? selectedCollections : null,
-    timeout_seconds: LAYERED_RAG_TIMEOUT_SECONDS,
-    debug: true,
-  };
+  const semanticSearchPromise = runSemanticSearch(
+    semanticPending,
+    question,
+    selectedCollections,
+    qualityMode === "semantic" ? "semantic" : qualityMode,
+    expectsRag,
+  );
 
-  const semanticSearchPromise = (async () => {
-    try {
-      const res = await fetch("/semantic-search", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(semanticPayload),
+  let ragAnswerPromise = Promise.resolve();
+  if (qualityMode === "balanced") {
+    ragAnswerPromise = (async () => {
+      const fastResult = await runQueryAnswer({
+        question,
+        selectedCollections,
+        config: getFastModelConfig(),
+        qualityMode: "balanced",
+        qualityStage: "fast",
+        timeoutSeconds: LAYERED_RAG_TIMEOUT_SECONDS,
+        pendingText: `Balanced 빠른 답변 생성 중... e2b 모델로 최대 ${LAYERED_RAG_TIMEOUT_SECONDS}초까지 기다립니다.`,
       });
-      const data = await res.json();
-      if (!res.ok) {
-        const error = parseApiError(data, "빠른 검색 실패");
-        renderSemanticSearchError(semanticPending, data, error);
-        return;
+      if (!fastResult.ok) return;
+      const escalation = shouldEscalateBalanced(question, selectedCollections, fastResult.data);
+      if (escalation.shouldEscalate && fastResult.feedbackContext) {
+        await runQualityEscalation(fastResult.feedbackContext, escalation.reason);
       }
-      renderSemanticSearchResponse(semanticPending, data);
-    } catch (err) {
-      renderBotResponse(semanticPending, "빠른 검색 오류: " + err, null);
-    }
-  })();
-
-  const ragAnswerPromise = (async () => {
-    try {
-      const res = await fetch("/query", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        const error = parseApiError(data, "요청 실패");
-        renderBotResponse(pending, buildGuidedErrorMessage(data, error), null);
-        return;
-      }
-      renderBotResponse(pending, data.answer, data.meta || null);
-    } catch (err) {
-      renderBotResponse(pending, "오류: " + err, null);
-    }
-  })();
+    })();
+  } else if (qualityMode === "quality") {
+    ragAnswerPromise = runQueryAnswer({
+      question,
+      selectedCollections,
+      config: getQualityModelConfig(),
+      qualityMode: "quality",
+      qualityStage: "quality",
+      timeoutSeconds: QUALITY_RAG_TIMEOUT_SECONDS,
+      pendingText: `Quality 답변 생성 중... 선택한 모델로 최대 ${QUALITY_RAG_TIMEOUT_SECONDS}초까지 기다립니다.`,
+    });
+  }
 
   try {
     await Promise.allSettled([semanticSearchPromise, ragAnswerPromise]);
@@ -800,6 +1052,9 @@ uploadDocKey.addEventListener("input", updateUploadDefaultsSummary);
 uploadRequestType.addEventListener("change", updateUploadDefaultsSummary);
 uploadCountry.addEventListener("change", updateUploadDefaultsSummary);
 uploadDocType.addEventListener("change", updateUploadDefaultsSummary);
+qualityModeInputs.forEach((input) => {
+  input.addEventListener("change", updateQualityModeHint);
+});
 
 sendBtn.addEventListener("click", sendQuestion);
 userInput.addEventListener("keydown", (event) => {
@@ -827,6 +1082,7 @@ sidebarOverlay.addEventListener("click", () => {
 });
 
 setAdvancedSettingsOpen(false);
+updateQualityModeHint();
 healthCheck();
 loadOpsBaselineStatus();
 loadCollections();

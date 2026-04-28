@@ -321,7 +321,11 @@
   - `X-RAG-Collections`
   - `X-RAG-Budget-Profile`
   - `X-RAG-Route-Reason`
-- `X-RAG-Query-Profile`
+  - `X-RAG-Query-Profile`
+  - `X-RAG-Quality-Mode`
+  - `X-RAG-Quality-Stage`
+- `quality_mode=semantic`은 `/query`에서 거부되며, LLM 없는 검색은 `POST /semantic-search`를 사용한다.
+- `quality_mode=balanced`는 빠른 답변 단계, `quality_mode=quality`는 정밀 답변 단계로 사용한다.
 - sample-pack compatibility 자동 라우팅은 최대 2개 컬렉션까지 확장한다.
 - 키워드가 없거나 과도하게 많이 매칭되면 기본 컬렉션 `all`로 fallback 한다.
 - 응답 헤더 `X-RAG-Collection`, `X-RAG-Collections`에 실제 사용 컬렉션이 담긴다.
@@ -340,7 +344,35 @@
 - `/query`와 같은 collection routing, active vector check, embedding fingerprint guard를 사용한다.
 - retrieval은 기존 Chroma/MMR + light hybrid/lexical/coverage 계층을 공유한다.
 - 응답은 `results[].source`, `h2`, `collection_key`, `snippet`과 `meta.retrieval_strategy`를 포함한다.
-- `/app`은 이 결과를 먼저 표시하고, RAG 답변은 별도 `/query` 요청으로 이어서 생성한다.
+- `/app`은 이 결과를 먼저 표시하고, `balanced`/`quality` 모드에서는 RAG 답변을 별도 `/query` 요청으로 이어서 생성한다.
+
+### POST `/query-feedback`
+- 목적: `/app` 답변 피드백을 로컬 파일에 append-only로 저장해 이후 품질 fixture/모델 비교 후보로 사용할 수 있게 한다.
+- 기본 저장 위치: `chroma_db/query_feedback.jsonl`
+- 요청:
+```json
+{
+  "request_id": "req-answer-1",
+  "query": "질문",
+  "answer": "답변",
+  "rating": "negative",
+  "reason_tags": ["needs_better_answer"],
+  "quality_mode": "balanced",
+  "quality_stage": "fast",
+  "provider": "ollama",
+  "model": "gemma4:e2b",
+  "collections": ["all"]
+}
+```
+- 응답:
+```json
+{
+  "accepted": true,
+  "feedback_id": "uuid",
+  "request_id": "req-feedback",
+  "storage": "chroma_db/query_feedback.jsonl"
+}
+```
 
 ### POST `/admin/auth`
 - 목적: 관리자 인증코드 확인(초기 MVP)

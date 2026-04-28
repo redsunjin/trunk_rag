@@ -52,6 +52,8 @@ def test_query_success_case(client, monkeypatch):
     assert response.headers.get("X-RAG-Budget-Profile") == "not_recommended_local"
     assert response.headers.get("X-RAG-Route-Reason") == "default"
     assert response.headers.get("X-RAG-Query-Profile") == "generic"
+    assert response.headers.get("X-RAG-Quality-Mode") == "balanced"
+    assert response.headers.get("X-RAG-Quality-Stage") == "balanced"
     assert response.json() == {
         "answer": "모킹 응답",
         "provider": "ollama",
@@ -121,6 +123,8 @@ def test_query_debug_response_includes_meta(client, monkeypatch):
     assert body["meta"]["collections"] == ["fr", "ge"]
     assert body["meta"]["route_reason"] == "explicit_multi"
     assert body["meta"]["budget_profile"] == "not_recommended_local"
+    assert body["meta"]["quality_mode"] == "balanced"
+    assert body["meta"]["quality_stage"] == "balanced"
     assert body["meta"]["support_level"] == "limited"
     assert body["meta"]["support_reason"] == "single_or_short_context"
     assert body["meta"]["citations"] == ["fr_doc.md > 프랑스"]
@@ -183,6 +187,7 @@ def test_semantic_search_success_case(client, monkeypatch):
     assert response.headers.get("X-Request-ID") == "req-semantic-1"
     assert response.headers.get("X-RAG-Search-Mode") == "semantic_fallback"
     assert response.headers.get("X-RAG-Route-Reason") == "explicit_multi"
+    assert response.headers.get("X-RAG-Quality-Mode") == "semantic"
     body = response.json()
     assert body["query"] == "프랑스와 독일 비교"
     assert len(body["results"]) == 2
@@ -420,6 +425,56 @@ def test_query_invalid_request_422(client):
     response = client.post("/query", json={"query": ""})
     body = _assert_query_error_shape(response, 422, "INVALID_REQUEST")
     assert "query" in (body.get("hint") or "")
+
+
+def test_query_rejects_semantic_quality_mode(client):
+    response = client.post(
+        "/query",
+        json={"query": "테스트", "quality_mode": "semantic"},
+        headers={"X-Request-ID": "req-semantic-mode"},
+    )
+    body = _assert_query_error_shape(response, 400, "QUALITY_MODE_REQUIRES_SEMANTIC_SEARCH")
+    assert body["request_id"] == "req-semantic-mode"
+    assert "/semantic-search" in (body.get("hint") or "")
+
+
+def test_query_feedback_accepts_local_record(client, monkeypatch):
+    captured: dict[str, object] = {}
+
+    def _append_feedback(payload):
+        captured["payload"] = payload
+        return {"id": "feedback-1", "storage": "chroma_db/query_feedback.jsonl", "record": payload}
+
+    monkeypatch.setattr(routes_query.feedback_service, "append_feedback", _append_feedback)
+
+    response = client.post(
+        "/query-feedback",
+        json={
+            "request_id": "req-answer-1",
+            "query": "테스트 질문",
+            "answer": "테스트 답변",
+            "rating": "negative",
+            "reason_tags": ["needs_better_answer"],
+            "quality_mode": "balanced",
+            "quality_stage": "fast",
+            "provider": "ollama",
+            "model": "gemma4:e2b",
+            "collections": ["all"],
+        },
+        headers={"X-Request-ID": "req-feedback-1"},
+    )
+
+    assert response.status_code == 200
+    assert response.headers.get("X-Request-ID") == "req-feedback-1"
+    assert response.headers.get("X-RAG-Feedback") == "accepted"
+    assert response.json() == {
+        "accepted": True,
+        "feedback_id": "feedback-1",
+        "request_id": "req-feedback-1",
+        "storage": "chroma_db/query_feedback.jsonl",
+    }
+    assert captured["payload"]["rating"] == "negative"
+    assert captured["payload"]["quality_stage"] == "fast"
 
 
 def test_query_invalid_collection(client):

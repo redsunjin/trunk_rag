@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-097`
-- current_active_title: `Await next-track after RAG quality gate introduction`
+- current_active_id: `LOOP-099`
+- current_active_title: `Await next-track after query mode/feedback loop`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -144,6 +144,17 @@
 - 실패 케이스: `GQ-05`는 route/source/support는 정상(`fr,ge`, citations=2, source coverage=1.0)이지만 답변이 `제공된 문서에서 확인되지 않습니다.`라서 필수 키워드와 비교 설명을 모두 놓쳤다.
 - 모델 전환 판단: `docs/reports/RAG_QUALITY_MODEL_COMPARISON_2026-04-28_GEMMA4_E2B.md` 기준 `gemma4:e2b`는 core generic 질문에는 충분하지만, sample-pack 다중 컬렉션 비교까지 포함한 기본값 전환 게이트는 `blocked`다.
 - 다음 추천: 기본값 전환 전에 `GQ-05` 품질 보정 또는 실제 사용자 문서 기반 fixture를 추가한 뒤 compare gate를 다시 실행한다.
+
+## 2026-04-28 Query Mode/Feedback Snapshot
+
+- 완료 루프: `LOOP-098 Semantic/balanced/quality query modes and feedback loop`
+- 판단: `gemma4:e2b`는 저지연 core generic 경로에 적합하지만 다중 컬렉션 비교 품질은 아직 기본값 전환 기준을 통과하지 못했으므로, 기본 운영은 `Balanced` 모드로 fast 답변과 quality 승격을 분리한다.
+- API: `POST /query`는 `quality_mode`/`quality_stage`를 받아 `X-RAG-Quality-Mode`, `X-RAG-Quality-Stage`, debug meta에 기록한다. `quality_mode=semantic`은 `/query`에서 거부하고 `/semantic-search`로 분리한다.
+- UI: `/app`에는 `Semantic`/`Balanced`/`Quality` segmented control을 추가했다. `Semantic`은 검색 결과만, `Balanced`는 `gemma4:e2b` fast 답변 + 필요 시 quality 승격, `Quality`는 선택한 고급 설정 모델로 최대 120초 대기한다.
+- 자동 승격: balanced fast 답변이 문서 미확인 문구를 내거나 support가 부족하거나, 복수 컬렉션 복합 비교 질문이면 quality 단계 답변을 추가 생성한다.
+- 피드백: 답변 아래 `좋음`/`부족함`/`정밀 답변` 버튼은 `POST /query-feedback`를 호출하며 기본 저장 위치는 `chroma_db/query_feedback.jsonl`이다. `정밀 답변`은 피드백 저장 후 즉시 quality 단계 답변을 추가 생성한다.
+- 검증: `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_feedback_service.py tests/e2e/test_web_flow_playwright.py -> 22 passed`; `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile api/schemas.py api/routes_query.py services/feedback_service.py app_api.py -> pass`; `node --check web/js/app_page.js -> pass`; `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`.
+- 다음 추천: 피드백 JSONL을 answer-level fixture 후보로 변환하는 작은 큐를 만들거나, quality 모델 후보를 e4b/외부 호환 모델로 비교해 `Quality` 모드 기본 후보를 정한다.
 
 ## 0. 2026-03-13 우선순위 재정렬
 

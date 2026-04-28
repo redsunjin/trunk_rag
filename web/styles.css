@@ -470,6 +470,55 @@ textarea {
     gap: 8px;
 }
 
+.quality-mode-panel {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: minmax(260px, 380px) 1fr;
+    gap: 12px;
+    align-items: center;
+}
+
+.segmented-control {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.segmented-option {
+    min-width: 0;
+    cursor: pointer;
+}
+
+.segmented-option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.segmented-option span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 8px 10px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    border-left: 1px solid var(--border-color);
+}
+
+.segmented-option:first-child span {
+    border-left: 0;
+}
+
+.segmented-option input:checked + span {
+    background: var(--primary-color);
+    color: #fff;
+}
+
 .main-chat-input textarea {
     min-height: 56px;
 }
@@ -536,6 +585,41 @@ textarea {
     font-size: 0.82rem;
     color: var(--primary-color);
     font-weight: 600;
+}
+
+.response-feedback {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.response-feedback-label,
+.response-feedback-status {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.feedback-btn {
+    min-height: 30px;
+    padding: 5px 9px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.feedback-btn:hover {
+    background: #f8faf7;
+}
+
+.feedback-btn:disabled {
+    cursor: wait;
+    opacity: 0.65;
 }
 
 .response-detail-section {
@@ -1007,6 +1091,19 @@ button.secondary-btn {
 
     .chat-layout {
         height: calc(100vh - 180px);
+    }
+
+    .quality-mode-panel {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .main-chat-input {
+        flex-direction: column;
+    }
+
+    .main-chat-input button {
+        min-height: 42px;
     }
 
     .main-header {

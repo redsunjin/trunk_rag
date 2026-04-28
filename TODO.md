@@ -185,7 +185,9 @@
 | LOOP-094 | done | gemma4:e2b low-latency model validation | `./.venv/bin/python scripts/diagnose_ollama_runtime.py --model gemma4:e2b --base-url http://localhost:11434 --repeat 3 --num-predict 64 --timeout-seconds 120` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e2b --llm-base-url http://localhost:11434` + `./.venv/bin/python -m pytest -q tests/test_runtime_service.py tests/api/test_system_api.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-095 | done | Await next-track after gemma4:e2b validation | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-096 | done | RAG quality comparison gate for model decisions | `./.venv/bin/python -m pytest -q tests/test_eval_query_quality.py tests/test_compare_rag_quality.py tests/test_check_ops_baseline_gate.py` + `./.venv/bin/python scripts/eval_query_quality.py --bucket generic-baseline --bucket sample-pack-baseline --llm-provider ollama --llm-model gemma4:e2b --llm-base-url http://localhost:11434 --output-json docs/reports/query_answer_eval_2026-04-28_gemma4_e2b_quality.json --output-report docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-04-28_GEMMA4_E2B_QUALITY.md` + `./.venv/bin/python scripts/compare_rag_quality.py --bucket generic-baseline --bucket sample-pack-baseline --model gemma4:e2b --llm-base-url http://localhost:11434 --output-json docs/reports/rag_quality_model_comparison_2026-04-28_gemma4_e2b.json --output-report docs/reports/RAG_QUALITY_MODEL_COMPARISON_2026-04-28_GEMMA4_E2B.md` expected `blocked` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-097 | active | Await next-track after RAG quality gate introduction | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-097 | done | Await next-track after RAG quality gate introduction | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-098 | done | Semantic/balanced/quality query modes and feedback loop | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_feedback_service.py tests/e2e/test_web_flow_playwright.py` + `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile api/schemas.py api/routes_query.py services/feedback_service.py app_api.py` + `node --check web/js/app_page.js` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-099 | active | Await next-track after query mode/feedback loop | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -2752,7 +2754,7 @@ closeout 메모 (2026-04-28):
 - 비교 게이트는 `pass_rate=1.0`, `avg_weighted_score>=0.85`, `p95<=20000ms`, `support_pass_rate=1.0` 기준에서 전체 `blocked`였다.
 - 결론: `gemma4:e2b`는 core generic 질문에는 충분하지만, 다중 컬렉션 비교/샘플팩 호환 질문까지 기본값 전환 기준으로 보려면 아직 품질 보강이 필요하다.
 
-## 현재 Active Loop (LOOP-097)
+## 완료 Loop (LOOP-097)
 
 목표:
 - RAG 품질 비교 게이트 도입 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
@@ -2770,6 +2772,58 @@ closeout 메모 (2026-04-28):
 
 진행 메모 (2026-04-28):
 - `LOOP-096`에서 e2b 품질을 실측했고, 기본값 전환 게이트는 sample-pack 비교 질문 실패로 `blocked`였다.
+- 사용자가 멀티에이전트형 운영 개념을 물었고, 기본 `e2b` 빠른 경로와 고급 모델 품질 경로를 모드로 분리하는 방향을 요청했다.
+
+closeout 메모 (2026-04-28):
+- 다음 작업 트랙을 `semantic`/`balanced`/`quality` 질의 모드와 답변 피드백 루프 구현으로 확정했다.
+
+## 완료 Loop (LOOP-098)
+
+목표:
+- `/app` 질의 경로를 `semantic`, `balanced`, `quality` 모드로 계층화하고, 답변 피드백을 로컬에 남길 수 있게 한다.
+
+범위:
+- 포함: UI 모드 선택, `/query` 품질 모드 메타/헤더, balanced fast e2b 경로, quality 자동/수동 승격, `/query-feedback` API, 로컬 JSONL 저장, API/e2e 테스트, README/SPEC/NEXT 현행화
+- 제외: 기본 모델 `.env` 전환, LLM judge 도입, 신규 도메인 fixture 대량 작성, GraphRAG 재개, 데스크톱 패키징 재착수
+
+완료 기준:
+- `semantic` 모드는 LLM 호출 없이 `/semantic-search` 결과만 보여야 한다.
+- `balanced` 모드는 `gemma4:e2b` fast 답변을 기본으로 사용하고, 복합 비교/근거 부족/문서 미확인 답변은 `quality`로 승격해야 한다.
+- `quality` 모드는 선택한 고급 설정 모델로 더 긴 timeout을 사용해야 한다.
+- 답변 피드백은 `chroma_db/query_feedback.jsonl`에 append-only로 저장되어야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_feedback_service.py tests/e2e/test_web_flow_playwright.py`
+- `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile api/schemas.py api/routes_query.py services/feedback_service.py app_api.py`
+- `node --check web/js/app_page.js`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-04-28):
+- `api/schemas.py`와 `api/routes_query.py`에 `quality_mode`, `quality_stage`, `X-RAG-Quality-*` 헤더와 debug meta를 추가했다.
+- `/query`는 `quality_mode=semantic`을 명시적으로 거부하고, semantic-only 검색은 `/semantic-search`로 분리했다.
+- `/app`은 기본 `Balanced` 모드에서 `/semantic-search`와 `gemma4:e2b` fast `/query`를 함께 실행하고, 복합/근거 부족 조건에서 `Quality` 답변을 추가 생성한다.
+- `Quality` 모드는 선택한 고급 설정 모델로 최대 120초까지 대기한다.
+- 답변 아래 피드백 버튼은 `/query-feedback`를 호출해 `chroma_db/query_feedback.jsonl`에 로컬 JSONL로 저장한다.
+- 검증은 `tests/api/test_query_api.py tests/test_feedback_service.py tests/e2e/test_web_flow_playwright.py -> 22 passed`, `py_compile`, `node --check`, `roadmap_harness validate` 통과로 마감한다.
+
+## 현재 Active Loop (LOOP-099)
+
+목표:
+- query mode/feedback loop 도입 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
+
+범위:
+- 포함: 다음 track 선택, 필요 시 새 작업 브랜치 생성, TODO/NEXT active 재정렬
+- 제외: 명시 지시 없는 기본 모델 전환, LLM judge 도입, 사용자 도메인 fixture 대량 작성, public blocker 구현, GraphRAG 재개, 데스크톱 패키징 재착수
+
+완료 기준:
+- 사용자가 피드백 기반 품질 fixture화, quality 모델 후보 비교, e2b 기본값 전환 보류/진행, 사용자 문서 세트 정리, PR/merge 후속, 또는 대기 유지를 명시해야 한다.
+- 새 track을 진행한다면 TODO/NEXT active가 해당 track으로 재정렬되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-28):
+- `LOOP-098`에서 semantic/balanced/quality 모드와 로컬 피드백 저장 경로를 추가했다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

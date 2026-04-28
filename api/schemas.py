@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
+
+QualityMode = Literal["semantic", "balanced", "quality"]
 
 
 class QueryRequest(BaseModel):
@@ -15,6 +17,8 @@ class QueryRequest(BaseModel):
     collection: str | None = None
     collections: list[str] | None = None
     timeout_seconds: int | None = Field(default=None, ge=1, le=180)
+    quality_mode: QualityMode = "balanced"
+    quality_stage: str | None = None
     debug: bool = False
 
 
@@ -30,6 +34,8 @@ class QueryMeta(BaseModel):
     collections: list[str] = Field(default_factory=list)
     route_reason: str = "-"
     budget_profile: str | None = None
+    quality_mode: str = "balanced"
+    quality_stage: str = "balanced"
     support_level: str = "insufficient_context"
     support_reason: str = "retrieved_context_empty"
     citations: list[str] = Field(default_factory=list)
@@ -52,6 +58,7 @@ class SemanticSearchRequest(BaseModel):
     collection: str | None = None
     collections: list[str] | None = None
     max_results: int = Field(default=3, ge=1, le=8)
+    quality_mode: QualityMode = "semantic"
 
 
 class SemanticSearchResult(BaseModel):
@@ -77,6 +84,29 @@ class SemanticSearchResponse(BaseModel):
     query: str
     results: list[SemanticSearchResult] = Field(default_factory=list)
     meta: SemanticSearchMeta
+
+
+class QueryFeedbackRequest(BaseModel):
+    request_id: str | None = None
+    query: str = Field(..., min_length=1)
+    answer: str | None = None
+    rating: Literal["positive", "negative", "quality_request"]
+    reason_tags: list[str] = Field(default_factory=list)
+    note: str | None = None
+    quality_mode: QualityMode = "balanced"
+    quality_stage: str | None = None
+    provider: str | None = None
+    model: str | None = None
+    collections: list[str] = Field(default_factory=list)
+    sources: list[QuerySource] = Field(default_factory=list)
+    meta: dict[str, Any] = Field(default_factory=dict)
+
+
+class QueryFeedbackResponse(BaseModel):
+    accepted: bool
+    feedback_id: str
+    request_id: str
+    storage: str
 
 
 class ReindexRequest(BaseModel):
