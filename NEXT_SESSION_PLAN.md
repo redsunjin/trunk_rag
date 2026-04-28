@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-104`
-- current_active_title: `Graph-lite relation sidecar feasibility gate`
+- current_active_id: `LOOP-105`
+- current_active_title: `Graph-lite Quality opt-in context integration`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -185,12 +185,23 @@
 ## 2026-04-28 Graph-lite Next Track Snapshot
 
 - 완료 루프: `LOOP-103 Await next-track after quality candidate comparison`
-- 현재 active: `LOOP-104 Graph-lite relation sidecar feasibility gate`
+- 완료 루프: `LOOP-104 Graph-lite relation sidecar feasibility gate`
+- 현재 active: `LOOP-105 Graph-lite Quality opt-in context integration`
 - 선택 이유: 들어오는 문서 데이터에서 인물/기관/국가/사건 간 관계가 RAG 품질을 좌우할 수 있으므로, full GraphRAG 재개 전에 로컬 경량 관계 계층의 품질 개선 가능성을 검증한다.
 - 범위 제한: full Neo4j/GraphRAG 운영 도입이 아니라, 로컬 graph-lite 관계 스냅샷과 관계 검색 PoC로 제한한다. 기존 `/query` 기본 경로는 대체하지 않고 semantic/vector fallback을 유지한다.
 - 병행 작업: 코드/테스트 구현은 별도 브랜치 `codex/loop-104-graph-lite-sidecar`에서 진행한다. 이 정리 브랜치 `codex/loop-103-track-sync`는 TODO/NEXT/README 현행화만 담당한다.
 - 검증 분리: 문서/큐 정합성은 `./.venv/bin/python scripts/roadmap_harness.py validate`로 확인하고, graph-lite 구현 검증은 병행 worker가 추가하는 `tests/test_graph_lite_*.py` 또는 동등한 graph-lite 대상 테스트로 별도 확인한다.
 - 완료 기준: 관계 후보는 source/chunk/evidence/confidence를 추적해야 하고, graph-lite 실패 시 기존 semantic/vector 경로가 유지되어야 하며, 결과 go/no-go 판단이 TODO/NEXT에 기록되어야 한다.
+
+## 2026-04-29 Graph-lite Closeout and Integration Target
+
+- 완료 루프: `LOOP-104 Graph-lite relation sidecar feasibility gate`
+- 구현 결과: `services/graph_lite_service.py`는 JSONL `entities/relations` snapshot loader, relation-heavy detector, in-memory relation search, context append helper를 제공한다.
+- 실측 결과: `scripts/benchmark_graph_lite_sidecar.py` 기준 graph-candidate 3건은 `3/3 hit`, fallback `0`, 평균 latency 약 `0.193ms`였다.
+- 회귀 결과: `tests/test_graph_lite_service.py tests/test_graphrag_poc_service.py tests/api/test_query_api.py -> 27 passed`; `tests/test_eval_query_quality.py tests/test_compare_rag_quality.py tests/test_documentation_boundaries.py tests/test_answer_level_eval_fixtures.py -> 17 passed`; `roadmap_harness.py validate -> ready`.
+- 판단: graph-lite는 기본 `/query` 대체가 아니라 `Quality` 또는 명시 고급 관계 단계의 opt-in context 보조 계층으로 진행한다.
+- 현재 목표: `LOOP-105`에서 relation-heavy + quality 질문에만 `[Graph-Lite Relations]` context를 붙이고, no-hit/snapshot-missing 시 기존 vector context로 fallback한다.
+- 완료 기준: 일반/balanced 질문은 기존 경로 유지, quality relation-heavy 질문은 debug meta에서 graph-lite status/relation count 확인, API 회귀 테스트와 roadmap harness 통과.
 
 ## 0. 2026-03-13 우선순위 재정렬
 

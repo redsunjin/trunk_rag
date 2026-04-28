@@ -192,7 +192,8 @@
 | LOOP-101 | done | Await next-track after feedback fixture candidate queue | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-102 | done | Quality mode model candidate comparison | `./.venv/bin/python -m pytest -q tests/test_eval_query_quality.py tests/test_compare_rag_quality.py` + `./.venv/bin/python scripts/compare_rag_quality.py --base-url http://127.0.0.1:8010 --timeout-seconds 180 --query-timeout-seconds 120 --quality-mode quality --quality-stage quality --bucket generic-baseline --bucket sample-pack-baseline --model gemma4:e2b --model gemma4:e4b --model qwen3.5:9b-nvfp4 --llm-base-url http://localhost:11434 --output-json docs/reports/rag_quality_model_comparison_2026-04-28_quality_candidates.json --output-report docs/reports/RAG_QUALITY_MODEL_COMPARISON_2026-04-28_QUALITY_CANDIDATES.md` expected `blocked` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-103 | done | Await next-track after quality candidate comparison | `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-104 | active | Graph-lite relation sidecar feasibility gate | `./.venv/bin/python scripts/roadmap_harness.py validate` + graph-lite 대상 테스트(구현 브랜치에서 추가 예정) |
+| LOOP-104 | done | Graph-lite relation sidecar feasibility gate | `./.venv/bin/python -m pytest -q tests/test_graph_lite_service.py tests/test_graphrag_poc_service.py tests/api/test_query_api.py` + `./.venv/bin/python -m pytest -q tests/test_eval_query_quality.py tests/test_compare_rag_quality.py tests/test_documentation_boundaries.py tests/test_answer_level_eval_fixtures.py` + `./.venv/bin/python scripts/benchmark_graph_lite_sidecar.py --output-json /tmp/graph_lite_sidecar_poc.json --output-report /tmp/GRAPH_LITE_SIDECAR_POC.md` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-105 | active | Graph-lite Quality opt-in context integration | `./.venv/bin/python -m pytest -q tests/test_graph_lite_service.py tests/api/test_query_api.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -2935,7 +2936,7 @@ closeout 메모 (2026-04-28):
 - `LOOP-104 Graph-lite relation sidecar feasibility gate`를 다음 active로 등록했다.
 - 이 정리 브랜치는 문서 현행화만 수행하며, graph-lite 코드/테스트 구현은 병행 브랜치 `codex/loop-104-graph-lite-sidecar`에서 진행한다.
 
-## 현재 Active Loop (LOOP-104)
+## 완료 Loop (LOOP-104)
 
 목표:
 - 문서에 포함된 엔티티/관계 후보를 로컬 경량 snapshot으로 만들고, 관계형 질문에서 기존 vector/semantic retrieval을 보조할 수 있는지 검증한다.
@@ -2955,6 +2956,33 @@ closeout 메모 (2026-04-28):
 - 문서/큐 정합성: `./.venv/bin/python scripts/roadmap_harness.py validate`
 - graph-lite 구현 브랜치 검증: 병행 worker가 추가하는 `tests/test_graph_lite_*.py` 또는 동등한 graph-lite 대상 테스트
 - 기본 경로 영향이 있으면 관련 API 회귀 테스트를 추가 실행한다.
+
+closeout 메모 (2026-04-29):
+- `services/graph_lite_service.py`는 JSONL `entities/relations` snapshot을 로드하고, relation-heavy 질문 감지, 인메모리 관계 검색, context append helper를 제공한다.
+- `scripts/benchmark_graph_lite_sidecar.py` 기준 기존 graph-candidate 3건은 `3/3 hit`, fallback `0`, 평균 latency 약 `0.193ms`였다.
+- 회귀 검증은 `tests/test_graph_lite_service.py tests/test_graphrag_poc_service.py tests/api/test_query_api.py -> 27 passed`, `tests/test_eval_query_quality.py tests/test_compare_rag_quality.py tests/test_documentation_boundaries.py tests/test_answer_level_eval_fixtures.py -> 17 passed`, `roadmap_harness.py validate -> ready`로 확인했다.
+- 판단: full Neo4j/GraphRAG 재개가 아니라, `Quality` 또는 명시 고급 관계 모드에서만 opt-in으로 붙이는 보조 계층으로 다음 단계 진행한다.
+
+## 현재 Active Loop (LOOP-105)
+
+목표:
+- relation-heavy 질문에서만 graph-lite 관계 근거를 RAG context에 추가해 `Quality` 답변 품질 개선 가능성을 검증한다.
+
+범위:
+- 포함: `/query` `quality_mode=quality` 또는 동등한 정밀 단계에서 graph-lite context를 opt-in으로 추가, graph-lite 실패 시 vector context 그대로 유지, debug meta에 graph-lite 적용 여부 기록, API/서비스 테스트 보강
+- 제외: 기본 balanced fast 경로 자동 적용, full Neo4j/GraphRAG 운영 도입, UI 기본 Quality 모델 고정, 유료 API 호출, relation extraction 품질 자동화
+
+완료 기준:
+- 일반 질문과 balanced 질문은 기존 context 경로가 유지되어야 한다.
+- relation-heavy + quality 질문은 graph-lite hit 시 context에 `[Graph-Lite Relations]` 블록을 추가해야 한다.
+- graph-lite snapshot이 없거나 no-hit이면 답변 생성이 실패하지 않고 기존 vector 경로로 fallback해야 한다.
+- debug meta에서 graph-lite status, fallback reason, relation count를 확인할 수 있어야 한다.
+- 관련 회귀 테스트와 roadmap harness 검증이 통과해야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_graph_lite_service.py tests/api/test_query_api.py`
+- `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile api/routes_query.py api/schemas.py services/graph_lite_service.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
