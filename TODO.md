@@ -180,7 +180,8 @@
 | LOOP-089 | done | First-run recovery guide usability check | `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-090 | done | App sidebar/header UI polish | `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-091 | done | Intro/app diagnostics disclosure and document workflow copy polish | `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py` + visual render check + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-092 | active | Await next-track after UI copy/disclosure polish | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-092 | done | Semantic search fallback and layered RAG wait | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-093 | active | Await next-track after semantic fallback layering | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -2601,25 +2602,58 @@ closeout 메모 (2026-04-28):
 - 실제 `/intro`, `/app` 1394x625 및 390x844 렌더링에서 `has_budget_summary=false`, `has_profile_summary=false`, `has_run_bat_visible=false`, `overflow=false`를 확인했다.
 - 검증은 `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py -> 11 passed`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과로 마감한다.
 
-## 현재 Active Loop (LOOP-092)
+## 완료 Loop (LOOP-092)
 
 목표:
-- UI copy/disclosure polish 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
+- LLM timeout이 발생해도 사용자가 먼저 확인할 수 있는 빠른 시맨틱 검색 fallback 계층을 추가한다.
+
+범위:
+- 포함: LLM 없는 `/semantic-search` API, `/app` 질문 시 빠른 검색 결과 선표시, 기존 `/query` RAG 답변 60초 UI 대기, timeout 안내 문구 보강, API/e2e 테스트, README/SPEC/NEXT 현행화
+- 제외: 기본 모델 교체, `.env` 강제 수정, GraphRAG 재개, upload review live execution 구현, 데스크톱 패키징 재착수
+
+완료 기준:
+- `/semantic-search`가 Chroma/MMR 기반 검색 결과를 LLM 호출 없이 반환해야 한다.
+- `/app`에서 질문하면 빠른 시맨틱 검색 결과가 먼저 표시되고 RAG 답변은 별도 메시지로 이어서 생성되어야 한다.
+- `/query`는 요청 단위 `timeout_seconds` override를 받아 UI 계층형 질의에서 60초까지 기다릴 수 있어야 한다.
+- RAG timeout이 발생해도 빠른 검색 결과는 화면에 남아야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/e2e/test_web_flow_playwright.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-28):
+- `LOOP-091`에서 `/intro`와 `/app`의 기본 설명/진단 노출/문서 workflow copy를 정리했다.
+- 실제 timeout 로그 기준 `context_build`는 약 0.7초, `invoke`가 30초 timeout이므로 병목은 벡터DB 부재가 아니라 LLM 생성 대기다.
+- 모델 교체는 계속 실측 후보로 유지하되, 이번 단계는 시맨틱 검색 fallback과 계층형 UX를 먼저 구현한다.
+- 로컬 모델 후보 진단에서는 `llama3.1:8b`가 1순위 교체 후보, `qwen3.5:4b-nvfp4`는 latency fallback 후보로 남는다.
+
+closeout 메모 (2026-04-28):
+- `POST /semantic-search`를 추가해 `semantic_fallback` budget으로 Chroma/MMR + 기존 light hybrid/lexical/coverage retrieval 결과를 LLM 호출 없이 반환한다.
+- `services/query_service.py`의 retrieval 단계를 `retrieve_collection_documents()`로 분리해 `/query`와 `/semantic-search`가 같은 검색 계층을 공유하도록 했다.
+- `/query` 요청에 `timeout_seconds` override를 추가했고, `/app` 계층형 질의는 RAG 답변을 최대 60초까지 기다린다.
+- `/app`은 질문 시 빠른 시맨틱 검색 결과 메시지를 먼저 렌더링하고, RAG 답변 성공/timeout은 별도 메시지로 표시한다.
+- timeout 안내는 빠른 검색 결과를 먼저 확인하도록 유도한다.
+- 검증은 `./.venv/bin/python -m pytest -q tests/test_query_service.py tests/api/test_query_api.py tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py -> 51 passed`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과로 마감한다.
+
+## 현재 Active Loop (LOOP-093)
+
+목표:
+- semantic fallback layering 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
 
 범위:
 - 포함: 다음 track 선택, 필요 시 새 작업 브랜치 생성, TODO/NEXT active 재정렬
-- 제외: 명시 지시 없는 public blocker 구현, upload review live execution 구현, GraphRAG 재개, 데스크톱 패키징 재착수
+- 제외: 명시 지시 없는 기본 모델 교체, public blocker 구현, upload review live execution 구현, GraphRAG 재개, 데스크톱 패키징 재착수
 
 완료 기준:
-- 사용자가 PR/merge 후속, 릴리즈 체크리스트 실측, 다른 MVP/V1/V1.5 track, 또는 대기 유지를 명시해야 한다.
+- 사용자가 PR/merge 후속, 모델 교체 실측, 릴리즈 체크리스트 실측, 다른 MVP/V1/V1.5 track, 또는 대기 유지를 명시해야 한다.
 - 새 track을 진행한다면 TODO/NEXT active가 해당 track으로 재정렬되어야 한다.
 
 검증:
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 진행 메모 (2026-04-28):
-- `LOOP-091`에서 `/intro`와 `/app`의 기본 설명/진단 노출/문서 workflow copy를 정리했다.
-- 다음 추천 후보는 이 브랜치 PR 생성/merge 후 릴리즈 체크리스트 실측이다.
+- `LOOP-092`에서 `/semantic-search` fallback API와 `/app` 계층형 질의 UX를 추가했다.
+- 다음 추천 후보는 `llama3.1:8b` 모델 교체 실측 또는 이 브랜치 PR 생성/merge 후 릴리즈 체크리스트 실측이다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

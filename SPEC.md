@@ -72,9 +72,10 @@
 - `GET /upload-requests`, `POST /upload-requests` 구현
 - `POST /upload-requests/{id}/approve`, `POST /upload-requests/{id}/reject` 구현
 - `GET /rag-docs`, `GET /rag-docs/{doc_name}` 구현
+- `POST /semantic-search` 구현: LLM 호출 없이 Chroma/MMR 기반 빠른 검색 결과 반환
 - 승인된 요청의 managed markdown runtime 저장소/manifest 구현
 - `/query` 표준 실패 응답(`code`, `message`, `hint`, `request_id`, `detail`) 구현
-- `/query` 타임아웃 정책(30초 기본, 재시도 없음) 적용
+- `/query` 타임아웃 정책(환경 기본값 + 요청 단위 `timeout_seconds` override, 재시도 없음) 적용
 - `/query` 성공/실패 응답에 `X-Request-ID` 헤더 제공
 - `/query` hot path의 Chroma handle/vector count snapshot 캐시 적용
 - `/query` budget profile 헤더(`X-RAG-Budget-Profile`, `X-RAG-Route-Reason`) 제공
@@ -305,7 +306,8 @@
   "llm_model": "gemma4:e4b",
   "llm_api_key": null,
   "llm_base_url": "http://localhost:11434",
-  "query_profile": "generic"
+  "query_profile": "generic",
+  "timeout_seconds": 60
 }
 ```
 - `collection`/`collections`를 생략하면 기본 core 컬렉션 `all`을 사용한다.
@@ -322,6 +324,22 @@
 - sample-pack compatibility 자동 라우팅은 최대 2개 컬렉션까지 확장한다.
 - 키워드가 없거나 과도하게 많이 매칭되면 기본 컬렉션 `all`로 fallback 한다.
 - 응답 헤더 `X-RAG-Collection`, `X-RAG-Collections`에 실제 사용 컬렉션이 담긴다.
+
+### POST `/semantic-search`
+- 목적: LLM 생성 없이 빠른 시맨틱 검색 fallback 결과를 반환한다.
+- 요청:
+```json
+{
+  "query": "갈릴레오의 영향",
+  "collection": "all",
+  "query_profile": "generic",
+  "max_results": 3
+}
+```
+- `/query`와 같은 collection routing, active vector check, embedding fingerprint guard를 사용한다.
+- retrieval은 기존 Chroma/MMR + light hybrid/lexical/coverage 계층을 공유한다.
+- 응답은 `results[].source`, `h2`, `collection_key`, `snippet`과 `meta.retrieval_strategy`를 포함한다.
+- `/app`은 이 결과를 먼저 표시하고, RAG 답변은 별도 `/query` 요청으로 이어서 생성한다.
 
 ### POST `/admin/auth`
 - 목적: 관리자 인증코드 확인(초기 MVP)

@@ -129,6 +129,82 @@ def test_query_debug_response_includes_meta(client, monkeypatch):
     assert body["meta"]["sources"][0]["collection_key"] in {"fr", "ge"}
 
 
+def test_semantic_search_success_case(client, monkeypatch):
+    from langchain_core.documents import Document
+
+    class DummyRetriever:
+        def __init__(self, key: str):
+            self.key = key
+
+        def invoke(self, question):
+            if self.key == "ge":
+                return [
+                    Document(
+                        page_content="독일 연구 대학과 실험실 문화에 대한 문서 본문입니다.",
+                        metadata={"source": "ge_doc.md", "h2": "독일"},
+                    )
+                ]
+            return [
+                Document(
+                    page_content="프랑스 과학 교육 제도와 학술 기관에 대한 문서 본문입니다.",
+                    metadata={"source": "fr_doc.md", "h2": "프랑스"},
+                )
+            ]
+
+    class DummyDB:
+        def __init__(self, key: str):
+            self.key = key
+
+        def as_retriever(self, **kwargs):
+            return DummyRetriever(self.key)
+
+    monkeypatch.setattr(routes_query.index_service, "get_db", lambda key="all": DummyDB(key))
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count", lambda _db: 1)
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count_snapshot", lambda key="all": 1)
+    monkeypatch.setattr(routes_query.index_service, "get_collection_documents_from_store", lambda key="all": [])
+    monkeypatch.setattr(
+        routes_query.index_service,
+        "get_embedding_fingerprint_status",
+        lambda keys=None: {"status": "ready", "message": "ok"},
+    )
+    monkeypatch.setattr(
+        routes_query,
+        "create_chat_llm",
+        lambda **kwargs: (_ for _ in ()).throw(AssertionError("semantic search must not call LLM")),
+    )
+
+    response = client.post(
+        "/semantic-search",
+        json={"query": "프랑스와 독일 비교", "collections": ["fr", "ge"], "max_results": 2},
+        headers={"X-Request-ID": "req-semantic-1"},
+    )
+
+    assert response.status_code == 200
+    assert response.headers.get("X-Request-ID") == "req-semantic-1"
+    assert response.headers.get("X-RAG-Search-Mode") == "semantic_fallback"
+    assert response.headers.get("X-RAG-Route-Reason") == "explicit_multi"
+    body = response.json()
+    assert body["query"] == "프랑스와 독일 비교"
+    assert len(body["results"]) == 2
+    assert body["results"][0]["source"] == "fr_doc.md"
+    assert body["results"][0]["collection_key"] == "fr"
+    assert body["meta"]["search_mode"] == "semantic_fallback"
+    assert body["meta"]["collections"] == ["fr", "ge"]
+    assert "mmr" in body["meta"]["retrieval_strategy"]
+
+
+def test_semantic_search_vectorstore_empty(client, monkeypatch):
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count_snapshot", lambda key="all": 0)
+    response = client.post(
+        "/semantic-search",
+        json={"query": "테스트"},
+        headers={"X-Request-ID": "req-semantic-empty"},
+    )
+    body = _assert_query_error_shape(response, 400, "VECTORSTORE_EMPTY")
+    assert body["request_id"] == "req-semantic-empty"
+    assert "Reindex" in (body.get("hint") or "")
+
+
 def test_query_supports_query_profile_override(client, monkeypatch):
     class DummyDB:
         def as_retriever(self, **kwargs):
@@ -297,14 +373,17 @@ def test_query_timeout(client, monkeypatch):
     )
     monkeypatch.setattr(routes_query, "create_chat_llm", lambda **kwargs: object())
     monkeypatch.setattr(routes_query.query_service, "build_query_chain", lambda retriever, llm: object())
+    captured: dict[str, object] = {}
 
     def _raise_timeout(chain, question, timeout_seconds=15):
+        captured["timeout_seconds"] = timeout_seconds
         raise TimeoutError("timeout")
 
     monkeypatch.setattr(routes_query.query_service, "invoke_query_chain", _raise_timeout)
-    response = client.post("/query", json={"query": "테스트", "llm_provider": "ollama"})
+    response = client.post("/query", json={"query": "테스트", "llm_provider": "ollama", "timeout_seconds": 60})
     body = _assert_query_error_shape(response, 504, "LLM_TIMEOUT")
     assert "/intro" in (body.get("hint") or "")
+    assert captured["timeout_seconds"] == 60
 
 
 def test_query_reports_embedding_dimension_mismatch(client, monkeypatch):

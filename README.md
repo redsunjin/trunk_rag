@@ -341,6 +341,7 @@ cd <repo>
 - `GET /health`: 서버/벡터 상태 확인
 - `GET /collections`: 컬렉션별 벡터 수/cap 사용률과 업로드 기본 메타데이터 조회
 - `POST /reindex`: 문서 재인덱싱
+- `POST /semantic-search`: LLM 호출 없이 Chroma/MMR 기반 빠른 검색 결과 반환
 - `POST /query`: 질의(기본 core 컬렉션 `all`, 필요 시 최대 2개 컬렉션 선택)
 - `GET /rag-docs`: RAG 대상 문서 목록
 - `GET /rag-docs/{doc_name}`: 문서 원문(md) 조회
@@ -368,10 +369,13 @@ cd <repo>
 `고급 설정 펼치기`를 누른 경우에만 provider/model/base URL/API key를 직접 수정합니다.
 현재 기본 `max_context_chars`는 미설정 시 `1500`입니다.
 `POST /reindex` 응답에는 실제 인덱싱에 사용된 `chunking` 설정이 포함됩니다.
+`POST /semantic-search`는 `/query`와 같은 컬렉션 라우팅과 embedding fingerprint guard를 사용하지만 LLM을 호출하지 않습니다.
+브라우저 `/app`은 질문 시 이 결과를 먼저 표시하고, RAG 답변은 별도 `/query` 요청으로 이어서 생성합니다.
 `POST /query`에서 `collection`/`collections`를 명시하지 않으면 기본적으로 core 컬렉션 `all`을 조회합니다.
 sample-pack 키워드 기반 자동 라우팅은 `query_profile=sample_pack`일 때만 호환 경로로 동작하고,
 복수 국가 키워드가 동시에 감지되면 최대 2개 컬렉션까지 함께 조회합니다.
 명시적 `collection`/`collections` 선택은 `query_profile`과 무관하게 그대로 지원됩니다.
+`timeout_seconds`를 요청에 포함하면 해당 요청에서만 기본 timeout을 override할 수 있습니다.
 
 예시:
 
@@ -381,6 +385,10 @@ curl http://127.0.0.1:8000/health
 curl -X POST http://127.0.0.1:8000/query `
   -H "Content-Type: application/json" `
   -d "{\"query\":\"각 국가별 대표적인 과학적 성과\",\"collection\":\"all\",\"llm_provider\":\"ollama\",\"llm_model\":\"gemma4:e4b\",\"llm_base_url\":\"http://localhost:11434\"}"
+
+curl -X POST http://127.0.0.1:8000/semantic-search `
+  -H "Content-Type: application/json" `
+  -d "{\"query\":\"갈릴레오의 영향\",\"collection\":\"all\",\"max_results\":3}"
 ```
 
 ### `/query` 에러 응답 규격
@@ -525,6 +533,8 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 
 - 기본 질의 모드에서는 `/health`의 런타임 기본 LLM 설정을 자동 사용합니다.
 - `고급 설정 펼치기`를 눌러야 provider/model/base URL/API key를 직접 수정할 수 있습니다.
+- 질문을 보내면 `/semantic-search` 결과를 먼저 보여 주고, `/query` RAG 답변은 별도 메시지에서 최대 60초까지 기다립니다.
+- RAG timeout이 발생해도 빠른 시맨틱 검색 결과는 화면에 남습니다.
 - `/intro`와 `/app`의 release/runtime/ops 진단 상세는 기본 화면을 방해하지 않도록 접힘 패널로 표시합니다.
 - 기본 문서 목록에는 첫 실행 확인용 유럽 과학사 sample-pack 데모 문서와 승인된 사용자 문서가 함께 표시될 수 있습니다.
 - `vectors=0`이면 질문 전 `Reindex`를 먼저 실행하라는 안내가 표시됩니다.

@@ -663,12 +663,12 @@ def format_docs_with_limit(docs: list[Document], *, max_chars: int | None) -> st
     return "".join(lines)
 
 
-def build_collection_context(
+def retrieve_collection_documents(
     question: str,
     collection_keys: list[str],
     trace: dict[str, Any] | None = None,
     budget: dict[str, object] | None = None,
-) -> str:
+) -> list[Document]:
     started_at = time.perf_counter()
     docs: list[Document] = []
     fingerprints: set[str] = set()
@@ -758,7 +758,7 @@ def build_collection_context(
     coverage_rerank_covered_term_count = int(coverage_info.get("covered_term_count", 0))
 
     selected_docs = docs[:max_total_docs]
-    context = format_docs_with_limit(selected_docs, max_chars=max_context_chars)
+    context_preview = format_docs_with_limit(selected_docs, max_chars=max_context_chars)
     elapsed_ms = round((time.perf_counter() - started_at) * 1000, 3)
 
     if trace is not None:
@@ -784,7 +784,7 @@ def build_collection_context(
                 "docs_total": len(docs),
                 "max_docs": max_total_docs,
                 "max_context_chars": max_context_chars,
-                "context_chars": len(context),
+                "context_chars": len(context_preview),
                 "budget_profile": None if budget is None else budget.get("profile"),
                 "retrieval_strategy": retrieval_strategy,
                 "lexical_query_terms": lexical_query_terms,
@@ -818,11 +818,34 @@ def build_collection_context(
         ",".join(collection_keys),
         len(docs),
         max_total_docs,
-        len(context),
+        len(context_preview),
         max_context_chars,
         elapsed_ms,
         collection_stats,
     )
+    return selected_docs
+
+
+def build_collection_context(
+    question: str,
+    collection_keys: list[str],
+    trace: dict[str, Any] | None = None,
+    budget: dict[str, object] | None = None,
+) -> str:
+    docs = retrieve_collection_documents(
+        question=question,
+        collection_keys=collection_keys,
+        trace=trace,
+        budget=budget,
+    )
+    max_context_chars = (
+        int(budget["max_context_chars"])
+        if budget and isinstance(budget.get("max_context_chars"), int)
+        else runtime_service.get_max_context_chars()
+    )
+    context = format_docs_with_limit(docs, max_chars=max_context_chars)
+    if trace is not None:
+        trace["context_chars"] = len(context)
     return context
 
 

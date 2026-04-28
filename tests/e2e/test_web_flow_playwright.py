@@ -186,7 +186,46 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     expect(page.locator("#appOverviewRuntime")).to_contain_text("문서 벡터=37")
     expect(page.locator("#appRecoverySteps")).to_contain_text("/intro 확인")
 
+    semantic_payload: dict[str, object] = {}
     query_payload: dict[str, object] = {}
+
+    def semantic_success(route):
+        semantic_payload["body"] = route.request.post_data_json
+        route.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps(
+                {
+                    "query": "정상 응답 테스트",
+                    "results": [
+                        {
+                            "rank": 1,
+                            "source": "fr_doc.md",
+                            "h2": "프랑스",
+                            "collection_key": "fr",
+                            "snippet": "프랑스 과학 교육 제도에 대한 빠른 검색 근거입니다.",
+                        },
+                        {
+                            "rank": 2,
+                            "source": "ge_doc.md",
+                            "h2": "독일",
+                            "collection_key": "ge",
+                            "snippet": "독일 연구 대학에 대한 빠른 검색 근거입니다.",
+                        },
+                    ],
+                    "meta": {
+                        "request_id": "req-semantic-e2e-1",
+                        "query_profile": "generic",
+                        "collections": ["fr", "ge"],
+                        "route_reason": "explicit_multi",
+                        "search_mode": "semantic_fallback",
+                        "retrieval_strategy": "mmr+light_hybrid",
+                        "stage_timings": {"semantic_retrieval_ms": 25.0},
+                        "context": {"docs_total": 2, "context_chars": 180},
+                    },
+                }
+            ),
+        )
 
     def query_success(route):
         query_payload["body"] = route.request.post_data_json
@@ -218,19 +257,27 @@ def test_intro_app_flow(page: Page, live_server_url: str):
             ),
         )
 
+    page.route("**/semantic-search", semantic_success)
     page.route("**/query", query_success)
     page.fill("#userInput", "정상 응답 테스트")
     page.click("#sendBtn")
+    expect(page.locator(".semantic-result-list").last).to_contain_text("fr_doc.md", timeout=10000)
+    expect(page.locator(".semantic-result-list").last).to_contain_text("프랑스 과학 교육")
     expect(page.locator(".chat-message.bot").last).to_contain_text("모킹된 질의 응답", timeout=10000)
     expect(page.locator(".chat-message.bot").last).to_contain_text("근거 수준=supported")
     expect(page.locator(".chat-message.bot").last).to_contain_text("fr_doc.md > 프랑스")
     page.locator(".chat-message.bot").last.locator("summary").click()
     expect(page.locator(".chat-message.bot").last).to_contain_text("request_id=req-e2e-1")
     expect(page.locator(".chat-message.bot").last).to_contain_text("fr_doc.md")
+    assert semantic_payload["body"]["collection"] == "fr"
+    assert semantic_payload["body"]["collections"] == ["fr", "ge"]
+    assert semantic_payload["body"]["max_results"] == 3
     assert query_payload["body"]["collection"] == "fr"
     assert query_payload["body"]["collections"] == ["fr", "ge"]
+    assert query_payload["body"]["timeout_seconds"] == 60
     assert query_payload["body"]["debug"] is True
     page.unroute("**/query", query_success)
+    page.unroute("**/semantic-search", semantic_success)
 
     def query_failure(route):
         route.fulfill(
@@ -248,13 +295,17 @@ def test_intro_app_flow(page: Page, live_server_url: str):
             headers={"X-Request-ID": "req-e2e-timeout"},
         )
 
+    page.route("**/semantic-search", semantic_success)
     page.route("**/query", query_failure)
     page.fill("#userInput", "오류 응답 테스트")
     page.click("#sendBtn")
+    expect(page.locator(".semantic-result-list").last).to_contain_text("fr_doc.md", timeout=10000)
     expect(page.locator(".chat-message.bot").last).to_contain_text("LLM 응답 시간이 제한")
     expect(page.locator(".chat-message.bot").last).to_contain_text("hint:")
     expect(page.locator(".chat-message.bot").last).to_contain_text("request_id:")
+    expect(page.locator(".chat-message.bot").last).to_contain_text("빠른 시맨틱 검색 결과")
     page.unroute("**/query", query_failure)
+    page.unroute("**/semantic-search", semantic_success)
 
     def reindex_success(route):
         route.fulfill(

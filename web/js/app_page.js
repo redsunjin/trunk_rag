@@ -50,6 +50,8 @@ let advancedSettingsOpen = false;
 let runtimeDefaultsLoaded = false;
 let uploadMetadataOpen = false;
 
+const LAYERED_RAG_TIMEOUT_SECONDS = 60;
+
 const offlineRecoverySteps = [
   "run_doc_rag.bat 또는 app_api.py로 서버를 다시 시작합니다.",
   "Ollama/LLM 서버와 기본 모델 준비 상태를 확인합니다.",
@@ -199,6 +201,55 @@ function renderBotResponse(messageNode, text, meta) {
     messageNode.appendChild(details);
   }
   chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+function renderSemanticSearchResponse(messageNode, data) {
+  const results = Array.isArray(data?.results) ? data.results : [];
+  messageNode.replaceChildren();
+
+  const body = document.createElement("div");
+  body.className = "message-text";
+  body.textContent = results.length
+    ? "빠른 시맨틱 검색 결과입니다. RAG 답변은 이어서 생성 중입니다."
+    : "빠른 시맨틱 검색에서 관련 문서를 찾지 못했습니다. RAG 답변은 이어서 생성 중입니다.";
+  messageNode.appendChild(body);
+
+  const meta = data?.meta || {};
+  const support = document.createElement("div");
+  support.className = "response-support";
+  support.textContent =
+    `검색 모드=${meta.search_mode || "semantic_fallback"} | ` +
+    `route=${meta.route_reason || "-"} | ` +
+    `strategy=${meta.retrieval_strategy || "-"}`;
+  messageNode.appendChild(support);
+
+  if (results.length) {
+    const list = document.createElement("ol");
+    list.className = "semantic-result-list";
+    results.forEach((item) => {
+      const row = document.createElement("li");
+      const title = document.createElement("strong");
+      title.textContent = `${item.source || "unknown"}${item.h2 ? ` > ${item.h2}` : ""}`;
+      const snippet = document.createElement("p");
+      snippet.textContent = item.snippet || "";
+      const metaLine = document.createElement("small");
+      metaLine.textContent = `rank=${item.rank || "-"} | collection=${item.collection_key || "-"}`;
+      row.appendChild(title);
+      row.appendChild(snippet);
+      row.appendChild(metaLine);
+      list.appendChild(row);
+    });
+    messageNode.appendChild(list);
+  }
+
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+function renderSemanticSearchError(messageNode, rawError, parsedError) {
+  const message = rawError?.code === "VECTORSTORE_EMPTY"
+    ? `${formatApiError(parsedError)} | 빠른 검색을 위해 Reindex가 필요합니다.`
+    : `${formatApiError(parsedError)} | 빠른 검색은 건너뛰고 RAG 답변 생성을 계속합니다.`;
+  renderBotResponse(messageNode, message, null);
 }
 
 function setStatus(type, text, detail) {
@@ -374,7 +425,7 @@ function buildGuidedErrorMessage(rawError, parsedError) {
     return `${base} | next: API 키와 base URL 설정을 확인하세요.`;
   }
   if (code === "LLM_TIMEOUT") {
-    return `${base} | next: 더 짧은 질문으로 다시 시도하거나 모델 상태를 확인하세요.`;
+    return `${base} | next: 위의 빠른 시맨틱 검색 결과를 먼저 확인하거나 더 짧은 질문으로 다시 시도하세요.`;
   }
   return base;
 }
@@ -559,9 +610,16 @@ async function sendQuestion() {
   }
 
   appendMessage("user", question);
-  const pending = appendMessage("bot", "생성 중...");
+  const semanticPending = appendMessage("bot", "빠른 시맨틱 검색 중...");
+  const pending = appendMessage("bot", `RAG 답변 생성 중... 빠른 검색 결과를 먼저 표시하고 최대 ${LAYERED_RAG_TIMEOUT_SECONDS}초까지 기다립니다.`);
   const selectedCollections = getSelectedCollectionKeys();
 
+  const semanticPayload = {
+    query: question,
+    collection: selectedCollections[0] || null,
+    collections: selectedCollections.length ? selectedCollections : null,
+    max_results: 3,
+  };
   const payload = {
     query: question,
     llm_provider: provider.value,
@@ -570,27 +628,53 @@ async function sendQuestion() {
     llm_base_url: baseUrl.value || null,
     collection: selectedCollections[0] || null,
     collections: selectedCollections.length ? selectedCollections : null,
+    timeout_seconds: LAYERED_RAG_TIMEOUT_SECONDS,
     debug: true,
   };
 
-  try {
-    const res = await fetch("/query", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(payload),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      const error = parseApiError(data, "요청 실패");
-      renderBotResponse(pending, buildGuidedErrorMessage(data, error), null);
-      return;
+  const semanticSearchPromise = (async () => {
+    try {
+      const res = await fetch("/semantic-search", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(semanticPayload),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const error = parseApiError(data, "빠른 검색 실패");
+        renderSemanticSearchError(semanticPending, data, error);
+        return;
+      }
+      renderSemanticSearchResponse(semanticPending, data);
+    } catch (err) {
+      renderBotResponse(semanticPending, "빠른 검색 오류: " + err, null);
     }
-    renderBotResponse(pending, data.answer, data.meta || null);
-  } catch (err) {
-    renderBotResponse(pending, "오류: " + err, null);
-  }
+  })();
 
-  userInput.value = "";
+  const ragAnswerPromise = (async () => {
+    try {
+      const res = await fetch("/query", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const error = parseApiError(data, "요청 실패");
+        renderBotResponse(pending, buildGuidedErrorMessage(data, error), null);
+        return;
+      }
+      renderBotResponse(pending, data.answer, data.meta || null);
+    } catch (err) {
+      renderBotResponse(pending, "오류: " + err, null);
+    }
+  })();
+
+  try {
+    await Promise.allSettled([semanticSearchPromise, ragAnswerPromise]);
+  } finally {
+    userInput.value = "";
+  }
 }
 
 async function reindex() {

@@ -8,14 +8,26 @@ import time
 from fastapi import APIRouter, Request, Response
 from chromadb.errors import InvalidDimensionException
 
-from api.schemas import QueryMeta, QueryRequest, QueryResponse, QuerySource
+from api.schemas import (
+    QueryMeta,
+    QueryRequest,
+    QueryResponse,
+    QuerySource,
+    SemanticSearchMeta,
+    SemanticSearchRequest,
+    SemanticSearchResponse,
+    SemanticSearchResult,
+)
 from core.errors import QueryAPIError
-from core.settings import DEFAULT_COLLECTION_KEY, MAX_QUERY_COLLECTIONS
+from core.settings import DEFAULT_COLLECTION_KEY, MAX_QUERY_COLLECTIONS, SEARCH_FETCH_K, SEARCH_K
 from services import collection_service, index_service, query_service, runtime_service
 from common import create_chat_llm, default_llm_model, resolve_llm_config
 
 router = APIRouter()
 logger = logging.getLogger("doc_rag.api")
+
+SEMANTIC_FALLBACK_CONTEXT_CHARS = 1200
+SEMANTIC_FALLBACK_SNIPPET_CHARS = 360
 
 
 def _serialize_stage_timings(
@@ -68,6 +80,196 @@ def _classify_support(
     return "limited", "single_or_short_context"
 
 
+def _build_semantic_search_budget(
+    *,
+    max_results: int,
+    collection_count: int,
+    route_reason: str,
+) -> dict[str, object]:
+    is_multi = collection_count > 1 or "multi" in route_reason
+    per_collection_k = 2 if is_multi else min(max_results, SEARCH_K)
+    return {
+        "profile": "semantic_fallback",
+        "summary": (
+            f"profile=semantic_fallback | k={per_collection_k} | fetch_k={SEARCH_FETCH_K} | "
+            f"max_docs={max_results} | context={SEMANTIC_FALLBACK_CONTEXT_CHARS}"
+        ),
+        "per_collection_k": per_collection_k,
+        "per_collection_fetch_k": SEARCH_FETCH_K,
+        "max_total_docs": max_results,
+        "max_context_chars": SEMANTIC_FALLBACK_CONTEXT_CHARS,
+    }
+
+
+def _snippet(text: str, *, limit: int = SEMANTIC_FALLBACK_SNIPPET_CHARS) -> str:
+    normalized = " ".join(str(text or "").split())
+    if len(normalized) <= limit:
+        return normalized
+    return normalized[:limit].rstrip() + "..."
+
+
+def _semantic_search_result(rank: int, item) -> SemanticSearchResult:
+    return SemanticSearchResult(
+        rank=rank,
+        source=str(item.metadata.get("source", "unknown")),
+        h2=str(item.metadata.get("h2", "")),
+        collection_key=str(item.metadata.get("collection_key", "")),
+        snippet=_snippet(str(item.page_content or "")),
+    )
+
+
+@router.post("/semantic-search", response_model=SemanticSearchResponse)
+def semantic_search(req: SemanticSearchRequest, request: Request, response: Response) -> SemanticSearchResponse:
+    from core.http import get_or_create_request_id
+
+    request_id = get_or_create_request_id(request)
+    response.headers["X-Request-ID"] = request_id
+    started_at = time.perf_counter()
+    route_reason = "-"
+    stage_timings: dict[str, int | float | str | list[str]] = {}
+    context_trace: dict[str, object] = {}
+    resolved_query_profile = query_service.normalize_query_profile(req.query_profile)
+    stage_timings["query_profile"] = resolved_query_profile
+    stage_timings["search_mode"] = "semantic_fallback"
+
+    try:
+        try:
+            route_started_at = time.perf_counter()
+            collection_keys, route_reason, allow_default_fallback = collection_service.resolve_collection_keys_for_query(
+                req.query,
+                req.collection,
+                req.collections,
+                allow_keyword_routing=(resolved_query_profile == query_service.QUERY_PROFILE_SAMPLE_PACK),
+            )
+            stage_timings["resolve_route_ms"] = round((time.perf_counter() - route_started_at) * 1000, 3)
+            stage_timings["requested_collections"] = list(collection_keys)
+        except ValueError as exc:
+            supported = ", ".join(collection_service.list_collection_keys())
+            raise QueryAPIError(
+                code="INVALID_COLLECTION",
+                status_code=400,
+                message="지원하지 않는 collection입니다.",
+                hint=f"지원값: {supported}, 최대 {MAX_QUERY_COLLECTIONS}개 선택 가능",
+            ) from exc
+
+        active_collection_keys: list[str] = []
+        collection_probe_started_at = time.perf_counter()
+        for key in collection_keys:
+            vectors = index_service.get_vector_count_snapshot(key)
+            if vectors is None:
+                db = index_service.get_db(key)
+                vectors = index_service.get_vector_count(db)
+            if (vectors or 0) > 0:
+                active_collection_keys.append(key)
+
+        if (
+            not active_collection_keys
+            and allow_default_fallback
+            and DEFAULT_COLLECTION_KEY not in collection_keys
+        ):
+            fallback_vector_count = index_service.get_vector_count_snapshot(DEFAULT_COLLECTION_KEY)
+            if fallback_vector_count is None:
+                fallback_db = index_service.get_db(DEFAULT_COLLECTION_KEY)
+                fallback_vector_count = index_service.get_vector_count(fallback_db)
+            if (fallback_vector_count or 0) > 0:
+                active_collection_keys = [DEFAULT_COLLECTION_KEY]
+                route_reason = f"{route_reason}->fallback"
+        stage_timings["active_collection_probe_ms"] = round(
+            (time.perf_counter() - collection_probe_started_at) * 1000,
+            3,
+        )
+        stage_timings["active_collections"] = list(active_collection_keys)
+
+        if not active_collection_keys:
+            selected_names = [collection_service.get_collection_name(key) for key in collection_keys]
+            hint_value = ",".join(selected_names)
+            raise QueryAPIError(
+                code="VECTORSTORE_EMPTY",
+                status_code=400,
+                message="선택된 컬렉션에 인덱스가 없습니다. 먼저 /reindex를 실행하세요.",
+                hint=f"collections={hint_value} | Reindex 또는 build_index.py --reset 을 실행하세요.",
+            )
+
+        embedding_status = index_service.get_embedding_fingerprint_status(active_collection_keys)
+        stage_timings["embedding_fingerprint_status"] = str(embedding_status["status"])
+        if embedding_status["status"] == "mismatch":
+            raise QueryAPIError(
+                code="VECTORSTORE_EMBEDDING_MISMATCH",
+                status_code=409,
+                message="현재 임베딩 모델과 저장된 인덱스 fingerprint가 맞지 않습니다.",
+                hint="Reindex 또는 build_index.py --reset 을 실행하고 DOC_RAG_EMBEDDING_MODEL 설정을 확인하세요.",
+            )
+
+        active_collection_names = [collection_service.get_collection_name(key) for key in active_collection_keys]
+        response.headers["X-RAG-Collection"] = active_collection_names[0]
+        response.headers["X-RAG-Collections"] = ",".join(active_collection_names)
+        response.headers["X-RAG-Route-Reason"] = route_reason
+        response.headers["X-RAG-Query-Profile"] = resolved_query_profile
+        response.headers["X-RAG-Search-Mode"] = "semantic_fallback"
+
+        budget = _build_semantic_search_budget(
+            max_results=req.max_results,
+            collection_count=len(active_collection_keys),
+            route_reason=route_reason,
+        )
+        stage_timings["budget_profile"] = "semantic_fallback"
+        retrieval_started_at = time.perf_counter()
+        docs = query_service.retrieve_collection_documents(
+            question=req.query,
+            collection_keys=active_collection_keys,
+            trace=context_trace,
+            budget=budget,
+        )
+        stage_timings["semantic_retrieval_ms"] = round((time.perf_counter() - retrieval_started_at) * 1000, 3)
+        results = [
+            _semantic_search_result(index, item)
+            for index, item in enumerate(docs[: req.max_results], start=1)
+        ]
+        elapsed_ms = int((time.perf_counter() - started_at) * 1000)
+        logger.info(
+            "semantic_search request_id=%s code=OK collections=%s route=%s results=%d elapsed_ms=%d timings=%s",
+            request_id,
+            ",".join(active_collection_names),
+            route_reason,
+            len(results),
+            elapsed_ms,
+            _serialize_stage_timings(
+                route_reason=route_reason,
+                stage_timings=stage_timings,
+                context_trace=context_trace,
+                invoke_trace={},
+            ),
+        )
+        return SemanticSearchResponse(
+            query=req.query,
+            results=results,
+            meta=SemanticSearchMeta(
+                request_id=request_id,
+                query_profile=resolved_query_profile,
+                collections=active_collection_keys,
+                route_reason=route_reason,
+                retrieval_strategy=str(context_trace.get("retrieval_strategy", "-")),
+                stage_timings=stage_timings,
+                context={key: value for key, value in context_trace.items() if key != "sources"},
+            ),
+        )
+    except QueryAPIError as exc:
+        elapsed_ms = int((time.perf_counter() - started_at) * 1000)
+        logger.warning(
+            "semantic_search request_id=%s code=%s elapsed_ms=%d timings=%s",
+            request_id,
+            exc.code,
+            elapsed_ms,
+            _serialize_stage_timings(
+                route_reason=route_reason,
+                stage_timings=stage_timings,
+                context_trace=context_trace,
+                invoke_trace={},
+            ),
+        )
+        raise exc
+
+
 @router.post("/query", response_model=QueryResponse)
 def query(req: QueryRequest, request: Request, response: Response) -> QueryResponse:
     from core.http import get_or_create_request_id
@@ -86,7 +288,8 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
     resolved_query_profile = query_service.QUERY_PROFILE_GENERIC
 
     try:
-        query_timeout_seconds = runtime_service.get_query_timeout_seconds()
+        query_timeout_seconds = req.timeout_seconds or runtime_service.get_query_timeout_seconds()
+        stage_timings["timeout_seconds"] = query_timeout_seconds
         try:
             config_started_at = time.perf_counter()
             desired_model = req.llm_model or default_llm_model(req.llm_provider)

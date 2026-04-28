@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-092`
-- current_active_title: `Await next-track after UI copy/disclosure polish`
+- current_active_id: `LOOP-093`
+- current_active_title: `Await next-track after semantic fallback layering`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -111,6 +111,15 @@
 - 문서 기준: 현재 기본 문서는 유럽 과학사 `sample-pack` 데모/부트스트랩 문서이며, 제품 본체 도메인 데이터가 아니다.
 - 문서 반영 흐름: 사용자는 `/app` 왼쪽 `문서 추가/갱신 요청`으로 요청을 만들고, 관리자 승인 후 검색 문서에 반영한다. 삭제/비활성화는 기본 MVP 화면에서 제공하지 않는다.
 - 검증: `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py -> 11 passed`; `/intro`, `/app` 1394x625 및 390x844 Playwright render check에서 `overflow=false`, `has_budget_summary=false`, `has_profile_summary=false`.
+
+## 2026-04-28 Semantic Fallback Snapshot
+
+- 완료 루프: `LOOP-092 Semantic search fallback and layered RAG wait`
+- 병목 판단: 실제 timeout 로그에서 vector/embedding은 ready였고 context build는 약 0.7초였으며 LLM invoke가 30초 timeout이었다.
+- API: `POST /semantic-search`는 기존 Chroma/MMR + light hybrid/lexical/coverage retrieval 계층을 공유하되 LLM을 호출하지 않고 source/snippet 결과를 반환한다.
+- UI: `/app`은 질문 시 빠른 시맨틱 검색 결과를 먼저 보여 주고, 기존 RAG 답변은 별도 메시지에서 최대 60초까지 기다린다.
+- 모델 교체: 기본 모델은 이번 루프에서 바꾸지 않았다. 후보는 `llama3.1:8b` 우선 실측, `qwen3.5:4b-nvfp4` latency fallback 순서다.
+- 검증: `./.venv/bin/python -m pytest -q tests/test_query_service.py tests/api/test_query_api.py tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py -> 51 passed`; `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`; `git diff --check -> pass`.
 
 ## 0. 2026-03-13 우선순위 재정렬
 

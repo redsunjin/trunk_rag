@@ -14,6 +14,7 @@ class QueryRequest(BaseModel):
     query_profile: str | None = None
     collection: str | None = None
     collections: list[str] | None = None
+    timeout_seconds: int | None = Field(default=None, ge=1, le=180)
     debug: bool = False
 
 
@@ -43,6 +44,39 @@ class QueryResponse(BaseModel):
     provider: str
     model: str
     meta: QueryMeta | None = None
+
+
+class SemanticSearchRequest(BaseModel):
+    query: str = Field(..., min_length=1)
+    query_profile: str | None = None
+    collection: str | None = None
+    collections: list[str] | None = None
+    max_results: int = Field(default=3, ge=1, le=8)
+
+
+class SemanticSearchResult(BaseModel):
+    rank: int
+    source: str
+    h2: str = ""
+    collection_key: str = ""
+    snippet: str
+
+
+class SemanticSearchMeta(BaseModel):
+    request_id: str
+    query_profile: str = "generic"
+    collections: list[str] = Field(default_factory=list)
+    route_reason: str = "-"
+    search_mode: str = "semantic_fallback"
+    retrieval_strategy: str = "-"
+    stage_timings: dict[str, Any] = Field(default_factory=dict)
+    context: dict[str, Any] = Field(default_factory=dict)
+
+
+class SemanticSearchResponse(BaseModel):
+    query: str
+    results: list[SemanticSearchResult] = Field(default_factory=list)
+    meta: SemanticSearchMeta
 
 
 class ReindexRequest(BaseModel):
