@@ -36,6 +36,7 @@ RUNTIME_PROFILE_VERIFIED = "verified"
 RUNTIME_PROFILE_EXPERIMENTAL = "experimental"
 RUNTIME_PROFILE_NOT_RECOMMENDED = "not_recommended"
 VERIFIED_LOCAL_OLLAMA_MODEL = "gemma4:e4b"
+VERIFIED_LOCAL_OLLAMA_FAST_MODEL = "gemma4:e2b"
 VERIFIED_LOCAL_OLLAMA_TIMEOUT_SECONDS = 30
 EXPERIMENTAL_LOCAL_OLLAMA_FALLBACK_MODEL = "qwen3.5:4b-nvfp4"
 VERIFIED_GROQ_MODEL = "llama-3.1-8b-instant"
@@ -206,6 +207,32 @@ def build_runtime_profile(
             ),
         }
 
+    if normalized_provider == "ollama" and normalized_model == VERIFIED_LOCAL_OLLAMA_FAST_MODEL:
+        if timeout_seconds >= VERIFIED_LOCAL_OLLAMA_TIMEOUT_SECONDS:
+            return {
+                "status": RUNTIME_PROFILE_VERIFIED,
+                "scope": "local",
+                "message": (
+                    "현재 Ollama 런타임 프로파일은 gemma4:e2b 저지연 로컬 대안 경로로 검증됐습니다."
+                ),
+                "recommendation": (
+                    f"응답 지연이 우선이면 `{VERIFIED_LOCAL_OLLAMA_FAST_MODEL}`와 "
+                    f"`DOC_RAG_QUERY_TIMEOUT_SECONDS={VERIFIED_LOCAL_OLLAMA_TIMEOUT_SECONDS}` 이상을 사용하세요. "
+                    "기본값 전환 여부는 별도 게이트로 결정하세요."
+                ),
+            }
+        return {
+            "status": RUNTIME_PROFILE_EXPERIMENTAL,
+            "scope": "local",
+            "message": (
+                "모델은 검증된 저지연 로컬 대안이지만 현재 timeout이 낮아 운영 게이트 재현 가능성이 떨어집니다."
+            ),
+            "recommendation": (
+                f"`{VERIFIED_LOCAL_OLLAMA_FAST_MODEL}`를 사용하려면 "
+                f"`DOC_RAG_QUERY_TIMEOUT_SECONDS={VERIFIED_LOCAL_OLLAMA_TIMEOUT_SECONDS}` 이상으로 올리세요."
+            ),
+        }
+
     if normalized_provider == "ollama" and normalized_model == EXPERIMENTAL_LOCAL_OLLAMA_FALLBACK_MODEL:
         return {
             "status": RUNTIME_PROFILE_EXPERIMENTAL,
@@ -286,11 +313,29 @@ def plan_query_budget(
         model=model,
         timeout_seconds=timeout_seconds,
     )
+    normalized_model = (model or "").strip()
     is_multi = collection_count > 1 or "multi" in route_reason
     default_context = get_max_context_chars() or DEFAULT_MAX_CONTEXT_CHARS
 
     if runtime_profile["status"] == RUNTIME_PROFILE_VERIFIED and runtime_profile["scope"] == "local":
-        if is_multi:
+        if normalized_model == VERIFIED_LOCAL_OLLAMA_FAST_MODEL:
+            if is_multi:
+                profile_name = "verified_fast_local_multi"
+                per_collection_k = 1
+                per_collection_fetch_k = 3
+                max_total_docs = 2
+                max_context_chars = _bounded_context_limit(900)
+                generation_budget_profile = GENERATION_BUDGET_RESTRICTED
+                max_output_tokens = 128
+            else:
+                profile_name = "verified_fast_local_single"
+                per_collection_k = 2
+                per_collection_fetch_k = 6
+                max_total_docs = 2
+                max_context_chars = _bounded_context_limit(1200)
+                generation_budget_profile = GENERATION_BUDGET_COMPACT
+                max_output_tokens = 160
+        elif is_multi:
             profile_name = "verified_local_multi"
             per_collection_k = 2
             per_collection_fetch_k = 4

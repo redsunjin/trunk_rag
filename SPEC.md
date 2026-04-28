@@ -521,7 +521,7 @@ cd <repo>
 cd <repo>
 copy .env.example .env
 ```
-- `.env.example` 기본값은 로컬 우선(`ollama`, `gemma4:e4b`)이며, `OLLAMA_BASE_URL`은 `http://localhost:11434`를 사용한다.
+- `.env.example` 기본값은 로컬 우선(`ollama`, `gemma4:e4b`)이며, `OLLAMA_BASE_URL`은 `http://localhost:11434`를 사용한다. `gemma4:e2b`는 기본값이 아니라 저지연 로컬 대안 프로파일로만 사용한다.
 - 임베딩 모델은 `DOC_RAG_EMBEDDING_MODEL`로 override 가능하며, HuggingFace 모델 ID 또는 로컬 경로를 받을 수 있다.
 - 로컬 embedding 모델이 `MPS`에서 불안정하면 `DOC_RAG_EMBEDDING_DEVICE=cpu`로 강제할 수 있다.
 - 인덱스 생성:
@@ -579,6 +579,8 @@ npm start
 ## 제약 사항
 - 추론 속도/품질은 로컬 하드웨어 성능에 크게 의존
 - 현재 실측 기준 로컬 최소 운영선은 `8B`급 모델을 `30초` timeout 안에서 통과시키는 수준이며, Apple Silicon에서는 사실상 `M4 Pro + 64GB unified memory` 이상을 권고한다
+- `gemma4:e2b`는 2026-04-28 실측에서 `generic-baseline 3/3 pass`, `avg_weighted_score=0.92`, `p95_latency_ms=7288.123~16313.556` 범위로 통과한 저지연 로컬 대안이다. 기본값 전환은 별도 결정으로 둔다
+- 같은 환경에서 `gemma4:e4b` 기본 게이트는 30초 timeout으로 막힐 수 있어, 로컬 운영 기본값은 후속 루프에서 재결정해야 한다
 - `qwen3.5:4b`, `qwen3.5:9b`, `LM Studio qwen3.5-4b-mlx-4bit`는 현재 Mac mini Pro 로컬 실측에서 운영 게이트를 안정 통과하지 못했다
 - 클라우드 추론(`groq + llama-3.1-8b-instant`)은 같은 게이트를 매우 낮은 지연으로 통과했으므로, 현행 운영 권장 경로는 로컬 엣지보다 클라우드 추론에 가깝다
 - 현재는 단일 노드 운영 기준

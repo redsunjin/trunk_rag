@@ -495,8 +495,9 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 로컬 LLM 경로는 "연결 가능"보다 "ops-baseline 게이트를 시간 제한 안에 안정적으로 통과하는지"를 기준으로 판단합니다.
 
 - 외부 API 사용이 가능하면 `groq + llama-3.1-8b-instant`가 가장 낮은 지연을 보였습니다.
-- 현재 로컬 Ollama verified 기본 프로파일은 `gemma4:e4b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`입니다.
-- `qwen3.5:4b-nvfp4`는 이번 세션에서 더 빠르지만 `generic-baseline 2/3 pass`였으므로 latency 우선 fallback으로만 둡니다.
+- 기존 로컬 Ollama 기본 프로파일은 `gemma4:e4b + DOC_RAG_QUERY_TIMEOUT_SECONDS=30`입니다. 다만 2026-04-28 현재 환경의 재실측에서는 `gemma4:e4b` 기본 게이트가 30초 timeout으로 막힐 수 있음을 확인했습니다.
+- `gemma4:e2b`는 저지연 로컬 대안으로 검증됐습니다. 2026-04-28 실측 기준 직접 생성은 `assessment=promising`, `generic-baseline 3/3 pass`, `avg_weighted_score=0.92`, `p95_latency_ms=7288.123~16313.556` 범위였습니다. 기본값 전환은 별도 결정으로 두고, 응답 지연이 우선이면 `gemma4:e2b`를 compact budget으로 사용합니다.
+- `qwen3.5:4b-nvfp4`는 더 빠른 실험 후보였지만 `generic-baseline 2/3 pass`였으므로 기본 fallback으로 승격하지 않습니다.
 - `qwen3.5:4b`, `qwen3.5:9b`, `LM Studio qwen3.5-4b-mlx-4bit`는 과거 로컬 Mac mini Pro 실측에서 `ops-baseline`을 안정 통과하지 못했습니다.
 - `/health`의 `runtime_profile_status/message/recommendation`과 `runtime_preflight` 결과를 보면 현재 프로파일이 기본 운영 경로로 적합한지 바로 판단할 수 있습니다.
 - `/intro`와 `/app` 화면도 같은 `runtime_profile_*` 값을 바로 보여 주므로, 브라우저만 열어도 현재 모델이 `verified / experimental / not_recommended`인지 확인할 수 있습니다.
@@ -518,6 +519,8 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
   --model gemma4:e4b `
   --repeat 3
 ```
+
+저지연 대안 검증은 `--model gemma4:e2b`로 같은 스크립트와 `scripts\check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e2b --llm-base-url http://localhost:11434`를 함께 실행합니다.
 
 - 출력의 `assessment=slow`면 context-heavy RAG에서 timeout 가능성이 크고, `borderline`이면 짧은 context에서만 버틸 수 있으며, `promising`이면 로컬 RAG 후보로 볼 수 있습니다.
 - 오프라인/로컬 운영이 반드시 필요하면 모델 선택보다 먼저 하드웨어와 timeout/profile을 함께 설계해야 합니다.

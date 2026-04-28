@@ -181,7 +181,9 @@
 | LOOP-090 | done | App sidebar/header UI polish | `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-091 | done | Intro/app diagnostics disclosure and document workflow copy polish | `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py` + visual render check + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-092 | done | Semantic search fallback and layered RAG wait | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-093 | active | Await next-track after semantic fallback layering | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-093 | done | Await next-track after semantic fallback layering | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-094 | done | gemma4:e2b low-latency model validation | `./.venv/bin/python scripts/diagnose_ollama_runtime.py --model gemma4:e2b --base-url http://localhost:11434 --repeat 3 --num-predict 64 --timeout-seconds 120` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e2b --llm-base-url http://localhost:11434` + `./.venv/bin/python -m pytest -q tests/test_runtime_service.py tests/api/test_system_api.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-095 | active | Await next-track after gemma4:e2b validation | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -2635,7 +2637,7 @@ closeout 메모 (2026-04-28):
 - timeout 안내는 빠른 검색 결과를 먼저 확인하도록 유도한다.
 - 검증은 `./.venv/bin/python -m pytest -q tests/test_query_service.py tests/api/test_query_api.py tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py -> 51 passed`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check` 통과로 마감한다.
 
-## 현재 Active Loop (LOOP-093)
+## 완료 Loop (LOOP-093)
 
 목표:
 - semantic fallback layering 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
@@ -2653,7 +2655,65 @@ closeout 메모 (2026-04-28):
 
 진행 메모 (2026-04-28):
 - `LOOP-092`에서 `/semantic-search` fallback API와 `/app` 계층형 질의 UX를 추가했다.
-- 다음 추천 후보는 `llama3.1:8b` 모델 교체 실측 또는 이 브랜치 PR 생성/merge 후 릴리즈 체크리스트 실측이다.
+- 사용자가 `gemma4:e2b` 모델 검증을 명시해 다음 작업 트랙으로 승격했다.
+
+closeout 메모 (2026-04-28):
+- 다음 작업 트랙을 `gemma4:e2b` 저지연 로컬 모델 검증으로 확정했다.
+
+## 완료 Loop (LOOP-094)
+
+목표:
+- `gemma4:e2b`가 trunk_rag 로컬 RAG 경로에서 지연시간 우선 대안으로 사용할 수 있는지 검증한다.
+
+범위:
+- 포함: Ollama 모델 존재 확인, 직접 생성 처리량 진단, `generic-baseline` RAG 게이트 실측, runtime profile/budget 반영, 문서 현행화
+- 제외: 기본 모델을 `gemma4:e2b`로 교체, qwen/llama 계열 추가 비교, GraphRAG 재개, 데스크톱 패키징 재착수
+
+완료 기준:
+- 직접 생성 진단에서 `gemma4:e2b`가 정상 응답하고 처리량 평가가 확보된다.
+- `generic-baseline` 게이트가 `gemma4:e2b`로 3/3 통과한다.
+- 기본 모델은 `gemma4:e4b`로 유지하되 `gemma4:e2b`는 검증된 저지연 로컬 대안으로 분류된다.
+
+검증:
+- `ollama list`
+- `./.venv/bin/python scripts/diagnose_ollama_runtime.py --model gemma4:e2b --base-url http://localhost:11434 --repeat 3 --num-predict 64 --timeout-seconds 120`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e2b --llm-base-url http://localhost:11434`
+- `./.venv/bin/python -m pytest -q tests/test_runtime_service.py tests/api/test_system_api.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-28):
+- `ollama list`에서 `gemma4:e2b` 로컬 설치를 확인했다.
+- 직접 생성 진단은 `assessment=promising`, wall_ms=`2211.48/171.864/152.668`, eval_tps=`26.036/142.965/142.808`로 통과했다.
+- 기존 코드 기준 `generic-baseline`은 `3/3 pass`, `avg_weighted_score=0.92`, `p95_latency_ms=2326.493`였지만 runtime profile이 미검증이라 게이트 종료 코드는 blocked였다.
+
+closeout 메모 (2026-04-28):
+- `services/runtime_service.py`에 `gemma4:e2b`를 verified fast local profile로 등록했다.
+- `gemma4:e2b` query budget은 `verified_fast_local_single`/`verified_fast_local_multi` compact profile로 분리해 `gemma4:e4b` 기본 품질 budget과 섞지 않도록 했다.
+- 새 코드/서버 재시작 후 `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e2b --llm-base-url http://localhost:11434`는 `ready`, `generic-baseline 3/3 pass`, `avg_weighted_score=0.92`, `p95_latency_ms=7288.123`로 통과했다.
+- 반복 실행한 `gemma4:e2b` 게이트도 `ready`, `generic-baseline 3/3 pass`, `avg_weighted_score=0.92`, `p95_latency_ms=16313.556`로 통과했다.
+- 같은 환경에서 `gemma4:e4b` 직접 생성은 `assessment=borderline`, eval_tps=`6.74/28.095`였고, 기본 게이트는 `passed=0/3`, `p95_latency_ms=30026.454`로 blocked였다.
+- 이번 루프에서는 기본 모델을 바꾸지 않았다. 다만 현재 환경에서는 `gemma4:e2b`가 로컬 기본값 전환 후보로 더 강하다.
+- `qwen3.5:4b-nvfp4`는 실험 후보로 남기되 기본 fallback으로 승격하지 않는다.
+
+## 현재 Active Loop (LOOP-095)
+
+목표:
+- `gemma4:e2b` 검증 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
+
+범위:
+- 포함: 다음 track 선택, 필요 시 새 작업 브랜치 생성, TODO/NEXT active 재정렬
+- 제외: 명시 지시 없는 기본 모델 교체, public blocker 구현, upload review live execution 구현, GraphRAG 재개, 데스크톱 패키징 재착수
+
+완료 기준:
+- 사용자가 모델 기본값 전환, 추가 모델 비교, 릴리즈 체크리스트 실측, PR/merge 후속, 다른 MVP/V1/V1.5 track, 또는 대기 유지를 명시해야 한다.
+- 새 track을 진행한다면 TODO/NEXT active가 해당 track으로 재정렬되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-28):
+- `LOOP-094`에서 `gemma4:e2b`를 저지연 로컬 대안으로 검증하고 runtime profile/budget에 반영했다.
+- 다음 추천 후보는 `gemma4:e2b`를 로컬 기본값으로 전환할지 결정하고, 전환한다면 `.env.example`/UI 기본값/README/SPEC/게이트 명령을 함께 정렬하는 작업이다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-093`
-- current_active_title: `Await next-track after semantic fallback layering`
+- current_active_id: `LOOP-095`
+- current_active_title: `Await next-track after gemma4:e2b validation`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -118,8 +118,20 @@
 - 병목 판단: 실제 timeout 로그에서 vector/embedding은 ready였고 context build는 약 0.7초였으며 LLM invoke가 30초 timeout이었다.
 - API: `POST /semantic-search`는 기존 Chroma/MMR + light hybrid/lexical/coverage retrieval 계층을 공유하되 LLM을 호출하지 않고 source/snippet 결과를 반환한다.
 - UI: `/app`은 질문 시 빠른 시맨틱 검색 결과를 먼저 보여 주고, 기존 RAG 답변은 별도 메시지에서 최대 60초까지 기다린다.
-- 모델 교체: 기본 모델은 이번 루프에서 바꾸지 않았다. 후보는 `llama3.1:8b` 우선 실측, `qwen3.5:4b-nvfp4` latency fallback 순서다.
+- 모델 교체: 기본 모델은 이번 루프에서 바꾸지 않았다. 이후 `LOOP-094`에서 `gemma4:e2b`를 저지연 로컬 대안으로 별도 검증했다.
 - 검증: `./.venv/bin/python -m pytest -q tests/test_query_service.py tests/api/test_query_api.py tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py -> 51 passed`; `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`; `git diff --check -> pass`.
+
+## 2026-04-28 gemma4:e2b Validation Snapshot
+
+- 완료 루프: `LOOP-094 gemma4:e2b low-latency model validation`
+- 결론: 이번 루프에서는 기본 모델을 바꾸지 않고, `gemma4:e2b`를 응답 지연이 우선인 verified fast local 대안으로 등록했다. 현재 환경에서는 `gemma4:e4b` 기본 게이트가 30초 timeout으로 막힐 수 있어 후속 루프에서 기본값 전환 여부를 결정해야 한다.
+- 모델 존재: `ollama list`에서 `gemma4:e2b` 로컬 설치 확인.
+- 직접 생성: `./.venv/bin/python scripts/diagnose_ollama_runtime.py --model gemma4:e2b --base-url http://localhost:11434 --repeat 3 --num-predict 64 --timeout-seconds 120 -> assessment=promising`, wall_ms=`2211.48/171.864/152.668`, eval_tps=`26.036/142.965/142.808`.
+- RAG 게이트 1차: 기존 미분류 프로파일에서도 `generic-baseline 3/3 pass`, `avg_weighted_score=0.92`, `p95_latency_ms=2326.493`였으나 runtime profile 미검증 정책 때문에 게이트 종료 코드는 blocked였다.
+- 코드 반영: `services/runtime_service.py`에서 `gemma4:e2b`를 `verified_fast_local_single`/`verified_fast_local_multi` compact budget으로 분리했다. 이 변경은 e4b 기본 budget을 바꾸지 않는다.
+- 최종 RAG 게이트: 새 코드/서버 재시작 후 `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e2b --llm-base-url http://localhost:11434 -> ready`, `generic-baseline 3/3 pass`, `avg_weighted_score=0.92`, `p95_latency_ms=7288.123`; 반복 실행에서도 `ready`, `p95_latency_ms=16313.556`로 통과했다.
+- e4b 비교: 같은 환경에서 `gemma4:e4b` 직접 생성은 `assessment=borderline`, eval_tps=`6.74/28.095`였고, 기본 게이트는 `passed=0/3`, `p95_latency_ms=30026.454`로 blocked였다.
+- 다음 판단: 실제 사용자 문서가 늘어난 뒤에는 e4b 품질 경로와 e2b 저지연 경로를 같은 질문셋으로 다시 비교한다.
 
 ## 0. 2026-03-13 우선순위 재정렬
 

@@ -132,6 +132,18 @@ def test_build_runtime_profile_marks_qwen4b_nvfp4_as_experimental_fallback():
     assert "gemma4:e4b" in str(profile["recommendation"])
 
 
+def test_build_runtime_profile_marks_gemma4_e2b_as_verified_fast_local():
+    profile = runtime_service.build_runtime_profile(
+        provider="ollama",
+        model="gemma4:e2b",
+        timeout_seconds=30,
+    )
+
+    assert profile["status"] == "verified"
+    assert profile["scope"] == "local"
+    assert "저지연" in str(profile["message"])
+
+
 def test_plan_query_budget_keeps_verified_local_single_budget():
     budget = runtime_service.plan_query_budget(
         provider="ollama",
@@ -161,6 +173,22 @@ def test_plan_query_budget_reduces_verified_local_multi_budget():
     assert budget["per_collection_k"] == 2
     assert budget["per_collection_fetch_k"] == 4
     assert budget["max_total_docs"] == 4
+    assert budget["generation_budget_profile"] == "compact"
+
+
+def test_plan_query_budget_uses_compact_budget_for_verified_fast_local():
+    budget = runtime_service.plan_query_budget(
+        provider="ollama",
+        model="gemma4:e2b",
+        timeout_seconds=30,
+        collection_count=1,
+        route_reason="default",
+    )
+
+    assert budget["profile"] == "verified_fast_local_single"
+    assert budget["per_collection_k"] == 2
+    assert budget["per_collection_fetch_k"] == 6
+    assert budget["max_total_docs"] == 2
     assert budget["generation_budget_profile"] == "compact"
 
 
