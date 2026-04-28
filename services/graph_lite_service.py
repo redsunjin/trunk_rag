@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import time
 from dataclasses import dataclass
@@ -14,6 +15,11 @@ GRAPH_LITE_RESULT_MODE = "graph_lite"
 DEFAULT_ENTITIES_FILE = "entities.jsonl"
 DEFAULT_RELATIONS_FILE = "relations.jsonl"
 DEFAULT_STATS_FILE = "ingest_stats.json"
+GRAPH_LITE_SNAPSHOT_DIR_ENV_KEY = "DOC_RAG_GRAPH_LITE_SNAPSHOT_DIR"
+DEFAULT_SNAPSHOT_DIR = Path("docs/reports/graphrag_snapshot_2026-03-17")
+GRAPH_LITE_DEFAULT_MAX_HOPS = 2
+GRAPH_LITE_DEFAULT_LIMIT = 8
+GRAPH_LITE_DEFAULT_CONTEXT_CHARS = 1200
 
 RELATION_HEAVY_KEYWORDS = (
     "관계",
@@ -194,6 +200,17 @@ def load_relation_snapshot(
         stats=stats,
         source_dir=str(base_dir),
     )
+
+
+def get_default_snapshot_dir() -> Path:
+    configured = os.getenv(GRAPH_LITE_SNAPSHOT_DIR_ENV_KEY, "").strip()
+    if configured:
+        return Path(configured)
+    return Path(__file__).resolve().parents[1] / DEFAULT_SNAPSHOT_DIR
+
+
+def load_default_relation_snapshot() -> GraphLiteSnapshot:
+    return load_relation_snapshot(get_default_snapshot_dir())
 
 
 def entity_label(snapshot: GraphLiteSnapshot, entity_id: str) -> str:

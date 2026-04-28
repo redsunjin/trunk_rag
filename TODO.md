@@ -193,7 +193,8 @@
 | LOOP-102 | done | Quality mode model candidate comparison | `./.venv/bin/python -m pytest -q tests/test_eval_query_quality.py tests/test_compare_rag_quality.py` + `./.venv/bin/python scripts/compare_rag_quality.py --base-url http://127.0.0.1:8010 --timeout-seconds 180 --query-timeout-seconds 120 --quality-mode quality --quality-stage quality --bucket generic-baseline --bucket sample-pack-baseline --model gemma4:e2b --model gemma4:e4b --model qwen3.5:9b-nvfp4 --llm-base-url http://localhost:11434 --output-json docs/reports/rag_quality_model_comparison_2026-04-28_quality_candidates.json --output-report docs/reports/RAG_QUALITY_MODEL_COMPARISON_2026-04-28_QUALITY_CANDIDATES.md` expected `blocked` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-103 | done | Await next-track after quality candidate comparison | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-104 | done | Graph-lite relation sidecar feasibility gate | `./.venv/bin/python -m pytest -q tests/test_graph_lite_service.py tests/test_graphrag_poc_service.py tests/api/test_query_api.py` + `./.venv/bin/python -m pytest -q tests/test_eval_query_quality.py tests/test_compare_rag_quality.py tests/test_documentation_boundaries.py tests/test_answer_level_eval_fixtures.py` + `./.venv/bin/python scripts/benchmark_graph_lite_sidecar.py --output-json /tmp/graph_lite_sidecar_poc.json --output-report /tmp/GRAPH_LITE_SIDECAR_POC.md` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-105 | active | Graph-lite Quality opt-in context integration | `./.venv/bin/python -m pytest -q tests/test_graph_lite_service.py tests/api/test_query_api.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-105 | done | Graph-lite Quality opt-in context integration | `./.venv/bin/python -m pytest -q tests/test_graph_lite_service.py tests/api/test_query_api.py` + graph-candidate qwen quality eval + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-106 | active | Graph-lite graph-candidate answer quality refinement | `./.venv/bin/python -m pytest -q tests/test_query_service.py tests/test_graph_lite_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_compare_rag_quality.py` + graph-candidate quality eval + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -2963,7 +2964,7 @@ closeout 메모 (2026-04-29):
 - 회귀 검증은 `tests/test_graph_lite_service.py tests/test_graphrag_poc_service.py tests/api/test_query_api.py -> 27 passed`, `tests/test_eval_query_quality.py tests/test_compare_rag_quality.py tests/test_documentation_boundaries.py tests/test_answer_level_eval_fixtures.py -> 17 passed`, `roadmap_harness.py validate -> ready`로 확인했다.
 - 판단: full Neo4j/GraphRAG 재개가 아니라, `Quality` 또는 명시 고급 관계 모드에서만 opt-in으로 붙이는 보조 계층으로 다음 단계 진행한다.
 
-## 현재 Active Loop (LOOP-105)
+## 완료 Loop (LOOP-105)
 
 목표:
 - relation-heavy 질문에서만 graph-lite 관계 근거를 RAG context에 추가해 `Quality` 답변 품질 개선 가능성을 검증한다.
@@ -2982,6 +2983,35 @@ closeout 메모 (2026-04-29):
 검증:
 - `./.venv/bin/python -m pytest -q tests/test_graph_lite_service.py tests/api/test_query_api.py`
 - `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile api/routes_query.py api/schemas.py services/graph_lite_service.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-04-29):
+- `/query`는 `quality_mode=quality` 또는 `quality_stage=quality` 요청에서만 graph-lite snapshot을 읽고, hit 시 `[Graph-Lite Relations]` context 블록을 추가한다.
+- Balanced/default 경로는 graph-lite를 로드하지 않으며, snapshot missing/no-hit/error는 기존 vector context로 fallback한다.
+- API 응답은 `X-RAG-Graph-Lite` 헤더와 debug `meta.context.graph_lite`에 `disabled/not_run/hit/fallback`, fallback reason, relation count, context 추가 여부를 기록한다.
+- `DOC_RAG_GRAPH_LITE_SNAPSHOT_DIR`로 기본 snapshot 위치를 바꿀 수 있게 했다.
+- `qwen3.5:9b-nvfp4` quality graph-candidate 실측은 `3 cases`, `2 passed`, `pass_rate=0.6667`, `avg_weighted_score=0.8667`, `p95_latency_ms=15272.702`, `support_pass_rate=1.0`, `source_route_pass_rate=1.0`이었다.
+- 남은 실패는 `GQ-09`로, route/source/support는 통과했지만 답변이 평가 기준의 관계 연쇄 표현과 `must_include_any` 일부를 놓쳤다.
+- 최종 회귀는 `tests/test_query_service.py tests/test_graph_lite_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_compare_rag_quality.py -> 63 passed`, documentation/e2e fixture 회귀 `8 passed`, py_compile, `git diff --check`, `scripts/benchmark_graph_lite_sidecar.py -> 3/3 hit avg_latency_ms=0.201`, `roadmap_harness.py validate -> ready`로 확인했다.
+
+## 현재 Active Loop (LOOP-106)
+
+목표:
+- graph-lite context가 들어간 `Quality` 답변에서 graph-candidate 실패 케이스를 줄이고, 특히 `GQ-09`의 관계 연쇄 설명 품질을 보정한다.
+
+범위:
+- 포함: graph-candidate 답변 정책/프롬프트/평가 fixture 정합성 점검, `GQ-09` 실패 원인 축소, 기존 Quality graph-lite context 유지, 회귀 테스트와 live eval 재실행
+- 제외: full Neo4j/GraphRAG 운영 도입, 기본 Balanced 경로 graph-lite 자동 적용, output token 예산 무조건 증가, UI 기본 Quality 모델 고정, 유료 API 호출
+
+완료 기준:
+- graph-candidate quality eval이 `3/3 pass`로 개선되거나, `GQ-09` 미통과 사유가 평가 fixture/문서 한계로 명확히 분리되어야 한다.
+- generic/sample-pack 기본 경로와 Balanced 비적용 경로가 회귀하지 않아야 한다.
+- latency가 기존 quality 실측 범위에서 크게 악화되지 않아야 한다.
+- TODO/NEXT에 go/no-go 판단과 검증 결과가 남아야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_query_service.py tests/test_graph_lite_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_compare_rag_quality.py`
+- `./.venv/bin/python scripts/eval_query_quality.py --base-url http://127.0.0.1:8011 --timeout-seconds 180 --query-timeout-seconds 120 --quality-mode quality --quality-stage quality --bucket graph-candidate --llm-provider ollama --llm-model qwen3.5:9b-nvfp4 --llm-base-url http://localhost:11434 --output-json docs/reports/query_answer_eval_2026-04-29_graph_lite_quality_qwen.json --output-report docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-04-29_GRAPH_LITE_QUALITY_QWEN.md`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)

@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-105`
-- current_active_title: `Graph-lite Quality opt-in context integration`
+- current_active_id: `LOOP-106`
+- current_active_title: `Graph-lite graph-candidate answer quality refinement`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -186,7 +186,7 @@
 
 - 완료 루프: `LOOP-103 Await next-track after quality candidate comparison`
 - 완료 루프: `LOOP-104 Graph-lite relation sidecar feasibility gate`
-- 현재 active: `LOOP-105 Graph-lite Quality opt-in context integration`
+- 현재 active: `LOOP-106 Graph-lite graph-candidate answer quality refinement`
 - 선택 이유: 들어오는 문서 데이터에서 인물/기관/국가/사건 간 관계가 RAG 품질을 좌우할 수 있으므로, full GraphRAG 재개 전에 로컬 경량 관계 계층의 품질 개선 가능성을 검증한다.
 - 범위 제한: full Neo4j/GraphRAG 운영 도입이 아니라, 로컬 graph-lite 관계 스냅샷과 관계 검색 PoC로 제한한다. 기존 `/query` 기본 경로는 대체하지 않고 semantic/vector fallback을 유지한다.
 - 병행 작업: 코드/테스트 구현은 별도 브랜치 `codex/loop-104-graph-lite-sidecar`에서 진행한다. 이 정리 브랜치 `codex/loop-103-track-sync`는 TODO/NEXT/README 현행화만 담당한다.
@@ -200,8 +200,27 @@
 - 실측 결과: `scripts/benchmark_graph_lite_sidecar.py` 기준 graph-candidate 3건은 `3/3 hit`, fallback `0`, 평균 latency 약 `0.193ms`였다.
 - 회귀 결과: `tests/test_graph_lite_service.py tests/test_graphrag_poc_service.py tests/api/test_query_api.py -> 27 passed`; `tests/test_eval_query_quality.py tests/test_compare_rag_quality.py tests/test_documentation_boundaries.py tests/test_answer_level_eval_fixtures.py -> 17 passed`; `roadmap_harness.py validate -> ready`.
 - 판단: graph-lite는 기본 `/query` 대체가 아니라 `Quality` 또는 명시 고급 관계 단계의 opt-in context 보조 계층으로 진행한다.
-- 현재 목표: `LOOP-105`에서 relation-heavy + quality 질문에만 `[Graph-Lite Relations]` context를 붙이고, no-hit/snapshot-missing 시 기존 vector context로 fallback한다.
+- 완료 목표: `LOOP-105`에서 relation-heavy + quality 질문에만 `[Graph-Lite Relations]` context를 붙이고, no-hit/snapshot-missing 시 기존 vector context로 fallback하도록 통합했다.
 - 완료 기준: 일반/balanced 질문은 기존 경로 유지, quality relation-heavy 질문은 debug meta에서 graph-lite status/relation count 확인, API 회귀 테스트와 roadmap harness 통과.
+
+## 2026-04-29 Graph-lite Quality Opt-in Closeout
+
+- 완료 루프: `LOOP-105 Graph-lite Quality opt-in context integration`
+- 코드 반영: `/query`는 `quality_mode=quality` 또는 `quality_stage=quality`일 때만 graph-lite snapshot을 읽고, hit 시 `[Graph-Lite Relations]` 블록을 기존 vector context 뒤에 추가한다.
+- fallback: snapshot missing/no-hit/error는 답변 생성을 막지 않고 기존 vector context로 진행한다. Balanced/default 경로는 graph-lite를 로드하지 않는다.
+- 관측성: `X-RAG-Graph-Lite` 헤더와 debug `meta.context.graph_lite`에 `disabled/not_run/hit/fallback`, fallback reason, relation count, context 추가 여부를 남긴다.
+- 설정: 기본 snapshot 경로는 `docs/reports/graphrag_snapshot_2026-03-17`이며, `DOC_RAG_GRAPH_LITE_SNAPSHOT_DIR`로 대체할 수 있다.
+- 회귀 결과: `tests/test_query_service.py tests/test_graph_lite_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_compare_rag_quality.py -> 63 passed`; documentation/e2e fixture 회귀 `8 passed`; py_compile와 `git diff --check` 통과; `scripts/benchmark_graph_lite_sidecar.py -> 3/3 hit`, `avg_latency_ms=0.201`.
+- live eval: `qwen3.5:9b-nvfp4`, `quality_mode=quality`, `quality_stage=quality`, `graph-candidate` 기준 `3 cases`, `2 passed`, `pass_rate=0.6667`, `avg_weighted_score=0.8667`, `p95_latency_ms=15272.702`, `support_pass_rate=1.0`, `source_route_pass_rate=1.0`.
+- 판단: graph-lite는 관계 근거 주입 계층으로 동작했고 support/source route는 안정적이지만, `GQ-09`는 답변이 관계 연쇄 표현과 평가 `must_include_any` 일부를 놓쳐 다음 루프에서 보정한다.
+
+## 2026-04-29 Graph-lite Quality Refinement Target
+
+- 현재 active: `LOOP-106 Graph-lite graph-candidate answer quality refinement`
+- 목표: graph-lite context를 받은 Quality 답변이 관계형 질문에서 평가 기준을 더 안정적으로 충족하도록 `GQ-09` 실패 원인을 좁힌다.
+- 범위: 답변 정책/프롬프트/평가 fixture 정합성 점검, graph-candidate live eval 재실행, generic/sample-pack 및 Balanced 비적용 회귀 확인.
+- 제외: full Neo4j/GraphRAG 운영 도입, Balanced 기본 graph-lite 자동 적용, output token 예산 무조건 증가, UI 기본 Quality 모델 고정, 유료 API 호출.
+- 완료 기준: graph-candidate quality eval이 `3/3 pass`로 개선되거나, 남은 실패가 fixture/문서 한계로 명확히 분리되어 go/no-go 판단이 문서화되어야 한다.
 
 ## 0. 2026-03-13 우선순위 재정렬
 

@@ -2,7 +2,7 @@
 
 ## Status
 
-- Status: PoC contract, not default product runtime.
+- Status: Quality-mode opt-in PoC contract, not default Balanced runtime.
 - Scope: local JSONL relation snapshot loading and in-memory relation retrieval.
 - Non-scope: Neo4j, full GraphRAG orchestration, network calls, paid APIs, or automatic `/query` replacement.
 
@@ -111,6 +111,8 @@ Fallback reasons:
 - `no_relation_keyword`
 - `not_relation_heavy`
 - `no_graph_hit`
+- `snapshot_unavailable`
+- `graph_lite_error`
 
 ## Integration Rule
 
@@ -122,7 +124,9 @@ append_graph_lite_context(base_context, graph_result)
 
 This helper appends relation evidence only when `graph_result.status == "hit"`. If graph-lite falls back, the original context is returned unchanged.
 
-Default `/query` integration is intentionally not enabled in this loop. A future integration should make graph-lite opt-in through Balanced/Quality mode or an explicit advanced relation mode, and must keep vector fallback active.
+`POST /query` invokes graph-lite only when `quality_mode=quality` or `quality_stage=quality`. Balanced fast answers do not load graph-lite. When snapshot loading fails, no relation is found, or the detector rejects the question, the original vector context is used unchanged.
+
+Debug metadata exposes the graph-lite trace under `meta.context.graph_lite`, including status, fallback reason, relation count, and whether context was appended.
 
 ## Validation
 

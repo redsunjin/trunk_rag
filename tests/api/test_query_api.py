@@ -133,6 +133,235 @@ def test_query_debug_response_includes_meta(client, monkeypatch):
     assert body["meta"]["sources"][0]["collection_key"] in {"fr", "ge"}
 
 
+def test_query_quality_mode_appends_graph_lite_context(client, monkeypatch):
+    class DummyDB:
+        def as_retriever(self, **kwargs):
+            return object()
+
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(routes_query.index_service, "get_db", lambda *args, **kwargs: DummyDB())
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count", lambda _db: 1)
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count_snapshot", lambda key="all": 1)
+    monkeypatch.setattr(
+        routes_query.index_service,
+        "get_embedding_fingerprint_status",
+        lambda keys=None: {"status": "ready", "message": "ok"},
+    )
+    monkeypatch.setattr(
+        routes_query,
+        "resolve_llm_config",
+        lambda **kwargs: ("ollama", "qwen3.5:9b-nvfp4", None, "http://localhost:11434"),
+    )
+    monkeypatch.setattr(routes_query, "create_chat_llm", lambda **kwargs: object())
+    monkeypatch.setattr(
+        routes_query.query_service,
+        "build_collection_context",
+        lambda question, collection_keys, trace=None, budget=None: "base vector context",
+    )
+    monkeypatch.setattr(routes_query.graph_lite_service, "load_default_relation_snapshot", lambda: object())
+
+    def _query_relation_snapshot(snapshot, question, *, collection_keys=None, max_hops=2, limit=8, force=False):
+        captured["graph_collection_keys"] = collection_keys
+        return {
+            "mode": "graph_lite",
+            "status": "hit",
+            "fallback_used": False,
+            "fallback_reason": None,
+            "query_entities": ["newton", "voltaire"],
+            "matched_entities": ["newton", "voltaire"],
+            "relations": [
+                {
+                    "source": "newton",
+                    "source_label": "Newton",
+                    "target": "voltaire",
+                    "target_label": "Voltaire",
+                    "predicate": "influenced",
+                    "weight": 3,
+                    "score": 9.35,
+                    "collections": ["uk", "fr"],
+                    "evidence": [
+                        {
+                            "source": "uk.md",
+                            "heading": "2. Newton",
+                            "excerpt": "뉴턴의 국장은 볼테르에게 강한 인상을 주었다.",
+                        }
+                    ],
+                }
+            ],
+            "latency_ms": 1.234,
+        }
+
+    monkeypatch.setattr(routes_query.graph_lite_service, "query_relation_snapshot", _query_relation_snapshot)
+
+    def _build_query_chain(context_builder, llm, query_profile=None):
+        return context_builder
+
+    def _invoke_query_chain(chain, question, timeout_seconds=15, trace=None, query_profile=None):
+        captured["context"] = chain(question)
+        if trace is not None:
+            trace["invoke_ms"] = 12.3
+            trace["status"] = "ok"
+        return "graph-lite quality 응답"
+
+    monkeypatch.setattr(routes_query.query_service, "build_query_chain", _build_query_chain)
+    monkeypatch.setattr(routes_query.query_service, "invoke_query_chain", _invoke_query_chain)
+
+    response = client.post(
+        "/query",
+        json={
+            "query": "뉴턴과 볼테르의 관계가 계몽주의 확산으로 어떻게 이어졌는지 설명해줘.",
+            "llm_provider": "ollama",
+            "collections": ["uk", "fr"],
+            "quality_mode": "quality",
+            "quality_stage": "quality",
+            "debug": True,
+        },
+        headers={"X-Request-ID": "req-graph-lite-hit"},
+    )
+
+    assert response.status_code == 200
+    assert response.headers.get("X-RAG-Graph-Lite") == "hit"
+    assert captured["graph_collection_keys"] == ["uk", "fr"]
+    assert "base vector context" in str(captured["context"])
+    assert "[Graph-Lite Relations]" in str(captured["context"])
+    body = response.json()
+    assert body["answer"] == "graph-lite quality 응답"
+    graph_meta = body["meta"]["context"]["graph_lite"]
+    assert graph_meta["enabled"] is True
+    assert graph_meta["status"] == "hit"
+    assert graph_meta["relation_count"] == 1
+    assert graph_meta["context_added"] is True
+
+
+def test_query_quality_mode_falls_back_when_graph_lite_snapshot_missing(client, monkeypatch):
+    class DummyDB:
+        def as_retriever(self, **kwargs):
+            return object()
+
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(routes_query.index_service, "get_db", lambda *args, **kwargs: DummyDB())
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count", lambda _db: 1)
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count_snapshot", lambda key="all": 1)
+    monkeypatch.setattr(
+        routes_query.index_service,
+        "get_embedding_fingerprint_status",
+        lambda keys=None: {"status": "ready", "message": "ok"},
+    )
+    monkeypatch.setattr(
+        routes_query,
+        "resolve_llm_config",
+        lambda **kwargs: ("ollama", "qwen3.5:9b-nvfp4", None, "http://localhost:11434"),
+    )
+    monkeypatch.setattr(routes_query, "create_chat_llm", lambda **kwargs: object())
+    monkeypatch.setattr(
+        routes_query.query_service,
+        "build_collection_context",
+        lambda question, collection_keys, trace=None, budget=None: "base vector context",
+    )
+    monkeypatch.setattr(
+        routes_query.graph_lite_service,
+        "load_default_relation_snapshot",
+        lambda: (_ for _ in ()).throw(FileNotFoundError("missing snapshot")),
+    )
+    monkeypatch.setattr(
+        routes_query.graph_lite_service,
+        "query_relation_snapshot",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("snapshot load should fail first")),
+    )
+
+    def _build_query_chain(context_builder, llm, query_profile=None):
+        return context_builder
+
+    def _invoke_query_chain(chain, question, timeout_seconds=15, trace=None, query_profile=None):
+        captured["context"] = chain(question)
+        if trace is not None:
+            trace["invoke_ms"] = 12.3
+            trace["status"] = "ok"
+        return "fallback quality 응답"
+
+    monkeypatch.setattr(routes_query.query_service, "build_query_chain", _build_query_chain)
+    monkeypatch.setattr(routes_query.query_service, "invoke_query_chain", _invoke_query_chain)
+
+    response = client.post(
+        "/query",
+        json={
+            "query": "뉴턴과 볼테르의 관계를 설명해줘.",
+            "llm_provider": "ollama",
+            "quality_mode": "quality",
+            "quality_stage": "quality",
+            "debug": True,
+        },
+        headers={"X-Request-ID": "req-graph-lite-fallback"},
+    )
+
+    assert response.status_code == 200
+    assert response.headers.get("X-RAG-Graph-Lite") == "fallback"
+    assert captured["context"] == "base vector context"
+    graph_meta = response.json()["meta"]["context"]["graph_lite"]
+    assert graph_meta["enabled"] is True
+    assert graph_meta["status"] == "fallback"
+    assert graph_meta["fallback_reason"] == "snapshot_unavailable"
+    assert graph_meta["context_added"] is False
+
+
+def test_query_balanced_mode_does_not_load_graph_lite(client, monkeypatch):
+    class DummyDB:
+        def as_retriever(self, **kwargs):
+            return object()
+
+    captured: dict[str, object] = {}
+    monkeypatch.setattr(routes_query.index_service, "get_db", lambda *args, **kwargs: DummyDB())
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count", lambda _db: 1)
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count_snapshot", lambda key="all": 1)
+    monkeypatch.setattr(
+        routes_query.index_service,
+        "get_embedding_fingerprint_status",
+        lambda keys=None: {"status": "ready", "message": "ok"},
+    )
+    monkeypatch.setattr(
+        routes_query,
+        "resolve_llm_config",
+        lambda **kwargs: ("ollama", "gemma4:e2b", None, "http://localhost:11434"),
+    )
+    monkeypatch.setattr(routes_query, "create_chat_llm", lambda **kwargs: object())
+    monkeypatch.setattr(
+        routes_query.query_service,
+        "build_collection_context",
+        lambda question, collection_keys, trace=None, budget=None: "base vector context",
+    )
+    monkeypatch.setattr(
+        routes_query.graph_lite_service,
+        "load_default_relation_snapshot",
+        lambda: (_ for _ in ()).throw(AssertionError("balanced mode must not load graph-lite")),
+    )
+
+    def _build_query_chain(context_builder, llm, query_profile=None):
+        return context_builder
+
+    def _invoke_query_chain(chain, question, timeout_seconds=15, trace=None, query_profile=None):
+        captured["context"] = chain(question)
+        if trace is not None:
+            trace["invoke_ms"] = 12.3
+            trace["status"] = "ok"
+        return "balanced 응답"
+
+    monkeypatch.setattr(routes_query.query_service, "build_query_chain", _build_query_chain)
+    monkeypatch.setattr(routes_query.query_service, "invoke_query_chain", _invoke_query_chain)
+
+    response = client.post(
+        "/query",
+        json={"query": "뉴턴과 볼테르의 관계를 설명해줘.", "llm_provider": "ollama", "debug": True},
+        headers={"X-Request-ID": "req-graph-lite-disabled"},
+    )
+
+    assert response.status_code == 200
+    assert response.headers.get("X-RAG-Graph-Lite") == "disabled"
+    assert captured["context"] == "base vector context"
+    graph_meta = response.json()["meta"]["context"]["graph_lite"]
+    assert graph_meta["enabled"] is False
+    assert graph_meta["status"] == "disabled"
+
+
 def test_semantic_search_success_case(client, monkeypatch):
     from langchain_core.documents import Document
 

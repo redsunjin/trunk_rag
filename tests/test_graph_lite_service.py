@@ -177,3 +177,13 @@ def test_append_graph_lite_context_is_noop_for_fallback(tmp_path):
     context = graph_lite_service.append_graph_lite_context("base context", result)
 
     assert context == "base context"
+
+
+def test_load_default_relation_snapshot_uses_env_override(tmp_path, monkeypatch):
+    snapshot_dir = _write_snapshot(tmp_path)
+    monkeypatch.setenv(graph_lite_service.GRAPH_LITE_SNAPSHOT_DIR_ENV_KEY, str(snapshot_dir))
+
+    snapshot = graph_lite_service.load_default_relation_snapshot()
+
+    assert snapshot.source_dir == str(snapshot_dir)
+    assert snapshot.stats["nodes"] == 4

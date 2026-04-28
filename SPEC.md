@@ -52,7 +52,7 @@
 - answer-level 평가 fixture + `/query` 품질 평가 스크립트(`evals/answer_level_eval_fixtures.jsonl`, `scripts/eval_query_quality.py`)
 - Vector RAG answer-level baseline 리포트(`docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md`)
 - GraphRAG 관련 문서/PoC 아카이브 유지
-- graph-lite JSONL 관계 스냅샷 로더/인메모리 검색/context append PoC 유지(기본 `/query` 자동 통합 없음)
+- graph-lite JSONL 관계 스냅샷 로더/인메모리 검색/context append PoC 유지(`Quality` 단계 opt-in, `Balanced` 기본 경로 자동 적용 없음)
 
 ### 제외(현재 단계)
 - 사용자 인증/권한
@@ -96,7 +96,7 @@
 - 경량 lexical boost로 context 문서 순서 재조정
 - multi-collection 질문에서 상위 context가 한 컬렉션에 쏠리지 않게 하는 light coverage rerank
 - graph snapshot 기반 entity/relation 추출 PoC(아카이브)
-- graph-lite JSONL 관계 스냅샷 로더/인메모리 검색/context append PoC(기본 `/query` 자동 통합 없음)
+- graph-lite JSONL 관계 스냅샷 로더/인메모리 검색/context append PoC(`Quality` 단계 opt-in, no-hit/snapshot-missing 시 vector fallback)
 
 ### 품질/검증
 - API 회귀 테스트: `tests/api/test_system_api.py`

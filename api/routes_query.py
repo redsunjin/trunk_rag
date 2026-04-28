@@ -22,7 +22,7 @@ from api.schemas import (
 )
 from core.errors import QueryAPIError
 from core.settings import DEFAULT_COLLECTION_KEY, MAX_QUERY_COLLECTIONS, SEARCH_FETCH_K, SEARCH_K
-from services import collection_service, feedback_service, index_service, query_service, runtime_service
+from services import collection_service, feedback_service, graph_lite_service, index_service, query_service, runtime_service
 from common import create_chat_llm, default_llm_model, resolve_llm_config
 
 router = APIRouter()
@@ -30,6 +30,46 @@ logger = logging.getLogger("doc_rag.api")
 
 SEMANTIC_FALLBACK_CONTEXT_CHARS = 1200
 SEMANTIC_FALLBACK_SNIPPET_CHARS = 360
+
+
+def _is_graph_lite_quality_opt_in(quality_mode: str, quality_stage: str) -> bool:
+    return quality_mode == "quality" or quality_stage == "quality"
+
+
+def _graph_lite_fallback_result(question: str, fallback_reason: str, started_at: float, error: str = "") -> dict[str, object]:
+    result: dict[str, object] = {
+        "contract_version": graph_lite_service.GRAPH_LITE_CONTRACT_VERSION,
+        "mode": graph_lite_service.GRAPH_LITE_RESULT_MODE,
+        "status": "fallback",
+        "fallback_used": True,
+        "fallback_reason": fallback_reason,
+        "question": question,
+        "query_entities": [],
+        "matched_entities": [],
+        "relations": [],
+        "context": "",
+        "latency_ms": round((time.perf_counter() - started_at) * 1000.0, 3),
+    }
+    if error:
+        result["error"] = error
+    return result
+
+
+def _graph_lite_trace(result: dict[str, object], *, enabled: bool, context_added: bool = False) -> dict[str, object]:
+    relations = result.get("relations", [])
+    relation_count = len(relations) if isinstance(relations, list) else 0
+    return {
+        "enabled": enabled,
+        "mode": result.get("mode", graph_lite_service.GRAPH_LITE_RESULT_MODE),
+        "status": result.get("status", "disabled" if not enabled else "not_run"),
+        "fallback_used": bool(result.get("fallback_used", False)),
+        "fallback_reason": result.get("fallback_reason"),
+        "relation_count": relation_count,
+        "query_entities": result.get("query_entities", []),
+        "matched_entities": result.get("matched_entities", []),
+        "context_added": context_added,
+        "latency_ms": result.get("latency_ms", 0),
+    }
 
 
 def _serialize_stage_timings(
@@ -297,12 +337,16 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
     query_budget: dict[str, object] | None = None
     resolved_query_profile = query_service.QUERY_PROFILE_GENERIC
     quality_stage = req.quality_stage or req.quality_mode
+    graph_lite_result: dict[str, object] | None = None
 
     try:
         stage_timings["quality_mode"] = req.quality_mode
         stage_timings["quality_stage"] = quality_stage
+        graph_lite_enabled = _is_graph_lite_quality_opt_in(req.quality_mode, quality_stage)
+        stage_timings["graph_lite_enabled"] = graph_lite_enabled
         response.headers["X-RAG-Quality-Mode"] = req.quality_mode
         response.headers["X-RAG-Quality-Stage"] = quality_stage
+        response.headers["X-RAG-Graph-Lite"] = "not_run" if graph_lite_enabled else "disabled"
         if req.quality_mode == "semantic":
             raise QueryAPIError(
                 code="QUALITY_MODE_REQUIRES_SEMANTIC_SEARCH",
@@ -451,12 +495,64 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
             ) from exc
 
         def _context_builder(question: str) -> str:
-            return query_service.build_collection_context(
+            nonlocal graph_lite_result
+            context = query_service.build_collection_context(
                 question=question,
                 collection_keys=active_collection_keys,
                 trace=context_trace,
                 budget=query_budget,
             )
+            if not graph_lite_enabled:
+                context_trace["graph_lite"] = _graph_lite_trace(
+                    {
+                        "mode": graph_lite_service.GRAPH_LITE_RESULT_MODE,
+                        "status": "disabled",
+                        "relations": [],
+                    },
+                    enabled=False,
+                )
+                return context
+
+            graph_started_at = time.perf_counter()
+            try:
+                snapshot = graph_lite_service.load_default_relation_snapshot()
+                graph_lite_result = graph_lite_service.query_relation_snapshot(
+                    snapshot,
+                    question,
+                    collection_keys=active_collection_keys,
+                    max_hops=graph_lite_service.GRAPH_LITE_DEFAULT_MAX_HOPS,
+                    limit=graph_lite_service.GRAPH_LITE_DEFAULT_LIMIT,
+                )
+            except (FileNotFoundError, OSError, ValueError) as exc:
+                graph_lite_result = _graph_lite_fallback_result(
+                    question,
+                    "snapshot_unavailable",
+                    graph_started_at,
+                    error=type(exc).__name__,
+                )
+            except Exception as exc:
+                logger.warning("graph_lite_failed query=%s error=%s", question, type(exc).__name__)
+                graph_lite_result = _graph_lite_fallback_result(
+                    question,
+                    "graph_lite_error",
+                    graph_started_at,
+                    error=type(exc).__name__,
+                )
+
+            appended_context = graph_lite_service.append_graph_lite_context(
+                context,
+                graph_lite_result,
+                max_chars=graph_lite_service.GRAPH_LITE_DEFAULT_CONTEXT_CHARS,
+            )
+            context_added = appended_context != context
+            context_trace["graph_lite"] = _graph_lite_trace(
+                graph_lite_result,
+                enabled=True,
+                context_added=context_added,
+            )
+            if context_added:
+                context_trace["context_chars"] = len(appended_context)
+            return appended_context
 
         chain_started_at = time.perf_counter()
         if "query_profile" in inspect.signature(query_service.build_query_chain).parameters:
@@ -504,6 +600,8 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
                 ),
             ) from exc
 
+        if graph_lite_result is not None:
+            response.headers["X-RAG-Graph-Lite"] = str(graph_lite_result.get("status", "not_run"))
         elapsed_ms = int((time.perf_counter() - started_at) * 1000)
         logger.info(
             "query request_id=%s code=OK provider=%s model=%s collection=%s route=%s elapsed_ms=%d timings=%s",

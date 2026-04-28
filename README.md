@@ -26,7 +26,7 @@
 - 현재 제품 표기: Trunk RAG SVG mark/wordmark/favicon을 `/intro`, `/app`, `/admin`, README에 적용
 - 현재 복구 안내: `/intro`와 `/app`는 기본 화면에 간단 상태를 표시하고, release/runtime/ops 세부 진단은 접힘 패널에서 표시
 - 현재 문서 흐름: 기본 번들 문서는 유럽 과학사 sample-pack 데모이며, 사용자 문서는 업로드 요청과 관리자 승인 후 반영
-- 현재 relation PoC: graph-lite JSONL 관계 스냅샷/인메모리 검색 계층을 실험용 내부 helper로 추가했으며, 기본 `/query` 경로에는 자동 연결하지 않음
+- 현재 relation PoC: graph-lite JSONL 관계 스냅샷/인메모리 검색 계층을 `Quality` 단계의 opt-in context 보조로 연결했으며, `Balanced` 기본 경로에는 자동 적용하지 않음
 - 현재 범위 밖: full Neo4j/GraphRAG 운영, 무거운 rerank, 설치형 데스크톱 제품화
 
 현재 문서는 과장된 성능 약속보다 "지금 무엇이 준비돼 있고 어떤 경로가 검증됐는지"를 우선 보여 주는 기준으로 유지합니다.
@@ -60,7 +60,7 @@
 - 현재: `/query`는 runtime profile 기반 query budget(`single/multi`, `verified/experimental/not_recommended`)을 내부 정책으로 적용한다
 - 현재: `/query` context build는 MMR retrieval 뒤에 collection pool에서 lexical match가 강한 문서를 최대 2개까지 보강하고, 이어서 경량 lexical boost와 multi-collection coverage rerank로 문서 순서를 한 번 더 보정한다
 - 현재: `debug` trace는 `retrieval_strategy`, `lexical_query_terms`, `hybrid_candidate_merge_applied`, `hybrid_candidate_count`, `hybrid_scan_doc_count`, `hybrid_skipped_collections`, `coverage_rerank_applied`, `coverage_rerank_collection_count`를 남겨 경량 보정 적용 여부와 scan 비용을 확인할 수 있다
-- 현재: `services/graph_lite_service.py`는 full GraphRAG를 되살리지 않고 JSONL `entities/relations` 스냅샷을 읽어 relation-heavy 질문 감지, 인메모리 관계 검색, RAG context append contract를 제공한다. 이 helper는 opt-in PoC이며 기본 `/query`에는 자동 적용하지 않는다
+- 현재: `services/graph_lite_service.py`는 full GraphRAG를 되살리지 않고 JSONL `entities/relations` 스냅샷을 읽어 relation-heavy 질문 감지, 인메모리 관계 검색, RAG context append contract를 제공한다. `/query`는 `quality` 단계에서만 opt-in으로 graph-lite context를 붙이고, no-hit/snapshot-missing이면 기존 vector context로 fallback한다
 - 현재: `/health`는 `runtime_query_budget_*`, `embedding_fingerprint_*` 상태를 노출해 경량 경로와 인덱스 호환 상태를 먼저 보여 준다
 - 현재: reindex 시 컬렉션별 embedding fingerprint를 저장하고, `/query`는 mismatch를 invoke 전에 먼저 차단한다
 - 현재: `services/tool_registry_service.py`는 `search_docs`, `read_doc`, `list_collections`, `health_check`, `reindex`, upload approval 계열을 internal tool 후보로 등록한다
@@ -549,6 +549,7 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 - 개인 운영 자동 승인(선택): `DOC_RAG_AUTO_APPROVE` (`1/true/on`이면 요청 생성 즉시 승인/인덱싱)
 - 질의 타임아웃(선택): `DOC_RAG_QUERY_TIMEOUT_SECONDS` (기본 `30`, 단위 초)
 - 컨텍스트 길이 제한(선택): `DOC_RAG_MAX_CONTEXT_CHARS` (미설정 시 제한 없음)
+- graph-lite snapshot 경로(선택): `DOC_RAG_GRAPH_LITE_SNAPSHOT_DIR` (미설정 시 `docs/reports/graphrag_snapshot_2026-03-17`)
 - 청킹 모드(선택): `DOC_RAG_CHUNKING_MODE` (`char` 기본, `token` 옵션)
 - 토큰 인코딩(선택): `DOC_RAG_CHUNK_TOKEN_ENCODING` (기본 `cl100k_base`)
 - 임베딩 모델(선택): `DOC_RAG_EMBEDDING_MODEL` (기본 `BAAI/bge-m3`, 로컬 경로 가능)
