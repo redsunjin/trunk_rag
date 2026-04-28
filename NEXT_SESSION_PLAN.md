@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-095`
-- current_active_title: `Await next-track after gemma4:e2b validation`
+- current_active_id: `LOOP-097`
+- current_active_title: `Await next-track after RAG quality gate introduction`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -132,6 +132,18 @@
 - 최종 RAG 게이트: 새 코드/서버 재시작 후 `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e2b --llm-base-url http://localhost:11434 -> ready`, `generic-baseline 3/3 pass`, `avg_weighted_score=0.92`, `p95_latency_ms=7288.123`; 반복 실행에서도 `ready`, `p95_latency_ms=16313.556`로 통과했다.
 - e4b 비교: 같은 환경에서 `gemma4:e4b` 직접 생성은 `assessment=borderline`, eval_tps=`6.74/28.095`였고, 기본 게이트는 `passed=0/3`, `p95_latency_ms=30026.454`로 blocked였다.
 - 다음 판단: 실제 사용자 문서가 늘어난 뒤에는 e4b 품질 경로와 e2b 저지연 경로를 같은 질문셋으로 다시 비교한다.
+
+## 2026-04-28 RAG Quality Gate Snapshot
+
+- 완료 루프: `LOOP-096 RAG quality comparison gate for model decisions`
+- 기존 상태: `scripts/eval_query_quality.py`와 `generic-baseline` 최소 회귀 게이트는 있었지만, 모델 전환 판단용 비교 리포트와 support/citation/source coverage 기준은 부족했다.
+- 코드 반영: `eval_query_quality.py`는 기본 평가 요청에 `debug=true`를 사용하고 `support_level`, citation 수, source route coverage를 리포트에 남긴다.
+- 신규 게이트: `scripts/compare_rag_quality.py`는 동일 fixture/bucket/threshold로 모델 후보를 비교하고, `pass_rate=1.0`, `avg_weighted_score>=0.85`, `p95<=20000ms`, `support_pass_rate=1.0` 기준으로 `ready/blocked`를 판정한다.
+- e2b 상세 평가: `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-04-28_GEMMA4_E2B_QUALITY.md` 기준 전체 6문항 `5/6 pass`, `avg_weighted_score=0.7962`, `p95_latency_ms=3568.391`, `support_pass_rate=1.0`.
+- e2b bucket 결과: `generic-baseline`은 `3/3 pass`, `avg_weighted_score=0.92`, `p95_latency_ms=2191.589`; `sample-pack-baseline`은 `2/3 pass`, `avg_weighted_score=0.6724`.
+- 실패 케이스: `GQ-05`는 route/source/support는 정상(`fr,ge`, citations=2, source coverage=1.0)이지만 답변이 `제공된 문서에서 확인되지 않습니다.`라서 필수 키워드와 비교 설명을 모두 놓쳤다.
+- 모델 전환 판단: `docs/reports/RAG_QUALITY_MODEL_COMPARISON_2026-04-28_GEMMA4_E2B.md` 기준 `gemma4:e2b`는 core generic 질문에는 충분하지만, sample-pack 다중 컬렉션 비교까지 포함한 기본값 전환 게이트는 `blocked`다.
+- 다음 추천: 기본값 전환 전에 `GQ-05` 품질 보정 또는 실제 사용자 문서 기반 fixture를 추가한 뒤 compare gate를 다시 실행한다.
 
 ## 0. 2026-03-13 우선순위 재정렬
 

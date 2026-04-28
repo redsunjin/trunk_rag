@@ -152,12 +152,14 @@ def build_query_payload(
     llm_model: str | None,
     llm_base_url: str | None,
     llm_api_key: str | None,
+    debug: bool = True,
 ) -> tuple[dict[str, object], list[str], str]:
     payload, expected_route_keys, request_mode = prepare_query_request(case)
     payload["llm_provider"] = llm_provider
     payload["llm_model"] = llm_model
     payload["llm_base_url"] = llm_base_url
     payload["llm_api_key"] = llm_api_key
+    payload["debug"] = debug
     query_profile = str(case.get("query_profile", "")).strip()
     if query_profile:
         payload["query_profile"] = query_profile
@@ -336,6 +338,25 @@ def evaluate_case_result(
     if not expected_route_keys:
         route_pass = True
 
+    meta = body.get("meta") if isinstance(body.get("meta"), dict) else {}
+    support_level = str(meta.get("support_level", "-") or "-")
+    support_reason = str(meta.get("support_reason", "-") or "-")
+    citations = [str(item) for item in meta.get("citations", [])] if isinstance(meta.get("citations"), list) else []
+    sources = [item for item in meta.get("sources", []) if isinstance(item, dict)] if isinstance(meta.get("sources"), list) else []
+    source_collection_keys = [
+        str(item.get("collection_key", "")).strip()
+        for item in sources
+        if str(item.get("collection_key", "")).strip()
+    ]
+    expected_source_keys = [key for key in expected_route_keys if key]
+    source_covered_keys = sorted(set(expected_source_keys).intersection(source_collection_keys))
+    if expected_source_keys:
+        source_route_coverage_ratio = round(len(source_covered_keys) / len(set(expected_source_keys)), 4)
+    else:
+        source_route_coverage_ratio = 1.0
+    source_route_pass = source_route_coverage_ratio == 1.0 if expected_source_keys else True
+    support_pass = support_level in {"supported", "limited"} and bool(citations)
+
     passed = (
         status == 200
         and required_ratio == 1.0
@@ -370,6 +391,16 @@ def evaluate_case_result(
         "precision_score": precision_score,
         "completeness_score": completeness_score,
         "hallucination_score": hallucination_score,
+        "support_level": support_level,
+        "support_reason": support_reason,
+        "support_pass": support_pass,
+        "citation_count": len(citations),
+        "citations": citations,
+        "source_count": len(sources),
+        "source_collection_keys": source_collection_keys,
+        "source_covered_keys": source_covered_keys,
+        "source_route_coverage_ratio": source_route_coverage_ratio,
+        "source_route_pass": source_route_pass,
         "weighted_score": round(weighted_score, 4),
         "pass": passed,
         "error_code": body.get("code"),
@@ -381,7 +412,10 @@ def evaluate_case_result(
 def summarize_results(results: list[dict[str, object]]) -> dict[str, object]:
     latencies = [float(item["latency_ms"]) for item in results]
     scores = [float(item["weighted_score"]) for item in results]
+    source_coverages = [float(item.get("source_route_coverage_ratio", 0.0) or 0.0) for item in results]
     passed = sum(1 for item in results if item["pass"])
+    support_passed = sum(1 for item in results if item.get("support_pass"))
+    source_route_passed = sum(1 for item in results if item.get("source_route_pass"))
     buckets: dict[str, list[dict[str, object]]] = {}
     for item in results:
         buckets.setdefault(str(item["bucket"]), []).append(item)
@@ -390,7 +424,13 @@ def summarize_results(results: list[dict[str, object]]) -> dict[str, object]:
     for bucket, bucket_items in buckets.items():
         bucket_latencies = [float(item["latency_ms"]) for item in bucket_items]
         bucket_scores = [float(item["weighted_score"]) for item in bucket_items]
+        bucket_source_coverages = [
+            float(item.get("source_route_coverage_ratio", 0.0) or 0.0)
+            for item in bucket_items
+        ]
         bucket_passed = sum(1 for item in bucket_items if item["pass"])
+        bucket_support_passed = sum(1 for item in bucket_items if item.get("support_pass"))
+        bucket_source_route_passed = sum(1 for item in bucket_items if item.get("source_route_pass"))
         bucket_summaries[bucket] = {
             "cases": len(bucket_items),
             "passed": bucket_passed,
@@ -398,6 +438,9 @@ def summarize_results(results: list[dict[str, object]]) -> dict[str, object]:
             "avg_latency_ms": round(mean(bucket_latencies), 3) if bucket_latencies else 0.0,
             "p95_latency_ms": round(percentile(bucket_latencies, 0.95), 3) if bucket_latencies else 0.0,
             "avg_weighted_score": round(mean(bucket_scores), 4) if bucket_scores else 0.0,
+            "support_pass_rate": round(bucket_support_passed / len(bucket_items), 4),
+            "source_route_pass_rate": round(bucket_source_route_passed / len(bucket_items), 4),
+            "avg_source_route_coverage": round(mean(bucket_source_coverages), 4) if bucket_source_coverages else 0.0,
         }
 
     return {
@@ -407,6 +450,9 @@ def summarize_results(results: list[dict[str, object]]) -> dict[str, object]:
         "avg_latency_ms": round(mean(latencies), 3) if latencies else 0.0,
         "p95_latency_ms": round(percentile(latencies, 0.95), 3) if latencies else 0.0,
         "avg_weighted_score": round(mean(scores), 4) if scores else 0.0,
+        "support_pass_rate": round(support_passed / len(results), 4) if results else 0.0,
+        "source_route_pass_rate": round(source_route_passed / len(results), 4) if results else 0.0,
+        "avg_source_route_coverage": round(mean(source_coverages), 4) if source_coverages else 0.0,
         "bucket_summaries": bucket_summaries,
     }
 
@@ -456,6 +502,9 @@ def build_markdown_report(payload: dict[str, object]) -> str:
         f"- avg_weighted_score: `{summary['avg_weighted_score']}`",
         f"- avg_latency_ms: `{summary['avg_latency_ms']}`",
         f"- p95_latency_ms: `{summary['p95_latency_ms']}`",
+        f"- support_pass_rate: `{summary.get('support_pass_rate', 0.0)}`",
+        f"- source_route_pass_rate: `{summary.get('source_route_pass_rate', 0.0)}`",
+        f"- avg_source_route_coverage: `{summary.get('avg_source_route_coverage', 0.0)}`",
         "",
         "## Buckets",
         ]
@@ -471,6 +520,9 @@ def build_markdown_report(payload: dict[str, object]) -> str:
                 f"- avg_weighted_score: `{bucket_summary['avg_weighted_score']}`",
                 f"- avg_latency_ms: `{bucket_summary['avg_latency_ms']}`",
                 f"- p95_latency_ms: `{bucket_summary['p95_latency_ms']}`",
+                f"- support_pass_rate: `{bucket_summary.get('support_pass_rate', 0.0)}`",
+                f"- source_route_pass_rate: `{bucket_summary.get('source_route_pass_rate', 0.0)}`",
+                f"- avg_source_route_coverage: `{bucket_summary.get('avg_source_route_coverage', 0.0)}`",
             ]
         )
 
@@ -491,6 +543,9 @@ def build_markdown_report(payload: dict[str, object]) -> str:
                 f"- required_hits: `{len(result['required_hits'])}/{result['required_total']}`",
                 f"- must_include_any_hits: `{len(result['must_include_any_hits'])}/{result['must_include_any_total']}`",
                 f"- forbidden_hits: `{', '.join(result['forbidden_hits']) or '-'}`",
+                f"- support: `{result.get('support_level', '-')}` / `{result.get('support_reason', '-')}`",
+                f"- citations: `{result.get('citation_count', 0)}`",
+                f"- source_route_coverage: `{result.get('source_route_coverage_ratio', 0.0)}`",
                 f"- answer_preview: `{answer_preview}`",
             ]
         )
@@ -513,6 +568,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--llm-model", default=None)
     parser.add_argument("--llm-base-url", default=None)
     parser.add_argument("--llm-api-key", default=None)
+    parser.add_argument("--no-debug", action="store_true")
     parser.add_argument("--graph-collection", default=DEFAULT_COLLECTION_KEY)
     parser.add_argument("--graph-max-hops", type=int, default=2)
     parser.add_argument("--output-json", type=Path, default=DEFAULT_OUTPUT_JSON)
@@ -533,6 +589,7 @@ def run_evaluation(
     llm_model: str | None = None,
     llm_base_url: str | None = None,
     llm_api_key: str | None = None,
+    debug: bool = True,
     graph_collection: str = DEFAULT_COLLECTION_KEY,
     graph_max_hops: int = 2,
 ) -> dict[str, object]:
@@ -566,6 +623,7 @@ def run_evaluation(
                 llm_model=llm_model,
                 llm_base_url=llm_base_url,
                 llm_api_key=llm_api_key,
+                debug=debug,
             )
             request_id = f"answer-eval-{index:03d}-{case['id']}"
             status, body, latency_ms, headers = call_query(
@@ -605,6 +663,7 @@ def run_evaluation(
         "base_url": base_url,
         "llm_provider": llm_provider,
         "llm_model": llm_model,
+        "debug": debug,
         "health": health,
         "collections": collections_payload,
         "summary": summarize_results(results),
@@ -635,6 +694,7 @@ def main() -> None:
         llm_model=args.llm_model,
         llm_base_url=args.llm_base_url,
         llm_api_key=args.llm_api_key,
+        debug=not args.no_debug,
         graph_collection=args.graph_collection,
         graph_max_hops=args.graph_max_hops,
     )

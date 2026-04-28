@@ -93,6 +93,7 @@ def test_build_query_payload_includes_optional_query_profile():
     )
 
     assert payload["query_profile"] == "sample_pack"
+    assert payload["debug"] is True
     assert expected_route_keys == ["fr"]
     assert request_mode == "explicit_single"
 
@@ -154,3 +155,48 @@ def test_validate_fixture_collections_available_raises_for_empty_explicit_collec
         assert "GQ-03: uk" in str(exc)
     else:
         raise AssertionError("expected ValueError for empty explicit collection")
+
+
+def test_evaluate_case_result_extracts_debug_support_and_source_quality():
+    case = {
+        "id": "GQ-20",
+        "bucket": "generic-baseline",
+        "query": "sample",
+        "collection_keys": ["all"],
+        "evaluation": {
+            "min_answer_chars": 10,
+            "must_include": ["뉴턴"],
+            "must_not_include": ["오류"],
+            "must_include_any": ["과학"],
+            "score_weights": {
+                "precision": 0.5,
+                "completeness": 0.4,
+                "hallucination": 0.1,
+            },
+        },
+    }
+    body = {
+        "answer": "뉴턴의 국장은 과학의 사회적 위상을 보여준다.",
+        "meta": {
+            "support_level": "supported",
+            "support_reason": "multiple_context_segments",
+            "citations": ["uk.md"],
+            "sources": [{"source": "uk.md", "collection_key": "all"}],
+        },
+    }
+    headers = {"X-RAG-Collections": "w2_007_header_rag"}
+
+    result = eval_query_quality.evaluate_case_result(
+        case,
+        status=200,
+        body=body,
+        headers=headers,
+        latency_ms=42.0,
+        expected_route_keys=["all"],
+        request_mode="explicit_single",
+    )
+
+    assert result["support_pass"] is True
+    assert result["citation_count"] == 1
+    assert result["source_collection_keys"] == ["all"]
+    assert result["source_route_coverage_ratio"] == 1.0

@@ -1,0 +1,635 @@
+{
+  "generated_at": "2026-04-28T03:07:00+00:00",
+  "backend": "vector_query",
+  "eval_file": "evals/answer_level_eval_fixtures.jsonl",
+  "base_url": "http://127.0.0.1:8000",
+  "llm_provider": "ollama",
+  "llm_model": "gemma4:e2b",
+  "debug": true,
+  "health": {
+    "status": "ok",
+    "collection_key": "all",
+    "collection": "w2_007_header_rag",
+    "default_runtime_collection_keys": [
+      "all"
+    ],
+    "compatibility_bundle_key": "sample_pack",
+    "compatibility_bundle_label": "sample-pack 호환 번들",
+    "compatibility_bundle_collection_keys": [
+      "eu",
+      "fr",
+      "ge",
+      "it",
+      "uk"
+    ],
+    "compatibility_bundle_optional": true,
+    "seed_corpus_key": "sample_pack_bootstrap",
+    "seed_corpus_label": "sample-pack demo/bootstrap corpus",
+    "seed_corpus_role": "demo_bootstrap",
+    "seed_corpus_dataset": "sample-eu-science-history",
+    "seed_corpus_description": "First-run demo corpus used to populate the core all collection and the optional sample-pack compatibility collections. It is bundled example data, not product-domain data.",
+    "persist_dir": "/Users/Agent/ps-workspace/trunk_rag/chroma_db",
+    "vectors": 37,
+    "auto_approve": false,
+    "pending_requests": 0,
+    "chunking_mode": "char",
+    "embedding_model": "BAAI/bge-m3",
+    "query_timeout_seconds": 30,
+    "max_context_chars": 1500,
+    "default_llm_provider": "ollama",
+    "default_llm_model": "gemma4:e4b",
+    "default_llm_base_url": "http://localhost:11434",
+    "runtime_profile_status": "verified",
+    "runtime_profile_scope": "local",
+    "runtime_profile_message": "현재 Ollama 런타임 프로파일은 gemma4 기본 로컬 운영 경로로 검증됐습니다.",
+    "runtime_profile_recommendation": "`DOC_RAG_QUERY_TIMEOUT_SECONDS=30` 이상을 유지하세요.",
+    "runtime_query_budget_profile": "verified_local_single",
+    "runtime_query_budget_summary": "profile=verified_local_single | k=3 | fetch_k=10 | max_docs=3 | context=1500 | generation=standard | max_output_tokens=192",
+    "embedding_fingerprint_status": "ready",
+    "embedding_fingerprint_message": "현재 임베딩 모델과 저장된 컬렉션 fingerprint가 일치합니다.",
+    "embedding_fingerprint_details": [
+      {
+        "collection_key": "all",
+        "vectors": 37,
+        "status": "ready",
+        "stored_embedding_model": "BAAI/bge-m3",
+        "stored_embedding_fingerprint": "d790e737453c38959ca181c43431c25924a5340160b90e5884404377ef08dd49"
+      }
+    ],
+    "compatibility_bundle_embedding_fingerprint_status": "ready",
+    "compatibility_bundle_embedding_fingerprint_message": "현재 임베딩 모델과 저장된 컬렉션 fingerprint가 일치합니다.",
+    "compatibility_bundle_embedding_fingerprint_details": [
+      {
+        "collection_key": "eu",
+        "vectors": 9,
+        "status": "ready",
+        "stored_embedding_model": "BAAI/bge-m3",
+        "stored_embedding_fingerprint": "d790e737453c38959ca181c43431c25924a5340160b90e5884404377ef08dd49"
+      },
+      {
+        "collection_key": "fr",
+        "vectors": 7,
+        "status": "ready",
+        "stored_embedding_model": "BAAI/bge-m3",
+        "stored_embedding_fingerprint": "d790e737453c38959ca181c43431c25924a5340160b90e5884404377ef08dd49"
+      },
+      {
+        "collection_key": "ge",
+        "vectors": 7,
+        "status": "ready",
+        "stored_embedding_model": "BAAI/bge-m3",
+        "stored_embedding_fingerprint": "d790e737453c38959ca181c43431c25924a5340160b90e5884404377ef08dd49"
+      },
+      {
+        "collection_key": "it",
+        "vectors": 7,
+        "status": "ready",
+        "stored_embedding_model": "BAAI/bge-m3",
+        "stored_embedding_fingerprint": "d790e737453c38959ca181c43431c25924a5340160b90e5884404377ef08dd49"
+      },
+      {
+        "collection_key": "uk",
+        "vectors": 7,
+        "status": "ready",
+        "stored_embedding_model": "BAAI/bge-m3",
+        "stored_embedding_fingerprint": "d790e737453c38959ca181c43431c25924a5340160b90e5884404377ef08dd49"
+      }
+    ],
+    "release_web_status": "ready",
+    "release_web_headline": "기본 웹 MVP 경로로 바로 사용할 수 있습니다.",
+    "release_web_steps": [
+      "기본 시작 경로는 `run_doc_rag.bat` 하나로 유지합니다.",
+      "Ollama를 `http://localhost:11434`에서 실행하고 기본 모델 `gemma4:e4b`을 준비하세요.",
+      "오프라인 환경이면 `DOC_RAG_EMBEDDING_MODEL`에 로컬 임베딩 경로를 지정하거나 HuggingFace cache를 준비하세요.",
+      "`DOC_RAG_QUERY_TIMEOUT_SECONDS=30` 이상을 유지하세요.",
+      "`/intro -> /app` 경로로 진입해 바로 질의할 수 있습니다.",
+      "실패 시 `/intro`의 상태 메시지와 request_id를 기준으로 원인을 확인하세요."
+    ]
+  },
+  "collections": {
+    "default_collection_key": "all",
+    "auto_approve": false,
+    "collections": [
+      {
+        "key": "all",
+        "name": "w2_007_header_rag",
+        "label": "전체 (기본)",
+        "file_names": [
+          "eu_summry.md",
+          "fr.md",
+          "ge.md",
+          "it.md",
+          "uk.md"
+        ],
+        "default_country": "all",
+        "default_doc_type": "summary",
+        "vectors": 37,
+        "soft_cap": 30000,
+        "hard_cap": 50000,
+        "soft_usage_ratio": 0.0012,
+        "hard_usage_ratio": 0.0007,
+        "soft_exceeded": false,
+        "hard_exceeded": false
+      },
+      {
+        "key": "eu",
+        "name": "rag_science_history_eu",
+        "label": "유럽 요약",
+        "file_names": [
+          "eu_summry.md"
+        ],
+        "default_country": "all",
+        "default_doc_type": "summary",
+        "vectors": 9,
+        "soft_cap": 30000,
+        "hard_cap": 50000,
+        "soft_usage_ratio": 0.0003,
+        "hard_usage_ratio": 0.0002,
+        "soft_exceeded": false,
+        "hard_exceeded": false
+      },
+      {
+        "key": "fr",
+        "name": "rag_science_history_fr",
+        "label": "프랑스",
+        "file_names": [
+          "fr.md"
+        ],
+        "default_country": "france",
+        "default_doc_type": "country",
+        "vectors": 7,
+        "soft_cap": 30000,
+        "hard_cap": 50000,
+        "soft_usage_ratio": 0.0002,
+        "hard_usage_ratio": 0.0001,
+        "soft_exceeded": false,
+        "hard_exceeded": false
+      },
+      {
+        "key": "ge",
+        "name": "rag_science_history_ge",
+        "label": "독일",
+        "file_names": [
+          "ge.md"
+        ],
+        "default_country": "germany",
+        "default_doc_type": "country",
+        "vectors": 7,
+        "soft_cap": 30000,
+        "hard_cap": 50000,
+        "soft_usage_ratio": 0.0002,
+        "hard_usage_ratio": 0.0001,
+        "soft_exceeded": false,
+        "hard_exceeded": false
+      },
+      {
+        "key": "it",
+        "name": "rag_science_history_it",
+        "label": "이탈리아",
+        "file_names": [
+          "it.md"
+        ],
+        "default_country": "italy",
+        "default_doc_type": "country",
+        "vectors": 7,
+        "soft_cap": 30000,
+        "hard_cap": 50000,
+        "soft_usage_ratio": 0.0002,
+        "hard_usage_ratio": 0.0001,
+        "soft_exceeded": false,
+        "hard_exceeded": false
+      },
+      {
+        "key": "uk",
+        "name": "rag_science_history_uk",
+        "label": "영국",
+        "file_names": [
+          "uk.md"
+        ],
+        "default_country": "uk",
+        "default_doc_type": "country",
+        "vectors": 7,
+        "soft_cap": 30000,
+        "hard_cap": 50000,
+        "soft_usage_ratio": 0.0002,
+        "hard_usage_ratio": 0.0001,
+        "soft_exceeded": false,
+        "hard_exceeded": false
+      }
+    ]
+  },
+  "summary": {
+    "cases": 6,
+    "passed": 5,
+    "pass_rate": 0.8333,
+    "avg_latency_ms": 2370.421,
+    "p95_latency_ms": 3568.391,
+    "avg_weighted_score": 0.7962,
+    "support_pass_rate": 1.0,
+    "source_route_pass_rate": 1.0,
+    "avg_source_route_coverage": 1.0,
+    "bucket_summaries": {
+      "sample-pack-baseline": {
+        "cases": 3,
+        "passed": 2,
+        "pass_rate": 0.6667,
+        "avg_latency_ms": 2744.558,
+        "p95_latency_ms": 3834.592,
+        "avg_weighted_score": 0.6724,
+        "support_pass_rate": 1.0,
+        "source_route_pass_rate": 1.0,
+        "avg_source_route_coverage": 1.0
+      },
+      "generic-baseline": {
+        "cases": 3,
+        "passed": 3,
+        "pass_rate": 1.0,
+        "avg_latency_ms": 1996.283,
+        "p95_latency_ms": 2191.589,
+        "avg_weighted_score": 0.92,
+        "support_pass_rate": 1.0,
+        "source_route_pass_rate": 1.0,
+        "avg_source_route_coverage": 1.0
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "GQ-01",
+      "bucket": "sample-pack-baseline",
+      "query": "에콜 폴리테크니크가 프랑스 과학 인재 양성에서 맡은 역할을 요약해줘.",
+      "request_mode": "explicit_single",
+      "collection_keys": [
+        "fr"
+      ],
+      "expected_route_keys": [
+        "fr"
+      ],
+      "actual_route_keys": [
+        "fr"
+      ],
+      "route_pass": true,
+      "status": 200,
+      "latency_ms": 4012.06,
+      "answer_length": 329,
+      "answer_preview": "요약하면, 에콜 폴리테크니크의 역할은 프랑스 과학 인재 양성을 국가 중심의 교육과 훈련으로 조직한 데 있습니다. 에콜 폴리테크니크는 프랑스 혁명기의 혼란과 외세의 위협 속에서 국가가 직접 엘리트 과학 인재를 육성하여 사회를 혁신하는 프랑스 특유의 모델을 완성했습니다. 이 기관은 세계 최초의 이공계 전문 교육 기관으로서 수학, 물리뿐만 아니라 토목, 교량 건설, 주조 및 단조 등 전쟁과 국가 재건에 필요한 실전 기술을 교육했습니",
+      "answer": "요약하면, 에콜 폴리테크니크의 역할은 프랑스 과학 인재 양성을 국가 중심의 교육과 훈련으로 조직한 데 있습니다. 에콜 폴리테크니크는 프랑스 혁명기의 혼란과 외세의 위협 속에서 국가가 직접 엘리트 과학 인재를 육성하여 사회를 혁신하는 프랑스 특유의 모델을 완성했습니다. 이 기관은 세계 최초의 이공계 전문 교육 기관으로서 수학, 물리뿐만 아니라 토목, 교량 건설, 주조 및 단조 등 전쟁과 국가 재건에 필요한 실전 기술을 교육했습니다. 이러한 교육을 통해 단련된 압도적인 기술력은 훗날 미국의 MIT나 취리히 공대 등 전 세계 주요 공과대학의 모태가 되는 인류의 교육 유산으로 이어졌습니다.",
+      "required_hits": [
+        "에콜 폴리테크니크",
+        "과학 인재",
+        "양성",
+        "역할"
+      ],
+      "required_total": 4,
+      "required_ratio": 1.0,
+      "must_include_any_hits": [
+        "프랑스",
+        "교육",
+        "양성",
+        "훈련"
+      ],
+      "must_include_any_total": 6,
+      "must_include_any_ratio": 0.6667,
+      "forbidden_hits": [],
+      "min_answer_chars": 120,
+      "min_chars_ratio": 1.0,
+      "precision_score": 1.0,
+      "completeness_score": 0.8334,
+      "hallucination_score": 1.0,
+      "support_level": "supported",
+      "support_reason": "multiple_context_segments",
+      "support_pass": true,
+      "citation_count": 1,
+      "citations": [
+        "fr.md"
+      ],
+      "source_count": 2,
+      "source_collection_keys": [
+        "fr",
+        "fr"
+      ],
+      "source_covered_keys": [
+        "fr"
+      ],
+      "source_route_coverage_ratio": 1.0,
+      "source_route_pass": true,
+      "weighted_score": 0.9334,
+      "pass": true,
+      "error_code": null,
+      "error_message": null
+    },
+    {
+      "id": "GQ-03",
+      "bucket": "sample-pack-baseline",
+      "query": "뉴턴의 국장이 영국 사회에서 무엇을 상징했는지 설명해줘.",
+      "request_mode": "explicit_single",
+      "collection_keys": [
+        "uk"
+      ],
+      "expected_route_keys": [
+        "uk"
+      ],
+      "actual_route_keys": [
+        "uk"
+      ],
+      "route_pass": true,
+      "status": 200,
+      "latency_ms": 2237.385,
+      "answer_length": 341,
+      "answer_preview": "요약하면, 뉴턴의 국장은 영국 사회에서 과학자의 권위와 영향력이 국왕에 비견될 만큼 높아졌음을 상징했습니다. 이는 과학이 종교나 왕권 못지않은 사회적 지위를 얻었다는 뜻입니다. 아이작 뉴턴의 국장은 영국 역사상 전례 없는 '사회적 지진'을 일으켰으며, 평민 출신 학자가 국왕들이 잠든 웨스트민스터 사원에 안치된 사건이었습니다. 이는 과학이 종교 및 왕권과 동등한 권위를 획득했음을 선포한 사건으로, 과학이 신분과 권위의 상징인 사",
+      "answer": "요약하면, 뉴턴의 국장은 영국 사회에서 과학자의 권위와 영향력이 국왕에 비견될 만큼 높아졌음을 상징했습니다. 이는 과학이 종교나 왕권 못지않은 사회적 지위를 얻었다는 뜻입니다. 아이작 뉴턴의 국장은 영국 역사상 전례 없는 '사회적 지진'을 일으켰으며, 평민 출신 학자가 국왕들이 잠든 웨스트민스터 사원에 안치된 사건이었습니다. 이는 과학이 종교 및 왕권과 동등한 권위를 획득했음을 선포한 사건으로, 과학이 신분과 권위의 상징인 사원에 입성하여 사회적 지위의 정점에 서게 되었음을 상징했습니다. 이 사건은 과학에 대한 영국의 개방성과 힘을 보여주었으며, 이는 이후 계몽주의의 불씨를 당기는 데 영향을 미쳤습니다.",
+      "required_hits": [
+        "뉴턴",
+        "국장",
+        "영국",
+        "사회",
+        "상징"
+      ],
+      "required_total": 5,
+      "required_ratio": 1.0,
+      "must_include_any_hits": [
+        "국왕",
+        "사회",
+        "과학자",
+        "영향력"
+      ],
+      "must_include_any_total": 5,
+      "must_include_any_ratio": 0.8,
+      "forbidden_hits": [],
+      "min_answer_chars": 120,
+      "min_chars_ratio": 1.0,
+      "precision_score": 1.0,
+      "completeness_score": 0.9,
+      "hallucination_score": 1.0,
+      "support_level": "supported",
+      "support_reason": "multiple_context_segments",
+      "support_pass": true,
+      "citation_count": 1,
+      "citations": [
+        "uk.md"
+      ],
+      "source_count": 2,
+      "source_collection_keys": [
+        "uk",
+        "uk"
+      ],
+      "source_covered_keys": [
+        "uk"
+      ],
+      "source_route_coverage_ratio": 1.0,
+      "source_route_pass": true,
+      "weighted_score": 0.96,
+      "pass": true,
+      "error_code": null,
+      "error_message": null
+    },
+    {
+      "id": "GQ-05",
+      "bucket": "sample-pack-baseline",
+      "query": "프랑스의 에콜 폴리테크니크와 독일의 훔볼트 대학이 인재 양성에서 어떻게 다른지 비교해줘.",
+      "request_mode": "explicit_multi",
+      "collection_keys": [
+        "fr",
+        "ge"
+      ],
+      "expected_route_keys": [
+        "fr",
+        "ge"
+      ],
+      "actual_route_keys": [
+        "fr",
+        "ge"
+      ],
+      "route_pass": true,
+      "status": 200,
+      "latency_ms": 1984.228,
+      "answer_length": 19,
+      "answer_preview": "제공된 문서에서 확인되지 않습니다.",
+      "answer": "제공된 문서에서 확인되지 않습니다.",
+      "required_hits": [],
+      "required_total": 4,
+      "required_ratio": 0.0,
+      "must_include_any_hits": [],
+      "must_include_any_total": 4,
+      "must_include_any_ratio": 0.0,
+      "forbidden_hits": [],
+      "min_answer_chars": 160,
+      "min_chars_ratio": 0.1187,
+      "precision_score": 0.0,
+      "completeness_score": 0.0593,
+      "hallucination_score": 1.0,
+      "support_level": "supported",
+      "support_reason": "multiple_context_segments",
+      "support_pass": true,
+      "citation_count": 2,
+      "citations": [
+        "fr.md",
+        "ge.md"
+      ],
+      "source_count": 2,
+      "source_collection_keys": [
+        "fr",
+        "ge"
+      ],
+      "source_covered_keys": [
+        "fr",
+        "ge"
+      ],
+      "source_route_coverage_ratio": 1.0,
+      "source_route_pass": true,
+      "weighted_score": 0.1237,
+      "pass": false,
+      "error_code": null,
+      "error_message": null
+    },
+    {
+      "id": "GQ-19",
+      "bucket": "generic-baseline",
+      "query": "문서 기준으로 에콜 폴리테크니크가 어떤 방식으로 과학 인재를 길렀는지 요약해줘.",
+      "request_mode": "explicit_single",
+      "collection_keys": [
+        "all"
+      ],
+      "expected_route_keys": [
+        "all"
+      ],
+      "actual_route_keys": [
+        "all"
+      ],
+      "route_pass": true,
+      "status": 200,
+      "latency_ms": 2213.226,
+      "answer_length": 234,
+      "answer_preview": "에콜 폴리테크니크는 국가적 위기 상황에서 과학을 최후의 보루로 삼아 국가가 직접 엘리트 과학 인재를 육성하는 방식으로 인재를 길렀습니다. 이곳에서는 수학과 물리뿐만 아니라 토목, 교량 건설, 주조 및 단조 등 전쟁과 국가 재건에 필요한 실전 기술을 교육했습니다. 이러한 실용적 교육과 과학적 표준화 작업은 근대 산업의 강력한 기반이 되었으며, 이는 훗날 전 세계 주요 공과대학의 모태가 되는 교육 유산으로 이어졌습니다.",
+      "answer": "에콜 폴리테크니크는 국가적 위기 상황에서 과학을 최후의 보루로 삼아 국가가 직접 엘리트 과학 인재를 육성하는 방식으로 인재를 길렀습니다. 이곳에서는 수학과 물리뿐만 아니라 토목, 교량 건설, 주조 및 단조 등 전쟁과 국가 재건에 필요한 실전 기술을 교육했습니다. 이러한 실용적 교육과 과학적 표준화 작업은 근대 산업의 강력한 기반이 되었으며, 이는 훗날 전 세계 주요 공과대학의 모태가 되는 교육 유산으로 이어졌습니다.",
+      "required_hits": [
+        "에콜 폴리테크니크",
+        "과학 인재"
+      ],
+      "required_total": 2,
+      "required_ratio": 1.0,
+      "must_include_any_hits": [
+        "국가",
+        "교육"
+      ],
+      "must_include_any_total": 5,
+      "must_include_any_ratio": 0.4,
+      "forbidden_hits": [],
+      "min_answer_chars": 110,
+      "min_chars_ratio": 1.0,
+      "precision_score": 1.0,
+      "completeness_score": 0.7,
+      "hallucination_score": 1.0,
+      "support_level": "supported",
+      "support_reason": "multiple_context_segments",
+      "support_pass": true,
+      "citation_count": 2,
+      "citations": [
+        "fr.md",
+        "eu_summry.md"
+      ],
+      "source_count": 2,
+      "source_collection_keys": [
+        "all",
+        "all"
+      ],
+      "source_covered_keys": [
+        "all"
+      ],
+      "source_route_coverage_ratio": 1.0,
+      "source_route_pass": true,
+      "weighted_score": 0.88,
+      "pass": true,
+      "error_code": null,
+      "error_message": null
+    },
+    {
+      "id": "GQ-20",
+      "bucket": "generic-baseline",
+      "query": "문서 기준으로 뉴턴의 국장이 당시 영국에서 과학의 위상을 어떻게 보여줬는지 설명해줘.",
+      "request_mode": "explicit_single",
+      "collection_keys": [
+        "all"
+      ],
+      "expected_route_keys": [
+        "all"
+      ],
+      "actual_route_keys": [
+        "all"
+      ],
+      "route_pass": true,
+      "status": 200,
+      "latency_ms": 1996.852,
+      "answer_length": 195,
+      "answer_preview": "이제 과학이 신분과 권위의 상징인 사원에 입성하여 사회적 지위의 정점에 서게 되었음을 보여줍니다. 1727년 아이작 뉴턴의 국장이 국왕들이 잠든 웨스트민스터 사원에 안치된 것은 과학이 종교 및 왕권과 동등한 권위를 획득했음을 선포한 사건이었습니다. 이로 인해 당시 영국은 신분을 넘어 지식과 능력을 국격으로 예우하는 문화를 가졌음을 선포한 것입니다.",
+      "answer": "이제 과학이 신분과 권위의 상징인 사원에 입성하여 사회적 지위의 정점에 서게 되었음을 보여줍니다. 1727년 아이작 뉴턴의 국장이 국왕들이 잠든 웨스트민스터 사원에 안치된 것은 과학이 종교 및 왕권과 동등한 권위를 획득했음을 선포한 사건이었습니다. 이로 인해 당시 영국은 신분을 넘어 지식과 능력을 국격으로 예우하는 문화를 가졌음을 선포한 것입니다.",
+      "required_hits": [
+        "뉴턴",
+        "국장",
+        "영국",
+        "과학"
+      ],
+      "required_total": 4,
+      "required_ratio": 1.0,
+      "must_include_any_hits": [
+        "권위",
+        "사회적 지위",
+        "왕권",
+        "사회"
+      ],
+      "must_include_any_total": 5,
+      "must_include_any_ratio": 0.8,
+      "forbidden_hits": [],
+      "min_answer_chars": 110,
+      "min_chars_ratio": 1.0,
+      "precision_score": 1.0,
+      "completeness_score": 0.9,
+      "hallucination_score": 1.0,
+      "support_level": "supported",
+      "support_reason": "multiple_context_segments",
+      "support_pass": true,
+      "citation_count": 2,
+      "citations": [
+        "uk.md",
+        "eu_summry.md"
+      ],
+      "source_count": 2,
+      "source_collection_keys": [
+        "all",
+        "all"
+      ],
+      "source_covered_keys": [
+        "all"
+      ],
+      "source_route_coverage_ratio": 1.0,
+      "source_route_pass": true,
+      "weighted_score": 0.96,
+      "pass": true,
+      "error_code": null,
+      "error_message": null
+    },
+    {
+      "id": "GQ-21",
+      "bucket": "generic-baseline",
+      "query": "문서 기준으로 독일이 교육과 과학을 국가 재건의 동력으로 삼은 방식을 정리해줘.",
+      "request_mode": "explicit_single",
+      "collection_keys": [
+        "all"
+      ],
+      "expected_route_keys": [
+        "all"
+      ],
+      "actual_route_keys": [
+        "all"
+      ],
+      "route_pass": true,
+      "status": 200,
+      "latency_ms": 1778.772,
+      "answer_length": 177,
+      "answer_preview": "독일은 나폴레옹 전쟁 패배 후 국가 재건의 핵심 동력을 교육과 과학에서 찾았습니다. 1810년에 설립된 베를린 대학(현 훔볼트 대학)은 연구와 교육을 통합하는 새로운 대학 모델을 제시하며 세계 과학의 요람으로 발전했습니다. 이러한 기초 과학의 제도화는 독일이 실용적 공학을 산업에 접목하는 결정적인 발판이 되었습니다.",
+      "answer": "독일은 나폴레옹 전쟁 패배 후 국가 재건의 핵심 동력을 교육과 과학에서 찾았습니다. 1810년에 설립된 베를린 대학(현 훔볼트 대학)은 연구와 교육을 통합하는 새로운 대학 모델을 제시하며 세계 과학의 요람으로 발전했습니다. 이러한 기초 과학의 제도화는 독일이 실용적 공학을 산업에 접목하는 결정적인 발판이 되었습니다.",
+      "required_hits": [
+        "독일",
+        "교육",
+        "과학"
+      ],
+      "required_total": 3,
+      "required_ratio": 1.0,
+      "must_include_any_hits": [
+        "훔볼트 대학",
+        "베를린 대학",
+        "국가 재건"
+      ],
+      "must_include_any_total": 5,
+      "must_include_any_ratio": 0.6,
+      "forbidden_hits": [],
+      "min_answer_chars": 150,
+      "min_chars_ratio": 1.0,
+      "precision_score": 1.0,
+      "completeness_score": 0.8,
+      "hallucination_score": 1.0,
+      "support_level": "supported",
+      "support_reason": "multiple_context_segments",
+      "support_pass": true,
+      "citation_count": 2,
+      "citations": [
+        "ge.md",
+        "eu_summry.md"
+      ],
+      "source_count": 2,
+      "source_collection_keys": [
+        "all",
+        "all"
+      ],
+      "source_covered_keys": [
+        "all"
+      ],
+      "source_route_coverage_ratio": 1.0,
+      "source_route_pass": true,
+      "weighted_score": 0.92,
+      "pass": true,
+      "error_code": null,
+      "error_message": null
+    }
+  ]
+}

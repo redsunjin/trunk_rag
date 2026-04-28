@@ -129,6 +129,7 @@
 - `scripts/benchmark_token_chunking.py`: char/token 청킹 비교 벤치 스크립트
 - `scripts/benchmark_query_e2e.py`: `/query` E2E p95 벤치 스크립트
 - `scripts/eval_query_quality.py`: answer-level `/query` 품질 평가 스크립트
+- `scripts/compare_rag_quality.py`: 모델 후보별 RAG 품질 비교 게이트 스크립트
 - `scripts/check_ops_baseline_gate.py`: core 기본 컬렉션 상태와 `generic-baseline` 회귀 게이트를 한 번에 점검하는 스크립트
 - `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩 스크립트
 - `scripts/roadmap_harness.py`: `TODO.md`/`NEXT_SESSION_PLAN.md`의 루프 상태와 active 항목을 점검하는 스크립트
@@ -293,6 +294,7 @@ cd <repo>
 - `generic-baseline` fixture는 기본 `all` 컬렉션 하나만으로 통과하는 core runtime 기준을 사용합니다.
 - `sample-pack-baseline` fixture는 요청별 `query_profile=sample_pack`을 함께 보내 샘플팩 전용 프롬프트/후처리 호환성을 별도로 측정합니다.
 - 평가 항목은 `must_include`, `must_include_any`, `must_not_include`, 최소 답변 길이, 실제 route header를 기반으로 점수화됩니다.
+- 평가 요청은 기본적으로 `debug=true`를 사용해 `support_level`, citation 수, source route coverage도 함께 기록합니다.
 - 현재 `/query`는 최대 2개 컬렉션까지만 직접 선택 가능하므로, 3개 이상 컬렉션이 필요한 graph 질문은 vector baseline 평가 시 `collection=all`로 fallback 합니다.
 - 이 스크립트는 GraphRAG 자체를 평가하는 것이 아니라, 현재 Vector RAG 기본 경로의 answer-level 기준선을 만드는 용도입니다.
 - `2026-03-18` 기준 최신 baseline은 `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md`이며, 6개 fixture 중 2개만 통과했습니다.
@@ -302,6 +304,23 @@ cd <repo>
 - `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_OPS_RELIABILITY.md` 기준 `ops-baseline`은 3건 모두 `200` 응답으로 복구됐습니다.
 - `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-19_OPS_ANSWER_COMPLETENESS.md` 기준 최신 `ops-baseline`은 `3/3 pass`, `avg_weighted_score=0.9645`, `p95_latency_ms=8724.427`입니다.
 - 공식 기본 임베딩 `BAAI/bge-m3` 로컬 캐시가 없는 환경에서는 `DOC_RAG_EMBEDDING_MODEL`에 로컬 경로를 주고, `minishlab/potion-base-4M` 계열은 `DOC_RAG_EMBEDDING_DEVICE=cpu`가 필요할 수 있습니다.
+
+모델 전환 후보는 단일 게이트가 아니라 비교 품질 게이트로 봅니다.
+
+```powershell
+.venv\Scripts\python.exe scripts\compare_rag_quality.py `
+  --bucket generic-baseline `
+  --bucket sample-pack-baseline `
+  --model gemma4:e2b `
+  --llm-base-url http://localhost:11434 `
+  --output-json docs\reports\rag_quality_model_comparison_2026-04-28_gemma4_e2b.json `
+  --output-report docs\reports\RAG_QUALITY_MODEL_COMPARISON_2026-04-28_GEMMA4_E2B.md
+```
+
+- 기본 임계값은 `pass_rate=1.0`, `avg_weighted_score>=0.85`, `p95<=20000ms`, `support_pass_rate=1.0`입니다.
+- `generic-baseline`만 통과해도 본체 기본 질문은 가능하지만, 모델 기본값 전환은 `sample-pack-baseline` 또는 실제 사용자 문서 질문셋까지 함께 통과한 뒤 결정합니다.
+- 비교 게이트가 `blocked`이면 종료 코드 `1`을 반환합니다. 이는 모델 전환 보류 신호이며, 리포트 생성 실패와 구분해서 봅니다.
+- 2026-04-28 `gemma4:e2b` 비교 게이트는 `generic-baseline 3/3 pass`였지만 `sample-pack-baseline GQ-05` 실패로 전체 `blocked`였습니다.
 
 기본 회귀 게이트는 아래 한 명령으로 확인할 수 있습니다.
 

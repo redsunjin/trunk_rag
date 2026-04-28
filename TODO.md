@@ -183,7 +183,9 @@
 | LOOP-092 | done | Semantic search fallback and layered RAG wait | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-093 | done | Await next-track after semantic fallback layering | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-094 | done | gemma4:e2b low-latency model validation | `./.venv/bin/python scripts/diagnose_ollama_runtime.py --model gemma4:e2b --base-url http://localhost:11434 --repeat 3 --num-predict 64 --timeout-seconds 120` + `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e2b --llm-base-url http://localhost:11434` + `./.venv/bin/python -m pytest -q tests/test_runtime_service.py tests/api/test_system_api.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-095 | active | Await next-track after gemma4:e2b validation | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-095 | done | Await next-track after gemma4:e2b validation | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-096 | done | RAG quality comparison gate for model decisions | `./.venv/bin/python -m pytest -q tests/test_eval_query_quality.py tests/test_compare_rag_quality.py tests/test_check_ops_baseline_gate.py` + `./.venv/bin/python scripts/eval_query_quality.py --bucket generic-baseline --bucket sample-pack-baseline --llm-provider ollama --llm-model gemma4:e2b --llm-base-url http://localhost:11434 --output-json docs/reports/query_answer_eval_2026-04-28_gemma4_e2b_quality.json --output-report docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-04-28_GEMMA4_E2B_QUALITY.md` + `./.venv/bin/python scripts/compare_rag_quality.py --bucket generic-baseline --bucket sample-pack-baseline --model gemma4:e2b --llm-base-url http://localhost:11434 --output-json docs/reports/rag_quality_model_comparison_2026-04-28_gemma4_e2b.json --output-report docs/reports/RAG_QUALITY_MODEL_COMPARISON_2026-04-28_GEMMA4_E2B.md` expected `blocked` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-097 | active | Await next-track after RAG quality gate introduction | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -2695,7 +2697,7 @@ closeout 메모 (2026-04-28):
 - 이번 루프에서는 기본 모델을 바꾸지 않았다. 다만 현재 환경에서는 `gemma4:e2b`가 로컬 기본값 전환 후보로 더 강하다.
 - `qwen3.5:4b-nvfp4`는 실험 후보로 남기되 기본 fallback으로 승격하지 않는다.
 
-## 현재 Active Loop (LOOP-095)
+## 완료 Loop (LOOP-095)
 
 목표:
 - `gemma4:e2b` 검증 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
@@ -2714,6 +2716,60 @@ closeout 메모 (2026-04-28):
 진행 메모 (2026-04-28):
 - `LOOP-094`에서 `gemma4:e2b`를 저지연 로컬 대안으로 검증하고 runtime profile/budget에 반영했다.
 - 다음 추천 후보는 `gemma4:e2b`를 로컬 기본값으로 전환할지 결정하고, 전환한다면 `.env.example`/UI 기본값/README/SPEC/게이트 명령을 함께 정렬하는 작업이다.
+
+closeout 메모 (2026-04-28):
+- 사용자가 e2b 품질 확인과 RAG 품질 프로세스 도입을 요청해 다음 작업 트랙으로 확정했다.
+
+## 완료 Loop (LOOP-096)
+
+목표:
+- 모델 기본값 전환 전에 사용할 RAG 품질 비교 프로세스를 도입하고, `gemma4:e2b` 품질을 기존 fixture 기준으로 확인한다.
+
+범위:
+- 포함: 기존 answer-level 평가에 support/citation/source coverage 기록 추가, 모델 후보 비교 게이트 스크립트 추가, e2b 품질 리포트 생성, TODO/NEXT/README/SPEC 현행화
+- 제외: 기본 모델 전환, LLM judge 도입, 신규 사용자 도메인 fixture 대량 작성, GraphRAG 재개, 데스크톱 패키징 재착수
+
+완료 기준:
+- 단건 answer-level 평가가 답변 키워드/route 외에 support/citation/source coverage를 함께 기록한다.
+- `scripts/compare_rag_quality.py`가 동일 bucket/threshold 기준으로 모델 후보의 기본값 전환 가능 여부를 판정한다.
+- `gemma4:e2b`를 `generic-baseline` + `sample-pack-baseline` 기준으로 실측해 통과/실패 케이스가 문서화된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_eval_query_quality.py tests/test_compare_rag_quality.py tests/test_check_ops_baseline_gate.py`
+- `./.venv/bin/python scripts/eval_query_quality.py --bucket generic-baseline --bucket sample-pack-baseline --llm-provider ollama --llm-model gemma4:e2b --llm-base-url http://localhost:11434 --output-json docs/reports/query_answer_eval_2026-04-28_gemma4_e2b_quality.json --output-report docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-04-28_GEMMA4_E2B_QUALITY.md`
+- `./.venv/bin/python scripts/compare_rag_quality.py --bucket generic-baseline --bucket sample-pack-baseline --model gemma4:e2b --llm-base-url http://localhost:11434 --output-json docs/reports/rag_quality_model_comparison_2026-04-28_gemma4_e2b.json --output-report docs/reports/RAG_QUALITY_MODEL_COMPARISON_2026-04-28_GEMMA4_E2B.md` -> expected `blocked`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-28):
+- 기존 품질 프로세스는 `eval_query_quality.py` + `generic-baseline` 중심의 최소 회귀 게이트였고, 모델 전환 판단용 비교/소스 품질 게이트는 부족했다.
+- `eval_query_quality.py`가 기본적으로 `debug=true`를 보내 `support_level`, citation 수, source route coverage를 리포트에 포함하도록 확장했다.
+- `scripts/compare_rag_quality.py`를 추가해 모델 후보별 `pass_rate`, `avg_weighted_score`, `p95`, `support_pass_rate`, bucket별 결과, 실패 케이스를 한 보고서로 비교한다.
+
+closeout 메모 (2026-04-28):
+- `gemma4:e2b` answer-level 품질은 전체 6문항 `5/6 pass`, `avg_weighted_score=0.7962`, `p95_latency_ms=3568.391`, `support_pass_rate=1.0`이었다.
+- `generic-baseline`은 `3/3 pass`, `avg_weighted_score=0.92`, `p95_latency_ms=2191.589`로 통과했다.
+- `sample-pack-baseline`은 `2/3 pass`, `avg_weighted_score=0.6724`였고 `GQ-05`가 `제공된 문서에서 확인되지 않습니다.`로 실패했다.
+- 비교 게이트는 `pass_rate=1.0`, `avg_weighted_score>=0.85`, `p95<=20000ms`, `support_pass_rate=1.0` 기준에서 전체 `blocked`였다.
+- 결론: `gemma4:e2b`는 core generic 질문에는 충분하지만, 다중 컬렉션 비교/샘플팩 호환 질문까지 기본값 전환 기준으로 보려면 아직 품질 보강이 필요하다.
+
+## 현재 Active Loop (LOOP-097)
+
+목표:
+- RAG 품질 비교 게이트 도입 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
+
+범위:
+- 포함: 다음 track 선택, 필요 시 새 작업 브랜치 생성, TODO/NEXT active 재정렬
+- 제외: 명시 지시 없는 기본 모델 교체, LLM judge 도입, 신규 사용자 도메인 fixture 대량 작성, public blocker 구현, GraphRAG 재개, 데스크톱 패키징 재착수
+
+완료 기준:
+- 사용자가 e2b 기본값 전환 보류/진행, GQ-05 품질 보정, 사용자 문서 품질 fixture 작성, 추가 모델 비교, PR/merge 후속, 또는 대기 유지를 명시해야 한다.
+- 새 track을 진행한다면 TODO/NEXT active가 해당 track으로 재정렬되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-28):
+- `LOOP-096`에서 e2b 품질을 실측했고, 기본값 전환 게이트는 sample-pack 비교 질문 실패로 `blocked`였다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

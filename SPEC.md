@@ -158,7 +158,8 @@
 - `desktop/electron/*`: Electron PoC 런타임/검증 스크립트
 - `desktop/electron/README.md`: 데스크톱 런처 사용 가이드
 - `services/graphrag_poc_service.py`: GraphRAG snapshot/benchmark 보조 서비스
-- `scripts/eval_query_quality.py`: answer-level `/query` 품질 평가 하네스
+- `scripts/eval_query_quality.py`: answer-level `/query` 품질 평가 하네스. 기본 평가 요청은 `debug=true`로 support/citation/source coverage를 함께 기록한다
+- `scripts/compare_rag_quality.py`: 모델 후보별 RAG 품질 비교 게이트. 동일 fixture/bucket/임계값으로 모델 전환 가능 여부를 판정한다
 - `scripts/check_ops_baseline_gate.py`: runtime preflight + core 기본 컬렉션 상태 + `generic-baseline` 회귀 게이트/diagnostics 점검
 - `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩
 - `scripts/roadmap_harness.py`: 실행 큐 상태와 현재 active 항목 점검
@@ -580,6 +581,7 @@ npm start
 - 추론 속도/품질은 로컬 하드웨어 성능에 크게 의존
 - 현재 실측 기준 로컬 최소 운영선은 `8B`급 모델을 `30초` timeout 안에서 통과시키는 수준이며, Apple Silicon에서는 사실상 `M4 Pro + 64GB unified memory` 이상을 권고한다
 - `gemma4:e2b`는 2026-04-28 실측에서 `generic-baseline 3/3 pass`, `avg_weighted_score=0.92`, `p95_latency_ms=7288.123~16313.556` 범위로 통과한 저지연 로컬 대안이다. 기본값 전환은 별도 결정으로 둔다
+- 2026-04-28 `gemma4:e2b` 모델 비교 품질 게이트는 `generic-baseline`은 통과했지만 `sample-pack-baseline GQ-05` 실패로 전체 `blocked`였다. 기본값 전환은 사용자 문서 질문셋 또는 sample-pack 호환 질문까지 통과한 뒤 결정한다
 - 같은 환경에서 `gemma4:e4b` 기본 게이트는 30초 timeout으로 막힐 수 있어, 로컬 운영 기본값은 후속 루프에서 재결정해야 한다
 - `qwen3.5:4b`, `qwen3.5:9b`, `LM Studio qwen3.5-4b-mlx-4bit`는 현재 Mac mini Pro 로컬 실측에서 운영 게이트를 안정 통과하지 못했다
 - 클라우드 추론(`groq + llama-3.1-8b-instant`)은 같은 게이트를 매우 낮은 지연으로 통과했으므로, 현행 운영 권장 경로는 로컬 엣지보다 클라우드 추론에 가깝다
