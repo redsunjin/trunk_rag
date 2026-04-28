@@ -387,6 +387,7 @@ cd <repo>
 - `status`는 현재 `active` 항목, 기본 게이트 명령, 큐 상태를 출력합니다.
 - `validate`는 `TODO.md`의 `Execution Queue`와 `NEXT_SESSION_PLAN.md`의 `Session Loop Harness`가 일치하는지 검사합니다.
 - 현재 규칙은 `active` 항목 1개만 허용하고, `current_active_id`가 실제 active row와 일치해야 합니다.
+- 현재 다음 품질 트랙은 full Neo4j/GraphRAG 재개가 아니라, 기존 vector/semantic 경로를 보조하는 로컬 graph-lite 관계 스냅샷/검색 PoC입니다.
 
 ## API
 

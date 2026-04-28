@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-103`
-- current_active_title: `Await next-track after quality candidate comparison`
+- current_active_id: `LOOP-104`
+- current_active_title: `Graph-lite relation sidecar feasibility gate`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -181,6 +181,16 @@
 - 판단: 모델 추가 교체보다 `GQ-05`의 부분근거/미확인 표현 판정과 fixture 기대치를 먼저 보정해야 한다. qwen은 Quality 후보로 가장 유력하지만 전체 게이트 통과 전 UI 기본값으로 고정하지 않는다.
 - 검증: `./.venv/bin/python -m pytest -q tests/test_eval_query_quality.py tests/test_compare_rag_quality.py -> 11 passed`; `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/eval_query_quality.py scripts/compare_rag_quality.py -> pass`; compare command expected `blocked`; `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`.
 - 다음 추천: `GQ-05`를 부분근거 답변이 가능한 평가 항목으로 분리하거나, 문서 보강 후 qwen Quality 후보를 다시 비교한다.
+
+## 2026-04-28 Graph-lite Next Track Snapshot
+
+- 완료 루프: `LOOP-103 Await next-track after quality candidate comparison`
+- 현재 active: `LOOP-104 Graph-lite relation sidecar feasibility gate`
+- 선택 이유: 들어오는 문서 데이터에서 인물/기관/국가/사건 간 관계가 RAG 품질을 좌우할 수 있으므로, full GraphRAG 재개 전에 로컬 경량 관계 계층의 품질 개선 가능성을 검증한다.
+- 범위 제한: full Neo4j/GraphRAG 운영 도입이 아니라, 로컬 graph-lite 관계 스냅샷과 관계 검색 PoC로 제한한다. 기존 `/query` 기본 경로는 대체하지 않고 semantic/vector fallback을 유지한다.
+- 병행 작업: 코드/테스트 구현은 별도 브랜치 `codex/loop-104-graph-lite-sidecar`에서 진행한다. 이 정리 브랜치 `codex/loop-103-track-sync`는 TODO/NEXT/README 현행화만 담당한다.
+- 검증 분리: 문서/큐 정합성은 `./.venv/bin/python scripts/roadmap_harness.py validate`로 확인하고, graph-lite 구현 검증은 병행 worker가 추가하는 `tests/test_graph_lite_*.py` 또는 동등한 graph-lite 대상 테스트로 별도 확인한다.
+- 완료 기준: 관계 후보는 source/chunk/evidence/confidence를 추적해야 하고, graph-lite 실패 시 기존 semantic/vector 경로가 유지되어야 하며, 결과 go/no-go 판단이 TODO/NEXT에 기록되어야 한다.
 
 ## 0. 2026-03-13 우선순위 재정렬
 

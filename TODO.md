@@ -191,7 +191,8 @@
 | LOOP-100 | done | Query feedback fixture candidate export queue | `./.venv/bin/python -m pytest -q tests/test_export_feedback_fixture_candidates.py` + `./.venv/bin/python scripts/export_feedback_fixture_candidates.py --output-jsonl docs/reports/query_feedback_fixture_candidates_2026-04-28.jsonl --output-report docs/reports/QUERY_FEEDBACK_FIXTURE_CANDIDATES_2026-04-28.md` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-101 | done | Await next-track after feedback fixture candidate queue | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-102 | done | Quality mode model candidate comparison | `./.venv/bin/python -m pytest -q tests/test_eval_query_quality.py tests/test_compare_rag_quality.py` + `./.venv/bin/python scripts/compare_rag_quality.py --base-url http://127.0.0.1:8010 --timeout-seconds 180 --query-timeout-seconds 120 --quality-mode quality --quality-stage quality --bucket generic-baseline --bucket sample-pack-baseline --model gemma4:e2b --model gemma4:e4b --model qwen3.5:9b-nvfp4 --llm-base-url http://localhost:11434 --output-json docs/reports/rag_quality_model_comparison_2026-04-28_quality_candidates.json --output-report docs/reports/RAG_QUALITY_MODEL_COMPARISON_2026-04-28_QUALITY_CANDIDATES.md` expected `blocked` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-103 | active | Await next-track after quality candidate comparison | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-103 | done | Await next-track after quality candidate comparison | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-104 | active | Graph-lite relation sidecar feasibility gate | `./.venv/bin/python scripts/roadmap_harness.py validate` + graph-lite 대상 테스트(구현 브랜치에서 추가 예정) |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -2909,24 +2910,51 @@ closeout 메모 (2026-04-28):
 - `gemma4:e4b`는 `4/6 pass`, `avg_weighted_score=0.6725`, `p95_latency_ms=7437.782`로 quality 후보 기준에서도 e2b/qwen보다 약했다.
 - 전체 게이트는 `qwen3.5:9b-nvfp4`도 `GQ-05`에서 미확인 표현이 포함되어 `pass_rate=1.0` 기준을 만족하지 못해 `blocked`였다. 다만 `GQ-05`의 required hits는 `4/4`였고 점수는 `0.925`라서 다음 보정은 모델 교체보다 부분근거/미확인 표현 판정과 fixture 기대치 조정이 우선이다.
 
-## 현재 Active Loop (LOOP-103)
+## 완료 Loop (LOOP-103)
 
 목표:
 - Quality 후보 비교 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
 
 범위:
 - 포함: 다음 track 선택, 필요 시 새 작업 브랜치 생성, TODO/NEXT active 재정렬
-- 제외: 명시 지시 없는 UI 기본 Quality 모델 변경, LLM judge 도입, 사용자 문서 fixture 대량 작성, public blocker 구현, GraphRAG 재개
+- 제외: 명시 지시 없는 UI 기본 Quality 모델 변경, LLM judge 도입, 사용자 문서 fixture 대량 작성, public blocker 구현, full Neo4j/GraphRAG 재개
 
 완료 기준:
-- 사용자가 `GQ-05` 부분근거/fixture 판정 보정, qwen Quality 후보 승격, 추가 모델 비교, 피드백 후보의 정식 fixture 승격, PR/merge 후속, 또는 대기 유지를 명시해야 한다.
+- 사용자가 다음 작업 트랙을 명시해야 한다.
 - 새 track을 진행한다면 TODO/NEXT active가 해당 track으로 재정렬되어야 한다.
+- 다음 트랙의 범위, 완료 기준, 검증 방법이 문서에 남아야 한다.
 
 검증:
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 진행 메모 (2026-04-28):
 - `LOOP-102`에서 Quality 후보 비교 결과 `qwen3.5:9b-nvfp4`가 가장 강했으나 전체 게이트는 `GQ-05` 판정으로 blocked였다.
+- 사용자는 관계 그래프가 들어오는 데이터의 관계 품질을 높일 수 있는지 검토했고, 다음 트랙을 full GraphRAG 재개가 아닌 graph-lite 관계 스냅샷/검색 PoC로 제한하는 방향을 선택했다.
+
+closeout 메모 (2026-04-28):
+- `LOOP-104 Graph-lite relation sidecar feasibility gate`를 다음 active로 등록했다.
+- 이 정리 브랜치는 문서 현행화만 수행하며, graph-lite 코드/테스트 구현은 병행 브랜치 `codex/loop-104-graph-lite-sidecar`에서 진행한다.
+
+## 현재 Active Loop (LOOP-104)
+
+목표:
+- 문서에 포함된 엔티티/관계 후보를 로컬 경량 snapshot으로 만들고, 관계형 질문에서 기존 vector/semantic retrieval을 보조할 수 있는지 검증한다.
+
+범위:
+- 포함: 로컬 graph-lite 관계 스냅샷, 관계 검색 PoC, vector fallback 유지, graph-candidate 또는 관계형 질문 기준 타깃 테스트, 결과 기반 go/no-go 판단 문서화
+- 제외: full Neo4j 운영 도입, 기존 `/query` 기본 경로 대체, 기본 UI 모델/Quality 후보 고정, 유료 API 호출, 기존 archived GraphRAG 트랙의 무조건 재개
+
+완료 기준:
+- 관계 후보가 원문 source/chunk/evidence/confidence와 함께 추적 가능해야 한다.
+- 관계형 질문에서 graph-lite 검색 결과를 별도 계층으로 확인할 수 있어야 하며, 실패 시 기존 semantic/vector 경로가 유지되어야 한다.
+- 기본 MVP 경로(`intro -> app/admin`, `/query`, `/semantic-search`)의 기존 동작을 깨지 않아야 한다.
+- graph-lite 대상 테스트와 roadmap harness 검증 결과가 TODO/NEXT에 기록되어야 한다.
+- 결과가 품질 개선 후보인지, 보류/폐기해야 하는지 go/no-go 판단이 남아야 한다.
+
+검증:
+- 문서/큐 정합성: `./.venv/bin/python scripts/roadmap_harness.py validate`
+- graph-lite 구현 브랜치 검증: 병행 worker가 추가하는 `tests/test_graph_lite_*.py` 또는 동등한 graph-lite 대상 테스트
+- 기본 경로 영향이 있으면 관련 API 회귀 테스트를 추가 실행한다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
