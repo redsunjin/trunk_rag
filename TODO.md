@@ -195,7 +195,9 @@
 | LOOP-104 | done | Graph-lite relation sidecar feasibility gate | `./.venv/bin/python -m pytest -q tests/test_graph_lite_service.py tests/test_graphrag_poc_service.py tests/api/test_query_api.py` + `./.venv/bin/python -m pytest -q tests/test_eval_query_quality.py tests/test_compare_rag_quality.py tests/test_documentation_boundaries.py tests/test_answer_level_eval_fixtures.py` + `./.venv/bin/python scripts/benchmark_graph_lite_sidecar.py --output-json /tmp/graph_lite_sidecar_poc.json --output-report /tmp/GRAPH_LITE_SIDECAR_POC.md` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-105 | done | Graph-lite Quality opt-in context integration | `./.venv/bin/python -m pytest -q tests/test_graph_lite_service.py tests/api/test_query_api.py` + graph-candidate qwen quality eval + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-106 | done | Graph-lite graph-candidate answer quality refinement | `./.venv/bin/python -m pytest -q tests/test_query_service.py tests/test_graph_lite_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_compare_rag_quality.py` + graph-candidate quality eval + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-107 | active | Await next-track after graph-lite quality refinement | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-107 | done | Await next-track after graph-lite quality refinement | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-108 | done | Graph-lite active-doc snapshot builder | `./.venv/bin/python -m pytest -q tests/test_graph_lite_snapshot_builder.py tests/test_graph_lite_service.py tests/api/test_query_api.py` + `./.venv/bin/python scripts/build_graph_lite_snapshot.py --output-dir /tmp/trunk_rag_graph_lite_snapshot_loop108` + graph-lite benchmark + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-109 | active | Graph-lite Quality status exposure and operator handoff | `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -3022,7 +3024,7 @@ closeout 메모 (2026-04-29):
 - 대상 회귀는 `tests/test_query_service.py tests/test_graph_lite_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_compare_rag_quality.py -> 65 passed`로 확인했다.
 - 판단: graph-lite Quality opt-in은 graph-candidate 질문군에서 품질 개선 신호가 확인됐지만, 아직 `Quality` 고급 경로 전용이다. 기본 Balanced 경로로 승격하지 않는다.
 
-## 현재 Active Loop (LOOP-107)
+## 완료 Loop (LOOP-107)
 
 목표:
 - graph-lite 품질 보정 이후 다음 제품/품질 트랙을 선택할 수 있도록 현 상태를 대기 상태로 고정한다.
@@ -3036,6 +3038,55 @@ closeout 메모 (2026-04-29):
 - 다음 트랙을 진행한다면 TODO/NEXT active가 해당 track으로 재정렬되어야 한다.
 
 검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-04-29):
+- 사용자가 계속 멈추는 문제를 지적해 `Await next-track` 대기 상태를 닫고 다음 구체 작업을 `LOOP-108 Graph-lite active-doc snapshot builder`로 승격했다.
+- 선택 이유는 기존 graph-lite가 샘플 snapshot을 읽고 평가하는 데서 끝났고, 실제 seed + managed active 문서 변경을 반영하는 생성 명령이 필요했기 때문이다.
+
+## 완료 Loop (LOOP-108)
+
+목표:
+- 현재 seed 문서와 managed active markdown 원본에서 graph-lite JSONL snapshot을 생성하는 로컬 명령을 제공한다.
+
+범위:
+- 포함: snapshot builder 서비스, CLI 스크립트, load validation, build summary, graph-lite benchmark 재검증, README/SPEC/contract 문서화
+- 제외: LLM 기반 relation extraction, Neo4j/full GraphRAG 운영 도입, Balanced 기본 경로 자동 적용, `.env` 자동 수정, 생성 snapshot의 git 커밋
+
+완료 기준:
+- `entities.jsonl`, `relations.jsonl`, `ingest_stats.json`을 지정 output directory에 생성할 수 있어야 한다.
+- 생성된 snapshot은 `graph_lite_service.load_relation_snapshot()`으로 바로 읽혀야 한다.
+- 기본 출력은 로컬 runtime artifact인 `chroma_db/graph_lite_snapshot`이고, 실제 검증은 `/tmp` 출력으로 수행한다.
+- 기존 Quality opt-in query path가 회귀하지 않아야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_graph_lite_snapshot_builder.py tests/test_graph_lite_service.py tests/api/test_query_api.py`
+- `./.venv/bin/python scripts/build_graph_lite_snapshot.py --output-dir /tmp/trunk_rag_graph_lite_snapshot_loop108`
+- `./.venv/bin/python scripts/benchmark_graph_lite_sidecar.py --snapshot-dir /tmp/trunk_rag_graph_lite_snapshot_loop108 --output-json /tmp/trunk_rag_graph_lite_snapshot_loop108/benchmark.json --output-report /tmp/trunk_rag_graph_lite_snapshot_loop108/BENCHMARK.md`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-04-29):
+- `services/graph_lite_snapshot_builder.py`와 `scripts/build_graph_lite_snapshot.py`를 추가했다.
+- 기본 출력은 `chroma_db/graph_lite_snapshot`이며, 생성 후 `DOC_RAG_GRAPH_LITE_SNAPSHOT_DIR`로 지정해 Quality opt-in 경로에서 사용할 수 있다.
+- `/tmp/trunk_rag_graph_lite_snapshot_loop108` 실측 생성 결과는 `source_docs=5`, `section_hits=21`, `entities=20`, `relations=48`이었다.
+- 생성 snapshot benchmark는 graph-candidate `3/3 hit`, fallback `0`, `avg_latency_ms=0.198`이었다.
+- 추가 기본 사용자 흐름 회귀는 `tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py -> 11 passed`로 확인했다.
+
+## 현재 Active Loop (LOOP-109)
+
+목표:
+- 운영자가 Quality 답변에서 graph-lite가 실제로 적용됐는지 UI/API 상태로 더 쉽게 확인하도록 노출 경로를 정리한다.
+
+범위:
+- 포함: `/query` debug/header 상태를 UI 또는 운영 안내에서 읽기 쉽게 보여주는 최소 노출, 문서/테스트 보강
+- 제외: Balanced 기본 graph-lite 자동 적용, graph-lite snapshot 자동 재생성, LLM 기반 relation extraction, 유료 API 호출
+
+완료 기준:
+- Quality 질문에서 graph-lite hit/fallback/disabled 상태를 사용자가 확인할 수 있어야 한다.
+- 기본 Balanced 사용자 흐름과 intro/app 레이아웃이 깨지지 않아야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)

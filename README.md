@@ -116,6 +116,7 @@
 - `services/mutation_executor_service.py`: V1.5 mutation executor selection seam/noop fallback/reindex candidate stub/upload review boundary noop
 - `services/agent_runtime_service.py`: V1.5 internal agent runtime entry draft
 - `services/graph_lite_service.py`: local JSONL relation snapshot loader/search/context append PoC
+- `services/graph_lite_snapshot_builder.py`: current seed + managed active markdown sources에서 graph-lite JSONL snapshot 생성
 - `core/actor_policy_manifest.py`: V1.5 actor policy manifest loader/normalizer
 - `core/*.py`: 설정/에러/HTTP 유틸
 - `config/actor_policy_manifest.json`: V1.5 actor policy source manifest
@@ -133,6 +134,7 @@
 - `scripts/benchmark_query_e2e.py`: `/query` E2E p95 벤치 스크립트
 - `scripts/eval_query_quality.py`: answer-level `/query` 품질 평가 스크립트
 - `scripts/compare_rag_quality.py`: 모델 후보별 RAG 품질 비교 게이트 스크립트
+- `scripts/build_graph_lite_snapshot.py`: 현재 markdown 원본에서 `chroma_db/graph_lite_snapshot`용 graph-lite snapshot 생성
 - `scripts/benchmark_graph_lite_sidecar.py`: graph-lite relation snapshot retrieval PoC 벤치 스크립트
 - `scripts/check_ops_baseline_gate.py`: core 기본 컬렉션 상태와 `generic-baseline` 회귀 게이트를 한 번에 점검하는 스크립트
 - `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩 스크립트
@@ -549,7 +551,7 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 - 개인 운영 자동 승인(선택): `DOC_RAG_AUTO_APPROVE` (`1/true/on`이면 요청 생성 즉시 승인/인덱싱)
 - 질의 타임아웃(선택): `DOC_RAG_QUERY_TIMEOUT_SECONDS` (기본 `30`, 단위 초)
 - 컨텍스트 길이 제한(선택): `DOC_RAG_MAX_CONTEXT_CHARS` (미설정 시 제한 없음)
-- graph-lite snapshot 경로(선택): `DOC_RAG_GRAPH_LITE_SNAPSHOT_DIR` (미설정 시 `docs/reports/graphrag_snapshot_2026-03-17`)
+- graph-lite snapshot 경로(선택): `DOC_RAG_GRAPH_LITE_SNAPSHOT_DIR` (미설정 시 `docs/reports/graphrag_snapshot_2026-03-17`; 운영 문서 기반 생성은 `python scripts/build_graph_lite_snapshot.py --output-dir chroma_db/graph_lite_snapshot`)
 - 청킹 모드(선택): `DOC_RAG_CHUNKING_MODE` (`char` 기본, `token` 옵션)
 - 토큰 인코딩(선택): `DOC_RAG_CHUNK_TOKEN_ENCODING` (기본 `cl100k_base`)
 - 임베딩 모델(선택): `DOC_RAG_EMBEDDING_MODEL` (기본 `BAAI/bge-m3`, 로컬 경로 가능)

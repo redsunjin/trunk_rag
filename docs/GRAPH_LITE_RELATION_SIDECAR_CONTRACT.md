@@ -20,6 +20,15 @@ The minimal local snapshot is a directory with:
 - `relations.jsonl`
 - `ingest_stats.json` optional
 
+Build command for current local seed + managed active markdown sources:
+
+```bash
+python scripts/build_graph_lite_snapshot.py --output-dir chroma_db/graph_lite_snapshot
+```
+
+The generated directory is a local runtime artifact. Use it by setting
+`DOC_RAG_GRAPH_LITE_SNAPSHOT_DIR=chroma_db/graph_lite_snapshot`.
+
 Entity record:
 
 ```json

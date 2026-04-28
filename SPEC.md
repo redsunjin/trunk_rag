@@ -161,8 +161,10 @@
 - `desktop/electron/README.md`: 데스크톱 런처 사용 가이드
 - `services/graphrag_poc_service.py`: GraphRAG snapshot/benchmark 보조 서비스
 - `services/graph_lite_service.py`: JSONL `entities/relations` 스냅샷 로딩, relation-heavy detector, 인메모리 relation search, context append helper를 제공하는 graph-lite PoC
+- `services/graph_lite_snapshot_builder.py`: 현재 seed + managed active markdown 원본에서 graph-lite JSONL snapshot을 생성하고 load validation을 수행한다
 - `scripts/eval_query_quality.py`: answer-level `/query` 품질 평가 하네스. 기본 평가 요청은 `debug=true`로 support/citation/source coverage를 함께 기록한다
 - `scripts/compare_rag_quality.py`: 모델 후보별 RAG 품질 비교 게이트. 동일 fixture/bucket/임계값으로 모델 전환 가능 여부를 판정한다
+- `scripts/build_graph_lite_snapshot.py`: 현재 markdown source records에서 graph-lite snapshot을 생성한다. 기본 출력은 git에 포함하지 않는 `chroma_db/graph_lite_snapshot`이다
 - `scripts/benchmark_graph_lite_sidecar.py`: graph-lite relation snapshot retrieval viability 벤치. LLM 호출 없이 graph-candidate fixture의 hit/fallback/latency를 측정한다
 - `scripts/check_ops_baseline_gate.py`: runtime preflight + core 기본 컬렉션 상태 + `generic-baseline` 회귀 게이트/diagnostics 점검
 - `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩

@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-107`
-- current_active_title: `Await next-track after graph-lite quality refinement`
+- current_active_id: `LOOP-109`
+- current_active_title: `Graph-lite Quality status exposure and operator handoff`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -186,7 +186,7 @@
 
 - 완료 루프: `LOOP-103 Await next-track after quality candidate comparison`
 - 완료 루프: `LOOP-104 Graph-lite relation sidecar feasibility gate`
-- 현재 active: `LOOP-107 Await next-track after graph-lite quality refinement`
+- 현재 active: `LOOP-109 Graph-lite Quality status exposure and operator handoff`
 - 선택 이유: 들어오는 문서 데이터에서 인물/기관/국가/사건 간 관계가 RAG 품질을 좌우할 수 있으므로, full GraphRAG 재개 전에 로컬 경량 관계 계층의 품질 개선 가능성을 검증한다.
 - 범위 제한: full Neo4j/GraphRAG 운영 도입이 아니라, 로컬 graph-lite 관계 스냅샷과 관계 검색 PoC로 제한한다. 기존 `/query` 기본 경로는 대체하지 않고 semantic/vector fallback을 유지한다.
 - 병행 작업: 코드/테스트 구현은 별도 브랜치 `codex/loop-104-graph-lite-sidecar`에서 진행한다. 이 정리 브랜치 `codex/loop-103-track-sync`는 TODO/NEXT/README 현행화만 담당한다.
@@ -225,12 +225,26 @@
 - 회귀 결과: `tests/test_query_service.py tests/test_graph_lite_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_compare_rag_quality.py -> 65 passed`.
 - 판단: graph-lite Quality opt-in은 graph-candidate 질문군에서 품질 개선 신호가 확인됐지만, 아직 고급 Quality 경로 전용이다. 기본 Balanced 경로로 승격하지 않는다.
 
-## 2026-04-29 Await Next Track
+## 2026-04-29 Graph-lite Snapshot Builder Closeout
 
-- 현재 active: `LOOP-107 Await next-track after graph-lite quality refinement`
+- 완료 루프: `LOOP-107 Await next-track after graph-lite quality refinement`
 - 상태: LOOP-104/105/106 graph-lite 트랙은 relation snapshot PoC, Quality opt-in 통합, graph-candidate 품질 보정까지 완료됐다.
-- 다음 선택지: 실제 사용자 문서 기반 graph-lite snapshot 생성 경로, query feedback fixture 승격, Quality 모델 후보 재비교, 또는 UI에서 Quality/graph-lite 상태 노출 정리 중 하나를 다음 track으로 선택한다.
-- 기본 제한: full GraphRAG/Neo4j 운영 도입과 Balanced 기본 graph-lite 자동 적용은 아직 하지 않는다.
+- 선택: 사용자가 계속 멈추는 문제를 지적해 대기 상태를 닫고 `LOOP-108 Graph-lite active-doc snapshot builder`를 실행했다.
+- 완료 루프: `LOOP-108 Graph-lite active-doc snapshot builder`
+- 구현 결과: `services/graph_lite_snapshot_builder.py`와 `scripts/build_graph_lite_snapshot.py`를 추가해 현재 seed + managed active markdown 원본에서 `entities.jsonl`, `relations.jsonl`, `ingest_stats.json`을 생성할 수 있게 했다.
+- 기본 출력: `chroma_db/graph_lite_snapshot`. 이 경로는 git에 포함하지 않는 local runtime artifact이며, `DOC_RAG_GRAPH_LITE_SNAPSHOT_DIR`로 지정해 Quality opt-in 경로에서 사용한다.
+- 실측: `/tmp/trunk_rag_graph_lite_snapshot_loop108` 생성 결과 `source_docs=5`, `section_hits=21`, `entities=20`, `relations=48`.
+- benchmark: 생성 snapshot 기준 graph-candidate `3/3 hit`, fallback `0`, `avg_latency_ms=0.198`.
+- 회귀: `tests/test_graph_lite_snapshot_builder.py tests/test_graph_lite_service.py tests/api/test_query_api.py -> 31 passed`.
+- 추가 회귀: `tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py -> 11 passed`.
+
+## 2026-04-29 Graph-lite Status Exposure Target
+
+- 현재 active: `LOOP-109 Graph-lite Quality status exposure and operator handoff`
+- 목표: 운영자가 Quality 답변에서 graph-lite가 실제로 적용됐는지 UI/API 상태로 더 쉽게 확인하도록 노출 경로를 정리한다.
+- 범위: `/query` debug/header 상태를 UI 또는 운영 안내에서 읽기 쉽게 보여주는 최소 노출, 문서/테스트 보강.
+- 제외: Balanced 기본 graph-lite 자동 적용, graph-lite snapshot 자동 재생성, LLM 기반 relation extraction, 유료 API 호출.
+- 완료 기준: Quality 질문에서 graph-lite hit/fallback/disabled 상태를 사용자가 확인할 수 있고, 기본 Balanced 사용자 흐름과 intro/app 레이아웃이 깨지지 않아야 한다.
 
 ## 0. 2026-03-13 우선순위 재정렬
 
