@@ -152,6 +152,9 @@ def build_query_payload(
     llm_model: str | None,
     llm_base_url: str | None,
     llm_api_key: str | None,
+    query_timeout_seconds: int | None = None,
+    quality_mode: str | None = None,
+    quality_stage: str | None = None,
     debug: bool = True,
 ) -> tuple[dict[str, object], list[str], str]:
     payload, expected_route_keys, request_mode = prepare_query_request(case)
@@ -159,6 +162,12 @@ def build_query_payload(
     payload["llm_model"] = llm_model
     payload["llm_base_url"] = llm_base_url
     payload["llm_api_key"] = llm_api_key
+    if query_timeout_seconds is not None:
+        payload["timeout_seconds"] = query_timeout_seconds
+    if quality_mode:
+        payload["quality_mode"] = quality_mode
+    if quality_stage:
+        payload["quality_stage"] = quality_stage
     payload["debug"] = debug
     query_profile = str(case.get("query_profile", "")).strip()
     if query_profile:
@@ -470,6 +479,9 @@ def build_markdown_report(payload: dict[str, object]) -> str:
         f"- base_url: `{payload['base_url']}`",
         f"- llm_provider: `{payload['llm_provider']}`",
         f"- llm_model: `{payload['llm_model'] or health.get('default_llm_model', '-')}`",
+        f"- query_timeout_seconds: `{payload.get('query_timeout_seconds') or '-'}`",
+        f"- quality_mode: `{payload.get('quality_mode') or '-'}`",
+        f"- quality_stage: `{payload.get('quality_stage') or '-'}`",
         "",
         "## Health Snapshot",
         f"- vectors: `{health.get('vectors', 0)}`",
@@ -568,6 +580,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--llm-model", default=None)
     parser.add_argument("--llm-base-url", default=None)
     parser.add_argument("--llm-api-key", default=None)
+    parser.add_argument("--query-timeout-seconds", type=int, default=None)
+    parser.add_argument("--quality-mode", choices=["balanced", "quality"], default=None)
+    parser.add_argument("--quality-stage", default=None)
     parser.add_argument("--no-debug", action="store_true")
     parser.add_argument("--graph-collection", default=DEFAULT_COLLECTION_KEY)
     parser.add_argument("--graph-max-hops", type=int, default=2)
@@ -589,6 +604,9 @@ def run_evaluation(
     llm_model: str | None = None,
     llm_base_url: str | None = None,
     llm_api_key: str | None = None,
+    query_timeout_seconds: int | None = None,
+    quality_mode: str | None = None,
+    quality_stage: str | None = None,
     debug: bool = True,
     graph_collection: str = DEFAULT_COLLECTION_KEY,
     graph_max_hops: int = 2,
@@ -623,6 +641,9 @@ def run_evaluation(
                 llm_model=llm_model,
                 llm_base_url=llm_base_url,
                 llm_api_key=llm_api_key,
+                query_timeout_seconds=query_timeout_seconds,
+                quality_mode=quality_mode,
+                quality_stage=quality_stage,
                 debug=debug,
             )
             request_id = f"answer-eval-{index:03d}-{case['id']}"
@@ -663,6 +684,9 @@ def run_evaluation(
         "base_url": base_url,
         "llm_provider": llm_provider,
         "llm_model": llm_model,
+        "query_timeout_seconds": query_timeout_seconds,
+        "quality_mode": quality_mode,
+        "quality_stage": quality_stage,
         "debug": debug,
         "health": health,
         "collections": collections_payload,
@@ -694,6 +718,9 @@ def main() -> None:
         llm_model=args.llm_model,
         llm_base_url=args.llm_base_url,
         llm_api_key=args.llm_api_key,
+        query_timeout_seconds=args.query_timeout_seconds,
+        quality_mode=args.quality_mode,
+        quality_stage=args.quality_stage,
         debug=not args.no_debug,
         graph_collection=args.graph_collection,
         graph_max_hops=args.graph_max_hops,

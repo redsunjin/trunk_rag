@@ -187,6 +187,9 @@ def build_report(
     eval_file: Path,
     base_url: str,
     timeout_seconds: int,
+    query_timeout_seconds: int | None,
+    quality_mode: str | None,
+    quality_stage: str | None,
 ) -> dict[str, object]:
     models: list[dict[str, object]] = []
     for payload in model_payloads:
@@ -248,6 +251,9 @@ def build_report(
         "eval_file": str(eval_file),
         "base_url": base_url,
         "timeout_seconds": timeout_seconds,
+        "query_timeout_seconds": query_timeout_seconds,
+        "quality_mode": quality_mode,
+        "quality_stage": quality_stage,
         "models": models,
     }
 
@@ -264,6 +270,10 @@ def build_markdown_report(report: dict[str, object]) -> str:
         f"- selected_candidate: `{report.get('selected_candidate') or '-'}`",
         f"- eval_file: `{report['eval_file']}`",
         f"- base_url: `{report['base_url']}`",
+        f"- http_timeout_seconds: `{report['timeout_seconds']}`",
+        f"- query_timeout_seconds: `{report.get('query_timeout_seconds') or '-'}`",
+        f"- quality_mode: `{report.get('quality_mode') or '-'}`",
+        f"- quality_stage: `{report.get('quality_stage') or '-'}`",
         f"- selected_buckets: `{', '.join(report['selected_buckets'])}`",
         f"- required_buckets: `{', '.join(report['required_buckets'])}`",
         f"- min_pass_rate: `{thresholds['min_pass_rate']}`",
@@ -348,6 +358,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--llm-provider", default="ollama")
     parser.add_argument("--llm-base-url", default=None)
     parser.add_argument("--llm-api-key", default=None)
+    parser.add_argument("--query-timeout-seconds", type=int, default=None)
+    parser.add_argument("--quality-mode", choices=["balanced", "quality"], default=None)
+    parser.add_argument("--quality-stage", default=None)
     parser.add_argument("--min-pass-rate", type=float, default=DEFAULT_MIN_PASS_RATE)
     parser.add_argument("--min-avg-weighted-score", type=float, default=DEFAULT_MIN_AVG_WEIGHTED_SCORE)
     parser.add_argument("--max-p95-ms", type=float, default=DEFAULT_MAX_P95_MS)
@@ -378,6 +391,9 @@ def main() -> int:
                 llm_model=spec.model,
                 llm_base_url=args.llm_base_url,
                 llm_api_key=args.llm_api_key,
+                query_timeout_seconds=args.query_timeout_seconds,
+                quality_mode=args.quality_mode,
+                quality_stage=args.quality_stage,
                 debug=True,
             )
         )
@@ -392,6 +408,9 @@ def main() -> int:
         eval_file=args.eval_file,
         base_url=args.base_url,
         timeout_seconds=args.timeout_seconds,
+        query_timeout_seconds=args.query_timeout_seconds,
+        quality_mode=args.quality_mode,
+        quality_stage=args.quality_stage,
     )
     write_outputs(report, output_json=args.output_json, output_report=args.output_report)
     print(json.dumps({key: report[key] for key in ("outcome", "recommendation", "selected_candidate")}, ensure_ascii=False, indent=2))

@@ -90,9 +90,15 @@ def test_build_query_payload_includes_optional_query_profile():
         llm_model="llama3.1:8b",
         llm_base_url="http://localhost:11434",
         llm_api_key=None,
+        query_timeout_seconds=120,
+        quality_mode="quality",
+        quality_stage="quality",
     )
 
     assert payload["query_profile"] == "sample_pack"
+    assert payload["timeout_seconds"] == 120
+    assert payload["quality_mode"] == "quality"
+    assert payload["quality_stage"] == "quality"
     assert payload["debug"] is True
     assert expected_route_keys == ["fr"]
     assert request_mode == "explicit_single"

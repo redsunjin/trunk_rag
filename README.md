@@ -321,6 +321,27 @@ cd <repo>
 - `generic-baseline`만 통과해도 본체 기본 질문은 가능하지만, 모델 기본값 전환은 `sample-pack-baseline` 또는 실제 사용자 문서 질문셋까지 함께 통과한 뒤 결정합니다.
 - 비교 게이트가 `blocked`이면 종료 코드 `1`을 반환합니다. 이는 모델 전환 보류 신호이며, 리포트 생성 실패와 구분해서 봅니다.
 - 2026-04-28 `gemma4:e2b` 비교 게이트는 `generic-baseline 3/3 pass`였지만 `sample-pack-baseline GQ-05` 실패로 전체 `blocked`였습니다.
+- Quality 모드 후보 비교는 `/query` 요청 자체의 `timeout_seconds`와 `quality_mode`를 함께 지정해 실행합니다.
+
+```powershell
+.venv\Scripts\python.exe scripts\compare_rag_quality.py `
+  --base-url http://127.0.0.1:8010 `
+  --timeout-seconds 180 `
+  --query-timeout-seconds 120 `
+  --quality-mode quality `
+  --quality-stage quality `
+  --bucket generic-baseline `
+  --bucket sample-pack-baseline `
+  --model gemma4:e2b `
+  --model gemma4:e4b `
+  --model qwen3.5:9b-nvfp4 `
+  --llm-base-url http://localhost:11434 `
+  --output-json docs\reports\rag_quality_model_comparison_2026-04-28_quality_candidates.json `
+  --output-report docs\reports\RAG_QUALITY_MODEL_COMPARISON_2026-04-28_QUALITY_CANDIDATES.md
+```
+
+- 2026-04-28 Quality 후보 비교에서는 `qwen3.5:9b-nvfp4`가 가장 강한 후보였지만 전체 게이트는 `blocked`였습니다.
+- `qwen3.5:9b-nvfp4`는 `5/6 pass`, `avg_weighted_score=0.9364`, `p95_latency_ms=6729.217`였고, 실패는 `GQ-05`의 부분근거/미확인 표현 판정입니다.
 
 답변 피드백은 바로 정식 평가 fixture로 승격하지 않고 후보 큐로 먼저 내보냅니다.
 

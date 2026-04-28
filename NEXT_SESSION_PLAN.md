@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-101`
-- current_active_title: `Await next-track after feedback fixture candidate queue`
+- current_active_id: `LOOP-103`
+- current_active_title: `Await next-track after quality candidate comparison`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -166,6 +166,21 @@
 - 현재 실측: 로컬 `chroma_db/query_feedback.jsonl`이 아직 없어 `docs/reports/QUERY_FEEDBACK_FIXTURE_CANDIDATES_2026-04-28.md`는 `feedback_records=0`, `candidates=0`으로 생성됐다.
 - 검증: `./.venv/bin/python -m pytest -q tests/test_export_feedback_fixture_candidates.py -> 6 passed`; `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/export_feedback_fixture_candidates.py -> pass`; `./.venv/bin/python scripts/export_feedback_fixture_candidates.py --output-jsonl docs/reports/query_feedback_fixture_candidates_2026-04-28.jsonl --output-report docs/reports/QUERY_FEEDBACK_FIXTURE_CANDIDATES_2026-04-28.md -> records=0 candidates=0`; `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`.
 - 다음 추천: `Quality` 모드의 기본 후보를 `gemma4:e4b`, 외부 OpenAI 호환 모델, 또는 LM Studio 후보로 비교하거나, 실제 피드백이 쌓인 뒤 후보 중 1-2개를 정식 fixture로 승격한다.
+
+## 2026-04-28 Quality Candidate Comparison Snapshot
+
+- 완료 루프: `LOOP-102 Quality mode model candidate comparison`
+- main 반영: `LOOP-100` 브랜치는 `main`에 fast-forward merge 후 `origin/main`까지 푸시했다.
+- 코드 반영: `scripts/eval_query_quality.py`와 `scripts/compare_rag_quality.py`에 `/query` payload의 `timeout_seconds`, `quality_mode`, `quality_stage`를 전달하는 옵션을 추가했다. 기존 `--timeout-seconds`는 HTTP 대기 시간이고, 새 `--query-timeout-seconds`는 실제 LLM 생성 제한이다.
+- 실측 조건: `/query` `quality_mode=quality`, `quality_stage=quality`, `query_timeout_seconds=120`, HTTP timeout `180`, buckets=`generic-baseline,sample-pack-baseline`.
+- 비교 후보: `gemma4:e2b`, `gemma4:e4b`, `qwen3.5:9b-nvfp4`.
+- 결과: `docs/reports/RAG_QUALITY_MODEL_COMPARISON_2026-04-28_QUALITY_CANDIDATES.md` 기준 전체 outcome은 `blocked`, strongest measured candidate는 `ollama:qwen3.5:9b-nvfp4`.
+- qwen 결과: `5/6 pass`, `avg_weighted_score=0.9364`, `p95_latency_ms=6729.217`, `support_pass_rate=1.0`. `GQ-05`는 required hits `4/4`, score `0.925`였지만 `제공된 문서에서 확인되지 않습니다.` 표현 때문에 pass=false였다.
+- gemma4:e2b 결과: `5/6 pass`, `avg_weighted_score=0.7962`, `p95_latency_ms=4600.037`; `GQ-05` required hits `0/4`.
+- gemma4:e4b 결과: `4/6 pass`, `avg_weighted_score=0.6725`, `p95_latency_ms=7437.782`; `GQ-03`, `GQ-05` 실패.
+- 판단: 모델 추가 교체보다 `GQ-05`의 부분근거/미확인 표현 판정과 fixture 기대치를 먼저 보정해야 한다. qwen은 Quality 후보로 가장 유력하지만 전체 게이트 통과 전 UI 기본값으로 고정하지 않는다.
+- 검증: `./.venv/bin/python -m pytest -q tests/test_eval_query_quality.py tests/test_compare_rag_quality.py -> 11 passed`; `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/eval_query_quality.py scripts/compare_rag_quality.py -> pass`; compare command expected `blocked`; `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`.
+- 다음 추천: `GQ-05`를 부분근거 답변이 가능한 평가 항목으로 분리하거나, 문서 보강 후 qwen Quality 후보를 다시 비교한다.
 
 ## 0. 2026-03-13 우선순위 재정렬
 

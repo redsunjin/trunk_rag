@@ -113,7 +113,12 @@ def test_build_report_selects_strongest_candidate_but_blocks_without_gate_ready(
         eval_file=Path("evals/answer_level_eval_fixtures.jsonl"),
         base_url="http://127.0.0.1:8000",
         timeout_seconds=45,
+        query_timeout_seconds=120,
+        quality_mode="quality",
+        quality_stage="quality",
     )
 
     assert report["outcome"] == "blocked"
     assert report["selected_candidate"] == "ollama:gemma4:e2b"
+    assert report["query_timeout_seconds"] == 120
+    assert report["quality_mode"] == "quality"

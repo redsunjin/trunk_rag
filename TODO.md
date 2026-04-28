@@ -189,7 +189,9 @@
 | LOOP-098 | done | Semantic/balanced/quality query modes and feedback loop | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_feedback_service.py tests/e2e/test_web_flow_playwright.py` + `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile api/schemas.py api/routes_query.py services/feedback_service.py app_api.py` + `node --check web/js/app_page.js` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-099 | done | Await next-track after query mode/feedback loop | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-100 | done | Query feedback fixture candidate export queue | `./.venv/bin/python -m pytest -q tests/test_export_feedback_fixture_candidates.py` + `./.venv/bin/python scripts/export_feedback_fixture_candidates.py --output-jsonl docs/reports/query_feedback_fixture_candidates_2026-04-28.jsonl --output-report docs/reports/QUERY_FEEDBACK_FIXTURE_CANDIDATES_2026-04-28.md` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-101 | active | Await next-track after feedback fixture candidate queue | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-101 | done | Await next-track after feedback fixture candidate queue | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-102 | done | Quality mode model candidate comparison | `./.venv/bin/python -m pytest -q tests/test_eval_query_quality.py tests/test_compare_rag_quality.py` + `./.venv/bin/python scripts/compare_rag_quality.py --base-url http://127.0.0.1:8010 --timeout-seconds 180 --query-timeout-seconds 120 --quality-mode quality --quality-stage quality --bucket generic-baseline --bucket sample-pack-baseline --model gemma4:e2b --model gemma4:e4b --model qwen3.5:9b-nvfp4 --llm-base-url http://localhost:11434 --output-json docs/reports/rag_quality_model_comparison_2026-04-28_quality_candidates.json --output-report docs/reports/RAG_QUALITY_MODEL_COMPARISON_2026-04-28_QUALITY_CANDIDATES.md` expected `blocked` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-103 | active | Await next-track after quality candidate comparison | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -2857,7 +2859,7 @@ closeout 메모 (2026-04-28):
 - 후보는 `status=needs_fixture_review`, `priority`, `query_profile`, `collection_keys`, `observed_runtime`, `suggested_fixture`를 포함한다.
 - 현재 로컬에는 `chroma_db/query_feedback.jsonl`이 없어 `docs/reports/QUERY_FEEDBACK_FIXTURE_CANDIDATES_2026-04-28.md`는 `records=0`, `candidates=0` 상태로 생성됐다.
 
-## 현재 Active Loop (LOOP-101)
+## 완료 Loop (LOOP-101)
 
 목표:
 - feedback fixture candidate queue 도입 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
@@ -2875,6 +2877,56 @@ closeout 메모 (2026-04-28):
 
 진행 메모 (2026-04-28):
 - `LOOP-100`에서 피드백 JSONL을 fixture 후보 큐로 내보내는 스크립트와 빈 후보 리포트를 추가했다.
+- 사용자가 다음 작업 진행을 요청해 `Quality mode model candidate comparison`으로 다음 트랙을 확정했다.
+
+closeout 메모 (2026-04-28):
+- `LOOP-100` 브랜치를 `main`에 fast-forward merge하고 `origin/main`에 푸시했다.
+- 다음 작업 트랙을 `LOOP-102 Quality mode model candidate comparison`으로 확정했다.
+
+## 완료 Loop (LOOP-102)
+
+목표:
+- `Quality` 모드에서 사용할 고급 모델 후보를 동일 fixture와 120초 요청 timeout 기준으로 비교한다.
+
+범위:
+- 포함: `eval_query_quality.py`/`compare_rag_quality.py`에 `/query` 요청 `timeout_seconds`, `quality_mode`, `quality_stage` 전달 옵션 추가, e2b/e4b/qwen 후보 비교 리포트 생성, 테스트/문서 현행화
+- 제외: UI 기본 Quality 모델 자동 변경, 외부 유료 모델 호출, LLM judge 도입, fixture 자동 보정, GraphRAG 재개
+
+완료 기준:
+- 비교 스크립트가 HTTP timeout과 별개로 `/query` payload의 `timeout_seconds`를 설정할 수 있어야 한다.
+- Quality 후보 비교 리포트가 `gemma4:e2b`, `gemma4:e4b`, `qwen3.5:9b-nvfp4`를 같은 조건에서 비교해야 한다.
+- 후보가 전체 게이트를 통과하지 못하면 blocker와 다음 보정 방향을 명시해야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_eval_query_quality.py tests/test_compare_rag_quality.py`
+- `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/eval_query_quality.py scripts/compare_rag_quality.py`
+- `./.venv/bin/python scripts/compare_rag_quality.py --base-url http://127.0.0.1:8010 --timeout-seconds 180 --query-timeout-seconds 120 --quality-mode quality --quality-stage quality --bucket generic-baseline --bucket sample-pack-baseline --model gemma4:e2b --model gemma4:e4b --model qwen3.5:9b-nvfp4 --llm-base-url http://localhost:11434 --output-json docs/reports/rag_quality_model_comparison_2026-04-28_quality_candidates.json --output-report docs/reports/RAG_QUALITY_MODEL_COMPARISON_2026-04-28_QUALITY_CANDIDATES.md` -> expected `blocked`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-04-28):
+- `qwen3.5:9b-nvfp4`가 `selected_candidate`로 가장 강했다. 결과는 `5/6 pass`, `avg_weighted_score=0.9364`, `p95_latency_ms=6729.217`, `support_pass_rate=1.0`이었다.
+- `gemma4:e2b`는 `5/6 pass`, `avg_weighted_score=0.7962`, `p95_latency_ms=4600.037`였고, `GQ-05`가 `제공된 문서에서 확인되지 않습니다.`로 실패했다.
+- `gemma4:e4b`는 `4/6 pass`, `avg_weighted_score=0.6725`, `p95_latency_ms=7437.782`로 quality 후보 기준에서도 e2b/qwen보다 약했다.
+- 전체 게이트는 `qwen3.5:9b-nvfp4`도 `GQ-05`에서 미확인 표현이 포함되어 `pass_rate=1.0` 기준을 만족하지 못해 `blocked`였다. 다만 `GQ-05`의 required hits는 `4/4`였고 점수는 `0.925`라서 다음 보정은 모델 교체보다 부분근거/미확인 표현 판정과 fixture 기대치 조정이 우선이다.
+
+## 현재 Active Loop (LOOP-103)
+
+목표:
+- Quality 후보 비교 이후 다음 MVP/V1/V1.5 작업 트랙을 사용자의 명시 지시에 따라 선택한다.
+
+범위:
+- 포함: 다음 track 선택, 필요 시 새 작업 브랜치 생성, TODO/NEXT active 재정렬
+- 제외: 명시 지시 없는 UI 기본 Quality 모델 변경, LLM judge 도입, 사용자 문서 fixture 대량 작성, public blocker 구현, GraphRAG 재개
+
+완료 기준:
+- 사용자가 `GQ-05` 부분근거/fixture 판정 보정, qwen Quality 후보 승격, 추가 모델 비교, 피드백 후보의 정식 fixture 승격, PR/merge 후속, 또는 대기 유지를 명시해야 한다.
+- 새 track을 진행한다면 TODO/NEXT active가 해당 track으로 재정렬되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+진행 메모 (2026-04-28):
+- `LOOP-102`에서 Quality 후보 비교 결과 `qwen3.5:9b-nvfp4`가 가장 강했으나 전체 게이트는 `GQ-05` 판정으로 blocked였다.
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 
