@@ -133,6 +133,76 @@ def test_query_debug_response_includes_meta(client, monkeypatch):
     assert body["meta"]["sources"][0]["collection_key"] in {"fr", "ge"}
 
 
+def test_query_guard_replaces_false_not_found_when_supported_context_exists(client, monkeypatch):
+    class DummyRetriever:
+        def invoke(self, question):
+            from langchain_core.documents import Document
+
+            return [
+                Document(
+                    page_content=(
+                        "| status | meaning | operator action |\n"
+                        "| --- | --- | --- |\n"
+                        "| `hit` | Quality mode found relation context and appended it to RAG context. | "
+                        "Treat transport as healthy; evaluate answer quality separately. |\n"
+                        "| `not-reported` | Server response did not include graph-lite metadata. | "
+                        "Confirm server was started with current code and debug metadata. |"
+                    ),
+                    metadata={"source": "BROWSER_COMPANION_OPERATOR_GUIDE.md", "h2": "Graph-Lite Status Meanings"},
+                )
+            ]
+
+    class DummyDB:
+        def as_retriever(self, **kwargs):
+            return DummyRetriever()
+
+    monkeypatch.setattr(routes_query.index_service, "get_db", lambda key="project_docs": DummyDB())
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count", lambda _db: 1)
+    monkeypatch.setattr(routes_query.index_service, "get_vector_count_snapshot", lambda key="project_docs": 1)
+    monkeypatch.setattr(
+        routes_query.index_service,
+        "get_embedding_fingerprint_status",
+        lambda keys=None: {"status": "ready", "message": "ok"},
+    )
+    monkeypatch.setattr(
+        routes_query,
+        "resolve_llm_config",
+        lambda **kwargs: ("ollama", "qwen3:4b", None, "http://localhost:11434"),
+    )
+    monkeypatch.setattr(routes_query, "create_chat_llm", lambda **kwargs: object())
+
+    def _build_query_chain(context_builder, llm):
+        return context_builder
+
+    def _invoke_query_chain(chain, question, timeout_seconds=15, trace=None):
+        chain(question)
+        if trace is not None:
+            trace["invoke_ms"] = 100
+            trace["status"] = "ok"
+        return "제공된 문서에서 확인되지 않습니다."
+
+    monkeypatch.setattr(routes_query.query_service, "build_query_chain", _build_query_chain)
+    monkeypatch.setattr(routes_query.query_service, "invoke_query_chain", _invoke_query_chain)
+
+    response = client.post(
+        "/query",
+        json={
+            "query": "Browser companion에서 graph-lite=hit와 graph-lite=not-reported는 무엇이 다른가?",
+            "collection": "project_docs",
+            "debug": True,
+        },
+        headers={"X-Request-ID": "req-answer-guard-1"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert "제공된 문서에서 확인되지 않습니다" not in body["answer"]
+    assert "graph-lite=hit" in body["answer"]
+    assert "graph-lite=not-reported" in body["answer"]
+    assert body["meta"]["support_level"] in {"supported", "limited"}
+    assert body["meta"]["invoke"]["answer_guard"]["reason"] == "supported_context_false_not_found"
+
+
 def test_query_quality_mode_appends_graph_lite_context(client, monkeypatch):
     class DummyDB:
         def as_retriever(self, **kwargs):

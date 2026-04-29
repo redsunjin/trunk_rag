@@ -338,6 +338,7 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
     resolved_query_profile = query_service.QUERY_PROFILE_GENERIC
     quality_stage = req.quality_stage or req.quality_mode
     graph_lite_result: dict[str, object] | None = None
+    last_context_text = ""
 
     try:
         stage_timings["quality_mode"] = req.quality_mode
@@ -495,7 +496,7 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
             ) from exc
 
         def _context_builder(question: str) -> str:
-            nonlocal graph_lite_result
+            nonlocal graph_lite_result, last_context_text
             context = query_service.build_collection_context(
                 question=question,
                 collection_keys=active_collection_keys,
@@ -511,6 +512,7 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
                     },
                     enabled=False,
                 )
+                last_context_text = context
                 return context
 
             graph_started_at = time.perf_counter()
@@ -552,6 +554,7 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
             )
             if context_added:
                 context_trace["context_chars"] = len(appended_context)
+            last_context_text = appended_context
             return appended_context
 
         chain_started_at = time.perf_counter()
@@ -602,6 +605,29 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
 
         if graph_lite_result is not None:
             response.headers["X-RAG-Graph-Lite"] = str(graph_lite_result.get("status", "not_run"))
+        source_items = [
+            item
+            for item in context_trace.get("sources", [])
+            if isinstance(item, dict)
+        ]
+        citations = _build_citation_labels(source_items)
+        support_level, support_reason = _classify_support(
+            context_trace=context_trace,
+            invoke_trace=invoke_trace,
+            citations=citations,
+        )
+        if support_level in {"supported", "limited"} and query_service.is_insufficient_answer(answer):
+            fallback_answer = query_service.build_supported_context_fallback_answer(
+                req.query,
+                last_context_text,
+            )
+            if fallback_answer:
+                answer = fallback_answer
+                invoke_trace["answer_guard"] = {
+                    "applied": True,
+                    "reason": "supported_context_false_not_found",
+                    "strategy": "extractive_context_lines",
+                }
         elapsed_ms = int((time.perf_counter() - started_at) * 1000)
         logger.info(
             "query request_id=%s code=OK provider=%s model=%s collection=%s route=%s elapsed_ms=%d timings=%s",
@@ -620,17 +646,6 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
         )
         response_meta = None
         if req.debug:
-            source_items = [
-                item
-                for item in context_trace.get("sources", [])
-                if isinstance(item, dict)
-            ]
-            citations = _build_citation_labels(source_items)
-            support_level, support_reason = _classify_support(
-                context_trace=context_trace,
-                invoke_trace=invoke_trace,
-                citations=citations,
-            )
             response_meta = QueryMeta(
                 request_id=request_id,
                 query_profile=resolved_query_profile,

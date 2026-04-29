@@ -1,0 +1,338 @@
+{
+  "generated_at": "2026-04-29T22:10:40+00:00",
+  "backend": "vector_query",
+  "eval_file": "evals/user_doc_answer_level_eval_fixtures.jsonl",
+  "base_url": "http://127.0.0.1:8015",
+  "llm_provider": "ollama",
+  "llm_model": "gemma4:e4b",
+  "query_timeout_seconds": 60,
+  "quality_mode": null,
+  "quality_stage": null,
+  "debug": true,
+  "health": {
+    "status": "ok",
+    "collection_key": "all",
+    "collection": "w2_007_header_rag",
+    "default_runtime_collection_keys": [
+      "all"
+    ],
+    "compatibility_bundle_key": "sample_pack",
+    "compatibility_bundle_label": "sample-pack 호환 번들",
+    "compatibility_bundle_collection_keys": [
+      "eu",
+      "fr",
+      "ge",
+      "it",
+      "uk"
+    ],
+    "compatibility_bundle_optional": true,
+    "seed_corpus_key": "sample_pack_bootstrap",
+    "seed_corpus_label": "sample-pack demo/bootstrap corpus",
+    "seed_corpus_role": "demo_bootstrap",
+    "seed_corpus_dataset": "sample-eu-science-history",
+    "seed_corpus_description": "First-run demo corpus used to populate the core all collection and the optional sample-pack compatibility collections. It is bundled example data, not product-domain data.",
+    "persist_dir": "/Users/Agent/ps-workspace/trunk_rag/chroma_db",
+    "vectors": 37,
+    "auto_approve": false,
+    "pending_requests": 1,
+    "chunking_mode": "char",
+    "embedding_model": "BAAI/bge-m3",
+    "query_timeout_seconds": 30,
+    "max_context_chars": 1500,
+    "default_llm_provider": "ollama",
+    "default_llm_model": "gemma4:e4b",
+    "default_llm_base_url": "http://localhost:11434",
+    "runtime_profile_status": "verified",
+    "runtime_profile_scope": "local",
+    "runtime_profile_message": "현재 Ollama 런타임 프로파일은 gemma4 기본 로컬 운영 경로로 검증됐습니다.",
+    "runtime_profile_recommendation": "`DOC_RAG_QUERY_TIMEOUT_SECONDS=30` 이상을 유지하세요.",
+    "runtime_query_budget_profile": "verified_local_single",
+    "runtime_query_budget_summary": "profile=verified_local_single | k=3 | fetch_k=10 | max_docs=3 | context=1500 | generation=standard | max_output_tokens=192",
+    "embedding_fingerprint_status": "ready",
+    "embedding_fingerprint_message": "현재 임베딩 모델과 저장된 컬렉션 fingerprint가 일치합니다.",
+    "embedding_fingerprint_details": [
+      {
+        "collection_key": "all",
+        "vectors": 37,
+        "status": "ready",
+        "stored_embedding_model": "BAAI/bge-m3",
+        "stored_embedding_fingerprint": "d790e737453c38959ca181c43431c25924a5340160b90e5884404377ef08dd49"
+      }
+    ],
+    "compatibility_bundle_embedding_fingerprint_status": "ready",
+    "compatibility_bundle_embedding_fingerprint_message": "현재 임베딩 모델과 저장된 컬렉션 fingerprint가 일치합니다.",
+    "compatibility_bundle_embedding_fingerprint_details": [
+      {
+        "collection_key": "eu",
+        "vectors": 9,
+        "status": "ready",
+        "stored_embedding_model": "BAAI/bge-m3",
+        "stored_embedding_fingerprint": "d790e737453c38959ca181c43431c25924a5340160b90e5884404377ef08dd49"
+      },
+      {
+        "collection_key": "fr",
+        "vectors": 7,
+        "status": "ready",
+        "stored_embedding_model": "BAAI/bge-m3",
+        "stored_embedding_fingerprint": "d790e737453c38959ca181c43431c25924a5340160b90e5884404377ef08dd49"
+      },
+      {
+        "collection_key": "ge",
+        "vectors": 7,
+        "status": "ready",
+        "stored_embedding_model": "BAAI/bge-m3",
+        "stored_embedding_fingerprint": "d790e737453c38959ca181c43431c25924a5340160b90e5884404377ef08dd49"
+      },
+      {
+        "collection_key": "it",
+        "vectors": 7,
+        "status": "ready",
+        "stored_embedding_model": "BAAI/bge-m3",
+        "stored_embedding_fingerprint": "d790e737453c38959ca181c43431c25924a5340160b90e5884404377ef08dd49"
+      },
+      {
+        "collection_key": "uk",
+        "vectors": 7,
+        "status": "ready",
+        "stored_embedding_model": "BAAI/bge-m3",
+        "stored_embedding_fingerprint": "d790e737453c38959ca181c43431c25924a5340160b90e5884404377ef08dd49"
+      }
+    ],
+    "release_web_status": "ready",
+    "release_web_headline": "기본 웹 MVP 경로로 바로 사용할 수 있습니다.",
+    "release_web_steps": [
+      "기본 시작 경로는 `run_doc_rag.bat` 하나로 유지합니다.",
+      "Ollama를 `http://localhost:11434`에서 실행하고 기본 모델 `gemma4:e4b`을 준비하세요.",
+      "오프라인 환경이면 `DOC_RAG_EMBEDDING_MODEL`에 로컬 임베딩 경로를 지정하거나 HuggingFace cache를 준비하세요.",
+      "`DOC_RAG_QUERY_TIMEOUT_SECONDS=30` 이상을 유지하세요.",
+      "`/intro -> /app` 경로로 진입해 바로 질의할 수 있습니다.",
+      "실패 시 `/intro`의 상태 메시지와 request_id를 기준으로 원인을 확인하세요."
+    ]
+  },
+  "collections": {
+    "default_collection_key": "all",
+    "auto_approve": false,
+    "collections": [
+      {
+        "key": "all",
+        "name": "w2_007_header_rag",
+        "label": "전체 (기본)",
+        "file_names": [
+          "eu_summry.md",
+          "fr.md",
+          "ge.md",
+          "it.md",
+          "uk.md"
+        ],
+        "default_country": "all",
+        "default_doc_type": "summary",
+        "vectors": 37,
+        "soft_cap": 30000,
+        "hard_cap": 50000,
+        "soft_usage_ratio": 0.0012,
+        "hard_usage_ratio": 0.0007,
+        "soft_exceeded": false,
+        "hard_exceeded": false
+      },
+      {
+        "key": "eu",
+        "name": "rag_science_history_eu",
+        "label": "유럽 요약",
+        "file_names": [
+          "eu_summry.md"
+        ],
+        "default_country": "all",
+        "default_doc_type": "summary",
+        "vectors": 9,
+        "soft_cap": 30000,
+        "hard_cap": 50000,
+        "soft_usage_ratio": 0.0003,
+        "hard_usage_ratio": 0.0002,
+        "soft_exceeded": false,
+        "hard_exceeded": false
+      },
+      {
+        "key": "fr",
+        "name": "rag_science_history_fr",
+        "label": "프랑스",
+        "file_names": [
+          "fr.md"
+        ],
+        "default_country": "france",
+        "default_doc_type": "country",
+        "vectors": 7,
+        "soft_cap": 30000,
+        "hard_cap": 50000,
+        "soft_usage_ratio": 0.0002,
+        "hard_usage_ratio": 0.0001,
+        "soft_exceeded": false,
+        "hard_exceeded": false
+      },
+      {
+        "key": "ge",
+        "name": "rag_science_history_ge",
+        "label": "독일",
+        "file_names": [
+          "ge.md"
+        ],
+        "default_country": "germany",
+        "default_doc_type": "country",
+        "vectors": 7,
+        "soft_cap": 30000,
+        "hard_cap": 50000,
+        "soft_usage_ratio": 0.0002,
+        "hard_usage_ratio": 0.0001,
+        "soft_exceeded": false,
+        "hard_exceeded": false
+      },
+      {
+        "key": "it",
+        "name": "rag_science_history_it",
+        "label": "이탈리아",
+        "file_names": [
+          "it.md"
+        ],
+        "default_country": "italy",
+        "default_doc_type": "country",
+        "vectors": 7,
+        "soft_cap": 30000,
+        "hard_cap": 50000,
+        "soft_usage_ratio": 0.0002,
+        "hard_usage_ratio": 0.0001,
+        "soft_exceeded": false,
+        "hard_exceeded": false
+      },
+      {
+        "key": "uk",
+        "name": "rag_science_history_uk",
+        "label": "영국",
+        "file_names": [
+          "uk.md"
+        ],
+        "default_country": "uk",
+        "default_doc_type": "country",
+        "vectors": 7,
+        "soft_cap": 30000,
+        "hard_cap": 50000,
+        "soft_usage_ratio": 0.0002,
+        "hard_usage_ratio": 0.0001,
+        "soft_exceeded": false,
+        "hard_exceeded": false
+      },
+      {
+        "key": "project_docs",
+        "name": "rag_project_docs",
+        "label": "프로젝트 운영 문서",
+        "file_names": [],
+        "default_country": "all",
+        "default_doc_type": "operator_guide",
+        "vectors": 10,
+        "soft_cap": 30000,
+        "hard_cap": 50000,
+        "soft_usage_ratio": 0.0003,
+        "hard_usage_ratio": 0.0002,
+        "soft_exceeded": false,
+        "hard_exceeded": false
+      }
+    ]
+  },
+  "summary": {
+    "cases": 1,
+    "passed": 1,
+    "pass_rate": 1.0,
+    "avg_latency_ms": 12349.821,
+    "p95_latency_ms": 12349.821,
+    "avg_weighted_score": 1.0,
+    "support_pass_rate": 1.0,
+    "source_route_pass_rate": 1.0,
+    "avg_source_route_coverage": 1.0,
+    "bucket_summaries": {
+      "user-doc-candidate": {
+        "cases": 1,
+        "passed": 1,
+        "pass_rate": 1.0,
+        "avg_latency_ms": 12349.821,
+        "p95_latency_ms": 12349.821,
+        "avg_weighted_score": 1.0,
+        "support_pass_rate": 1.0,
+        "source_route_pass_rate": 1.0,
+        "avg_source_route_coverage": 1.0
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "UDQ-BC-01",
+      "bucket": "user-doc-candidate",
+      "query": "Browser companion에서 graph-lite=hit와 graph-lite=not-reported는 무엇이 다르고, 운영자는 각각 무엇을 확인해야 하나?",
+      "request_mode": "explicit_single",
+      "collection_keys": [
+        "project_docs"
+      ],
+      "expected_route_keys": [
+        "project_docs"
+      ],
+      "actual_route_keys": [
+        "project_docs"
+      ],
+      "route_pass": true,
+      "status": 200,
+      "latency_ms": 12349.821,
+      "answer_length": 403,
+      "answer_preview": "문서 근거로 확인되는 내용입니다.\n- `graph-lite=not-reported`: Server response did not include graph-lite metadata. 운영자는 다음을 확인합니다: Confirm server was started with current code and debug metadata.\n- graph-lite=hit | relations=<number> | context=added\n- `g",
+      "answer": "문서 근거로 확인되는 내용입니다.\n- `graph-lite=not-reported`: Server response did not include graph-lite metadata. 운영자는 다음을 확인합니다: Confirm server was started with current code and debug metadata.\n- graph-lite=hit | relations=<number> | context=added\n- `graph-lite=hit`: Quality mode found relation context and appended it to RAG context. 운영자는 다음을 확인합니다: Treat transport as healthy; evaluate answer quality separately.",
+      "required_hits": [
+        "graph-lite=hit",
+        "graph-lite=not-reported",
+        "운영자",
+        "확인"
+      ],
+      "required_total": 4,
+      "required_ratio": 1.0,
+      "must_include_any_hits": [
+        "Quality",
+        "debug",
+        "metadata",
+        "context",
+        "RAG"
+      ],
+      "must_include_any_total": 5,
+      "must_include_any_ratio": 1.0,
+      "forbidden_hits": [],
+      "min_answer_chars": 150,
+      "min_chars_ratio": 1.0,
+      "precision_score": 1.0,
+      "completeness_score": 1.0,
+      "hallucination_score": 1.0,
+      "support_level": "supported",
+      "support_reason": "multiple_context_segments",
+      "support_pass": true,
+      "citation_count": 2,
+      "citations": [
+        "BROWSER_COMPANION_OPERATOR_GUIDE.md > Graph-Lite Quality Smoke",
+        "BROWSER_COMPANION_OPERATOR_GUIDE.md > Graph-Lite Status Meanings"
+      ],
+      "source_count": 3,
+      "source_collection_keys": [
+        "project_docs",
+        "project_docs",
+        "project_docs"
+      ],
+      "source_covered_keys": [
+        "project_docs"
+      ],
+      "source_route_coverage_ratio": 1.0,
+      "source_route_pass": true,
+      "graph_lite_header": "disabled",
+      "graph_lite_enabled": false,
+      "graph_lite_status": "disabled",
+      "graph_lite_fallback_reason": "-",
+      "graph_lite_relation_count": 0,
+      "graph_lite_context_added": false,
+      "weighted_score": 1.0,
+      "pass": true,
+      "error_code": null,
+      "error_message": null
+    }
+  ]
+}

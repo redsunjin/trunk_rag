@@ -168,6 +168,32 @@ def test_postprocess_answer_returns_insufficient_for_english_reasoning_intro():
     assert resolved == query_service.INSUFFICIENT_ANSWER_TEXT
 
 
+def test_is_insufficient_answer_handles_punctuation():
+    assert query_service.is_insufficient_answer("제공된 문서에서 확인되지 않습니다.")
+    assert query_service.is_insufficient_answer("제공된 문서에서 확인되지 않습니다")
+    assert not query_service.is_insufficient_answer("문서 근거가 있습니다.")
+
+
+def test_build_supported_context_fallback_answer_extracts_relevant_table_lines():
+    context = """
+[1] source=BROWSER_COMPANION_OPERATOR_GUIDE.md h2=Graph-Lite Status Meanings
+| status | meaning | operator action |
+| --- | --- | --- |
+| `hit` | Quality mode found relation context and appended it to RAG context. | Treat transport as healthy; evaluate answer quality separately. |
+| `not-reported` | Server response did not include graph-lite metadata. | Confirm server was started with current code and debug metadata. |
+"""
+
+    answer = query_service.build_supported_context_fallback_answer(
+        "Browser companion에서 graph-lite=hit와 graph-lite=not-reported는 무엇이 다르고 운영자는 무엇을 확인해야 하나?",
+        context,
+    )
+
+    assert "제공된 문서에서 확인되지 않습니다" not in answer
+    assert "graph-lite=hit" in answer
+    assert "graph-lite=not-reported" in answer
+    assert "debug metadata" in answer
+
+
 def test_get_prompt_template_defaults_to_generic_profile(monkeypatch):
     monkeypatch.delenv(query_service.QUERY_PROFILE_ENV_KEY, raising=False)
 

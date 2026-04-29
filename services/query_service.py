@@ -91,6 +91,8 @@ ANSWER_LABEL_PATTERNS = [
     re.compile(r"(?im)^\s*1\)\s*핵심 답변\s*:\s*"),
     re.compile(r"(?im)^\s*2\)\s*근거\s*:\s*"),
 ]
+CONTEXT_SOURCE_LINE_PATTERN = re.compile(r"^\[\d+\]\s+source=.*$")
+MARKDOWN_TABLE_SEPARATOR_PATTERN = re.compile(r"^\|\s*[-: ]+\|")
 LEXICAL_TOKEN_PATTERN = re.compile(r"[0-9A-Za-z가-힣]+")
 KOREAN_PARTICLE_SUFFIXES = (
     "으로부터",
@@ -218,6 +220,12 @@ def normalize_answer_whitespace(answer: str) -> str:
     if len(paragraphs) > 1 and paragraphs[-1] == INSUFFICIENT_ANSWER_TEXT:
         paragraphs = paragraphs[:-1]
     return "\n\n".join(paragraphs).strip()
+
+
+def is_insufficient_answer(answer: str) -> bool:
+    normalized = normalize_answer_whitespace(answer)
+    expected = INSUFFICIENT_ANSWER_TEXT.rstrip(".。").strip()
+    return normalized.rstrip(".。").strip() == expected
 
 
 def normalize_lexical_token(token: str) -> str:
@@ -666,6 +674,91 @@ def postprocess_answer(question: str, answer: str, query_profile: str | None = N
     if lead in cleaned_answer:
         return cleaned_answer
     return f"{lead} {cleaned_answer}".strip()
+
+
+def _iter_context_evidence_lines(context: str) -> list[str]:
+    lines: list[str] = []
+    for raw_line in context.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if CONTEXT_SOURCE_LINE_PATTERN.match(line):
+            continue
+        if line.startswith("```"):
+            continue
+        if MARKDOWN_TABLE_SEPARATOR_PATTERN.match(line):
+            continue
+        if line.startswith("#"):
+            continue
+        if line.startswith("|"):
+            cells = [cell.strip().strip("`") for cell in line.strip("|").split("|")]
+            if len(cells) < 3:
+                continue
+            if cells and cells[0].lower() in {"status", "symptom"}:
+                continue
+        lines.append(line)
+    return lines
+
+
+def _score_context_evidence_line(line: str, query_terms: list[str]) -> tuple[int, int]:
+    lowered = line.lower()
+    query_term_set = set(query_terms)
+    matches = {term for term in query_terms if term and term in lowered}
+    score = len(matches)
+    if "graph-lite" in lowered and {"graph", "lite"} & set(query_terms):
+        score += 1
+    if line.startswith("|"):
+        score += 1
+        cells = [cell.strip().strip("`").lower() for cell in line.strip("|").split("|")]
+        if cells:
+            subject_terms = set(LEXICAL_TOKEN_PATTERN.findall(cells[0]))
+            if subject_terms and subject_terms <= query_term_set:
+                score += 8
+    if "graph-lite=hit" in lowered and {"graph", "lite", "hit"} <= query_term_set:
+        score += 8
+    if "graph-lite=not-reported" in lowered and {"graph", "lite", "not", "reported"} <= query_term_set:
+        score += 8
+    return score, len(line)
+
+
+def _render_context_evidence_line(line: str) -> str:
+    if line.startswith("|"):
+        cells = [cell.strip() for cell in line.strip("|").split("|")]
+        if len(cells) >= 3:
+            subject, meaning, action = cells[:3]
+            normalized_subject = subject.strip().strip("`").lower()
+            if normalized_subject in {"hit", "disabled", "not-reported", "fallback", "not_run"}:
+                subject = f"`graph-lite={normalized_subject}`"
+            return f"{subject}: {meaning} 운영자는 다음을 확인합니다: {action}"
+    if len(line) > 260:
+        return f"{line[:257].rstrip()}..."
+    return line
+
+
+def select_supported_context_evidence(question: str, context: str, *, limit: int = 3) -> list[str]:
+    query_terms = extract_lexical_query_terms(question)
+    ranked: list[tuple[int, int, int, str]] = []
+    seen: set[str] = set()
+    for index, line in enumerate(_iter_context_evidence_lines(context)):
+        rendered = _render_context_evidence_line(line)
+        key = rendered.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        score, length = _score_context_evidence_line(line, query_terms)
+        if score <= 0:
+            continue
+        ranked.append((score, length, -index, rendered))
+    ranked.sort(reverse=True)
+    return [item[3] for item in ranked[:limit]]
+
+
+def build_supported_context_fallback_answer(question: str, context: str, *, limit: int = 3) -> str:
+    evidence_lines = select_supported_context_evidence(question, context, limit=limit)
+    if not evidence_lines:
+        return ""
+    rendered_lines = "\n".join(f"- {line}" for line in evidence_lines)
+    return f"문서 근거로 확인되는 내용입니다.\n{rendered_lines}"
 
 
 def format_docs(docs: list[Document]) -> str:

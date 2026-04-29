@@ -88,6 +88,10 @@
 - `docs/reports/PROJECT_DOC_INGESTION_PATH_FOR_USER_DOC_QUALITY_GATE_2026-04-30.md`
 - `docs/reports/PROJECT_DOC_COLLECTION_CONTRACT_SKELETON_2026-04-30.md`
 - `docs/reports/PROJECT_DOC_QUERY_SMOKE_AND_UDQ_PROMOTION_GATE_2026-04-30.md`
+- `docs/USER_DOC_QUERY_EVAL_QUESTION_SET.md`
+- `evals/user_doc_answer_level_eval_fixtures.jsonl`
+- `docs/reports/SUPPORTED_CONTEXT_FALSE_NOT_FOUND_REMEDIATION_2026-04-30.md`
+- `docs/reports/USER_DOC_QUERY_ANSWER_EVAL_2026-04-30_LOOP126.md`
 
 ## Roadmap Loop Harness
 
@@ -231,7 +235,8 @@
 | LOOP-123 | done | Project-doc ingestion path for user-doc quality gate | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-124 | done | Project-doc collection contract skeleton | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_index_service.py` + `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile services/project_doc_service.py services/index_service.py core/collection_manifest.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-125 | done | Project-doc query smoke and UDQ candidate promotion gate | `project_docs` reindex/query smoke + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-126 | active | Supported-context false-not-found remediation | supported/citation 존재 시 false `제공된 문서에서 확인되지 않습니다` 개선 |
+| LOOP-126 | done | Supported-context false-not-found remediation | `./.venv/bin/python -m pytest -q tests/test_query_service.py tests/api/test_query_api.py tests/test_user_doc_eval_fixtures.py` + user-doc eval `1/1 pass` |
+| LOOP-127 | active | User-doc quality gate operator command | opt-in `project_docs`/user-doc eval gate를 반복 가능한 운영 명령으로 정리 |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -3503,6 +3508,33 @@ closeout 메모 (2026-04-30):
 - `support_level=supported`와 citation/context가 존재하는 응답에서 근거 있음 상태와 모순되는 not-found 답변이 완화되어야 한다.
 - `UDQ-BC-01`을 정식 fixture로 승격할지, 계속 후보로 둘지 다시 판단해야 한다.
 - 미해결이면 blocker와 재개 조건을 명확히 기록해야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+- 변경 영역 타깃 테스트
+
+closeout 메모 (2026-04-30):
+- `/query` 성공 응답에서 debug 여부와 무관하게 source/citation/support를 계산하도록 조정했다.
+- `support_level`이 `supported` 또는 `limited`이고 생성 답변이 insufficient phrase로 끝나면, retrieved context에서 근거 줄을 추출한 fallback answer를 반환한다.
+- fallback 적용 시 debug meta에 `invoke.answer_guard.reason=supported_context_false_not_found`를 남긴다.
+- markdown table evidence 추출은 source header, table separator, code fence, 잘린 table row를 제외하고 `graph-lite=hit`/`graph-lite=not-reported` 같은 질문 status 값을 우선한다.
+- `UDQ-BC-01`은 기본 baseline fixture가 아니라 `evals/user_doc_answer_level_eval_fixtures.jsonl` 전용 opt-in user-doc fixture로 승격했다.
+- `./.venv/bin/python scripts/eval_query_quality.py --base-url http://127.0.0.1:8015 --timeout-seconds 90 --eval-file evals/user_doc_answer_level_eval_fixtures.jsonl --case-id UDQ-BC-01 --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434 --query-timeout-seconds 60 --output-json docs/reports/user_doc_query_answer_eval_2026-04-30_loop126.json --output-report docs/reports/USER_DOC_QUERY_ANSWER_EVAL_2026-04-30_LOOP126.md` 결과 `1/1 pass`, `avg_weighted_score=1.0`, `support_pass_rate=1.0`, `source_route_pass_rate=1.0`이었다.
+- 상세 기록은 `docs/reports/SUPPORTED_CONTEXT_FALSE_NOT_FOUND_REMEDIATION_2026-04-30.md`에 남겼다.
+
+## 현재 Active Loop (LOOP-127)
+
+목표:
+- opt-in `project_docs`/user-doc answer eval gate를 운영자가 반복 실행할 수 있는 명령 또는 wrapper로 정리한다.
+
+범위:
+- 포함: user-doc eval command 문서화 또는 작은 wrapper, project_docs index precondition 안내, 기본 release gate 비변경 확인
+- 제외: default runtime collection 변경, user-doc fixture의 default baseline 편입, 모델 기본값 변경
+
+완료 기준:
+- `UDQ-BC-01` 전용 gate를 재실행하는 표준 명령이 문서 또는 스크립트로 고정되어야 한다.
+- `generic-baseline` 기본 gate와 user-doc opt-in gate의 경계가 문서에 명확해야 한다.
+- 실패 시 project_docs reindex 필요 여부를 운영자가 알 수 있어야 한다.
 
 검증:
 - `./.venv/bin/python scripts/roadmap_harness.py validate`

@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-126`
-- current_active_title: `Supported-context false-not-found remediation`
+- current_active_id: `LOOP-127`
+- current_active_title: `User-doc quality gate operator command`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -114,6 +114,18 @@
 - report: `docs/reports/PROJECT_DOC_QUERY_SMOKE_AND_UDQ_PROMOTION_GATE_2026-04-30.md`
 - 다음 active: `LOOP-126 Supported-context false-not-found remediation`
 - LOOP-126 목표: retrieval/citation/support가 존재하는데도 not-found 답변으로 끝나는 경로를 prompt/guard/policy 레벨에서 최소 보정하고, `UDQ-BC-01`을 재평가한다.
+
+## 2026-04-30 Supported-Context Guard Snapshot
+
+- 완료 루프: `LOOP-126 Supported-context false-not-found remediation`
+- 코드 반영: `/query`가 성공 응답마다 source/citation/support를 계산하고, supported/limited context가 있는데 answer가 `제공된 문서에서 확인되지 않습니다.`이면 retrieved context evidence line fallback을 적용한다.
+- debug meta: guard 적용 시 `invoke.answer_guard.reason=supported_context_false_not_found`
+- evidence policy: source header, markdown separator, code fence, malformed truncated table row는 제외하고 `graph-lite=hit`, `graph-lite=not-reported` 같은 질문 status 값을 우선한다.
+- fixture: `UDQ-BC-01`은 `evals/user_doc_answer_level_eval_fixtures.jsonl` 전용 opt-in user-doc fixture로 승격했다. 기본 `evals/answer_level_eval_fixtures.jsonl`에는 편입하지 않았다.
+- eval result: `docs/reports/USER_DOC_QUERY_ANSWER_EVAL_2026-04-30_LOOP126.md` 기준 `1/1 pass`, `avg_weighted_score=1.0`, `support_pass_rate=1.0`, `source_route_pass_rate=1.0`, `p95_latency_ms=12349.821`.
+- report: `docs/reports/SUPPORTED_CONTEXT_FALSE_NOT_FOUND_REMEDIATION_2026-04-30.md`
+- 다음 active: `LOOP-127 User-doc quality gate operator command`
+- LOOP-127 목표: opt-in `project_docs`/user-doc eval gate를 운영자가 반복 실행할 수 있는 명령 또는 wrapper로 정리하고, 기본 release gate와의 경계를 문서화한다.
 
 ## 2026-04-28 UI Copy/Disclosure Snapshot
 

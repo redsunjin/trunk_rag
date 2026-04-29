@@ -206,6 +206,10 @@
 - `docs/reports/PROJECT_DOC_INGESTION_PATH_FOR_USER_DOC_QUALITY_GATE_2026-04-30.md`: project/operator docs를 품질 게이트에 넣는 opt-in collection 경로 판단
 - `docs/reports/PROJECT_DOC_COLLECTION_CONTRACT_SKELETON_2026-04-30.md`: opt-in `project_docs` manifest/source-loader contract skeleton
 - `docs/reports/PROJECT_DOC_QUERY_SMOKE_AND_UDQ_PROMOTION_GATE_2026-04-30.md`: opt-in `project_docs` query smoke와 `UDQ-BC-01` 승격 판단
+- `docs/USER_DOC_QUERY_EVAL_QUESTION_SET.md`: user/operator document answer-level 질문셋
+- `evals/user_doc_answer_level_eval_fixtures.jsonl`: opt-in user-doc answer-level eval fixture
+- `docs/reports/SUPPORTED_CONTEXT_FALSE_NOT_FOUND_REMEDIATION_2026-04-30.md`: supported context false not-found guard와 `UDQ-BC-01` 전용 gate 승격 기록
+- `docs/reports/USER_DOC_QUERY_ANSWER_EVAL_2026-04-30_LOOP126.md`: `UDQ-BC-01` user-doc answer eval 실행 결과
 - `docs/VECTORSTORE_POLICY.md`: 벡터스토어 운영/용량 정책
 - `docs/COLLECTION_ROUTING_POLICY.md`: 분야별 컬렉션/라우팅 정책
 - `docs/FUTURE_EXTERNAL_CONSTRAINTS.md`: 외부 제한사항 중 추후 적용 항목
