@@ -87,6 +87,7 @@
 - `docs/reports/QUALITY_MODEL_DEFAULT_POLICY_REVISIT_2026-04-29.md`
 - `docs/reports/PROJECT_DOC_INGESTION_PATH_FOR_USER_DOC_QUALITY_GATE_2026-04-30.md`
 - `docs/reports/PROJECT_DOC_COLLECTION_CONTRACT_SKELETON_2026-04-30.md`
+- `docs/reports/PROJECT_DOC_QUERY_SMOKE_AND_UDQ_PROMOTION_GATE_2026-04-30.md`
 
 ## Roadmap Loop Harness
 
@@ -229,7 +230,8 @@
 | LOOP-122 | done | Quality model default policy revisit | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-123 | done | Project-doc ingestion path for user-doc quality gate | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-124 | done | Project-doc collection contract skeleton | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_index_service.py` + `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile services/project_doc_service.py services/index_service.py core/collection_manifest.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-125 | active | Project-doc query smoke and UDQ candidate promotion gate | opt-in `project_docs` reindex/query smoke 후 `UDQ-BC-01` 승격 여부 판단 |
+| LOOP-125 | done | Project-doc query smoke and UDQ candidate promotion gate | `project_docs` reindex/query smoke + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-126 | active | Supported-context false-not-found remediation | supported/citation 존재 시 false `제공된 문서에서 확인되지 않습니다` 개선 |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -3479,6 +3481,32 @@ closeout 메모 (2026-04-30):
 
 검증:
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-04-30):
+- `project_docs` reindex smoke를 `reset=False`로 실행해 기존 로컬 벡터 상태를 삭제하지 않고 확인했다.
+- 결과는 `docs=1/1`, `chunks=10`, `vectors=10`, `validation usable_ratio=100.00%`, collection=`rag_project_docs`였다.
+- `/query` smoke는 explicit `project_docs`, `support_level=supported`, operator guide citation 2개를 반환했다.
+- 같은 smoke의 답변 본문은 `제공된 문서에서 확인되지 않습니다.`였으므로 `UDQ-BC-01`은 정식 fixture로 승격하지 않고 candidate-only로 유지한다.
+- smoke용 `:8015` 서버는 종료했고, 종료 후 `/health` 연결 실패로 중지 상태를 확인했다.
+- 상세 기록은 `docs/reports/PROJECT_DOC_QUERY_SMOKE_AND_UDQ_PROMOTION_GATE_2026-04-30.md`에 남겼다.
+
+## 현재 Active Loop (LOOP-126)
+
+목표:
+- retrieval/citation/support가 존재하는데도 답변 본문이 `제공된 문서에서 확인되지 않습니다.`로 끝나는 false not-found 경로를 줄인다.
+
+범위:
+- 포함: supported context 판단 경로 분석, prompt/guard/policy의 최소 보정, `UDQ-BC-01` 재실행 또는 동등한 타깃 검증
+- 제외: 기본 모델 교체, 외부 API, default runtime collection 변경, project docs 자동 포함
+
+완료 기준:
+- `support_level=supported`와 citation/context가 존재하는 응답에서 근거 있음 상태와 모순되는 not-found 답변이 완화되어야 한다.
+- `UDQ-BC-01`을 정식 fixture로 승격할지, 계속 후보로 둘지 다시 판단해야 한다.
+- 미해결이면 blocker와 재개 조건을 명확히 기록해야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+- 변경 영역 타깃 테스트
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

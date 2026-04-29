@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-125`
-- current_active_title: `Project-doc query smoke and UDQ candidate promotion gate`
+- current_active_id: `LOOP-126`
+- current_active_title: `Supported-context false-not-found remediation`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -102,6 +102,18 @@
 - progress_sync_rule: 범위 변경, 구현 메모, 검증 결과, blocker, 다음 액션이 생기면 `TODO.md` 현재 `active` 메모와 본 문서의 현재 스냅샷을 같은 작업 단위에서 함께 갱신한다.
 - commit_sync_rule: 커밋 전과 세션 pause 전에는 `TODO.md`/`NEXT_SESSION_PLAN.md`가 모두 최신 진행 상태를 반영한 뒤 `./.venv/bin/python scripts/roadmap_harness.py status`로 handoff 상태를 확인한다.
 - legacy_gate_note: 역사 메모의 `ops-baseline` 표기는 `generic-baseline`/`sample-pack-baseline` 분리 이전 명칭이며, 현재 본체 기본 gate는 `generic-baseline`이다.
+
+## 2026-04-30 Project-Doc Query Smoke Snapshot
+
+- 완료 루프: `LOOP-125 Project-doc query smoke and UDQ candidate promotion gate`
+- opt-in collection: `project_docs` / Chroma collection `rag_project_docs`
+- reindex smoke: `reset=False`, `docs=1/1`, `chunks=10`, `vectors=10`, `validation usable_ratio=100.00%`
+- query smoke: explicit `project_docs`, `support_level=supported`, request_id=`c12fce7d-dfa8-493f-b3b5-40131542ac1f`
+- citations: `BROWSER_COMPANION_OPERATOR_GUIDE.md > Graph-Lite Quality Smoke`, `BROWSER_COMPANION_OPERATOR_GUIDE.md > Graph-Lite Status Meanings`
+- promotion decision: 답변 본문이 `제공된 문서에서 확인되지 않습니다.`였으므로 `UDQ-BC-01`은 candidate-only로 유지한다.
+- report: `docs/reports/PROJECT_DOC_QUERY_SMOKE_AND_UDQ_PROMOTION_GATE_2026-04-30.md`
+- 다음 active: `LOOP-126 Supported-context false-not-found remediation`
+- LOOP-126 목표: retrieval/citation/support가 존재하는데도 not-found 답변으로 끝나는 경로를 prompt/guard/policy 레벨에서 최소 보정하고, `UDQ-BC-01`을 재평가한다.
 
 ## 2026-04-28 UI Copy/Disclosure Snapshot
 

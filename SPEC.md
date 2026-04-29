@@ -203,6 +203,7 @@
 - `docs/reports/QUALITY_MODEL_DEFAULT_POLICY_REVISIT_2026-04-29.md`: graph-lite/user-doc 후보 기준 Quality 모델 기본 정책 재검토
 - `docs/reports/PROJECT_DOC_INGESTION_PATH_FOR_USER_DOC_QUALITY_GATE_2026-04-30.md`: project/operator docs를 품질 게이트에 넣는 opt-in collection 경로 판단
 - `docs/reports/PROJECT_DOC_COLLECTION_CONTRACT_SKELETON_2026-04-30.md`: opt-in `project_docs` manifest/source-loader contract skeleton
+- `docs/reports/PROJECT_DOC_QUERY_SMOKE_AND_UDQ_PROMOTION_GATE_2026-04-30.md`: opt-in `project_docs` query smoke와 `UDQ-BC-01` 승격 판단
 
 ## API 계약
 ### GET `/health`
