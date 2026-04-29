@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-123`
-- current_active_title: `Project-doc ingestion path for user-doc quality gate`
+- current_active_id: `LOOP-124`
+- current_active_title: `Project-doc collection contract skeleton`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -411,13 +411,26 @@
 - decision: user/operator-doc answer-level fixture evidence is required before model default changes.
 - 다음 active: `LOOP-123 Project-doc ingestion path for user-doc quality gate`.
 
-## 2026-04-29 Project-Doc Ingestion Path Target
+## 2026-04-30 Project-Doc Ingestion Path Target
 
-- 현재 active: `LOOP-123 Project-doc ingestion path for user-doc quality gate`
+- 완료 루프: `LOOP-123 Project-doc ingestion path for user-doc quality gate`
 - 목표: `docs/BROWSER_COMPANION_OPERATOR_GUIDE.md` 같은 project/operator 문서를 RAG 품질 게이트에 넣는 경로를 결정한다.
 - 범위: managed-doc workflow로 넣을지, project-doc collection을 만들지, 외부 운영 문서로만 둘지 기준 정리.
 - 제외: 대량 문서 인덱싱, 기본 모델 변경, 외부 유료 API 사용.
-- 완료 기준: `UDQ-BC-01`을 정식 fixture로 승격할 수 있는 전제 조건과 Go/No-Go가 명확해야 한다.
+- decision: explicit opt-in `project_docs` collection path is Go.
+- no-go: do not use managed-doc workflow for repo-owned operator docs.
+- no-go: do not keep target docs external-only if they are expected to become answer-level quality fixtures.
+- guardrail: `project_docs` must not enter default `all` runtime path or sample-pack compatibility bundle.
+- report: `docs/reports/PROJECT_DOC_INGESTION_PATH_FOR_USER_DOC_QUALITY_GATE_2026-04-30.md`
+- 다음 active: `LOOP-124 Project-doc collection contract skeleton`.
+
+## 2026-04-30 Project-Doc Collection Contract Target
+
+- 현재 active: `LOOP-124 Project-doc collection contract skeleton`
+- 목표: opt-in `project_docs` collection을 위한 manifest/source-loader contract skeleton을 추가한다.
+- 범위: project-doc allowlist/manifest contract, source-loader skeleton 또는 contract test, default runtime 비변경 확인.
+- 제외: 대량 docs 인덱싱, 기본 query route 변경, 모델 정책 변경, 외부 API.
+- 완료 기준: `docs/BROWSER_COMPANION_OPERATOR_GUIDE.md` 같은 allowlisted project doc이 `project_docs` 후보 source로 표현될 수 있어야 하며 default runtime과 sample-pack bundle에는 영향이 없어야 한다.
 
 ## 0. 2026-03-13 우선순위 재정렬
 

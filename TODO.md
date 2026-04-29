@@ -85,6 +85,7 @@
 - `docs/BROWSER_COMPANION_OPERATOR_GUIDE.md`
 - `docs/reports/USER_DOC_RAG_QUALITY_FIXTURE_SEED_2026-04-29.md`
 - `docs/reports/QUALITY_MODEL_DEFAULT_POLICY_REVISIT_2026-04-29.md`
+- `docs/reports/PROJECT_DOC_INGESTION_PATH_FOR_USER_DOC_QUALITY_GATE_2026-04-30.md`
 
 ## Roadmap Loop Harness
 
@@ -225,7 +226,8 @@
 | LOOP-120 | done | Browser companion operator guide and troubleshooting | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-121 | done | User-doc RAG quality fixture seed | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-122 | done | Quality model default policy revisit | `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-123 | active | Project-doc ingestion path for user-doc quality gate | operator/project docs를 managed-doc 또는 project-doc collection으로 평가 경로에 넣을지 결정 |
+| LOOP-123 | done | Project-doc ingestion path for user-doc quality gate | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-124 | active | Project-doc collection contract skeleton | opt-in `project_docs` manifest/source-loader contract skeleton |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -3422,6 +3424,31 @@ closeout 메모 (2026-04-29):
 완료 기준:
 - `UDQ-BC-01`을 정식 fixture로 승격할 수 있는 전제 조건이 명확해야 한다.
 - project/operator docs 인덱싱 경로의 Go/No-Go가 문서화되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-04-30):
+- `docs/reports/PROJECT_DOC_INGESTION_PATH_FOR_USER_DOC_QUALITY_GATE_2026-04-30.md`에 경로 결정을 기록했다.
+- 결정: repo-owned operator/project docs는 일반 managed-doc workflow에 섞지 않는다.
+- 결정: 외부 문서로만 두면 answer-level quality gate에서 검색 불가능한 문서를 묻게 되므로 No-Go다.
+- 결정: 명시적 opt-in `project_docs` collection 경로를 Go로 둔다.
+- guardrail: `project_docs`는 default `all` runtime path와 sample-pack compatibility bundle에 포함하지 않는다.
+- `UDQ-BC-01`은 `project_docs`가 index/query 가능해질 때까지 candidate-only로 유지한다.
+
+## 현재 Active Loop (LOOP-124)
+
+목표:
+- opt-in `project_docs` collection을 위한 manifest/source-loader contract skeleton을 추가한다.
+
+범위:
+- 포함: project-doc allowlist/manifest contract, source-loader skeleton 또는 contract test, default runtime 비변경 확인
+- 제외: 대량 docs 인덱싱, 기본 query route 변경, 모델 정책 변경, 외부 API
+
+완료 기준:
+- `docs/BROWSER_COMPANION_OPERATOR_GUIDE.md` 같은 allowlisted project doc이 `project_docs` 후보 source로 표현될 수 있어야 한다.
+- default runtime collection과 sample-pack compatibility bundle에는 영향이 없어야 한다.
+- `UDQ-BC-01` 정식 fixture 승격은 아직 보류되어야 한다.
 
 검증:
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
