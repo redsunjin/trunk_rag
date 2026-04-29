@@ -83,6 +83,7 @@
 - `docs/reports/BROWSER_COMPANION_POST_SMOKE_HARDENING_2026-04-29.md`
 - `docs/reports/BROWSER_COMPANION_GRAPH_LITE_ENABLED_SMOKE_2026-04-29.md`
 - `docs/BROWSER_COMPANION_OPERATOR_GUIDE.md`
+- `docs/reports/USER_DOC_RAG_QUALITY_FIXTURE_SEED_2026-04-29.md`
 
 ## Roadmap Loop Harness
 
@@ -221,8 +222,8 @@
 | LOOP-118 | done | Await next-track after browser companion hardening | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-119 | done | Graph-lite enabled browser companion smoke | `./.venv/bin/python scripts/build_graph_lite_snapshot.py --output-dir /tmp/trunk_rag_graph_lite_snapshot_loop119` + graph-lite snapshot server + browser companion Quality smoke shows `graph-lite=hit` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-120 | done | Browser companion operator guide and troubleshooting | `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-121 | active | User-doc RAG quality fixture seed | 실제/관리 문서 기반 answer-level fixture 후보 추가 |
-| LOOP-122 | pending | Quality model default policy revisit | graph-lite/user-doc fixture 결과 기준 Quality 모델 후보 정책 재검토 |
+| LOOP-121 | done | User-doc RAG quality fixture seed | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-122 | active | Quality model default policy revisit | graph-lite/user-doc fixture 결과 기준 Quality 모델 후보 정책 재검토 |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -3372,6 +3373,30 @@ closeout 메모 (2026-04-29):
 - 최소 1개 이상의 user-doc/managed-doc 성격 fixture 후보가 문서화되어야 한다.
 - 해당 후보가 왜 기존 sample-pack/demo 품질과 다른지 설명되어야 한다.
 - 정식 `evals/answer_level_eval_fixtures.jsonl` 승격 여부가 명확해야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-04-29):
+- 현재 승인된 managed doc은 없고, smoke에서 생성된 pending upload request는 너무 짧아 품질 fixture로 승격하지 않았다.
+- `docs/reports/user_doc_quality_fixture_candidates_2026-04-29.jsonl`에 `UDQ-BC-01` 후보를 추가했다.
+- 후보 source는 `docs/BROWSER_COMPANION_OPERATOR_GUIDE.md`이며, `graph-lite=hit`와 `graph-lite=not-reported` 상태 차이와 운영자 확인 행동을 묻는다.
+- 정식 `evals/answer_level_eval_fixtures.jsonl`에는 아직 반영하지 않았다. operator guide가 승인된 managed/user doc 또는 project-doc collection으로 인덱싱될 때 승격한다.
+- `docs/reports/USER_DOC_RAG_QUALITY_FIXTURE_SEED_2026-04-29.md`에 후보와 promotion gate를 기록했다.
+
+## 현재 Active Loop (LOOP-122)
+
+목표:
+- graph-lite smoke와 user-doc fixture 후보를 바탕으로 Quality 모델 기본 정책을 재검토한다.
+
+범위:
+- 포함: graph-lite metadata transport와 answer quality를 분리해 모델 정책 판단, 기본값/후보/보류 조건 정리
+- 제외: 기본 모델 즉시 변경, 외부 유료 API 사용, 신규 모델 설치, 대규모 eval 실행
+
+완료 기준:
+- 현재 기본 Quality 모델 정책을 유지/변경/조건부로 나눠 판단해야 한다.
+- `UDQ-BC-01` 같은 user-doc 후보가 정식 fixture로 승격되기 전까지 어떤 결정을 보류할지 명확해야 한다.
+- 다음 작업 후보가 문서화되어야 한다.
 
 검증:
 - `./.venv/bin/python scripts/roadmap_harness.py validate`

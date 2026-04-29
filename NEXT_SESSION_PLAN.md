@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-121`
-- current_active_title: `User-doc RAG quality fixture seed`
+- current_active_id: `LOOP-122`
+- current_active_title: `Quality model default policy revisit`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -388,12 +388,23 @@
 
 ## 2026-04-29 User-Doc Quality Fixture Seed Target
 
-- 현재 active: `LOOP-121 User-doc RAG quality fixture seed`
+- 완료 루프: `LOOP-121 User-doc RAG quality fixture seed`
 - 목표: graph-lite hit가 단순 transport 성공에 그치지 않도록, 실제/관리 문서 기반 answer-level fixture 후보를 추가한다.
 - 범위: 현재 관리/active 문서 또는 smoke에서 드러난 관계형 질문을 answer-level fixture 후보로 정리, 평가 기준 초안 작성.
 - 제외: 품질 모델 기본값 변경, graph-lite 알고리즘 변경, 대량 fixture 확장.
-- 완료 기준: 최소 1개 이상의 user-doc/managed-doc 성격 fixture 후보가 문서화되고, 정식 fixture 승격 여부가 명확해야 한다.
-- 다음 pending: `LOOP-122 Quality model default policy revisit`.
+- candidate report: `docs/reports/USER_DOC_RAG_QUALITY_FIXTURE_SEED_2026-04-29.md`
+- candidate JSONL: `docs/reports/user_doc_quality_fixture_candidates_2026-04-29.jsonl`
+- decision: pending upload request `ef12174a-c0f9-4325-80d1-35388f73fb84` is too short for quality fixture promotion.
+- candidate: `UDQ-BC-01` uses `docs/BROWSER_COMPANION_OPERATOR_GUIDE.md`, but remains candidate-only until the guide or an equivalent user doc is indexed as managed/project-doc corpus.
+- 다음 active: `LOOP-122 Quality model default policy revisit`.
+
+## 2026-04-29 Quality Model Policy Revisit Target
+
+- 현재 active: `LOOP-122 Quality model default policy revisit`
+- 목표: graph-lite smoke와 user-doc fixture 후보를 바탕으로 Quality 모델 기본 정책을 재검토한다.
+- 범위: graph-lite metadata transport와 answer quality를 분리해 모델 정책 판단, 기본값/후보/보류 조건 정리.
+- 제외: 기본 모델 즉시 변경, 외부 유료 API 사용, 신규 모델 설치, 대규모 eval 실행.
+- 완료 기준: 현재 기본 Quality 모델 정책을 유지/변경/조건부로 나눠 판단하고, user-doc 후보 승격 전 보류할 결정을 명확히 한다.
 
 ## 0. 2026-03-13 우선순위 재정렬
 
