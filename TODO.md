@@ -82,6 +82,7 @@
 - `docs/reports/BROWSER_COMPANION_LOADED_EXTENSION_SMOKE_2026-04-29.md`
 - `docs/reports/BROWSER_COMPANION_POST_SMOKE_HARDENING_2026-04-29.md`
 - `docs/reports/BROWSER_COMPANION_GRAPH_LITE_ENABLED_SMOKE_2026-04-29.md`
+- `docs/BROWSER_COMPANION_OPERATOR_GUIDE.md`
 
 ## Roadmap Loop Harness
 
@@ -219,8 +220,8 @@
 | LOOP-117 | done | Browser companion post-smoke hardening | `node --check browser_companion/sidepanel.js` + `./.venv/bin/python scripts/validate_browser_companion_manifest.py` + `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/smoke_browser_companion_extension.py` + post-hardening loaded-extension smoke with `--skip-quality --skip-upload` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-118 | done | Await next-track after browser companion hardening | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-119 | done | Graph-lite enabled browser companion smoke | `./.venv/bin/python scripts/build_graph_lite_snapshot.py --output-dir /tmp/trunk_rag_graph_lite_snapshot_loop119` + graph-lite snapshot server + browser companion Quality smoke shows `graph-lite=hit` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-120 | active | Browser companion operator guide and troubleshooting | graph-lite/browser companion smoke 결과 기준 운영 가이드 정리 |
-| LOOP-121 | pending | User-doc RAG quality fixture seed | 실제/관리 문서 기반 answer-level fixture 후보 추가 |
+| LOOP-120 | done | Browser companion operator guide and troubleshooting | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-121 | active | User-doc RAG quality fixture seed | 실제/관리 문서 기반 answer-level fixture 후보 추가 |
 | LOOP-122 | pending | Quality model default policy revisit | graph-lite/user-doc fixture 결과 기준 Quality 모델 후보 정책 재검토 |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
@@ -3348,6 +3349,29 @@ closeout 메모 (2026-04-29):
 - 운영자가 browser companion을 로드하고 `graph-lite=hit|disabled|not-reported|fallback` 상태를 해석할 수 있어야 한다.
 - upload draft가 실제 pending request를 만든다는 주의가 문서에 있어야 한다.
 - README/SPEC/NEXT_SESSION_PLAN과 참조가 동기화되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-04-29):
+- `docs/BROWSER_COMPANION_OPERATOR_GUIDE.md`를 추가했다.
+- 운영 가이드는 local load, graph-lite Quality smoke, `graph-lite=hit|disabled|not-reported|fallback|not_run` 상태 해석, upload draft side effect, troubleshooting을 포함한다.
+- `browser_companion/README.md`, `README.md`, `SPEC.md`에서 운영 가이드와 evidence 문서를 참조하도록 동기화했다.
+- 신규 UI나 권한 확대 없이 문서/운영 흐름만 정리했다.
+
+## 현재 Active Loop (LOOP-121)
+
+목표:
+- graph-lite hit가 단순 transport 성공에 그치지 않도록, 실제/관리 문서 기반 answer-level fixture 후보를 추가한다.
+
+범위:
+- 포함: 현재 관리/active 문서 또는 smoke에서 드러난 관계형 질문을 answer-level fixture 후보로 정리, 평가 기준 초안 작성
+- 제외: 품질 모델 기본값 변경, graph-lite 알고리즘 변경, 대량 fixture 확장
+
+완료 기준:
+- 최소 1개 이상의 user-doc/managed-doc 성격 fixture 후보가 문서화되어야 한다.
+- 해당 후보가 왜 기존 sample-pack/demo 품질과 다른지 설명되어야 한다.
+- 정식 `evals/answer_level_eval_fixtures.jsonl` 승격 여부가 명확해야 한다.
 
 검증:
 - `./.venv/bin/python scripts/roadmap_harness.py validate`

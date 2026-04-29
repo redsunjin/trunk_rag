@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-120`
-- current_active_title: `Browser companion operator guide and troubleshooting`
+- current_active_id: `LOOP-121`
+- current_active_title: `User-doc RAG quality fixture seed`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -378,12 +378,22 @@
 
 ## 2026-04-29 Browser Companion Operator Guide Target
 
-- 현재 active: `LOOP-120 Browser companion operator guide and troubleshooting`
+- 완료 루프: `LOOP-120 Browser companion operator guide and troubleshooting`
 - 목표: browser companion과 graph-lite smoke 결과를 기준으로 운영자가 따라갈 수 있는 가이드와 문제 해결 흐름을 정리한다.
 - 범위: 로컬 서버 준비, 확장 로드, graph-lite snapshot 서버 실행, smoke command, 흔한 상태값 해석, 문제 해결.
 - 제외: 신규 UI 구현, Chrome Web Store packaging, GraphRAG/full Neo4j 통합.
-- 완료 기준: 운영자가 `graph-lite=hit|disabled|not-reported|fallback` 상태를 해석하고 upload draft side effect를 이해할 수 있어야 한다.
-- 다음 pending: `LOOP-121 User-doc RAG quality fixture seed`, `LOOP-122 Quality model default policy revisit`.
+- guide: `docs/BROWSER_COMPANION_OPERATOR_GUIDE.md`
+- 완료 기준: 운영자가 `graph-lite=hit|disabled|not-reported|fallback|not_run` 상태를 해석하고 upload draft side effect를 이해할 수 있게 정리했다.
+- 다음 active: `LOOP-121 User-doc RAG quality fixture seed`.
+
+## 2026-04-29 User-Doc Quality Fixture Seed Target
+
+- 현재 active: `LOOP-121 User-doc RAG quality fixture seed`
+- 목표: graph-lite hit가 단순 transport 성공에 그치지 않도록, 실제/관리 문서 기반 answer-level fixture 후보를 추가한다.
+- 범위: 현재 관리/active 문서 또는 smoke에서 드러난 관계형 질문을 answer-level fixture 후보로 정리, 평가 기준 초안 작성.
+- 제외: 품질 모델 기본값 변경, graph-lite 알고리즘 변경, 대량 fixture 확장.
+- 완료 기준: 최소 1개 이상의 user-doc/managed-doc 성격 fixture 후보가 문서화되고, 정식 fixture 승격 여부가 명확해야 한다.
+- 다음 pending: `LOOP-122 Quality model default policy revisit`.
 
 ## 0. 2026-03-13 우선순위 재정렬
 

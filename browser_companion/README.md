@@ -9,6 +9,8 @@ Minimal Chrome Manifest V3 side panel companion for a local Trunk RAG server.
 - Does not run an on-device browser model.
 - Does not replace `/app`, `/admin`, or managed-doc workflows.
 
+Operator guide: `docs/BROWSER_COMPANION_OPERATOR_GUIDE.md`
+
 ## Local Load
 
 1. Start Trunk RAG locally.

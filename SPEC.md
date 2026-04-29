@@ -196,6 +196,7 @@
 - `docs/reports/BROWSER_COMPANION_LOADED_EXTENSION_SMOKE_2026-04-29.md`: browser companion loaded-extension smoke 증거
 - `docs/reports/BROWSER_COMPANION_POST_SMOKE_HARDENING_2026-04-29.md`: browser companion smoke 이후 UI/운영 보강 기록
 - `docs/reports/BROWSER_COMPANION_GRAPH_LITE_ENABLED_SMOKE_2026-04-29.md`: graph-lite snapshot server 기준 browser companion Quality smoke 증거
+- `docs/BROWSER_COMPANION_OPERATOR_GUIDE.md`: Chrome browser companion 로컬 운영/graph-lite 상태 해석/문제 해결 가이드
 
 ## API 계약
 ### GET `/health`
