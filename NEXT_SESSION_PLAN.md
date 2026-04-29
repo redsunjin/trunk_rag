@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-109`
-- current_active_title: `Graph-lite Quality status exposure and operator handoff`
+- current_active_id: `LOOP-110`
+- current_active_title: `Graph-lite active-doc Quality drill and fixture seed`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -240,11 +240,24 @@
 
 ## 2026-04-29 Graph-lite Status Exposure Target
 
-- 현재 active: `LOOP-109 Graph-lite Quality status exposure and operator handoff`
+- 완료 루프: `LOOP-109 Graph-lite Quality status exposure and operator handoff`
 - 목표: 운영자가 Quality 답변에서 graph-lite가 실제로 적용됐는지 UI/API 상태로 더 쉽게 확인하도록 노출 경로를 정리한다.
 - 범위: `/query` debug/header 상태를 UI 또는 운영 안내에서 읽기 쉽게 보여주는 최소 노출, 문서/테스트 보강.
 - 제외: Balanced 기본 graph-lite 자동 적용, graph-lite snapshot 자동 재생성, LLM 기반 relation extraction, 유료 API 호출.
 - 완료 기준: Quality 질문에서 graph-lite hit/fallback/disabled 상태를 사용자가 확인할 수 있고, 기본 Balanced 사용자 흐름과 intro/app 레이아웃이 깨지지 않아야 한다.
+- 구현 결과: `/app` 답변의 근거 요약과 `실행 상세 보기` trace summary에 `graph-lite=hit|fallback|disabled`, fallback reason, relation count, context 추가 여부를 표시한다.
+- UI 검증: Balanced mock 응답은 `graph-lite=disabled`, Quality mock 응답은 `graph-lite=hit`, `relations=2`, `context=added`가 보이도록 Playwright e2e를 보강했다.
+- 회귀: `node --check web/js/app_page.js -> pass`; `tests/api/test_query_api.py tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py -> 33 passed`.
+
+## 2026-04-29 Graph-lite Active-doc Quality Drill Target
+
+- 현재 active: `LOOP-110 Graph-lite active-doc Quality drill and fixture seed`
+- 목표: LOOP-108의 active-doc snapshot builder와 LOOP-109의 상태 노출을 연결해, 현재 seed + managed active 문서에서 생성한 snapshot이 Quality graph-lite drill에 유효한지 확인한다.
+- 범위: temp snapshot 생성, graph-candidate benchmark 재실행, 필요 시 fixture seed/운영 메모 보강, 기존 `/query` Quality opt-in 회귀 확인.
+- 제외: Balanced 기본 graph-lite 자동 적용, snapshot 자동 스케줄러, LLM 기반 relation extraction, full Neo4j/GraphRAG 운영.
+- 완료 기준: 생성 snapshot load/benchmark 통과, Quality graph-lite 상태 노출과 drill 결과 문서 연결, 기존 API hit/fallback/disabled 회귀 유지.
+- 검증 후보: `tests/test_graph_lite_snapshot_builder.py tests/test_graph_lite_service.py tests/api/test_query_api.py`, `scripts/build_graph_lite_snapshot.py --output-dir /tmp/trunk_rag_graph_lite_snapshot_loop110`, `scripts/benchmark_graph_lite_sidecar.py --snapshot-dir /tmp/trunk_rag_graph_lite_snapshot_loop110`, `scripts/roadmap_harness.py validate`.
+- 다음 pending: `LOOP-111 Graph-lite Quality eval refresh after active-doc drill`. active-doc drill이 통과하면 graph-candidate quality eval을 새 snapshot 기준으로 다시 돌려 품질 게이트 승격 여부를 판단한다.
 
 ## 0. 2026-03-13 우선순위 재정렬
 

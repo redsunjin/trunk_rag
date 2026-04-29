@@ -231,26 +231,41 @@ def test_intro_app_flow(page: Page, live_server_url: str):
 
     def query_success(route):
         query_payload["body"] = route.request.post_data_json
+        request_body = query_payload["body"]
+        is_quality = request_body.get("quality_mode") == "quality"
+        graph_lite_meta = {
+            "enabled": is_quality,
+            "mode": "quality" if is_quality else "balanced",
+            "status": "hit" if is_quality else "disabled",
+            "fallback_used": False,
+            "fallback_reason": None,
+            "relation_count": 2 if is_quality else 0,
+            "context_added": is_quality,
+        }
         route.fulfill(
             status=200,
             content_type="application/json",
             body=json.dumps(
                 {
-                    "answer": "모킹된 질의 응답",
+                    "answer": "모킹된 정밀 질의 응답" if is_quality else "모킹된 질의 응답",
                     "provider": "ollama",
-                    "model": "gemma4:e2b",
+                    "model": "qwen3.5:9b-nvfp4" if is_quality else "gemma4:e2b",
                     "meta": {
                         "request_id": "req-e2e-1",
                         "collections": ["fr", "ge"],
                         "route_reason": "explicit_multi",
-                        "budget_profile": "verified_local_multi",
-                        "quality_mode": "balanced",
-                        "quality_stage": "fast",
+                        "budget_profile": "verified_local_multi" if not is_quality else "quality_candidate",
+                        "quality_mode": "quality" if is_quality else "balanced",
+                        "quality_stage": "quality" if is_quality else "fast",
                         "support_level": "supported",
                         "support_reason": "multiple_context_segments",
                         "citations": ["fr_doc.md > 프랑스", "ge_doc.md > 독일"],
                         "stage_timings": {"resolve_route_ms": 1.2},
-                        "context": {"docs_total": 2, "context_chars": 240},
+                        "context": {
+                            "docs_total": 2,
+                            "context_chars": 240,
+                            "graph_lite": graph_lite_meta,
+                        },
                         "invoke": {"invoke_ms": 420.5, "status": "ok"},
                         "sources": [
                             {"source": "fr_doc.md", "h2": "프랑스", "collection_key": "fr"},
@@ -270,6 +285,7 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     expect(page.locator(".chat-message.bot").last).to_contain_text("모킹된 질의 응답", timeout=10000)
     expect(page.locator(".chat-message.bot").last).to_contain_text("근거 수준=supported")
     expect(page.locator(".chat-message.bot").last).to_contain_text("fr_doc.md > 프랑스")
+    expect(page.locator(".chat-message.bot").last).to_contain_text("graph-lite=disabled")
     page.locator(".chat-message.bot").last.locator("summary").click()
     expect(page.locator(".chat-message.bot").last).to_contain_text("request_id=req-e2e-1")
     expect(page.locator(".chat-message.bot").last).to_contain_text("fr_doc.md")
@@ -285,6 +301,19 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     assert query_payload["body"]["quality_stage"] == "fast"
     assert query_payload["body"]["llm_provider"] == "ollama"
     assert query_payload["body"]["llm_model"] == "gemma4:e2b"
+
+    page.locator(".segmented-option").filter(has_text="Quality").click()
+    page.fill("#userInput", "정밀 관계 응답 테스트")
+    page.click("#sendBtn")
+    expect(page.locator(".chat-message.bot").last).to_contain_text("모킹된 정밀 질의 응답", timeout=10000)
+    expect(page.locator(".chat-message.bot").last).to_contain_text("graph-lite=hit")
+    expect(page.locator(".chat-message.bot").last).to_contain_text("relations=2")
+    page.locator(".chat-message.bot").last.locator("summary").click()
+    expect(page.locator(".chat-message.bot").last).to_contain_text("context=added")
+    assert query_payload["body"]["quality_mode"] == "quality"
+    assert query_payload["body"]["quality_stage"] == "quality"
+    assert query_payload["body"]["timeout_seconds"] == 120
+
     page.unroute("**/query", query_success)
     page.unroute("**/semantic-search", semantic_success)
 

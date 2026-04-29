@@ -197,7 +197,9 @@
 | LOOP-106 | done | Graph-lite graph-candidate answer quality refinement | `./.venv/bin/python -m pytest -q tests/test_query_service.py tests/test_graph_lite_service.py tests/api/test_query_api.py tests/test_eval_query_quality.py tests/test_compare_rag_quality.py` + graph-candidate quality eval + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-107 | done | Await next-track after graph-lite quality refinement | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-108 | done | Graph-lite active-doc snapshot builder | `./.venv/bin/python -m pytest -q tests/test_graph_lite_snapshot_builder.py tests/test_graph_lite_service.py tests/api/test_query_api.py` + `./.venv/bin/python scripts/build_graph_lite_snapshot.py --output-dir /tmp/trunk_rag_graph_lite_snapshot_loop108` + graph-lite benchmark + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-109 | active | Graph-lite Quality status exposure and operator handoff | `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-109 | done | Graph-lite Quality status exposure and operator handoff | `node --check web/js/app_page.js` + `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-110 | active | Graph-lite active-doc Quality drill and fixture seed | `./.venv/bin/python -m pytest -q tests/test_graph_lite_snapshot_builder.py tests/test_graph_lite_service.py tests/api/test_query_api.py` + `./.venv/bin/python scripts/build_graph_lite_snapshot.py --output-dir /tmp/trunk_rag_graph_lite_snapshot_loop110` + `./.venv/bin/python scripts/benchmark_graph_lite_sidecar.py --snapshot-dir /tmp/trunk_rag_graph_lite_snapshot_loop110 --output-json /tmp/graph_lite_active_doc_loop110.json --output-report /tmp/GRAPH_LITE_ACTIVE_DOC_LOOP110.md` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-111 | pending | Graph-lite Quality eval refresh after active-doc drill | `./.venv/bin/python -m pytest -q tests/test_eval_query_quality.py tests/test_compare_rag_quality.py tests/test_answer_level_eval_fixtures.py` + graph-candidate quality eval with active-doc snapshot + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -3072,7 +3074,7 @@ closeout 메모 (2026-04-29):
 - 생성 snapshot benchmark는 graph-candidate `3/3 hit`, fallback `0`, `avg_latency_ms=0.198`이었다.
 - 추가 기본 사용자 흐름 회귀는 `tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py -> 11 passed`로 확인했다.
 
-## 현재 Active Loop (LOOP-109)
+## 완료 Loop (LOOP-109)
 
 목표:
 - 운영자가 Quality 답변에서 graph-lite가 실제로 적용됐는지 UI/API 상태로 더 쉽게 확인하도록 노출 경로를 정리한다.
@@ -3086,7 +3088,34 @@ closeout 메모 (2026-04-29):
 - 기본 Balanced 사용자 흐름과 intro/app 레이아웃이 깨지지 않아야 한다.
 
 검증:
-- `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py`
+- `node --check web/js/app_page.js`
+- `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-04-29):
+- `/app` 답변의 근거 요약과 `실행 상세 보기` trace summary에 `graph-lite=hit|fallback|disabled`, fallback reason, relation count, context 추가 여부를 노출했다.
+- 기존 `/query` debug meta/header 계약은 유지하고, UI는 `meta.context.graph_lite`를 읽어 표시한다.
+- 기본 Balanced 흐름에서는 `graph-lite=disabled`가 보이고, Quality 응답 meta가 `hit`이면 `relations`/`context=added`까지 확인할 수 있도록 e2e mock 흐름을 보강했다.
+- 긴 support/detail 운영 문자열이 모바일에서 깨지지 않도록 줄바꿈 안전 스타일을 보강했다.
+
+## 현재 Active Loop (LOOP-110)
+
+목표:
+- LOOP-108에서 만든 active-doc snapshot builder와 LOOP-109의 상태 노출을 연결해, 실제 seed + managed active 문서 snapshot이 Quality graph-lite drill에서 유효한지 확인한다.
+
+범위:
+- 포함: temp snapshot 생성, graph-candidate benchmark 재실행, 필요 시 fixture seed/운영 메모 보강, 기존 `/query` Quality opt-in 회귀 확인
+- 제외: Balanced 기본 graph-lite 자동 적용, snapshot 자동 스케줄러, LLM 기반 relation extraction, full Neo4j/GraphRAG 운영
+
+완료 기준:
+- 현재 문서 기준으로 생성한 graph-lite snapshot이 load/benchmark를 통과해야 한다.
+- Quality graph-lite 상태 노출이 실제 drill 결과와 문서에 연결되어야 한다.
+- 기존 API graph-lite hit/fallback/disabled 회귀가 깨지지 않아야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_graph_lite_snapshot_builder.py tests/test_graph_lite_service.py tests/api/test_query_api.py`
+- `./.venv/bin/python scripts/build_graph_lite_snapshot.py --output-dir /tmp/trunk_rag_graph_lite_snapshot_loop110`
+- `./.venv/bin/python scripts/benchmark_graph_lite_sidecar.py --snapshot-dir /tmp/trunk_rag_graph_lite_snapshot_loop110 --output-json /tmp/graph_lite_active_doc_loop110.json --output-report /tmp/GRAPH_LITE_ACTIVE_DOC_LOOP110.md`
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)

@@ -178,10 +178,30 @@ function renderSourceSummary(sources) {
   `;
 }
 
+function buildGraphLiteSummary(meta) {
+  const graphLite = meta?.context?.graph_lite;
+  if (!graphLite || typeof graphLite !== "object") return "";
+  const status = graphLite.status || (graphLite.enabled ? "not_run" : "disabled");
+  const parts = [`graph-lite=${status}`];
+  if (graphLite.fallback_reason) {
+    parts.push(`reason=${graphLite.fallback_reason}`);
+  }
+  if (typeof graphLite.relation_count === "number") {
+    parts.push(`relations=${graphLite.relation_count}`);
+  }
+  if (graphLite.context_added === true) {
+    parts.push("context=added");
+  } else if (graphLite.context_added === false && status !== "disabled") {
+    parts.push("context=base");
+  }
+  return parts.join(" | ");
+}
+
 function buildResponseDetails(meta) {
   if (!meta || typeof meta !== "object") return null;
   const details = document.createElement("details");
   details.className = "response-details";
+  const graphLiteSummary = buildGraphLiteSummary(meta) || "-";
   details.innerHTML = `
     <summary>실행 상세 보기</summary>
     <div class="response-detail-section">
@@ -191,7 +211,8 @@ function buildResponseDetails(meta) {
         stage=${escapeHtml(meta.quality_stage || "-")} |
         collections=${escapeHtml((meta.collections || []).join(",") || "-")} |
         route=${escapeHtml(meta.route_reason || "-")} |
-        budget=${escapeHtml(meta.budget_profile || "-")}
+        budget=${escapeHtml(meta.budget_profile || "-")} |
+        ${escapeHtml(graphLiteSummary)}
       </p>
       <div class="trace-block">
         <h4>Source Summary</h4>
@@ -225,7 +246,9 @@ function buildSupportSummary(meta) {
     : "표시할 citation이 없습니다.";
   const mode = meta.quality_mode ? `mode=${meta.quality_mode} | ` : "";
   const stage = meta.quality_stage ? `stage=${meta.quality_stage} | ` : "";
-  support.textContent = `${mode}${stage}근거 수준=${level} | reason=${reason} | citations=${citations}`;
+  const graphLite = buildGraphLiteSummary(meta);
+  const graphLitePart = graphLite ? ` | ${graphLite}` : "";
+  support.textContent = `${mode}${stage}근거 수준=${level} | reason=${reason} | citations=${citations}${graphLitePart}`;
   return support;
 }
 

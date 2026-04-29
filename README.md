@@ -26,11 +26,11 @@
 - 현재 제품 표기: Trunk RAG SVG mark/wordmark/favicon을 `/intro`, `/app`, `/admin`, README에 적용
 - 현재 복구 안내: `/intro`와 `/app`는 기본 화면에 간단 상태를 표시하고, release/runtime/ops 세부 진단은 접힘 패널에서 표시
 - 현재 문서 흐름: 기본 번들 문서는 유럽 과학사 sample-pack 데모이며, 사용자 문서는 업로드 요청과 관리자 승인 후 반영
-- 현재 relation PoC: graph-lite JSONL 관계 스냅샷/인메모리 검색 계층을 `Quality` 단계의 opt-in context 보조로 연결했으며, `Balanced` 기본 경로에는 자동 적용하지 않음
+- 현재 relation PoC: graph-lite JSONL 관계 스냅샷/인메모리 검색 계층을 `Quality` 단계의 opt-in context 보조로 연결했으며, `Balanced` 기본 경로에는 자동 적용하지 않음. `/app` 답변의 근거 요약과 실행 상세에서는 `graph-lite=hit|fallback|disabled` 상태를 확인할 수 있음
 - 현재 범위 밖: full Neo4j/GraphRAG 운영, 무거운 rerank, 설치형 데스크톱 제품화
 
 현재 문서는 과장된 성능 약속보다 "지금 무엇이 준비돼 있고 어떤 경로가 검증됐는지"를 우선 보여 주는 기준으로 유지합니다.
-`/intro`, `/app`, `/ops-baseline/latest`는 최신 운영 게이트 상태를 같은 기준으로 보여 주고, `/app` 답변에는 경량 citation/support label을 함께 노출합니다.
+`/intro`, `/app`, `/ops-baseline/latest`는 최신 운영 게이트 상태를 같은 기준으로 보여 주고, `/app` 답변에는 경량 citation/support label과 graph-lite 상태 요약을 함께 노출합니다.
 현재 `/ops-baseline/latest`가 보여 주는 본체 기본 게이트는 `generic-baseline`입니다.
 
 ## Operating Model (현행화)
@@ -60,7 +60,7 @@
 - 현재: `/query`는 runtime profile 기반 query budget(`single/multi`, `verified/experimental/not_recommended`)을 내부 정책으로 적용한다
 - 현재: `/query` context build는 MMR retrieval 뒤에 collection pool에서 lexical match가 강한 문서를 최대 2개까지 보강하고, 이어서 경량 lexical boost와 multi-collection coverage rerank로 문서 순서를 한 번 더 보정한다
 - 현재: `debug` trace는 `retrieval_strategy`, `lexical_query_terms`, `hybrid_candidate_merge_applied`, `hybrid_candidate_count`, `hybrid_scan_doc_count`, `hybrid_skipped_collections`, `coverage_rerank_applied`, `coverage_rerank_collection_count`를 남겨 경량 보정 적용 여부와 scan 비용을 확인할 수 있다
-- 현재: `services/graph_lite_service.py`는 full GraphRAG를 되살리지 않고 JSONL `entities/relations` 스냅샷을 읽어 relation-heavy 질문 감지, 인메모리 관계 검색, RAG context append contract를 제공한다. `/query`는 `quality` 단계에서만 opt-in으로 graph-lite context를 붙이고, no-hit/snapshot-missing이면 기존 vector context로 fallback한다. 관계형/확산 질문은 핵심 관계 표현을 답변 lead에 보존하도록 보정한다
+- 현재: `services/graph_lite_service.py`는 full GraphRAG를 되살리지 않고 JSONL `entities/relations` 스냅샷을 읽어 relation-heavy 질문 감지, 인메모리 관계 검색, RAG context append contract를 제공한다. `/query`는 `quality` 단계에서만 opt-in으로 graph-lite context를 붙이고, no-hit/snapshot-missing이면 기존 vector context로 fallback한다. 관계형/확산 질문은 핵심 관계 표현을 답변 lead에 보존하도록 보정하며, `/app` 답변 하단에서는 graph-lite hit/fallback/disabled 상태와 relation count를 확인할 수 있다
 - 현재: `/health`는 `runtime_query_budget_*`, `embedding_fingerprint_*` 상태를 노출해 경량 경로와 인덱스 호환 상태를 먼저 보여 준다
 - 현재: reindex 시 컬렉션별 embedding fingerprint를 저장하고, `/query`는 mismatch를 invoke 전에 먼저 차단한다
 - 현재: `services/tool_registry_service.py`는 `search_docs`, `read_doc`, `list_collections`, `health_check`, `reindex`, upload approval 계열을 internal tool 후보로 등록한다
