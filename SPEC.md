@@ -159,6 +159,7 @@
 - `run_doc_rag_desktop.bat`: Windows에서 선택형 Electron 데스크톱 런처 실행
 - `desktop/electron/*`: Electron PoC 런타임/검증 스크립트
 - `desktop/electron/README.md`: 데스크톱 런처 사용 가이드
+- `browser_companion/*`: 로컬 Trunk RAG 서버에 연결하는 Chrome MV3 side panel companion skeleton
 - `services/graphrag_poc_service.py`: GraphRAG snapshot/benchmark 보조 서비스
 - `services/graph_lite_service.py`: JSONL `entities/relations` 스냅샷 로딩, relation-heavy detector, 인메모리 relation search, context append helper를 제공하는 graph-lite PoC
 - `services/graph_lite_snapshot_builder.py`: 현재 seed + managed active markdown 원본에서 graph-lite JSONL snapshot을 생성하고 load validation을 수행한다
@@ -166,6 +167,7 @@
 - `scripts/compare_rag_quality.py`: 모델 후보별 RAG 품질 비교 게이트. 동일 fixture/bucket/임계값으로 모델 전환 가능 여부를 판정한다
 - `scripts/build_graph_lite_snapshot.py`: 현재 markdown source records에서 graph-lite snapshot을 생성한다. 기본 출력은 git에 포함하지 않는 `chroma_db/graph_lite_snapshot`이다
 - `scripts/benchmark_graph_lite_sidecar.py`: graph-lite relation snapshot retrieval viability 벤치. LLM 호출 없이 graph-candidate fixture의 hit/fallback/latency를 측정한다
+- `scripts/validate_browser_companion_manifest.py`: browser companion manifest/권한 경계 검증 스크립트
 - `scripts/check_ops_baseline_gate.py`: runtime preflight + core 기본 컬렉션 상태 + `generic-baseline` 회귀 게이트/diagnostics 점검
 - `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩
 - `scripts/roadmap_harness.py`: 실행 큐 상태와 현재 active 항목 점검
@@ -183,6 +185,13 @@
 - `docs/GRAPH_RAG_ARCHIVE_INDEX.md`: GraphRAG archive 문서 진입점
 - `docs/GRAPH_LITE_RELATION_SIDECAR_CONTRACT.md`: full GraphRAG가 아닌 graph-lite relation sidecar PoC 계약
 - `docs/reports/GRAPH_LITE_ACTIVE_DOC_QUALITY_DRILL_2026-04-29.md`: active-doc graph-lite snapshot build/benchmark drill 증거
+- `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-04-29_GRAPH_LITE_ACTIVE_DOC_QWEN.md`: active-doc graph-lite snapshot 기준 qwen Quality answer eval 결과
+- `docs/reports/RAG_QUALITY_MODEL_COMPARISON_2026-04-29_GRAPH_LITE_ACTIVE_DOC_QWEN.md`: active-doc graph-lite Quality compare gate 결과
+- `docs/reports/GRAPH_LITE_QUALITY_PROMOTION_POLICY_2026-04-29.md`: graph-lite Quality opt-in 승격/운영 정책
+- `docs/reports/BROWSER_EXTENSION_COMPANION_REVIEW_2026-04-29.md`: 브라우저 companion extension 가능성 검토
+- `docs/reports/BROWSER_COMPANION_POC_SCOPE_GATE_2026-04-29.md`: browser companion extension PoC 범위 게이트
+- `docs/reports/BROWSER_COMPANION_EXTENSION_SKELETON_2026-04-29.md`: dependency-free Chrome MV3 companion skeleton 구현 기록
+- `docs/reports/BROWSER_COMPANION_LOCAL_SERVER_SMOKE_PLAN_2026-04-29.md`: browser companion loaded-extension smoke 계획
 
 ## API 계약
 ### GET `/health`

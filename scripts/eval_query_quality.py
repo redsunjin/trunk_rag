@@ -352,6 +352,13 @@ def evaluate_case_result(
     support_reason = str(meta.get("support_reason", "-") or "-")
     citations = [str(item) for item in meta.get("citations", [])] if isinstance(meta.get("citations"), list) else []
     sources = [item for item in meta.get("sources", []) if isinstance(item, dict)] if isinstance(meta.get("sources"), list) else []
+    context_meta = meta.get("context") if isinstance(meta.get("context"), dict) else {}
+    graph_lite_meta = (
+        context_meta.get("graph_lite")
+        if isinstance(context_meta.get("graph_lite"), dict)
+        else {}
+    )
+    graph_lite_header = headers.get("X-RAG-Graph-Lite") or headers.get("x-rag-graph-lite") or ""
     source_collection_keys = [
         str(item.get("collection_key", "")).strip()
         for item in sources
@@ -410,6 +417,12 @@ def evaluate_case_result(
         "source_covered_keys": source_covered_keys,
         "source_route_coverage_ratio": source_route_coverage_ratio,
         "source_route_pass": source_route_pass,
+        "graph_lite_header": graph_lite_header or "-",
+        "graph_lite_enabled": graph_lite_meta.get("enabled"),
+        "graph_lite_status": graph_lite_meta.get("status") or graph_lite_header or "-",
+        "graph_lite_fallback_reason": graph_lite_meta.get("fallback_reason") or "-",
+        "graph_lite_relation_count": int(graph_lite_meta.get("relation_count", 0) or 0),
+        "graph_lite_context_added": graph_lite_meta.get("context_added"),
         "weighted_score": round(weighted_score, 4),
         "pass": passed,
         "error_code": body.get("code"),
@@ -558,6 +571,11 @@ def build_markdown_report(payload: dict[str, object]) -> str:
                 f"- support: `{result.get('support_level', '-')}` / `{result.get('support_reason', '-')}`",
                 f"- citations: `{result.get('citation_count', 0)}`",
                 f"- source_route_coverage: `{result.get('source_route_coverage_ratio', 0.0)}`",
+                f"- graph_lite: status=`{result.get('graph_lite_status', '-')}`, "
+                f"header=`{result.get('graph_lite_header', '-')}`, "
+                f"relations=`{result.get('graph_lite_relation_count', 0)}`, "
+                f"context_added=`{result.get('graph_lite_context_added')}`, "
+                f"fallback=`{result.get('graph_lite_fallback_reason', '-')}`",
                 f"- answer_preview: `{answer_preview}`",
             ]
         )

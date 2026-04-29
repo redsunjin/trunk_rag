@@ -188,9 +188,18 @@ def test_evaluate_case_result_extracts_debug_support_and_source_quality():
             "support_reason": "multiple_context_segments",
             "citations": ["uk.md"],
             "sources": [{"source": "uk.md", "collection_key": "all"}],
+            "context": {
+                "graph_lite": {
+                    "enabled": True,
+                    "status": "hit",
+                    "fallback_reason": None,
+                    "relation_count": 2,
+                    "context_added": True,
+                }
+            },
         },
     }
-    headers = {"X-RAG-Collections": "w2_007_header_rag"}
+    headers = {"X-RAG-Collections": "w2_007_header_rag", "X-RAG-Graph-Lite": "hit"}
 
     result = eval_query_quality.evaluate_case_result(
         case,
@@ -206,3 +215,7 @@ def test_evaluate_case_result_extracts_debug_support_and_source_quality():
     assert result["citation_count"] == 1
     assert result["source_collection_keys"] == ["all"]
     assert result["source_route_coverage_ratio"] == 1.0
+    assert result["graph_lite_header"] == "hit"
+    assert result["graph_lite_status"] == "hit"
+    assert result["graph_lite_relation_count"] == 2
+    assert result["graph_lite_context_added"] is True

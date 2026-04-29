@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-111`
-- current_active_title: `Graph-lite Quality eval refresh after active-doc drill`
+- current_active_id: `LOOP-116`
+- current_active_title: `Browser companion loaded-extension manual smoke`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -263,12 +263,81 @@
 
 ## 2026-04-29 Graph-lite Quality Eval Refresh Target
 
-- 현재 active: `LOOP-111 Graph-lite Quality eval refresh after active-doc drill`
+- 완료 루프: `LOOP-111 Graph-lite Quality eval refresh after active-doc drill`
 - 목표: active-doc snapshot drill 결과를 실제 Quality answer-level 평가와 연결해 graph-lite 보조 계층의 답변 품질 개선 여부를 다시 판단한다.
 - 범위: graph-candidate quality eval/compare 재실행, active-doc snapshot 환경변수 적용, 결과 리포트/판단 문서화.
 - 제외: Balanced 기본 graph-lite 자동 적용, 모델 기본값 변경, 유료 API 호출, full Neo4j/GraphRAG 운영.
 - 완료 기준: graph-candidate Quality 평가 결과가 report로 남고, graph-lite context가 답변 품질과 support/source route에 미치는 영향이 go/no-go로 정리되어야 한다.
-- 다음 pending: `LOOP-112 Graph-lite Quality promotion decision and operator policy`. LOOP-111 결과가 나오면 Quality 전용 유지/부분 승격/보류 정책을 문서화한다.
+- 구현: `scripts/eval_query_quality.py` 리포트에 `graph_lite_header`, `graph_lite_status`, relation count, context 추가 여부를 case별로 남기도록 보강했다.
+- 결과: qwen Quality answer eval은 `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-04-29_GRAPH_LITE_ACTIVE_DOC_QWEN.md` 기준 graph-candidate `3/3 pass`, `avg_weighted_score=0.9167`, `p95_latency_ms=4479.486`, `support_pass_rate=1.0`, `source_route_pass_rate=1.0`.
+- graph-lite 관측: 모든 graph-candidate case는 `graph_lite=hit`, header `hit`, `relations=8`, `context_added=True`였다.
+- compare: `docs/reports/RAG_QUALITY_MODEL_COMPARISON_2026-04-29_GRAPH_LITE_ACTIVE_DOC_QWEN.md` 기준 `ready`, selected candidate `ollama:qwen3.5:9b-nvfp4`, p95 `4468.718ms`.
+- 판단: graph-lite는 아직 `Quality` 전용으로 유지한다. 다만 active-doc snapshot 기준 qwen Quality graph-candidate gate는 통과했으므로, 다음 루프에서 operator policy와 승격 범위를 결정한다.
+
+## 2026-04-29 Graph-lite Promotion Policy Target
+
+- 완료 루프: `LOOP-112 Graph-lite Quality promotion decision and operator policy`
+- 목표: LOOP-111의 ready 결과를 바탕으로 graph-lite를 어디까지 노출/승격할지 운영 정책으로 고정한다.
+- 범위: Quality 전용 유지/부분 승격/보류 기준 문서화, operator-facing 상태 표시 기준, snapshot 생성/지정 절차, 실패 시 fallback 정책.
+- 제외: Balanced 기본 자동 적용 구현, 새 모델 기본값 변경, 유료 API 호출, full Neo4j/GraphRAG 운영.
+- 완료 기준: graph-lite Quality promotion decision이 go/no-go 형태로 기록되고, operator가 snapshot 준비/Quality 모드 선택/hit 확인/fallback 대응을 이해할 수 있어야 한다.
+- 정책 문서: `docs/reports/GRAPH_LITE_QUALITY_PROMOTION_POLICY_2026-04-29.md`
+- 결정: Quality opt-in graph-lite는 `Go`, Balanced 기본 graph-lite는 `No-Go`, qwen Quality 후보는 graph-candidate 전용 `Conditional Go`, snapshot 자동화와 full GraphRAG/Neo4j는 `No-Go`.
+- operator flow: snapshot build, `DOC_RAG_GRAPH_LITE_SNAPSHOT_DIR` 지정, Quality 모드 질의, `graph-lite=hit|fallback|disabled` 확인, fallback 대응 순서로 고정했다.
+- 다음 active: `LOOP-113 Browser companion PoC scope gate`.
+
+## 2026-04-29 Browser Companion Extension Review
+
+- 검토 문서: `docs/reports/BROWSER_EXTENSION_COMPANION_REVIEW_2026-04-29.md`
+- 판단: `nico-martin/gemma4-browser-extension` 구조는 Trunk RAG의 browser companion surface로는 유효하지만, 현재 local FastAPI/Chroma/managed-doc/admin/graph-lite 운영 경로를 대체하지 않는다.
+- 추천 PoC: Chrome side panel extension이 현재 페이지/선택 텍스트를 추출하고 local Trunk RAG 서버의 `/semantic-search`, `/query`, `/upload-requests`를 호출하는 얇은 companion부터 시작한다.
+- 보류: 브라우저-only RAG, WebGPU-only 모델 제공, IndexedDB를 본체 문서 source of truth로 승격, graph-lite snapshot browser 생성.
+- 실행 영향: graph-lite Quality 정책이 닫힌 뒤 `LOOP-113 Browser companion PoC scope gate`로 공식 승격했다.
+
+## 2026-04-29 Browser Companion Scope Gate Target
+
+- 완료 루프: `LOOP-113 Browser companion PoC scope gate`
+- 목표: 브라우저 companion extension을 실제 구현하기 전에 MVP에 들어갈 범위와 중단 조건을 결정한다.
+- 범위: side panel companion이 local Trunk RAG 서버에 연결하는 PoC 범위, 권한/보안/오프라인 경계, 구현 전 검증 기준 정리.
+- 제외: extension skeleton 구현, Chrome Web Store 배포, WebGPU-only model runtime 구현, 본체 runtime 대체.
+- 완료 기준: browser companion PoC go/no-go, skeleton PoC의 최소 범위와 검증 명령, blocker/restart 조건이 기록되어야 한다.
+- scope 문서: `docs/reports/BROWSER_COMPANION_POC_SCOPE_GATE_2026-04-29.md`
+- 결정: local-server companion PoC는 `Go`. 단, 본체를 대체하지 않는 얇은 Chrome MV3 side panel로 제한한다.
+- 권한 경계: 초기 권한은 `sidePanel`, `storage`, `activeTab`, `scripting`, localhost host permission으로 제한하고, 전체 `http/https` host permission은 기본 제외한다.
+- 다음 active: `LOOP-114 Browser companion extension skeleton PoC`.
+
+## 2026-04-29 Browser Companion Skeleton Target
+
+- 완료 루프: `LOOP-114 Browser companion extension skeleton PoC`
+- 목표: 의존성 설치 없이 로드 가능한 Chrome MV3 browser companion skeleton을 추가한다.
+- 범위: dedicated extension directory, manifest, side panel HTML/CSS/JS, local server health/query/upload request draft calls, explicit current-page/selection extraction helper, manifest validation.
+- 제외: Chrome Web Store packaging, WebGPU model runtime, browser-only RAG, background crawling, 본체 `/app` 동작 변경.
+- 완료 기준: extension skeleton이 repo 안에 격리되고, local Trunk RAG 서버 연결 상태와 `/query` 호출 payload가 구현되며, manifest/JS 정적 검증과 roadmap harness가 통과해야 한다.
+- 구현 결과: `browser_companion/`에 dependency-free Chrome MV3 side panel skeleton을 추가했다. local server URL 저장, `/health`, `/query`, graph-lite/support/citation 표시, 명시적 page capture, `/upload-requests` draft 생성을 포함한다.
+- 권한: `sidePanel`, `storage`, `activeTab`, `scripting`, localhost host permission만 허용한다.
+- 검증: `node --check browser_companion/background.js -> pass`; `node --check browser_companion/sidepanel.js -> pass`; `scripts/validate_browser_companion_manifest.py -> browser companion manifest ok`; `roadmap_harness.py validate -> ready`.
+- 구현 기록: `docs/reports/BROWSER_COMPANION_EXTENSION_SKELETON_2026-04-29.md`
+- 다음 active: `LOOP-115 Browser companion local-server smoke plan`.
+
+## 2026-04-29 Browser Companion Local-Server Smoke Target
+
+- 완료 루프: `LOOP-115 Browser companion local-server smoke plan`
+- 목표: browser companion skeleton을 실제 Chrome side panel에서 확인하기 전 필요한 local-server smoke 계획을 고정한다.
+- 범위: `/health`, `/query`, explicit page capture, upload draft의 수동 smoke 순서와 판정 기준.
+- 제외: Chrome Web Store packaging, 자동 브라우저 E2E, WebGPU model runtime, extension 권한 확대.
+- 완료 기준: 사람이 Chrome에서 load unpacked 후 따라갈 수 있는 smoke 순서와 성공/실패 증거 기록 기준이 문서화되어야 한다.
+- smoke 계획: `docs/reports/BROWSER_COMPANION_LOCAL_SERVER_SMOKE_PLAN_2026-04-29.md`
+- 단계: manifest load, local `/health`, Balanced/Quality `/query`, explicit page capture, upload draft 생성.
+- 다음 active: `LOOP-116 Browser companion loaded-extension manual smoke`.
+
+## 2026-04-29 Browser Companion Manual Smoke Target
+
+- 현재 active: `LOOP-116 Browser companion loaded-extension manual smoke`
+- 목표: Chrome에서 `browser_companion/`을 load unpacked로 열고 local-server smoke evidence를 기록한다.
+- 범위: manifest load, side panel open, local health, query, explicit page capture, upload draft evidence.
+- 제외: Chrome Web Store packaging, 자동 E2E harness, 권한 확대, WebGPU/on-device model runtime.
+- 완료 기준: smoke 단계별 결과가 기록되고, 실패 시 blocker와 재개 조건이 정리되어야 한다.
+- 다음 pending: `LOOP-117 Browser companion post-smoke hardening`.
 
 ## 0. 2026-03-13 우선순위 재정렬
 

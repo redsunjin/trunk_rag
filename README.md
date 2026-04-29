@@ -128,6 +128,7 @@
 - `web/js/*.js`: 프론트엔드 로직 모듈
 - `web/styles.css`: 공통 스타일
 - `web/assets/*.svg`: Trunk RAG 브랜드 마크, 워드마크, favicon
+- `browser_companion/`: 로컬 Trunk RAG 서버에 연결하는 Chrome MV3 side panel companion skeleton
 - `scripts/validate_rag_doc.py`: 등록 전 문서 검증 스크립트
 - `scripts/benchmark_multi_collection.py`: 단일/다중 컬렉션 검색 비교 벤치
 - `scripts/benchmark_token_chunking.py`: char/token 청킹 비교 벤치 스크립트
@@ -136,6 +137,7 @@
 - `scripts/compare_rag_quality.py`: 모델 후보별 RAG 품질 비교 게이트 스크립트
 - `scripts/build_graph_lite_snapshot.py`: 현재 markdown 원본에서 `chroma_db/graph_lite_snapshot`용 graph-lite snapshot 생성
 - `scripts/benchmark_graph_lite_sidecar.py`: graph-lite relation snapshot retrieval PoC 벤치 스크립트
+- `scripts/validate_browser_companion_manifest.py`: browser companion manifest/권한 경계 검증 스크립트
 - `scripts/check_ops_baseline_gate.py`: core 기본 컬렉션 상태와 `generic-baseline` 회귀 게이트를 한 번에 점검하는 스크립트
 - `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩 스크립트
 - `scripts/roadmap_harness.py`: `TODO.md`/`NEXT_SESSION_PLAN.md`의 루프 상태와 active 항목을 점검하는 스크립트
@@ -185,6 +187,13 @@
 - `docs/GRAPH_RAG_ARCHIVE_INDEX.md`: GraphRAG archive 문서 진입점
 - `docs/GRAPH_LITE_RELATION_SIDECAR_CONTRACT.md`: graph-lite relation sidecar PoC 계약
 - `docs/reports/GRAPH_LITE_ACTIVE_DOC_QUALITY_DRILL_2026-04-29.md`: active-doc graph-lite snapshot build/benchmark drill 증거
+- `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-04-29_GRAPH_LITE_ACTIVE_DOC_QWEN.md`: active-doc graph-lite snapshot 기준 qwen Quality answer eval 결과
+- `docs/reports/RAG_QUALITY_MODEL_COMPARISON_2026-04-29_GRAPH_LITE_ACTIVE_DOC_QWEN.md`: active-doc graph-lite Quality compare gate 결과
+- `docs/reports/GRAPH_LITE_QUALITY_PROMOTION_POLICY_2026-04-29.md`: graph-lite Quality opt-in 승격/운영 정책
+- `docs/reports/BROWSER_EXTENSION_COMPANION_REVIEW_2026-04-29.md`: Trunk RAG browser companion extension 가능성 검토
+- `docs/reports/BROWSER_COMPANION_POC_SCOPE_GATE_2026-04-29.md`: browser companion extension PoC 범위 게이트
+- `docs/reports/BROWSER_COMPANION_EXTENSION_SKELETON_2026-04-29.md`: dependency-free Chrome MV3 companion skeleton 구현 기록
+- `docs/reports/BROWSER_COMPANION_LOCAL_SERVER_SMOKE_PLAN_2026-04-29.md`: browser companion loaded-extension smoke 계획
 - `docs/VECTORSTORE_POLICY.md`: 벡터스토어 운영/용량 정책
 - `docs/COLLECTION_ROUTING_POLICY.md`: 분야별 컬렉션/라우팅 정책
 - `docs/FUTURE_EXTERNAL_CONSTRAINTS.md`: 외부 제한사항 중 추후 적용 항목

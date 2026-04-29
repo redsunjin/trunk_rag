@@ -1,0 +1,578 @@
+{
+  "generated_at": "2026-04-29T05:03:02+00:00",
+  "outcome": "ready",
+  "recommendation": "`ollama:qwen3.5:9b-nvfp4` satisfies the selected RAG quality gate.",
+  "selected_candidate": "ollama:qwen3.5:9b-nvfp4",
+  "selected_buckets": [
+    "graph-candidate"
+  ],
+  "required_buckets": [
+    "graph-candidate"
+  ],
+  "thresholds": {
+    "min_pass_rate": 1.0,
+    "min_avg_weighted_score": 0.85,
+    "max_p95_ms": 20000.0
+  },
+  "eval_file": "evals/answer_level_eval_fixtures.jsonl",
+  "base_url": "http://127.0.0.1:8012",
+  "timeout_seconds": 180,
+  "query_timeout_seconds": 120,
+  "quality_mode": "quality",
+  "quality_stage": "quality",
+  "models": [
+    {
+      "provider": "ollama",
+      "model": "qwen3.5:9b-nvfp4",
+      "label": "ollama:qwen3.5:9b-nvfp4",
+      "gate": {
+        "ready": true,
+        "checks": [
+          {
+            "name": "overall_pass_rate",
+            "pass": true,
+            "actual": 1.0,
+            "expected": ">= 1.0"
+          },
+          {
+            "name": "overall_avg_weighted_score",
+            "pass": true,
+            "actual": 0.9167,
+            "expected": ">= 0.85"
+          },
+          {
+            "name": "overall_p95_latency_ms",
+            "pass": true,
+            "actual": 4468.718,
+            "expected": "<= 20000.0"
+          },
+          {
+            "name": "overall_support_pass_rate",
+            "pass": true,
+            "actual": 1.0,
+            "expected": ">= 1.0"
+          },
+          {
+            "name": "graph-candidate.pass_rate",
+            "pass": true,
+            "actual": 1.0,
+            "expected": ">= 1.0"
+          },
+          {
+            "name": "graph-candidate.avg_weighted_score",
+            "pass": true,
+            "actual": 0.9167,
+            "expected": ">= 0.85"
+          },
+          {
+            "name": "graph-candidate.p95_latency_ms",
+            "pass": true,
+            "actual": 4468.718,
+            "expected": "<= 20000.0"
+          },
+          {
+            "name": "graph-candidate.support_pass_rate",
+            "pass": true,
+            "actual": 1.0,
+            "expected": ">= 1.0"
+          }
+        ]
+      },
+      "summary": {
+        "cases": 3,
+        "passed": 3,
+        "pass_rate": 1.0,
+        "avg_latency_ms": 4393.238,
+        "p95_latency_ms": 4468.718,
+        "avg_weighted_score": 0.9167,
+        "support_pass_rate": 1.0,
+        "source_route_pass_rate": 1.0,
+        "avg_source_route_coverage": 1.0,
+        "bucket_summaries": {
+          "graph-candidate": {
+            "cases": 3,
+            "passed": 3,
+            "pass_rate": 1.0,
+            "avg_latency_ms": 4393.238,
+            "p95_latency_ms": 4468.718,
+            "avg_weighted_score": 0.9167,
+            "support_pass_rate": 1.0,
+            "source_route_pass_rate": 1.0,
+            "avg_source_route_coverage": 1.0
+          }
+        }
+      },
+      "failed_cases": [],
+      "raw_payload": {
+        "generated_at": "2026-04-29T05:03:02+00:00",
+        "backend": "vector_query",
+        "eval_file": "evals/answer_level_eval_fixtures.jsonl",
+        "base_url": "http://127.0.0.1:8012",
+        "llm_provider": "ollama",
+        "llm_model": "qwen3.5:9b-nvfp4",
+        "query_timeout_seconds": 120,
+        "quality_mode": "quality",
+        "quality_stage": "quality",
+        "debug": true,
+        "health": {
+          "status": "ok",
+          "collection_key": "all",
+          "collection": "w2_007_header_rag",
+          "default_runtime_collection_keys": [
+            "all"
+          ],
+          "compatibility_bundle_key": "sample_pack",
+          "compatibility_bundle_label": "sample-pack 호환 번들",
+          "compatibility_bundle_collection_keys": [
+            "eu",
+            "fr",
+            "ge",
+            "it",
+            "uk"
+          ],
+          "compatibility_bundle_optional": true,
+          "seed_corpus_key": "sample_pack_bootstrap",
+          "seed_corpus_label": "sample-pack demo/bootstrap corpus",
+          "seed_corpus_role": "demo_bootstrap",
+          "seed_corpus_dataset": "sample-eu-science-history",
+          "seed_corpus_description": "First-run demo corpus used to populate the core all collection and the optional sample-pack compatibility collections. It is bundled example data, not product-domain data.",
+          "persist_dir": "/Users/Agent/ps-workspace/trunk_rag/chroma_db",
+          "vectors": 37,
+          "auto_approve": false,
+          "pending_requests": 0,
+          "chunking_mode": "char",
+          "embedding_model": "BAAI/bge-m3",
+          "query_timeout_seconds": 30,
+          "max_context_chars": 1500,
+          "default_llm_provider": "ollama",
+          "default_llm_model": "gemma4:e4b",
+          "default_llm_base_url": "http://localhost:11434",
+          "runtime_profile_status": "verified",
+          "runtime_profile_scope": "local",
+          "runtime_profile_message": "현재 Ollama 런타임 프로파일은 gemma4 기본 로컬 운영 경로로 검증됐습니다.",
+          "runtime_profile_recommendation": "`DOC_RAG_QUERY_TIMEOUT_SECONDS=30` 이상을 유지하세요.",
+          "runtime_query_budget_profile": "verified_local_single",
+          "runtime_query_budget_summary": "profile=verified_local_single | k=3 | fetch_k=10 | max_docs=3 | context=1500 | generation=standard | max_output_tokens=192",
+          "embedding_fingerprint_status": "ready",
+          "embedding_fingerprint_message": "현재 임베딩 모델과 저장된 컬렉션 fingerprint가 일치합니다.",
+          "embedding_fingerprint_details": [
+            {
+              "collection_key": "all",
+              "vectors": 37,
+              "status": "ready",
+              "stored_embedding_model": "BAAI/bge-m3",
+              "stored_embedding_fingerprint": "d790e737453c38959ca181c43431c25924a5340160b90e5884404377ef08dd49"
+            }
+          ],
+          "compatibility_bundle_embedding_fingerprint_status": "ready",
+          "compatibility_bundle_embedding_fingerprint_message": "현재 임베딩 모델과 저장된 컬렉션 fingerprint가 일치합니다.",
+          "compatibility_bundle_embedding_fingerprint_details": [
+            {
+              "collection_key": "eu",
+              "vectors": 9,
+              "status": "ready",
+              "stored_embedding_model": "BAAI/bge-m3",
+              "stored_embedding_fingerprint": "d790e737453c38959ca181c43431c25924a5340160b90e5884404377ef08dd49"
+            },
+            {
+              "collection_key": "fr",
+              "vectors": 7,
+              "status": "ready",
+              "stored_embedding_model": "BAAI/bge-m3",
+              "stored_embedding_fingerprint": "d790e737453c38959ca181c43431c25924a5340160b90e5884404377ef08dd49"
+            },
+            {
+              "collection_key": "ge",
+              "vectors": 7,
+              "status": "ready",
+              "stored_embedding_model": "BAAI/bge-m3",
+              "stored_embedding_fingerprint": "d790e737453c38959ca181c43431c25924a5340160b90e5884404377ef08dd49"
+            },
+            {
+              "collection_key": "it",
+              "vectors": 7,
+              "status": "ready",
+              "stored_embedding_model": "BAAI/bge-m3",
+              "stored_embedding_fingerprint": "d790e737453c38959ca181c43431c25924a5340160b90e5884404377ef08dd49"
+            },
+            {
+              "collection_key": "uk",
+              "vectors": 7,
+              "status": "ready",
+              "stored_embedding_model": "BAAI/bge-m3",
+              "stored_embedding_fingerprint": "d790e737453c38959ca181c43431c25924a5340160b90e5884404377ef08dd49"
+            }
+          ],
+          "release_web_status": "ready",
+          "release_web_headline": "기본 웹 MVP 경로로 바로 사용할 수 있습니다.",
+          "release_web_steps": [
+            "기본 시작 경로는 `run_doc_rag.bat` 하나로 유지합니다.",
+            "Ollama를 `http://localhost:11434`에서 실행하고 기본 모델 `gemma4:e4b`을 준비하세요.",
+            "오프라인 환경이면 `DOC_RAG_EMBEDDING_MODEL`에 로컬 임베딩 경로를 지정하거나 HuggingFace cache를 준비하세요.",
+            "`DOC_RAG_QUERY_TIMEOUT_SECONDS=30` 이상을 유지하세요.",
+            "`/intro -> /app` 경로로 진입해 바로 질의할 수 있습니다.",
+            "실패 시 `/intro`의 상태 메시지와 request_id를 기준으로 원인을 확인하세요."
+          ]
+        },
+        "collections": {
+          "default_collection_key": "all",
+          "auto_approve": false,
+          "collections": [
+            {
+              "key": "all",
+              "name": "w2_007_header_rag",
+              "label": "전체 (기본)",
+              "file_names": [
+                "eu_summry.md",
+                "fr.md",
+                "ge.md",
+                "it.md",
+                "uk.md"
+              ],
+              "default_country": "all",
+              "default_doc_type": "summary",
+              "vectors": 37,
+              "soft_cap": 30000,
+              "hard_cap": 50000,
+              "soft_usage_ratio": 0.0012,
+              "hard_usage_ratio": 0.0007,
+              "soft_exceeded": false,
+              "hard_exceeded": false
+            },
+            {
+              "key": "eu",
+              "name": "rag_science_history_eu",
+              "label": "유럽 요약",
+              "file_names": [
+                "eu_summry.md"
+              ],
+              "default_country": "all",
+              "default_doc_type": "summary",
+              "vectors": 9,
+              "soft_cap": 30000,
+              "hard_cap": 50000,
+              "soft_usage_ratio": 0.0003,
+              "hard_usage_ratio": 0.0002,
+              "soft_exceeded": false,
+              "hard_exceeded": false
+            },
+            {
+              "key": "fr",
+              "name": "rag_science_history_fr",
+              "label": "프랑스",
+              "file_names": [
+                "fr.md"
+              ],
+              "default_country": "france",
+              "default_doc_type": "country",
+              "vectors": 7,
+              "soft_cap": 30000,
+              "hard_cap": 50000,
+              "soft_usage_ratio": 0.0002,
+              "hard_usage_ratio": 0.0001,
+              "soft_exceeded": false,
+              "hard_exceeded": false
+            },
+            {
+              "key": "ge",
+              "name": "rag_science_history_ge",
+              "label": "독일",
+              "file_names": [
+                "ge.md"
+              ],
+              "default_country": "germany",
+              "default_doc_type": "country",
+              "vectors": 7,
+              "soft_cap": 30000,
+              "hard_cap": 50000,
+              "soft_usage_ratio": 0.0002,
+              "hard_usage_ratio": 0.0001,
+              "soft_exceeded": false,
+              "hard_exceeded": false
+            },
+            {
+              "key": "it",
+              "name": "rag_science_history_it",
+              "label": "이탈리아",
+              "file_names": [
+                "it.md"
+              ],
+              "default_country": "italy",
+              "default_doc_type": "country",
+              "vectors": 7,
+              "soft_cap": 30000,
+              "hard_cap": 50000,
+              "soft_usage_ratio": 0.0002,
+              "hard_usage_ratio": 0.0001,
+              "soft_exceeded": false,
+              "hard_exceeded": false
+            },
+            {
+              "key": "uk",
+              "name": "rag_science_history_uk",
+              "label": "영국",
+              "file_names": [
+                "uk.md"
+              ],
+              "default_country": "uk",
+              "default_doc_type": "country",
+              "vectors": 7,
+              "soft_cap": 30000,
+              "hard_cap": 50000,
+              "soft_usage_ratio": 0.0002,
+              "hard_usage_ratio": 0.0001,
+              "soft_exceeded": false,
+              "hard_exceeded": false
+            }
+          ]
+        },
+        "summary": {
+          "cases": 3,
+          "passed": 3,
+          "pass_rate": 1.0,
+          "avg_latency_ms": 4393.238,
+          "p95_latency_ms": 4468.718,
+          "avg_weighted_score": 0.9167,
+          "support_pass_rate": 1.0,
+          "source_route_pass_rate": 1.0,
+          "avg_source_route_coverage": 1.0,
+          "bucket_summaries": {
+            "graph-candidate": {
+              "cases": 3,
+              "passed": 3,
+              "pass_rate": 1.0,
+              "avg_latency_ms": 4393.238,
+              "p95_latency_ms": 4468.718,
+              "avg_weighted_score": 0.9167,
+              "support_pass_rate": 1.0,
+              "source_route_pass_rate": 1.0,
+              "avg_source_route_coverage": 1.0
+            }
+          }
+        },
+        "results": [
+          {
+            "id": "GQ-09",
+            "bucket": "graph-candidate",
+            "query": "뉴턴의 국장, 볼테르의 충격, 프랑스/독일 계몽주의 확산이 어떤 연쇄로 이어졌는지 설명해줘.",
+            "request_mode": "fallback_all_for_eval",
+            "collection_keys": [
+              "uk",
+              "ge",
+              "fr"
+            ],
+            "expected_route_keys": [
+              "all"
+            ],
+            "actual_route_keys": [
+              "all"
+            ],
+            "route_pass": true,
+            "status": 200,
+            "latency_ms": 4472.493,
+            "answer_length": 311,
+            "answer_preview": "1727 년 뉴턴의 웨스트민스터 사원 국장은 평민 출신 과학자가 왕과 동등한 권위를 가진 사건으로, 볼테르가 이를 목격하며 영국의 개방성과 지성의 힘을 발견했습니다. 이 충격은 프랑스와 독일의 지식인들에게 전파되어 신분제의 벽을 허물고 계몽주의를 확산시키는 결정적 계기가 되었습니다. 반면 라이프니츠는 정치적 이해관계로 인해 하노버 왕가의 즉위 이후 외면당하며 잊혀졌고, 이는 당시 과학이 국가 간 대결과 권력 구조에 깊이 결합된",
+            "answer": "1727 년 뉴턴의 웨스트민스터 사원 국장은 평민 출신 과학자가 왕과 동등한 권위를 가진 사건으로, 볼테르가 이를 목격하며 영국의 개방성과 지성의 힘을 발견했습니다. 이 충격은 프랑스와 독일의 지식인들에게 전파되어 신분제의 벽을 허물고 계몽주의를 확산시키는 결정적 계기가 되었습니다. 반면 라이프니츠는 정치적 이해관계로 인해 하노버 왕가의 즉위 이후 외면당하며 잊혀졌고, 이는 당시 과학이 국가 간 대결과 권력 구조에 깊이 결합된 연쇄임을 보여줍니다. 결국 뉴턴의 장례식은 단순한 애도 행사가 아니라 유럽 전역으로 사상이 이동하고 계몽주의가 확산되는 강력한",
+            "required_hits": [
+              "계몽주의",
+              "연쇄",
+              "뉴턴",
+              "볼테르",
+              "확산",
+              "유럽"
+            ],
+            "required_total": 6,
+            "required_ratio": 1.0,
+            "must_include_any_hits": [
+              "사상"
+            ],
+            "must_include_any_total": 4,
+            "must_include_any_ratio": 0.25,
+            "forbidden_hits": [],
+            "min_answer_chars": 180,
+            "min_chars_ratio": 1.0,
+            "precision_score": 1.0,
+            "completeness_score": 0.625,
+            "hallucination_score": 1.0,
+            "support_level": "supported",
+            "support_reason": "multiple_context_segments",
+            "support_pass": true,
+            "citation_count": 2,
+            "citations": [
+              "ge.md",
+              "uk.md"
+            ],
+            "source_count": 2,
+            "source_collection_keys": [
+              "all",
+              "all"
+            ],
+            "source_covered_keys": [
+              "all"
+            ],
+            "source_route_coverage_ratio": 1.0,
+            "source_route_pass": true,
+            "graph_lite_header": "hit",
+            "graph_lite_enabled": true,
+            "graph_lite_status": "hit",
+            "graph_lite_fallback_reason": "-",
+            "graph_lite_relation_count": 8,
+            "graph_lite_context_added": true,
+            "weighted_score": 0.85,
+            "pass": true,
+            "error_code": null,
+            "error_message": null
+          },
+          {
+            "id": "GQ-12",
+            "bucket": "graph-candidate",
+            "query": "마그누스 실험실에서 시작된 네트워크가 헬름홀츠, 지멘스, 독일 물리학회, 산업화로 어떻게 이어졌는지 설명해줘.",
+            "request_mode": "explicit_single",
+            "collection_keys": [
+              "ge"
+            ],
+            "expected_route_keys": [
+              "ge"
+            ],
+            "actual_route_keys": [
+              "ge"
+            ],
+            "route_pass": true,
+            "status": 200,
+            "latency_ms": 4272.474,
+            "answer_length": 282,
+            "answer_preview": "마그누스 실험실은 신분과 배경을 초월한 지적 교류의 장으로 기능하며, 이곳에서 가난한 의대생 헬름홀츠와 군 장교 출신 지멘스가 만났습니다. 이 만남은 단순한 인적 연결을 넘어 세계 최초의 물리학회인 독일 물리학회의 모태가 되었고, 기초 과학의 제도화를 통해 실용적 공학으로 이어지는 결정적 발판을 마련했습니다. 결과적으로 마그누스 실험실은 기초 과학의 성과를 기업가 정신과 산업화로 자산화하는 과정에서 지멘스와 헬름홀츠를 연결하는",
+            "answer": "마그누스 실험실은 신분과 배경을 초월한 지적 교류의 장으로 기능하며, 이곳에서 가난한 의대생 헬름홀츠와 군 장교 출신 지멘스가 만났습니다. 이 만남은 단순한 인적 연결을 넘어 세계 최초의 물리학회인 독일 물리학회의 모태가 되었고, 기초 과학의 제도화를 통해 실용적 공학으로 이어지는 결정적 발판을 마련했습니다. 결과적으로 마그누스 실험실은 기초 과학의 성과를 기업가 정신과 산업화로 자산화하는 과정에서 지멘스와 헬름홀츠를 연결하는 핵심 네트워크로 작용하여 독일의 산업화와 기술 문화 융합을 이끈 것입니다.",
+            "required_hits": [
+              "마그누스",
+              "헬름홀츠",
+              "지멘스",
+              "독일 물리학회",
+              "산업"
+            ],
+            "required_total": 5,
+            "required_ratio": 1.0,
+            "must_include_any_hits": [
+              "실험실",
+              "산업",
+              "산업화",
+              "연결",
+              "네트워크"
+            ],
+            "must_include_any_total": 6,
+            "must_include_any_ratio": 0.8333,
+            "forbidden_hits": [],
+            "min_answer_chars": 180,
+            "min_chars_ratio": 1.0,
+            "precision_score": 1.0,
+            "completeness_score": 0.9166,
+            "hallucination_score": 1.0,
+            "support_level": "supported",
+            "support_reason": "multiple_context_segments",
+            "support_pass": true,
+            "citation_count": 1,
+            "citations": [
+              "ge.md"
+            ],
+            "source_count": 2,
+            "source_collection_keys": [
+              "ge",
+              "ge"
+            ],
+            "source_covered_keys": [
+              "ge"
+            ],
+            "source_route_coverage_ratio": 1.0,
+            "source_route_pass": true,
+            "graph_lite_header": "hit",
+            "graph_lite_enabled": true,
+            "graph_lite_status": "hit",
+            "graph_lite_fallback_reason": "-",
+            "graph_lite_relation_count": 8,
+            "graph_lite_context_added": true,
+            "weighted_score": 0.9666,
+            "pass": true,
+            "error_code": null,
+            "error_message": null
+          },
+          {
+            "id": "GQ-15",
+            "bucket": "graph-candidate",
+            "query": "에콜 폴리테크니크, 훔볼트 대학, 왕립학회, 파도바 대학을 한 관계망으로 놓고 각자의 역할을 설명해줘.",
+            "request_mode": "fallback_all_for_eval",
+            "collection_keys": [
+              "fr",
+              "ge",
+              "uk",
+              "it"
+            ],
+            "expected_route_keys": [
+              "all"
+            ],
+            "actual_route_keys": [
+              "all"
+            ],
+            "route_pass": true,
+            "status": 200,
+            "latency_ms": 4434.748,
+            "answer_length": 333,
+            "answer_preview": "제공된 문서에는 에콜 폴리테크니크와 훔볼트 대학의 상세한 역할은 기술되어 있으나, 왕립학회와 파도바 대학이 에콜 폴리테크니크 및 훔볼트 대학과 직접적인 관계망으로 연결되거나 상호작용하는 내용은 포함되어 있지 않습니다. 따라서 네 기관을 하나의 통합된 관계망으로 설명하거나 각자의 역할을 비교하여 서술할 수 있는 근거가 부족합니다. 문서에 따르면 에콜 폴리테크니크는 프랑스 혁명과 전쟁이라는 국가적 위기 속에서 실용적 기술 인재를 ",
+            "answer": "제공된 문서에는 에콜 폴리테크니크와 훔볼트 대학의 상세한 역할은 기술되어 있으나, 왕립학회와 파도바 대학이 에콜 폴리테크니크 및 훔볼트 대학과 직접적인 관계망으로 연결되거나 상호작용하는 내용은 포함되어 있지 않습니다. 따라서 네 기관을 하나의 통합된 관계망으로 설명하거나 각자의 역할을 비교하여 서술할 수 있는 근거가 부족합니다. 문서에 따르면 에콜 폴리테크니크는 프랑스 혁명과 전쟁이라는 국가적 위기 속에서 실용적 기술 인재를 양성한 '기술 병기창' 역할을 수행했으며, 훔볼트 대학은 나폴레옹 전쟁 패배 이후 독일의 재건을 위해 연구와 교육을 통합한 새로운 대학 모델로 등장했습니다. 반면 왕립",
+            "required_hits": [
+              "에콜 폴리테크니크",
+              "훔볼트 대학",
+              "왕립학회",
+              "파도바 대학",
+              "관계망",
+              "역할"
+            ],
+            "required_total": 6,
+            "required_ratio": 1.0,
+            "must_include_any_hits": [
+              "국가",
+              "연결",
+              "기관",
+              "대학"
+            ],
+            "must_include_any_total": 6,
+            "must_include_any_ratio": 0.6667,
+            "forbidden_hits": [],
+            "min_answer_chars": 190,
+            "min_chars_ratio": 1.0,
+            "precision_score": 1.0,
+            "completeness_score": 0.8334,
+            "hallucination_score": 1.0,
+            "support_level": "supported",
+            "support_reason": "multiple_context_segments",
+            "support_pass": true,
+            "citation_count": 2,
+            "citations": [
+              "fr.md",
+              "ge.md"
+            ],
+            "source_count": 2,
+            "source_collection_keys": [
+              "all",
+              "all"
+            ],
+            "source_covered_keys": [
+              "all"
+            ],
+            "source_route_coverage_ratio": 1.0,
+            "source_route_pass": true,
+            "graph_lite_header": "hit",
+            "graph_lite_enabled": true,
+            "graph_lite_status": "hit",
+            "graph_lite_fallback_reason": "-",
+            "graph_lite_relation_count": 8,
+            "graph_lite_context_added": true,
+            "weighted_score": 0.9334,
+            "pass": true,
+            "error_code": null,
+            "error_message": null
+          }
+        ]
+      }
+    }
+  ]
+}

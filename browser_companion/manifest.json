@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Trunk RAG Browser Companion",
+  "version": "0.1.0",
+  "description": "Side panel companion for a local Trunk RAG server.",
+  "minimum_chrome_version": "114",
+  "permissions": ["sidePanel", "storage", "activeTab", "scripting"],
+  "host_permissions": ["http://127.0.0.1/*", "http://localhost/*"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "action": {
+    "default_title": "Open Trunk RAG"
+  }
+}

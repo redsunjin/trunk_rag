@@ -72,6 +72,13 @@
 - `docs/NEXT_SESSION_CONTEXT_2026-02-28.md`
 - `Graph_Lang도입검토.md`
 - `docs/reports/GRAPH_LITE_ACTIVE_DOC_QUALITY_DRILL_2026-04-29.md`
+- `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-04-29_GRAPH_LITE_ACTIVE_DOC_QWEN.md`
+- `docs/reports/RAG_QUALITY_MODEL_COMPARISON_2026-04-29_GRAPH_LITE_ACTIVE_DOC_QWEN.md`
+- `docs/reports/GRAPH_LITE_QUALITY_PROMOTION_POLICY_2026-04-29.md`
+- `docs/reports/BROWSER_EXTENSION_COMPANION_REVIEW_2026-04-29.md`
+- `docs/reports/BROWSER_COMPANION_POC_SCOPE_GATE_2026-04-29.md`
+- `docs/reports/BROWSER_COMPANION_EXTENSION_SKELETON_2026-04-29.md`
+- `docs/reports/BROWSER_COMPANION_LOCAL_SERVER_SMOKE_PLAN_2026-04-29.md`
 
 ## Roadmap Loop Harness
 
@@ -200,8 +207,13 @@
 | LOOP-108 | done | Graph-lite active-doc snapshot builder | `./.venv/bin/python -m pytest -q tests/test_graph_lite_snapshot_builder.py tests/test_graph_lite_service.py tests/api/test_query_api.py` + `./.venv/bin/python scripts/build_graph_lite_snapshot.py --output-dir /tmp/trunk_rag_graph_lite_snapshot_loop108` + graph-lite benchmark + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-109 | done | Graph-lite Quality status exposure and operator handoff | `node --check web/js/app_page.js` + `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-110 | done | Graph-lite active-doc Quality drill and fixture seed | `./.venv/bin/python -m pytest -q tests/test_graph_lite_snapshot_builder.py tests/test_graph_lite_service.py tests/api/test_query_api.py` + `./.venv/bin/python scripts/build_graph_lite_snapshot.py --output-dir /tmp/trunk_rag_graph_lite_snapshot_loop110` + `./.venv/bin/python scripts/benchmark_graph_lite_sidecar.py --snapshot-dir /tmp/trunk_rag_graph_lite_snapshot_loop110 --output-json /tmp/graph_lite_active_doc_loop110.json --output-report /tmp/GRAPH_LITE_ACTIVE_DOC_LOOP110.md` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-111 | active | Graph-lite Quality eval refresh after active-doc drill | `./.venv/bin/python -m pytest -q tests/test_eval_query_quality.py tests/test_compare_rag_quality.py tests/test_answer_level_eval_fixtures.py` + graph-candidate quality eval with active-doc snapshot + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-112 | pending | Graph-lite Quality promotion decision and operator policy | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-111 | done | Graph-lite Quality eval refresh after active-doc drill | `./.venv/bin/python -m pytest -q tests/test_eval_query_quality.py tests/test_compare_rag_quality.py tests/test_answer_level_eval_fixtures.py` + graph-candidate quality eval with active-doc snapshot + compare gate + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-112 | done | Graph-lite Quality promotion decision and operator policy | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-113 | done | Browser companion PoC scope gate | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-114 | done | Browser companion extension skeleton PoC | `node --check browser_companion/background.js` + `node --check browser_companion/sidepanel.js` + `./.venv/bin/python scripts/validate_browser_companion_manifest.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-115 | done | Browser companion local-server smoke plan | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-116 | active | Browser companion loaded-extension manual smoke | Chrome side panel 수동 로드 검증 후 기록 |
+| LOOP-117 | pending | Browser companion post-smoke hardening | loaded-extension smoke 결과 기준 후속 보강 |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -3127,7 +3139,7 @@ closeout 메모 (2026-04-29):
 - 증거 문서는 `docs/reports/GRAPH_LITE_ACTIVE_DOC_QUALITY_DRILL_2026-04-29.md`에 고정했다.
 - 판단: archived GraphRAG snapshot 없이도 현재 seed + managed active 문서 기준 graph-lite relation drill이 유지된다. 기본 Balanced 승격은 하지 않고, 다음 루프에서 Quality answer eval refresh로 판단한다.
 
-## 현재 Active Loop (LOOP-111)
+## 완료 Loop (LOOP-111)
 
 목표:
 - active-doc snapshot drill 결과를 실제 Quality answer-level 평가와 연결해 graph-lite 보조 계층의 답변 품질 개선 여부를 다시 판단한다.
@@ -3144,6 +3156,130 @@ closeout 메모 (2026-04-29):
 검증:
 - `./.venv/bin/python -m pytest -q tests/test_eval_query_quality.py tests/test_compare_rag_quality.py tests/test_answer_level_eval_fixtures.py`
 - graph-candidate quality eval with active-doc snapshot
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-04-29):
+- 브라우저 companion extension 검토는 `docs/reports/BROWSER_EXTENSION_COMPANION_REVIEW_2026-04-29.md`로 분리해 후속 후보로 기록했고, 현재 graph-lite track 우선순위는 유지했다.
+- `scripts/eval_query_quality.py` 리포트에 `graph_lite_header`, `graph_lite_status`, relation count, context 추가 여부를 case별로 남기도록 보강했다.
+- 정적/단위 검증은 `tests/test_eval_query_quality.py tests/test_compare_rag_quality.py tests/test_answer_level_eval_fixtures.py -> 13 passed`, `py_compile scripts/eval_query_quality.py scripts/compare_rag_quality.py -> pass`.
+- active-doc snapshot은 `/tmp/trunk_rag_graph_lite_snapshot_loop111`에 재생성했고 `source_docs=5`, `section_hits=21`, `entities=20`, `relations=48`이었다.
+- qwen Quality answer eval은 `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-04-29_GRAPH_LITE_ACTIVE_DOC_QWEN.md` 기준 graph-candidate `3/3 pass`, `avg_weighted_score=0.9167`, `p95_latency_ms=4479.486`, `support_pass_rate=1.0`, `source_route_pass_rate=1.0`이었다.
+- 모든 graph-candidate case는 `graph_lite=hit`, header `hit`, `relations=8`, `context_added=True`로 확인됐다.
+- compare gate는 `docs/reports/RAG_QUALITY_MODEL_COMPARISON_2026-04-29_GRAPH_LITE_ACTIVE_DOC_QWEN.md` 기준 `ready`, selected candidate `ollama:qwen3.5:9b-nvfp4`, p95 `4468.718ms`였다.
+- 판단: graph-lite는 아직 `Quality` 전용으로 유지한다. 다만 active-doc snapshot 기준 qwen Quality graph-candidate gate는 통과했으므로, 다음 루프에서 operator policy와 승격 범위를 결정한다.
+
+## 완료 Loop (LOOP-112)
+
+목표:
+- LOOP-111의 ready 결과를 바탕으로 graph-lite를 어디까지 노출/승격할지 운영 정책으로 고정한다.
+
+범위:
+- 포함: Quality 전용 유지/부분 승격/보류 기준 문서화, operator-facing 상태 표시 기준, snapshot 생성/지정 절차, 실패 시 fallback 정책
+- 제외: Balanced 기본 자동 적용 구현, 새 모델 기본값 변경, 유료 API 호출, full Neo4j/GraphRAG 운영
+
+완료 기준:
+- graph-lite Quality promotion decision이 go/no-go 형태로 기록되어야 한다.
+- operator가 snapshot 준비, Quality 모드 선택, hit/fallback 확인, 실패 대응을 이해할 수 있어야 한다.
+- 다음 실행 후보가 `LOOP-113 Browser companion PoC scope gate`로 남아야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-04-29):
+- `docs/reports/GRAPH_LITE_QUALITY_PROMOTION_POLICY_2026-04-29.md`에 go/no-go 판단을 고정했다.
+- 결정: Quality opt-in graph-lite는 `Go`, Balanced 기본 graph-lite는 `No-Go`, qwen Quality 후보는 graph-candidate 전용 `Conditional Go`, snapshot 자동화와 full GraphRAG/Neo4j는 `No-Go`.
+- operator flow는 snapshot build, `DOC_RAG_GRAPH_LITE_SNAPSHOT_DIR` 지정, Quality 모드 질의, `graph-lite=hit|fallback|disabled` 확인, fallback 대응 순서로 정리했다.
+- 다음 실행 후보는 `LOOP-113 Browser companion PoC scope gate`로 승격했다.
+
+## 완료 Loop (LOOP-113)
+
+목표:
+- 브라우저 companion extension을 실제 구현하기 전에 MVP에 들어갈 범위와 중단 조건을 결정한다.
+
+범위:
+- 포함: side panel companion이 local Trunk RAG 서버에 연결하는 PoC 범위, 권한/보안/오프라인 경계, 구현 전 검증 기준 정리
+- 제외: extension skeleton 구현, Chrome Web Store 배포, WebGPU-only model runtime 구현, 본체 runtime 대체
+
+완료 기준:
+- browser companion PoC를 진행할지 go/no-go가 기록되어야 한다.
+- 진행한다면 skeleton PoC의 최소 범위와 검증 명령이 `LOOP-114`에 남아야 한다.
+- 진행하지 않는다면 재개 조건과 blocker가 기록되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-04-29):
+- `docs/reports/BROWSER_COMPANION_POC_SCOPE_GATE_2026-04-29.md`에 scope gate를 고정했다.
+- 결정: local-server companion PoC는 `Go`다. 단, Trunk RAG 본체를 대체하지 않는 얇은 Chrome MV3 side panel로 제한한다.
+- 초기 권한은 `sidePanel`, `storage`, `activeTab`, `scripting`, localhost host permission으로 제한하고, `http://*/*`/`https://*/*` 전체 host permission은 기본 제외한다.
+- 첫 skeleton은 의존성 설치 없는 vanilla JavaScript로 진행한다.
+
+## 완료 Loop (LOOP-114)
+
+목표:
+- 의존성 설치 없이 로드 가능한 Chrome MV3 browser companion skeleton을 추가한다.
+
+범위:
+- 포함: dedicated extension directory, manifest, side panel HTML/CSS/JS, local server health/query/upload request draft calls, explicit current-page/selection extraction helper, manifest validation
+- 제외: Chrome Web Store packaging, WebGPU model runtime, browser-only RAG, background crawling, 본체 `/app` 동작 변경
+
+완료 기준:
+- extension skeleton이 repo 안에 격리되어 있어야 한다.
+- local Trunk RAG 서버 연결 상태와 `/query` 호출 payload가 구현되어야 한다.
+- current page/selection extraction은 explicit user action으로만 실행되어야 한다.
+- manifest/JS 정적 검증과 roadmap harness가 통과해야 한다.
+
+검증:
+- `node --check browser_companion/background.js`
+- `node --check browser_companion/sidepanel.js`
+- `./.venv/bin/python scripts/validate_browser_companion_manifest.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-04-29):
+- `browser_companion/`에 dependency-free Chrome MV3 side panel skeleton을 추가했다.
+- 구현 범위는 local server URL 저장, `/health` 확인, `/query` Balanced/Quality 호출, graph-lite/support/citation/request id 표시, 명시적 current page/selection capture, `/upload-requests` draft 생성이다.
+- manifest 권한은 `sidePanel`, `storage`, `activeTab`, `scripting`과 localhost host permission만 허용한다.
+- 검증은 `node --check browser_companion/background.js -> pass`, `node --check browser_companion/sidepanel.js -> pass`, `scripts/validate_browser_companion_manifest.py -> browser companion manifest ok`, `roadmap_harness.py validate -> ready`.
+- 구현 기록은 `docs/reports/BROWSER_COMPANION_EXTENSION_SKELETON_2026-04-29.md`에 고정했다.
+
+## 완료 Loop (LOOP-115)
+
+목표:
+- browser companion skeleton을 실제 Chrome side panel에서 확인하기 전 필요한 local-server smoke 계획을 고정한다.
+
+범위:
+- 포함: `/health`, `/query`, explicit page capture, upload draft의 수동 smoke 순서와 판정 기준
+- 제외: Chrome Web Store packaging, 자동 브라우저 E2E, WebGPU model runtime, extension 권한 확대
+
+완료 기준:
+- 사람이 Chrome에서 load unpacked 후 따라갈 수 있는 smoke 순서가 문서화되어야 한다.
+- 성공/실패 증거로 무엇을 기록할지 정해야 한다.
+- 다음 루프 `LOOP-116`의 loaded-extension manual smoke 조건이 명확해야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-04-29):
+- `docs/reports/BROWSER_COMPANION_LOCAL_SERVER_SMOKE_PLAN_2026-04-29.md`에 loaded-extension smoke 순서와 pass/fail 기준을 고정했다.
+- smoke 범위는 manifest load, local `/health`, Balanced/Quality `/query`, explicit page capture, upload draft 생성이다.
+- 다음 루프 `LOOP-116`은 Chrome side panel을 실제로 load unpacked 한 뒤 수동 smoke evidence를 기록한다.
+
+## 현재 Active Loop (LOOP-116)
+
+목표:
+- Chrome에서 `browser_companion/`을 load unpacked로 열고 local-server smoke evidence를 기록한다.
+
+범위:
+- 포함: manifest load, side panel open, local health, query, explicit page capture, upload draft evidence
+- 제외: Chrome Web Store packaging, 자동 E2E harness, 권한 확대, WebGPU/on-device model runtime
+
+완료 기준:
+- `docs/reports/BROWSER_COMPANION_LOCAL_SERVER_SMOKE_PLAN_2026-04-29.md`의 smoke 단계별 결과가 기록되어야 한다.
+- 실패 시 blocker와 재개 조건이 기록되어야 한다.
+- 통과 시 post-smoke hardening 후보가 `LOOP-117`에 정리되어야 한다.
+
+검증:
+- Chrome side panel 수동 로드 검증 후 기록
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
