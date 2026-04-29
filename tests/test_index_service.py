@@ -110,6 +110,22 @@ def test_build_collection_source_records_uses_manifest_seed_metadata(monkeypatch
     assert record["metadata"]["tags"] == ["sample-pack", "country:france"]
 
 
+def test_build_project_docs_source_records_are_explicit_only(monkeypatch):
+    monkeypatch.setattr(index_service, "_load_managed_source_records", lambda collection_key="all": [])
+
+    default_records = index_service.build_collection_source_records("all")
+    project_records = index_service.build_collection_source_records("project_docs")
+
+    assert all(record["origin"] != "project_doc" for record in default_records)
+    assert len(project_records) == 1
+    record = project_records[0]
+    assert record["origin"] == "project_doc"
+    assert record["collection_key"] == "project_docs"
+    assert record["doc_key"] == "browser_companion_operator_guide"
+    assert record["metadata"]["source_type"] == "project_operator_doc"
+    assert record["metadata"]["doc_type"] == "operator_guide"
+
+
 def test_prepare_vectorstore_documents_serializes_complex_metadata():
     docs = [
         Document(

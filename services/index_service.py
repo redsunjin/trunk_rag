@@ -21,7 +21,7 @@ from core.settings import (
     PERSIST_DIR,
 )
 from scripts.validate_rag_doc import validate_loaded_documents
-from services import collection_service, runtime_service, upload_service
+from services import collection_service, project_doc_service, runtime_service, upload_service
 
 EMBEDDING_FINGERPRINTS_FILE = "embedding_fingerprints.json"
 VECTOR_COUNT_CACHE_TTL_SECONDS = 5.0
@@ -481,6 +481,8 @@ def build_collection_source_records(collection_key: str = DEFAULT_COLLECTION_KEY
     for record in _load_seed_source_records(collection_key):
         merged[str(record["doc_key"])] = record
     for record in _load_managed_source_records(collection_key):
+        merged[str(record["doc_key"])] = record
+    for record in project_doc_service.list_project_doc_source_records(collection_key):
         merged[str(record["doc_key"])] = record
     return sorted(
         merged.values(),

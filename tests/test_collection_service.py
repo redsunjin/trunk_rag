@@ -36,6 +36,17 @@ def test_seed_document_metadata_comes_from_manifest():
 def test_compatibility_bundle_keys_come_from_manifest():
     assert collection_service.list_default_runtime_collection_keys() == ["all"]
     assert collection_service.list_compatibility_collection_keys() == ["eu", "fr", "ge", "it", "uk"]
+    assert "project_docs" not in collection_service.list_default_runtime_collection_keys()
+    assert "project_docs" not in collection_service.list_compatibility_collection_keys()
+
+
+def test_project_docs_collection_is_explicit_only():
+    config = collection_service.get_collection_config("project_docs")
+
+    assert config["name"] == "rag_project_docs"
+    assert config["seed_doc_keys"] == []
+    assert config["keywords"] == []
+    assert collection_service.resolve_collection_key("project_docs") == "project_docs"
 
 
 def test_seed_corpus_config_describes_demo_bootstrap_boundary():

@@ -117,9 +117,11 @@
 - `services/agent_runtime_service.py`: V1.5 internal agent runtime entry draft
 - `services/graph_lite_service.py`: local JSONL relation snapshot loader/search/context append PoC
 - `services/graph_lite_snapshot_builder.py`: current seed + managed active markdown sources에서 graph-lite JSONL snapshot 생성
+- `services/project_doc_service.py`: opt-in `project_docs` allowlist source loader
 - `core/actor_policy_manifest.py`: V1.5 actor policy manifest loader/normalizer
 - `core/*.py`: 설정/에러/HTTP 유틸
 - `config/actor_policy_manifest.json`: V1.5 actor policy source manifest
+- `config/project_doc_manifest.json`: opt-in `project_docs` collection용 project/operator-doc allowlist
 - `build_index.py`: 초기 인덱스 생성 스크립트
 - `common.py`: 공통 유틸리티
 - `web/index.html`: 간단 웹 UI
@@ -202,6 +204,7 @@
 - `docs/reports/USER_DOC_RAG_QUALITY_FIXTURE_SEED_2026-04-29.md`: user/operator document 기반 answer-level fixture 후보 seed
 - `docs/reports/QUALITY_MODEL_DEFAULT_POLICY_REVISIT_2026-04-29.md`: graph-lite/user-doc 후보 기준 Quality 모델 기본 정책 재검토
 - `docs/reports/PROJECT_DOC_INGESTION_PATH_FOR_USER_DOC_QUALITY_GATE_2026-04-30.md`: project/operator docs를 품질 게이트에 넣는 opt-in collection 경로 판단
+- `docs/reports/PROJECT_DOC_COLLECTION_CONTRACT_SKELETON_2026-04-30.md`: opt-in `project_docs` manifest/source-loader contract skeleton
 - `docs/VECTORSTORE_POLICY.md`: 벡터스토어 운영/용량 정책
 - `docs/COLLECTION_ROUTING_POLICY.md`: 분야별 컬렉션/라우팅 정책
 - `docs/FUTURE_EXTERNAL_CONSTRAINTS.md`: 외부 제한사항 중 추후 적용 항목

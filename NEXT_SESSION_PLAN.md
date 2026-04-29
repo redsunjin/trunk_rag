@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-124`
-- current_active_title: `Project-doc collection contract skeleton`
+- current_active_id: `LOOP-125`
+- current_active_title: `Project-doc query smoke and UDQ candidate promotion gate`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -426,11 +426,23 @@
 
 ## 2026-04-30 Project-Doc Collection Contract Target
 
-- 현재 active: `LOOP-124 Project-doc collection contract skeleton`
+- 완료 루프: `LOOP-124 Project-doc collection contract skeleton`
 - 목표: opt-in `project_docs` collection을 위한 manifest/source-loader contract skeleton을 추가한다.
 - 범위: project-doc allowlist/manifest contract, source-loader skeleton 또는 contract test, default runtime 비변경 확인.
 - 제외: 대량 docs 인덱싱, 기본 query route 변경, 모델 정책 변경, 외부 API.
-- 완료 기준: `docs/BROWSER_COMPANION_OPERATOR_GUIDE.md` 같은 allowlisted project doc이 `project_docs` 후보 source로 표현될 수 있어야 하며 default runtime과 sample-pack bundle에는 영향이 없어야 한다.
+- 구현: `project_docs` collection, `config/project_doc_manifest.json`, `services/project_doc_service.py`, index source record 연결.
+- guardrail: default runtime, sample-pack compatibility bundle, keyword routing에 포함하지 않았다.
+- tests: `tests/test_collection_service.py`, `tests/test_index_service.py`.
+- report: `docs/reports/PROJECT_DOC_COLLECTION_CONTRACT_SKELETON_2026-04-30.md`
+- 다음 active: `LOOP-125 Project-doc query smoke and UDQ candidate promotion gate`.
+
+## 2026-04-30 Project-Doc Query Smoke Target
+
+- 현재 active: `LOOP-125 Project-doc query smoke and UDQ candidate promotion gate`
+- 목표: opt-in `project_docs` 컬렉션을 실제로 reindex/query smoke하고, `UDQ-BC-01` 승격 가능 여부를 판단한다.
+- 범위: `project_docs` reindex smoke, `UDQ-BC-01` 질문의 query smoke, fixture promotion gate 판단.
+- 제외: default runtime 변경, sample-pack 경로 변경, 모델 기본값 변경, 외부 API.
+- 완료 기준: `project_docs`가 opt-in으로 query 가능한지 확인하고 `UDQ-BC-01` 승격 여부를 결정해야 한다.
 
 ## 0. 2026-03-13 우선순위 재정렬
 

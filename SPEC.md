@@ -163,6 +163,8 @@
 - `services/graphrag_poc_service.py`: GraphRAG snapshot/benchmark 보조 서비스
 - `services/graph_lite_service.py`: JSONL `entities/relations` 스냅샷 로딩, relation-heavy detector, 인메모리 relation search, context append helper를 제공하는 graph-lite PoC
 - `services/graph_lite_snapshot_builder.py`: 현재 seed + managed active markdown 원본에서 graph-lite JSONL snapshot을 생성하고 load validation을 수행한다
+- `services/project_doc_service.py`: opt-in `project_docs` allowlist source loader
+- `config/project_doc_manifest.json`: opt-in `project_docs` collection용 project/operator-doc allowlist
 - `scripts/eval_query_quality.py`: answer-level `/query` 품질 평가 하네스. 기본 평가 요청은 `debug=true`로 support/citation/source coverage를 함께 기록한다
 - `scripts/compare_rag_quality.py`: 모델 후보별 RAG 품질 비교 게이트. 동일 fixture/bucket/임계값으로 모델 전환 가능 여부를 판정한다
 - `scripts/build_graph_lite_snapshot.py`: 현재 markdown source records에서 graph-lite snapshot을 생성한다. 기본 출력은 git에 포함하지 않는 `chroma_db/graph_lite_snapshot`이다
@@ -200,6 +202,7 @@
 - `docs/reports/USER_DOC_RAG_QUALITY_FIXTURE_SEED_2026-04-29.md`: user/operator document 기반 answer-level fixture 후보 seed
 - `docs/reports/QUALITY_MODEL_DEFAULT_POLICY_REVISIT_2026-04-29.md`: graph-lite/user-doc 후보 기준 Quality 모델 기본 정책 재검토
 - `docs/reports/PROJECT_DOC_INGESTION_PATH_FOR_USER_DOC_QUALITY_GATE_2026-04-30.md`: project/operator docs를 품질 게이트에 넣는 opt-in collection 경로 판단
+- `docs/reports/PROJECT_DOC_COLLECTION_CONTRACT_SKELETON_2026-04-30.md`: opt-in `project_docs` manifest/source-loader contract skeleton
 
 ## API 계약
 ### GET `/health`

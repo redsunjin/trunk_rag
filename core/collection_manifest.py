@@ -136,6 +136,14 @@ _FALLBACK_COLLECTION_MANIFEST: dict[str, Any] = {
             "default_country": "uk",
             "default_doc_type": "country",
         },
+        "project_docs": {
+            "name": "rag_project_docs",
+            "label": "프로젝트 운영 문서",
+            "seed_doc_keys": [],
+            "keywords": [],
+            "default_country": "all",
+            "default_doc_type": "operator_guide",
+        },
     },
 }
 

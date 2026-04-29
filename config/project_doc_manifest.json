@@ -1,0 +1,21 @@
+{
+  "version": "project_doc_manifest.v1",
+  "collection_key": "project_docs",
+  "documents": [
+    {
+      "doc_key": "browser_companion_operator_guide",
+      "path": "docs/BROWSER_COMPANION_OPERATOR_GUIDE.md",
+      "source_name": "BROWSER_COMPANION_OPERATOR_GUIDE.md",
+      "metadata": {
+        "source_type": "project_operator_doc",
+        "doc_type": "operator_guide",
+        "country": "all",
+        "tags": [
+          "project-doc",
+          "browser-companion",
+          "operator-guide"
+        ]
+      }
+    }
+  ]
+}

@@ -86,6 +86,7 @@
 - `docs/reports/USER_DOC_RAG_QUALITY_FIXTURE_SEED_2026-04-29.md`
 - `docs/reports/QUALITY_MODEL_DEFAULT_POLICY_REVISIT_2026-04-29.md`
 - `docs/reports/PROJECT_DOC_INGESTION_PATH_FOR_USER_DOC_QUALITY_GATE_2026-04-30.md`
+- `docs/reports/PROJECT_DOC_COLLECTION_CONTRACT_SKELETON_2026-04-30.md`
 
 ## Roadmap Loop Harness
 
@@ -227,7 +228,8 @@
 | LOOP-121 | done | User-doc RAG quality fixture seed | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-122 | done | Quality model default policy revisit | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-123 | done | Project-doc ingestion path for user-doc quality gate | `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-124 | active | Project-doc collection contract skeleton | opt-in `project_docs` manifest/source-loader contract skeleton |
+| LOOP-124 | done | Project-doc collection contract skeleton | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_index_service.py` + `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile services/project_doc_service.py services/index_service.py core/collection_manifest.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-125 | active | Project-doc query smoke and UDQ candidate promotion gate | opt-in `project_docs` reindex/query smoke 후 `UDQ-BC-01` 승격 여부 판단 |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -3449,6 +3451,31 @@ closeout 메모 (2026-04-30):
 - `docs/BROWSER_COMPANION_OPERATOR_GUIDE.md` 같은 allowlisted project doc이 `project_docs` 후보 source로 표현될 수 있어야 한다.
 - default runtime collection과 sample-pack compatibility bundle에는 영향이 없어야 한다.
 - `UDQ-BC-01` 정식 fixture 승격은 아직 보류되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-04-30):
+- `config/collection_manifest.json`과 fallback manifest에 explicit-only `project_docs` collection을 추가했다.
+- `project_docs`는 `default_runtime_collection_keys`, sample-pack compatibility bundle, keyword routing keywords에 포함하지 않았다.
+- `config/project_doc_manifest.json`에 `docs/BROWSER_COMPANION_OPERATOR_GUIDE.md` allowlist entry를 추가했다.
+- `services/project_doc_service.py`를 추가하고 `services/index_service.py`의 source record build 경로에 opt-in으로 연결했다.
+- `tests/test_collection_service.py`, `tests/test_index_service.py`에 default runtime 비변경과 `project_doc` source record 계약 검증을 추가했다.
+- `UDQ-BC-01`은 아직 정식 fixture로 승격하지 않았다. 다음 loop에서 `project_docs` reindex/query smoke 후 판단한다.
+
+## 현재 Active Loop (LOOP-125)
+
+목표:
+- opt-in `project_docs` 컬렉션을 실제로 reindex/query smoke하고, `UDQ-BC-01` 승격 가능 여부를 판단한다.
+
+범위:
+- 포함: `project_docs` reindex smoke, `UDQ-BC-01` 질문의 query smoke, fixture promotion gate 판단
+- 제외: default runtime 변경, sample-pack 경로 변경, 모델 기본값 변경, 외부 API
+
+완료 기준:
+- `project_docs`가 opt-in으로 query 가능한지 확인해야 한다.
+- `UDQ-BC-01`을 정식 fixture로 승격할지, 후보로 유지할지 결정해야 한다.
+- 실패 시 blocker와 재개 조건이 기록되어야 한다.
 
 검증:
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
