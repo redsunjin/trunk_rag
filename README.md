@@ -138,6 +138,7 @@
 - `scripts/build_graph_lite_snapshot.py`: 현재 markdown 원본에서 `chroma_db/graph_lite_snapshot`용 graph-lite snapshot 생성
 - `scripts/benchmark_graph_lite_sidecar.py`: graph-lite relation snapshot retrieval PoC 벤치 스크립트
 - `scripts/validate_browser_companion_manifest.py`: browser companion manifest/권한 경계 검증 스크립트
+- `scripts/smoke_browser_companion_extension.py`: Chrome loaded-extension browser companion smoke helper
 - `scripts/check_ops_baseline_gate.py`: core 기본 컬렉션 상태와 `generic-baseline` 회귀 게이트를 한 번에 점검하는 스크립트
 - `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩 스크립트
 - `scripts/roadmap_harness.py`: `TODO.md`/`NEXT_SESSION_PLAN.md`의 루프 상태와 active 항목을 점검하는 스크립트
@@ -194,6 +195,8 @@
 - `docs/reports/BROWSER_COMPANION_POC_SCOPE_GATE_2026-04-29.md`: browser companion extension PoC 범위 게이트
 - `docs/reports/BROWSER_COMPANION_EXTENSION_SKELETON_2026-04-29.md`: dependency-free Chrome MV3 companion skeleton 구현 기록
 - `docs/reports/BROWSER_COMPANION_LOCAL_SERVER_SMOKE_PLAN_2026-04-29.md`: browser companion loaded-extension smoke 계획
+- `docs/reports/BROWSER_COMPANION_LOADED_EXTENSION_SMOKE_2026-04-29.md`: browser companion loaded-extension smoke 증거
+- `docs/reports/BROWSER_COMPANION_POST_SMOKE_HARDENING_2026-04-29.md`: browser companion smoke 이후 UI/운영 보강 기록
 - `docs/VECTORSTORE_POLICY.md`: 벡터스토어 운영/용량 정책
 - `docs/COLLECTION_ROUTING_POLICY.md`: 분야별 컬렉션/라우팅 정책
 - `docs/FUTURE_EXTERNAL_CONSTRAINTS.md`: 외부 제한사항 중 추후 적용 항목

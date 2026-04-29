@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-116`
-- current_active_title: `Browser companion loaded-extension manual smoke`
+- current_active_id: `LOOP-118`
+- current_active_title: `Await next-track after browser companion hardening`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -332,12 +332,36 @@
 
 ## 2026-04-29 Browser Companion Manual Smoke Target
 
-- 현재 active: `LOOP-116 Browser companion loaded-extension manual smoke`
+- 완료 루프: `LOOP-116 Browser companion loaded-extension manual smoke`
 - 목표: Chrome에서 `browser_companion/`을 load unpacked로 열고 local-server smoke evidence를 기록한다.
 - 범위: manifest load, side panel open, local health, query, explicit page capture, upload draft evidence.
 - 제외: Chrome Web Store packaging, 자동 E2E harness, 권한 확대, WebGPU/on-device model runtime.
-- 완료 기준: smoke 단계별 결과가 기록되고, 실패 시 blocker와 재개 조건이 정리되어야 한다.
-- 다음 pending: `LOOP-117 Browser companion post-smoke hardening`.
+- smoke evidence: `docs/reports/BROWSER_COMPANION_LOADED_EXTENSION_SMOKE_2026-04-29.md`
+- helper: `scripts/smoke_browser_companion_extension.py`
+- 결과: Chrome for Testing loaded-extension smoke에서 extension id `fhebiamiikemennkopkncmjhgcdckjnj`, service worker, `/health`, Balanced/Quality `/query`, explicit capture, upload draft 생성이 통과했다.
+- 제한: current `:8000` server는 graph-lite snapshot 없이 실행 중이라 side panel은 `graph-lite=-`를 표시했다. Quality 답변 본문은 약했지만 extension/server round trip은 정상이다.
+- side effect: smoke upload step이 pending upload request `ef12174a-c0f9-4325-80d1-35388f73fb84`를 생성했다.
+- 다음 active: `LOOP-117 Browser companion post-smoke hardening`.
+
+## 2026-04-29 Browser Companion Post-Smoke Hardening Target
+
+- 완료 루프: `LOOP-117 Browser companion post-smoke hardening`
+- 목표: loaded-extension smoke에서 확인된 UX/운영 약점을 작은 범위에서 보강한다.
+- 범위: graph-lite metadata absent/disabled/fallback 라벨 분리, side panel server/model profile 가시화, upload smoke side-effect 안내, helper/문서 보강.
+- 제외: Chrome Web Store packaging, 권한 확대, WebGPU/on-device model runtime, full extension E2E harness.
+- hardening 문서: `docs/reports/BROWSER_COMPANION_POST_SMOKE_HARDENING_2026-04-29.md`
+- 구현: side panel health row에 server profile(`model`, `runtime`, `timeout`, `vectors`)을 추가했고, graph-lite 미보고 상태를 `graph-lite=not-reported`로 분리했다.
+- 구현: query meta에 model을 표시하고, upload draft copy를 admin review draft 흐름에 맞췄다.
+- 보류: full toolbar side-panel UI automation, graph-lite-enabled extension smoke, Web Store packaging, WebGPU/browser-only runtime.
+- 다음 active: `LOOP-118 Await next-track after browser companion hardening`.
+
+## 2026-04-29 Await Next-Track Target
+
+- 현재 active: `LOOP-118 Await next-track after browser companion hardening`
+- 목표: browser companion smoke/hardening 이후 다음 track 선택을 대기한다.
+- 범위: 현재 상태 검증, 다음 후보 정리.
+- 제외: 신규 구현.
+- 완료 기준: 다음 실행 후보가 사용자 지시 또는 문서 기준으로 확정되어야 한다.
 
 ## 0. 2026-03-13 우선순위 재정렬
 

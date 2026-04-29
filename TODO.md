@@ -79,6 +79,8 @@
 - `docs/reports/BROWSER_COMPANION_POC_SCOPE_GATE_2026-04-29.md`
 - `docs/reports/BROWSER_COMPANION_EXTENSION_SKELETON_2026-04-29.md`
 - `docs/reports/BROWSER_COMPANION_LOCAL_SERVER_SMOKE_PLAN_2026-04-29.md`
+- `docs/reports/BROWSER_COMPANION_LOADED_EXTENSION_SMOKE_2026-04-29.md`
+- `docs/reports/BROWSER_COMPANION_POST_SMOKE_HARDENING_2026-04-29.md`
 
 ## Roadmap Loop Harness
 
@@ -212,8 +214,9 @@
 | LOOP-113 | done | Browser companion PoC scope gate | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-114 | done | Browser companion extension skeleton PoC | `node --check browser_companion/background.js` + `node --check browser_companion/sidepanel.js` + `./.venv/bin/python scripts/validate_browser_companion_manifest.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-115 | done | Browser companion local-server smoke plan | `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-116 | active | Browser companion loaded-extension manual smoke | Chrome side panel 수동 로드 검증 후 기록 |
-| LOOP-117 | pending | Browser companion post-smoke hardening | loaded-extension smoke 결과 기준 후속 보강 |
+| LOOP-116 | done | Browser companion loaded-extension manual smoke | `./.venv/bin/python scripts/smoke_browser_companion_extension.py --chrome-executable "/Users/Agent/Library/Caches/ms-playwright/chromium-1208/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing" --output-json docs/reports/browser_companion_loaded_extension_smoke_2026-04-29.json` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-117 | done | Browser companion post-smoke hardening | `node --check browser_companion/sidepanel.js` + `./.venv/bin/python scripts/validate_browser_companion_manifest.py` + `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/smoke_browser_companion_extension.py` + post-hardening loaded-extension smoke with `--skip-quality --skip-upload` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-118 | active | Await next-track after browser companion hardening | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -3264,22 +3267,34 @@ closeout 메모 (2026-04-29):
 - smoke 범위는 manifest load, local `/health`, Balanced/Quality `/query`, explicit page capture, upload draft 생성이다.
 - 다음 루프 `LOOP-116`은 Chrome side panel을 실제로 load unpacked 한 뒤 수동 smoke evidence를 기록한다.
 
-## 현재 Active Loop (LOOP-116)
+closeout 메모 (2026-04-29):
+- `scripts/smoke_browser_companion_extension.py`를 추가해 Chrome for Testing 기반 loaded-extension smoke를 재현 가능하게 만들었다.
+- `docs/reports/BROWSER_COMPANION_LOADED_EXTENSION_SMOKE_2026-04-29.md`와 JSON 증거에 extension id, service worker, health/query/capture/upload 결과를 기록했다.
+- smoke 결과: manifest/load, `/health`, Balanced `/query`, Quality `/query` transport, explicit capture, upload draft 생성이 모두 동작했다.
+- 제한: 현재 실행 중인 `:8000` 서버는 graph-lite snapshot 없이 떠 있어 side panel은 `graph-lite=-`로 표시했다. Quality 답변 본문은 약했지만 request_id/support/citations round trip은 정상이다.
+- smoke 과정에서 정상 pending upload request `ef12174a-c0f9-4325-80d1-35388f73fb84`가 생성됐다. 삭제/정리는 별도 확인 없이는 수행하지 않는다.
+
+closeout 메모 (2026-04-29):
+- `browser_companion/sidepanel.html`, `sidepanel.css`, `sidepanel.js`에 smoke 후 hardening을 반영했다.
+- `/health` 후 연결 상태와 server profile(`model`, `runtime`, `timeout`, `vectors`)을 분리 표시한다.
+- graph-lite metadata가 없을 때 `graph-lite=not-reported`로 표시해 disabled/fallback과 구분한다.
+- query 결과 메타에 응답 model을 표시한다.
+- upload button/result copy를 admin review draft 흐름에 맞췄다.
+- `docs/reports/BROWSER_COMPANION_POST_SMOKE_HARDENING_2026-04-29.md`에 구현/보류/검증 기준을 기록했다.
+
+## 현재 Active Loop (LOOP-118)
 
 목표:
-- Chrome에서 `browser_companion/`을 load unpacked로 열고 local-server smoke evidence를 기록한다.
+- browser companion smoke/hardening 이후 다음 track 선택을 대기한다.
 
 범위:
-- 포함: manifest load, side panel open, local health, query, explicit page capture, upload draft evidence
-- 제외: Chrome Web Store packaging, 자동 E2E harness, 권한 확대, WebGPU/on-device model runtime
+- 포함: 현재 상태 검증, 다음 후보 정리
+- 제외: 신규 구현
 
 완료 기준:
-- `docs/reports/BROWSER_COMPANION_LOCAL_SERVER_SMOKE_PLAN_2026-04-29.md`의 smoke 단계별 결과가 기록되어야 한다.
-- 실패 시 blocker와 재개 조건이 기록되어야 한다.
-- 통과 시 post-smoke hardening 후보가 `LOOP-117`에 정리되어야 한다.
+- 다음 실행 후보가 사용자 지시 또는 문서 기준으로 확정되어야 한다.
 
 검증:
-- Chrome side panel 수동 로드 검증 후 기록
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)

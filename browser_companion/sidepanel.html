@@ -18,7 +18,10 @@
 
       <section class="status-row" aria-live="polite">
         <span id="statusDot" class="status-dot"></span>
-        <span id="statusText">연결 확인 전</span>
+        <span>
+          <span id="statusText">연결 확인 전</span>
+          <span id="serverMeta" class="server-meta">server profile=-</span>
+        </span>
       </section>
 
       <section class="server-config">
@@ -35,7 +38,7 @@
           <button id="capturePageBtn" type="button">Capture</button>
         </div>
         <p id="pageSummary" class="muted">현재 페이지는 명시적으로 Capture를 눌렀을 때만 읽습니다.</p>
-        <button id="uploadDraftBtn" type="button" class="secondary-btn" disabled>Upload Draft</button>
+        <button id="uploadDraftBtn" type="button" class="secondary-btn" disabled>Upload Draft for Review</button>
       </section>
 
       <section class="query-panel">

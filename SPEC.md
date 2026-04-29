@@ -168,6 +168,7 @@
 - `scripts/build_graph_lite_snapshot.py`: 현재 markdown source records에서 graph-lite snapshot을 생성한다. 기본 출력은 git에 포함하지 않는 `chroma_db/graph_lite_snapshot`이다
 - `scripts/benchmark_graph_lite_sidecar.py`: graph-lite relation snapshot retrieval viability 벤치. LLM 호출 없이 graph-candidate fixture의 hit/fallback/latency를 측정한다
 - `scripts/validate_browser_companion_manifest.py`: browser companion manifest/권한 경계 검증 스크립트
+- `scripts/smoke_browser_companion_extension.py`: Chrome loaded-extension browser companion smoke helper
 - `scripts/check_ops_baseline_gate.py`: runtime preflight + core 기본 컬렉션 상태 + `generic-baseline` 회귀 게이트/diagnostics 점검
 - `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩
 - `scripts/roadmap_harness.py`: 실행 큐 상태와 현재 active 항목 점검
@@ -192,6 +193,8 @@
 - `docs/reports/BROWSER_COMPANION_POC_SCOPE_GATE_2026-04-29.md`: browser companion extension PoC 범위 게이트
 - `docs/reports/BROWSER_COMPANION_EXTENSION_SKELETON_2026-04-29.md`: dependency-free Chrome MV3 companion skeleton 구현 기록
 - `docs/reports/BROWSER_COMPANION_LOCAL_SERVER_SMOKE_PLAN_2026-04-29.md`: browser companion loaded-extension smoke 계획
+- `docs/reports/BROWSER_COMPANION_LOADED_EXTENSION_SMOKE_2026-04-29.md`: browser companion loaded-extension smoke 증거
+- `docs/reports/BROWSER_COMPANION_POST_SMOKE_HARDENING_2026-04-29.md`: browser companion smoke 이후 UI/운영 보강 기록
 
 ## API 계약
 ### GET `/health`

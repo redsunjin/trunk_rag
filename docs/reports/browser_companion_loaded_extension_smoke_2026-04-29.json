@@ -1,0 +1,38 @@
+{
+  "extension_dir": "/Users/Agent/ps-workspace/trunk_rag/browser_companion",
+  "server_url": "http://127.0.0.1:8000",
+  "chrome_executable": "/Users/Agent/Library/Caches/ms-playwright/chromium-1208/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing",
+  "surface": "loaded Chrome extension with sidepanel.html opened as chrome-extension page",
+  "profile_dir": "/var/folders/rm/6_1t_xcj4977jnxpghlccr_m0000gp/T/trunk-rag-browser-companion-i_qh4pm6",
+  "extension_id": "fhebiamiikemennkopkncmjhgcdckjnj",
+  "service_worker_url": "chrome-extension://fhebiamiikemennkopkncmjhgcdckjnj/background.js",
+  "health_status": "Online | vectors=37 | model=gemma4:e4b",
+  "health_ok": true,
+  "balanced_query": {
+    "mode": "balanced",
+    "question": "기본 문서가 무엇인지 한 문장으로 설명해줘",
+    "elapsed_ms": 10094.5,
+    "result_excerpt": "제공된 문서는 유럽의 과학 기술 발전사를 다루며, 각 국가별 기술적 강점과 그 발전 과정, 그리고 과학이 국가의 경제적, 문화적 자산으로 활용된 역사적 사례들을 종합적으로 분석하고 있습니다.\nrequest_id=6ef2244c-3acc-4b19-86b7-6e8680c3d8ee | support=supported | uk.md | eu_summry.md | it.md | graph-lite=-",
+    "has_request_id": true,
+    "has_support": true,
+    "has_graph_lite_summary": true
+  },
+  "quality_query": {
+    "mode": "quality",
+    "question": "영국과 이탈리아 문서에서 과학 발전의 차이를 관계 중심으로 비교해줘",
+    "elapsed_ms": 5380.1,
+    "result_excerpt": "제공된 문서에서 확인되지 않습니다.\nrequest_id=cd2d192a-11c3-4f85-9b2b-7c7794920f3b | support=supported | it.md | eu_summry.md | fr.md | graph-lite=-",
+    "has_request_id": true,
+    "has_support": true,
+    "has_graph_lite_summary": true
+  },
+  "capture": {
+    "summary": "selection: Trunk RAG intro (15 chars)",
+    "upload_enabled": true
+  },
+  "upload_draft": {
+    "result_excerpt": "Upload draft created: ef12174a-c0f9-4325-80d1-35388f73fb84 (pending)",
+    "created": true
+  },
+  "sidepanel_url": "chrome-extension://fhebiamiikemennkopkncmjhgcdckjnj/sidepanel.html"
+}

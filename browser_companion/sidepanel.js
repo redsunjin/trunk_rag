@@ -7,6 +7,7 @@ const refs = {
   healthBtn: document.getElementById("healthBtn"),
   statusDot: document.getElementById("statusDot"),
   statusText: document.getElementById("statusText"),
+  serverMeta: document.getElementById("serverMeta"),
   capturePageBtn: document.getElementById("capturePageBtn"),
   pageSummary: document.getElementById("pageSummary"),
   uploadDraftBtn: document.getElementById("uploadDraftBtn"),
@@ -36,6 +37,19 @@ function storageSet(value) {
 function setStatus(kind, message) {
   refs.statusDot.className = `status-dot ${kind === "ok" ? "ok" : kind === "error" ? "error" : ""}`;
   refs.statusText.textContent = message;
+}
+
+function setServerMeta(data = null) {
+  if (!data) {
+    refs.serverMeta.textContent = "server profile=-";
+    return;
+  }
+  refs.serverMeta.textContent = [
+    `model=${data.default_llm_model ?? "-"}`,
+    `runtime=${data.runtime_profile_status ?? "-"}`,
+    `timeout=${data.query_timeout_seconds ?? "-"}s`,
+    `vectors=${data.vectors ?? "-"}`,
+  ].join(" | ");
 }
 
 function showResult(text, meta = "") {
@@ -77,7 +91,7 @@ async function apiFetch(path, options = {}) {
 
 function graphLiteSummary(meta) {
   const graphLite = meta?.context?.graph_lite;
-  if (!graphLite || typeof graphLite !== "object") return "graph-lite=-";
+  if (!graphLite || typeof graphLite !== "object") return "graph-lite=not-reported";
   const status = graphLite.status || (graphLite.enabled ? "not_run" : "disabled");
   const parts = [`graph-lite=${status}`];
   if (typeof graphLite.relation_count === "number") {
@@ -95,9 +109,11 @@ function graphLiteSummary(meta) {
 async function checkHealth() {
   try {
     const data = await apiFetch("/health");
-    setStatus("ok", `Online | vectors=${data.vectors ?? "-"} | model=${data.default_llm_model ?? "-"}`);
+    setStatus("ok", "Online");
+    setServerMeta(data);
   } catch (error) {
     setStatus("error", `Disconnected | ${error.message}`);
+    setServerMeta();
   }
 }
 
@@ -165,7 +181,7 @@ async function uploadDraft() {
         content,
       }),
     });
-    showResult(`Upload draft created: ${data.request?.id || "-"} (${data.request?.status || "-"})`);
+    showResult(`Upload draft created for admin review: ${data.request?.id || "-"} (${data.request?.status || "-"})`);
   } catch (error) {
     showResult(`Upload draft failed: ${error.message}`);
   }
@@ -194,6 +210,7 @@ async function askLocalRag() {
       : "citations=-";
     const metaText = [
       `request_id=${meta.request_id || "-"}`,
+      `model=${data.model || "-"}`,
       `support=${meta.support_level || "-"}`,
       citations,
       graphLiteSummary(meta),

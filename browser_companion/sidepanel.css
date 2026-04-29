@@ -90,6 +90,10 @@ section {
   color: var(--muted);
 }
 
+.status-row > span:last-child {
+  min-width: 0;
+}
+
 .status-dot {
   width: 9px;
   height: 9px;
@@ -104,6 +108,14 @@ section {
 
 .status-dot.error {
   background: var(--danger);
+}
+
+.server-meta {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
 }
 
 label {
