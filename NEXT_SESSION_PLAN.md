@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-122`
-- current_active_title: `Quality model default policy revisit`
+- current_active_id: `LOOP-123`
+- current_active_title: `Project-doc ingestion path for user-doc quality gate`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -400,11 +400,24 @@
 
 ## 2026-04-29 Quality Model Policy Revisit Target
 
-- 현재 active: `LOOP-122 Quality model default policy revisit`
+- 완료 루프: `LOOP-122 Quality model default policy revisit`
 - 목표: graph-lite smoke와 user-doc fixture 후보를 바탕으로 Quality 모델 기본 정책을 재검토한다.
 - 범위: graph-lite metadata transport와 answer quality를 분리해 모델 정책 판단, 기본값/후보/보류 조건 정리.
 - 제외: 기본 모델 즉시 변경, 외부 유료 API 사용, 신규 모델 설치, 대규모 eval 실행.
-- 완료 기준: 현재 기본 Quality 모델 정책을 유지/변경/조건부로 나눠 판단하고, user-doc 후보 승격 전 보류할 결정을 명확히 한다.
+- policy: `docs/reports/QUALITY_MODEL_DEFAULT_POLICY_REVISIT_2026-04-29.md`
+- decision: global default and Balanced default remain unchanged.
+- decision: graph-lite remains Quality opt-in; `qwen3.5:9b-nvfp4` remains conditional preferred Quality candidate for graph-heavy questions.
+- decision: `gemma4:e4b` Quality default promotion is No-Go because graph-lite transport passed but answer text remained weak.
+- decision: user/operator-doc answer-level fixture evidence is required before model default changes.
+- 다음 active: `LOOP-123 Project-doc ingestion path for user-doc quality gate`.
+
+## 2026-04-29 Project-Doc Ingestion Path Target
+
+- 현재 active: `LOOP-123 Project-doc ingestion path for user-doc quality gate`
+- 목표: `docs/BROWSER_COMPANION_OPERATOR_GUIDE.md` 같은 project/operator 문서를 RAG 품질 게이트에 넣는 경로를 결정한다.
+- 범위: managed-doc workflow로 넣을지, project-doc collection을 만들지, 외부 운영 문서로만 둘지 기준 정리.
+- 제외: 대량 문서 인덱싱, 기본 모델 변경, 외부 유료 API 사용.
+- 완료 기준: `UDQ-BC-01`을 정식 fixture로 승격할 수 있는 전제 조건과 Go/No-Go가 명확해야 한다.
 
 ## 0. 2026-03-13 우선순위 재정렬
 

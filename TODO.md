@@ -84,6 +84,7 @@
 - `docs/reports/BROWSER_COMPANION_GRAPH_LITE_ENABLED_SMOKE_2026-04-29.md`
 - `docs/BROWSER_COMPANION_OPERATOR_GUIDE.md`
 - `docs/reports/USER_DOC_RAG_QUALITY_FIXTURE_SEED_2026-04-29.md`
+- `docs/reports/QUALITY_MODEL_DEFAULT_POLICY_REVISIT_2026-04-29.md`
 
 ## Roadmap Loop Harness
 
@@ -223,7 +224,8 @@
 | LOOP-119 | done | Graph-lite enabled browser companion smoke | `./.venv/bin/python scripts/build_graph_lite_snapshot.py --output-dir /tmp/trunk_rag_graph_lite_snapshot_loop119` + graph-lite snapshot server + browser companion Quality smoke shows `graph-lite=hit` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-120 | done | Browser companion operator guide and troubleshooting | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-121 | done | User-doc RAG quality fixture seed | `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-122 | active | Quality model default policy revisit | graph-lite/user-doc fixture 결과 기준 Quality 모델 후보 정책 재검토 |
+| LOOP-122 | done | Quality model default policy revisit | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-123 | active | Project-doc ingestion path for user-doc quality gate | operator/project docs를 managed-doc 또는 project-doc collection으로 평가 경로에 넣을지 결정 |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -3397,6 +3399,29 @@ closeout 메모 (2026-04-29):
 - 현재 기본 Quality 모델 정책을 유지/변경/조건부로 나눠 판단해야 한다.
 - `UDQ-BC-01` 같은 user-doc 후보가 정식 fixture로 승격되기 전까지 어떤 결정을 보류할지 명확해야 한다.
 - 다음 작업 후보가 문서화되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-04-29):
+- `docs/reports/QUALITY_MODEL_DEFAULT_POLICY_REVISIT_2026-04-29.md`에 Quality 모델 기본 정책을 정리했다.
+- 결론: global default와 Balanced 기본 경로는 유지한다.
+- 결론: graph-lite는 Quality opt-in으로 유지하고, `qwen3.5:9b-nvfp4`는 graph-heavy 질문의 조건부 preferred Quality candidate로 둔다.
+- 결론: `gemma4:e4b`는 graph-lite metadata transport가 통과해도 답변 본문이 약했으므로 Quality default promotion은 No-Go다.
+- 결론: `UDQ-BC-01` 같은 user/operator-doc fixture가 실제 인덱싱된 뒤 answer-level 비교를 통과하기 전까지 모델 기본값 변경은 보류한다.
+
+## 현재 Active Loop (LOOP-123)
+
+목표:
+- `docs/BROWSER_COMPANION_OPERATOR_GUIDE.md` 같은 project/operator 문서를 RAG 품질 게이트에 넣는 경로를 결정한다.
+
+범위:
+- 포함: managed-doc workflow로 넣을지, project-doc collection을 만들지, 외부 운영 문서로만 둘지 기준 정리
+- 제외: 대량 문서 인덱싱, 기본 모델 변경, 외부 유료 API 사용
+
+완료 기준:
+- `UDQ-BC-01`을 정식 fixture로 승격할 수 있는 전제 조건이 명확해야 한다.
+- project/operator docs 인덱싱 경로의 Go/No-Go가 문서화되어야 한다.
 
 검증:
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
