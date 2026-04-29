@@ -81,6 +81,7 @@
 - `docs/reports/BROWSER_COMPANION_LOCAL_SERVER_SMOKE_PLAN_2026-04-29.md`
 - `docs/reports/BROWSER_COMPANION_LOADED_EXTENSION_SMOKE_2026-04-29.md`
 - `docs/reports/BROWSER_COMPANION_POST_SMOKE_HARDENING_2026-04-29.md`
+- `docs/reports/BROWSER_COMPANION_GRAPH_LITE_ENABLED_SMOKE_2026-04-29.md`
 
 ## Roadmap Loop Harness
 
@@ -216,7 +217,11 @@
 | LOOP-115 | done | Browser companion local-server smoke plan | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-116 | done | Browser companion loaded-extension manual smoke | `./.venv/bin/python scripts/smoke_browser_companion_extension.py --chrome-executable "/Users/Agent/Library/Caches/ms-playwright/chromium-1208/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing" --output-json docs/reports/browser_companion_loaded_extension_smoke_2026-04-29.json` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-117 | done | Browser companion post-smoke hardening | `node --check browser_companion/sidepanel.js` + `./.venv/bin/python scripts/validate_browser_companion_manifest.py` + `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/smoke_browser_companion_extension.py` + post-hardening loaded-extension smoke with `--skip-quality --skip-upload` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-118 | active | Await next-track after browser companion hardening | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-118 | done | Await next-track after browser companion hardening | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-119 | done | Graph-lite enabled browser companion smoke | `./.venv/bin/python scripts/build_graph_lite_snapshot.py --output-dir /tmp/trunk_rag_graph_lite_snapshot_loop119` + graph-lite snapshot server + browser companion Quality smoke shows `graph-lite=hit` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-120 | active | Browser companion operator guide and troubleshooting | graph-lite/browser companion smoke 결과 기준 운영 가이드 정리 |
+| LOOP-121 | pending | User-doc RAG quality fixture seed | 실제/관리 문서 기반 answer-level fixture 후보 추가 |
+| LOOP-122 | pending | Quality model default policy revisit | graph-lite/user-doc fixture 결과 기준 Quality 모델 후보 정책 재검토 |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -3293,6 +3298,56 @@ closeout 메모 (2026-04-29):
 
 완료 기준:
 - 다음 실행 후보가 사용자 지시 또는 문서 기준으로 확정되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-04-29):
+- 사용자가 추천 순서 진행을 승인했다.
+- 다음 실행 순서는 `LOOP-119 -> LOOP-120 -> LOOP-121 -> LOOP-122`로 등록했다.
+- 우선 `LOOP-119`에서 graph-lite snapshot이 켜진 서버를 대상으로 browser companion Quality smoke가 `graph-lite=hit`를 표시하는지 확인한다.
+
+## 현재 Active Loop (LOOP-119)
+
+목표:
+- graph-lite snapshot이 활성화된 로컬 서버에서 browser companion Quality smoke가 `graph-lite=hit`를 표시하는지 검증한다.
+
+범위:
+- 포함: active-doc graph-lite snapshot build, 별도 포트 graph-lite server 실행, Chrome loaded-extension smoke, evidence 문서화
+- 제외: Chrome Web Store packaging, full toolbar automation, WebGPU/browser-only runtime, pending upload request 추가 생성
+
+완료 기준:
+- Quality query 결과에서 `graph-lite=hit`, relation count, request_id, support/citations가 기록되어야 한다.
+- graph-lite 미활성 서버 smoke와 구분되는 evidence가 문서화되어야 한다.
+- 검증 후 임시 서버가 종료되어야 한다.
+
+검증:
+- `./.venv/bin/python scripts/build_graph_lite_snapshot.py --output-dir /tmp/trunk_rag_graph_lite_snapshot_loop119`
+- graph-lite snapshot server health check
+- `./.venv/bin/python scripts/smoke_browser_companion_extension.py --server-url http://127.0.0.1:8014 --skip-upload ...`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-04-29):
+- active-doc graph-lite snapshot을 `/tmp/trunk_rag_graph_lite_snapshot_loop119`에 생성했다: source_docs=5, section_hits=21, entities=20, relations=48.
+- `DOC_RAG_GRAPH_LITE_SNAPSHOT_DIR=/tmp/trunk_rag_graph_lite_snapshot_loop119`로 별도 `:8014` 서버를 띄워 browser companion loaded-extension smoke를 실행했다.
+- Quality 관계망 질문에서 `graph-lite=hit`, `relations=8`, `context=added`, `request_id=bdb67099-f084-46ee-8d60-3c36fcd96589`, `support=supported`, citations=`fr.md | ge.md | it.md`를 확인했다.
+- `--skip-upload`를 사용해 새 pending upload request는 만들지 않았다.
+- 임시 `:8014` 서버는 종료했고 종료 후 `/health`는 연결 실패로 확인됐다.
+- 답변 본문은 여전히 약했으므로 extension transport는 통과, answer quality는 `LOOP-121`/`LOOP-122`에서 다룬다.
+
+## 현재 Active Loop (LOOP-120)
+
+목표:
+- browser companion과 graph-lite smoke 결과를 기준으로 운영자가 따라갈 수 있는 가이드와 문제 해결 흐름을 정리한다.
+
+범위:
+- 포함: 로컬 서버 준비, 확장 로드, graph-lite snapshot 서버 실행, smoke command, 흔한 상태값 해석, 문제 해결
+- 제외: 신규 UI 구현, Chrome Web Store packaging, GraphRAG/full Neo4j 통합
+
+완료 기준:
+- 운영자가 browser companion을 로드하고 `graph-lite=hit|disabled|not-reported|fallback` 상태를 해석할 수 있어야 한다.
+- upload draft가 실제 pending request를 만든다는 주의가 문서에 있어야 한다.
+- README/SPEC/NEXT_SESSION_PLAN과 참조가 동기화되어야 한다.
 
 검증:
 - `./.venv/bin/python scripts/roadmap_harness.py validate`

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import tempfile
 import time
 from pathlib import Path
@@ -16,6 +17,8 @@ DEFAULT_SERVER_URL = "http://127.0.0.1:8000"
 DEFAULT_BALANCED_QUESTION = "기본 문서가 무엇인지 한 문장으로 설명해줘"
 DEFAULT_QUALITY_QUESTION = "영국과 이탈리아 문서에서 과학 발전의 차이를 관계 중심으로 비교해줘"
 EXTENSION_NAME = "Trunk RAG Companion"
+GRAPH_LITE_STATUS_PATTERN = re.compile(r"graph-lite=([^|\n]+)")
+GRAPH_LITE_RELATIONS_PATTERN = re.compile(r"relations=(\d+)")
 
 
 def parse_args() -> argparse.Namespace:
@@ -29,6 +32,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--quality-question", default=DEFAULT_QUALITY_QUESTION)
     parser.add_argument("--skip-quality", action="store_true")
     parser.add_argument("--skip-upload", action="store_true")
+    parser.add_argument("--expect-quality-graph-lite-status", default="")
+    parser.add_argument("--expect-quality-min-graph-lite-relations", type=int, default=0)
     parser.add_argument("--output-json", default="")
     return parser.parse_args()
 
@@ -50,6 +55,8 @@ def run_query(page: Any, question: str, mode: str, timeout: int) -> dict[str, An
     started = time.time()
     page.click("#askBtn")
     result_text = wait_for_result(page, timeout=timeout)
+    graph_lite_status_match = GRAPH_LITE_STATUS_PATTERN.search(result_text)
+    graph_lite_relations_match = GRAPH_LITE_RELATIONS_PATTERN.search(result_text)
     return {
         "mode": mode,
         "question": question,
@@ -58,6 +65,8 @@ def run_query(page: Any, question: str, mode: str, timeout: int) -> dict[str, An
         "has_request_id": "request_id=" in result_text,
         "has_support": "support=" in result_text,
         "has_graph_lite_summary": "graph-lite=" in result_text,
+        "graph_lite_status": graph_lite_status_match.group(1).strip() if graph_lite_status_match else "",
+        "graph_lite_relation_count": int(graph_lite_relations_match.group(1)) if graph_lite_relations_match else 0,
     }
 
 
@@ -158,6 +167,22 @@ def run_smoke(args: argparse.Namespace) -> dict[str, Any]:
                         mode="quality",
                         timeout=150000,
                     )
+                    quality_query = result["quality_query"]
+                    if args.expect_quality_graph_lite_status:
+                        actual_status = quality_query.get("graph_lite_status", "")
+                        if actual_status != args.expect_quality_graph_lite_status:
+                            raise RuntimeError(
+                                "quality graph-lite status mismatch: "
+                                f"expected={args.expect_quality_graph_lite_status} actual={actual_status}"
+                            )
+                    min_relations = args.expect_quality_min_graph_lite_relations
+                    if min_relations:
+                        actual_relations = int(quality_query.get("graph_lite_relation_count", 0) or 0)
+                        if actual_relations < min_relations:
+                            raise RuntimeError(
+                                "quality graph-lite relation count below expectation: "
+                                f"expected>={min_relations} actual={actual_relations}"
+                            )
 
                 content_page = context.new_page()
                 content_page.goto(

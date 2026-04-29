@@ -1,0 +1,42 @@
+{
+  "extension_dir": "/Users/Agent/ps-workspace/trunk_rag/browser_companion",
+  "server_url": "http://127.0.0.1:8014",
+  "chrome_executable": "/Users/Agent/Library/Caches/ms-playwright/chromium-1208/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing",
+  "surface": "loaded Chrome extension with sidepanel.html opened as chrome-extension page",
+  "profile_dir": "/var/folders/rm/6_1t_xcj4977jnxpghlccr_m0000gp/T/trunk-rag-browser-companion-4tp5ofkn",
+  "extension_id": "fhebiamiikemennkopkncmjhgcdckjnj",
+  "service_worker_url": "chrome-extension://fhebiamiikemennkopkncmjhgcdckjnj/background.js",
+  "health_status": "Online",
+  "health_ok": true,
+  "balanced_query": {
+    "mode": "balanced",
+    "question": "기본 문서가 무엇인지 한 문장으로 설명해줘",
+    "elapsed_ms": 10507.7,
+    "result_excerpt": "제공된 문서에서 확인되지 않습니다.\nrequest_id=9ae7be2b-fc5e-498e-9e8e-d1aef76f2d24 | model=gemma4:e4b | support=supported | uk.md | eu_summry.md | it.md | graph-lite=disabled | relations=0",
+    "has_request_id": true,
+    "has_support": true,
+    "has_graph_lite_summary": true,
+    "graph_lite_status": "disabled",
+    "graph_lite_relation_count": 0
+  },
+  "quality_query": {
+    "mode": "quality",
+    "question": "에콜 폴리테크니크, 훔볼트 대학, 왕립학회, 파도바 대학을 한 관계망으로 놓고 각자의 역할을 설명해줘.",
+    "elapsed_ms": 5781.2,
+    "result_excerpt": "제공된 문서에서 확인되지 않습니다.\nrequest_id=bdb67099-f084-46ee-8d60-3c36fcd96589 | model=gemma4:e4b | support=supported | fr.md | ge.md | it.md | graph-lite=hit | relations=8 | context=added",
+    "has_request_id": true,
+    "has_support": true,
+    "has_graph_lite_summary": true,
+    "graph_lite_status": "hit",
+    "graph_lite_relation_count": 8
+  },
+  "capture": {
+    "summary": "selection: Trunk RAG intro (15 chars)",
+    "upload_enabled": true
+  },
+  "upload_draft": {
+    "skipped": true,
+    "upload_enabled_after_capture": true
+  },
+  "sidepanel_url": "chrome-extension://fhebiamiikemennkopkncmjhgcdckjnj/sidepanel.html"
+}

@@ -197,6 +197,7 @@
 - `docs/reports/BROWSER_COMPANION_LOCAL_SERVER_SMOKE_PLAN_2026-04-29.md`: browser companion loaded-extension smoke 계획
 - `docs/reports/BROWSER_COMPANION_LOADED_EXTENSION_SMOKE_2026-04-29.md`: browser companion loaded-extension smoke 증거
 - `docs/reports/BROWSER_COMPANION_POST_SMOKE_HARDENING_2026-04-29.md`: browser companion smoke 이후 UI/운영 보강 기록
+- `docs/reports/BROWSER_COMPANION_GRAPH_LITE_ENABLED_SMOKE_2026-04-29.md`: graph-lite snapshot server 기준 browser companion Quality smoke 증거
 - `docs/VECTORSTORE_POLICY.md`: 벡터스토어 운영/용량 정책
 - `docs/COLLECTION_ROUTING_POLICY.md`: 분야별 컬렉션/라우팅 정책
 - `docs/FUTURE_EXTERNAL_CONSTRAINTS.md`: 외부 제한사항 중 추후 적용 항목

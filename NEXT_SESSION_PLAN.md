@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-118`
-- current_active_title: `Await next-track after browser companion hardening`
+- current_active_id: `LOOP-120`
+- current_active_title: `Browser companion operator guide and troubleshooting`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -357,11 +357,33 @@
 
 ## 2026-04-29 Await Next-Track Target
 
-- 현재 active: `LOOP-118 Await next-track after browser companion hardening`
+- 완료 루프: `LOOP-118 Await next-track after browser companion hardening`
 - 목표: browser companion smoke/hardening 이후 다음 track 선택을 대기한다.
 - 범위: 현재 상태 검증, 다음 후보 정리.
 - 제외: 신규 구현.
-- 완료 기준: 다음 실행 후보가 사용자 지시 또는 문서 기준으로 확정되어야 한다.
+- closeout: 사용자가 추천 순서 진행을 승인했고, 다음 실행 순서를 `LOOP-119 -> LOOP-120 -> LOOP-121 -> LOOP-122`로 등록했다.
+
+## 2026-04-29 Graph-Lite Browser Companion Smoke Target
+
+- 완료 루프: `LOOP-119 Graph-lite enabled browser companion smoke`
+- 목표: graph-lite snapshot이 활성화된 로컬 서버에서 browser companion Quality smoke가 `graph-lite=hit`를 표시하는지 검증한다.
+- 범위: active-doc graph-lite snapshot build, 별도 포트 graph-lite server 실행, Chrome loaded-extension smoke, evidence 문서화.
+- 제외: Chrome Web Store packaging, full toolbar automation, WebGPU/browser-only runtime, pending upload request 추가 생성.
+- evidence: `docs/reports/BROWSER_COMPANION_GRAPH_LITE_ENABLED_SMOKE_2026-04-29.md`
+- snapshot: `/tmp/trunk_rag_graph_lite_snapshot_loop119`, source_docs=5, section_hits=21, entities=20, relations=48.
+- result: browser companion Quality smoke on `:8014` showed `graph-lite=hit`, `relations=8`, `context=added`, request_id=`bdb67099-f084-46ee-8d60-3c36fcd96589`, support=`supported`, citations=`fr.md | ge.md | it.md`.
+- cleanup: loop-specific `:8014` server was stopped and final `/health` failed as expected.
+- caveat: answer text stayed weak, so extension transport passed but answer quality remains for `LOOP-121`/`LOOP-122`.
+- 다음 active: `LOOP-120 Browser companion operator guide and troubleshooting`.
+
+## 2026-04-29 Browser Companion Operator Guide Target
+
+- 현재 active: `LOOP-120 Browser companion operator guide and troubleshooting`
+- 목표: browser companion과 graph-lite smoke 결과를 기준으로 운영자가 따라갈 수 있는 가이드와 문제 해결 흐름을 정리한다.
+- 범위: 로컬 서버 준비, 확장 로드, graph-lite snapshot 서버 실행, smoke command, 흔한 상태값 해석, 문제 해결.
+- 제외: 신규 UI 구현, Chrome Web Store packaging, GraphRAG/full Neo4j 통합.
+- 완료 기준: 운영자가 `graph-lite=hit|disabled|not-reported|fallback` 상태를 해석하고 upload draft side effect를 이해할 수 있어야 한다.
+- 다음 pending: `LOOP-121 User-doc RAG quality fixture seed`, `LOOP-122 Quality model default policy revisit`.
 
 ## 0. 2026-03-13 우선순위 재정렬
 
