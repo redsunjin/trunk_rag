@@ -88,8 +88,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-110`
-- current_active_title: `Graph-lite active-doc Quality drill and fixture seed`
+- current_active_id: `LOOP-111`
+- current_active_title: `Graph-lite Quality eval refresh after active-doc drill`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -251,13 +251,24 @@
 
 ## 2026-04-29 Graph-lite Active-doc Quality Drill Target
 
-- 현재 active: `LOOP-110 Graph-lite active-doc Quality drill and fixture seed`
+- 완료 루프: `LOOP-110 Graph-lite active-doc Quality drill and fixture seed`
 - 목표: LOOP-108의 active-doc snapshot builder와 LOOP-109의 상태 노출을 연결해, 현재 seed + managed active 문서에서 생성한 snapshot이 Quality graph-lite drill에 유효한지 확인한다.
 - 범위: temp snapshot 생성, graph-candidate benchmark 재실행, 필요 시 fixture seed/운영 메모 보강, 기존 `/query` Quality opt-in 회귀 확인.
 - 제외: Balanced 기본 graph-lite 자동 적용, snapshot 자동 스케줄러, LLM 기반 relation extraction, full Neo4j/GraphRAG 운영.
 - 완료 기준: 생성 snapshot load/benchmark 통과, Quality graph-lite 상태 노출과 drill 결과 문서 연결, 기존 API hit/fallback/disabled 회귀 유지.
 - 검증 후보: `tests/test_graph_lite_snapshot_builder.py tests/test_graph_lite_service.py tests/api/test_query_api.py`, `scripts/build_graph_lite_snapshot.py --output-dir /tmp/trunk_rag_graph_lite_snapshot_loop110`, `scripts/benchmark_graph_lite_sidecar.py --snapshot-dir /tmp/trunk_rag_graph_lite_snapshot_loop110`, `scripts/roadmap_harness.py validate`.
-- 다음 pending: `LOOP-111 Graph-lite Quality eval refresh after active-doc drill`. active-doc drill이 통과하면 graph-candidate quality eval을 새 snapshot 기준으로 다시 돌려 품질 게이트 승격 여부를 판단한다.
+- 결과: 관련 테스트 `31 passed`; snapshot 생성 `source_docs=5`, `section_hits=21`, `entities=20`, `relations=48`; graph-candidate benchmark `3/3 hit`, fallback `0`, `avg_latency_ms=0.179`, `avg_relation_count=8.0`.
+- 증거 문서: `docs/reports/GRAPH_LITE_ACTIVE_DOC_QUALITY_DRILL_2026-04-29.md`
+- 판단: archived GraphRAG snapshot 없이도 현재 seed + managed active 문서 기준 graph-lite relation drill이 유지된다. 기본 Balanced 승격은 하지 않고, 다음 루프에서 Quality answer eval refresh로 판단한다.
+
+## 2026-04-29 Graph-lite Quality Eval Refresh Target
+
+- 현재 active: `LOOP-111 Graph-lite Quality eval refresh after active-doc drill`
+- 목표: active-doc snapshot drill 결과를 실제 Quality answer-level 평가와 연결해 graph-lite 보조 계층의 답변 품질 개선 여부를 다시 판단한다.
+- 범위: graph-candidate quality eval/compare 재실행, active-doc snapshot 환경변수 적용, 결과 리포트/판단 문서화.
+- 제외: Balanced 기본 graph-lite 자동 적용, 모델 기본값 변경, 유료 API 호출, full Neo4j/GraphRAG 운영.
+- 완료 기준: graph-candidate Quality 평가 결과가 report로 남고, graph-lite context가 답변 품질과 support/source route에 미치는 영향이 go/no-go로 정리되어야 한다.
+- 다음 pending: `LOOP-112 Graph-lite Quality promotion decision and operator policy`. LOOP-111 결과가 나오면 Quality 전용 유지/부분 승격/보류 정책을 문서화한다.
 
 ## 0. 2026-03-13 우선순위 재정렬
 

@@ -182,6 +182,7 @@
 - `docs/QUERY_EVAL_QUESTION_SET.md`: generic/sample-pack/graph 평가 질문셋
 - `docs/GRAPH_RAG_ARCHIVE_INDEX.md`: GraphRAG archive 문서 진입점
 - `docs/GRAPH_LITE_RELATION_SIDECAR_CONTRACT.md`: full GraphRAG가 아닌 graph-lite relation sidecar PoC 계약
+- `docs/reports/GRAPH_LITE_ACTIVE_DOC_QUALITY_DRILL_2026-04-29.md`: active-doc graph-lite snapshot build/benchmark drill 증거
 
 ## API 계약
 ### GET `/health`

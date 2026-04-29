@@ -184,6 +184,7 @@
 - `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-19_OPS_ANSWER_COMPLETENESS.md`: 최신 ops-baseline answer completeness 보정 결과
 - `docs/GRAPH_RAG_ARCHIVE_INDEX.md`: GraphRAG archive 문서 진입점
 - `docs/GRAPH_LITE_RELATION_SIDECAR_CONTRACT.md`: graph-lite relation sidecar PoC 계약
+- `docs/reports/GRAPH_LITE_ACTIVE_DOC_QUALITY_DRILL_2026-04-29.md`: active-doc graph-lite snapshot build/benchmark drill 증거
 - `docs/VECTORSTORE_POLICY.md`: 벡터스토어 운영/용량 정책
 - `docs/COLLECTION_ROUTING_POLICY.md`: 분야별 컬렉션/라우팅 정책
 - `docs/FUTURE_EXTERNAL_CONSTRAINTS.md`: 외부 제한사항 중 추후 적용 항목
