@@ -172,6 +172,7 @@
 - `scripts/validate_browser_companion_manifest.py`: browser companion manifest/권한 경계 검증 스크립트
 - `scripts/smoke_browser_companion_extension.py`: Chrome loaded-extension browser companion smoke helper
 - `scripts/check_ops_baseline_gate.py`: runtime preflight + core 기본 컬렉션 상태 + `generic-baseline` 회귀 게이트/diagnostics 점검
+- `scripts/check_user_doc_quality_gate.py`: default release gate와 분리된 opt-in `project_docs`/`UDQ-BC-01` user-doc 품질 게이트
 - `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩
 - `scripts/roadmap_harness.py`: 실행 큐 상태와 현재 active 항목 점검
 - `scripts/diagnose_ollama_runtime.py`: Ollama 직접 호출 기준 prompt/eval 처리량 진단
@@ -208,6 +209,7 @@
 - `evals/user_doc_answer_level_eval_fixtures.jsonl`: opt-in user-doc answer-level eval fixture
 - `docs/reports/SUPPORTED_CONTEXT_FALSE_NOT_FOUND_REMEDIATION_2026-04-30.md`: supported context false not-found guard와 `UDQ-BC-01` 전용 gate 승격 기록
 - `docs/reports/USER_DOC_QUERY_ANSWER_EVAL_2026-04-30_LOOP126.md`: `UDQ-BC-01` user-doc answer eval 실행 결과
+- `docs/reports/USER_DOC_QUALITY_GATE_OPERATOR_COMMAND_2026-04-30.md`: opt-in user-doc 품질 게이트 운영 명령과 기본 release gate 경계
 
 ## API 계약
 ### GET `/health`

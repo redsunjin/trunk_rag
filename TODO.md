@@ -92,6 +92,7 @@
 - `evals/user_doc_answer_level_eval_fixtures.jsonl`
 - `docs/reports/SUPPORTED_CONTEXT_FALSE_NOT_FOUND_REMEDIATION_2026-04-30.md`
 - `docs/reports/USER_DOC_QUERY_ANSWER_EVAL_2026-04-30_LOOP126.md`
+- `docs/reports/USER_DOC_QUALITY_GATE_OPERATOR_COMMAND_2026-04-30.md`
 
 ## Roadmap Loop Harness
 
@@ -236,7 +237,8 @@
 | LOOP-124 | done | Project-doc collection contract skeleton | `./.venv/bin/python -m pytest -q tests/test_collection_service.py tests/test_index_service.py` + `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile services/project_doc_service.py services/index_service.py core/collection_manifest.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-125 | done | Project-doc query smoke and UDQ candidate promotion gate | `project_docs` reindex/query smoke + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-126 | done | Supported-context false-not-found remediation | `./.venv/bin/python -m pytest -q tests/test_query_service.py tests/api/test_query_api.py tests/test_user_doc_eval_fixtures.py` + user-doc eval `1/1 pass` |
-| LOOP-127 | active | User-doc quality gate operator command | opt-in `project_docs`/user-doc eval gate를 반복 가능한 운영 명령으로 정리 |
+| LOOP-127 | done | User-doc quality gate operator command | `./.venv/bin/python -m pytest -q tests/test_check_user_doc_quality_gate.py tests/test_user_doc_eval_fixtures.py` + `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/check_user_doc_quality_gate.py` + user-doc gate blocked-smoke + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-128 | active | Await next-track after user-doc quality gate | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -3522,7 +3524,7 @@ closeout 메모 (2026-04-30):
 - `./.venv/bin/python scripts/eval_query_quality.py --base-url http://127.0.0.1:8015 --timeout-seconds 90 --eval-file evals/user_doc_answer_level_eval_fixtures.jsonl --case-id UDQ-BC-01 --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434 --query-timeout-seconds 60 --output-json docs/reports/user_doc_query_answer_eval_2026-04-30_loop126.json --output-report docs/reports/USER_DOC_QUERY_ANSWER_EVAL_2026-04-30_LOOP126.md` 결과 `1/1 pass`, `avg_weighted_score=1.0`, `support_pass_rate=1.0`, `source_route_pass_rate=1.0`이었다.
 - 상세 기록은 `docs/reports/SUPPORTED_CONTEXT_FALSE_NOT_FOUND_REMEDIATION_2026-04-30.md`에 남겼다.
 
-## 현재 Active Loop (LOOP-127)
+## 완료 Loop (LOOP-127)
 
 목표:
 - opt-in `project_docs`/user-doc answer eval gate를 운영자가 반복 실행할 수 있는 명령 또는 wrapper로 정리한다.
@@ -3539,6 +3541,30 @@ closeout 메모 (2026-04-30):
 검증:
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
 - 변경 영역 타깃 테스트
+
+진행 메모 (2026-04-30):
+- `scripts/check_user_doc_quality_gate.py`를 추가해 `UDQ-BC-01`/`project_docs` 전용 opt-in gate를 표준 명령으로 고정했다.
+- gate ready 조건은 runtime ready, `project_docs` vectors 존재, selected eval 전체 pass, `support_pass_rate=1.0`, `source_route_pass_rate=1.0`이다.
+- 기본 release gate는 `scripts/check_ops_baseline_gate.py`/`generic-baseline`로 유지하고, user-doc fixture는 `evals/user_doc_answer_level_eval_fixtures.jsonl`에만 둔다.
+- `PROJECT_DOCS_REINDEX_REQUIRED` 진단은 `project_docs` reindex 명령을 hint로 제공한다.
+- 운영 명령/경계/복구 조건은 `docs/reports/USER_DOC_QUALITY_GATE_OPERATOR_COMMAND_2026-04-30.md`, `README.md`, `SPEC.md`에 반영했다.
+- 검증 결과: `./.venv/bin/python -m pytest -q tests/test_check_user_doc_quality_gate.py tests/test_user_doc_eval_fixtures.py tests/test_documentation_boundaries.py` -> `8 passed`; `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/check_user_doc_quality_gate.py` -> pass; `git diff --check` -> pass; `./.venv/bin/python scripts/roadmap_harness.py validate` -> ready.
+- 현재 환경 실측: `scripts/check_user_doc_quality_gate.py --json`은 local app server 미기동 상태를 `APP_HEALTH_UNREACHABLE`로 반환하고, Ollama `gemma4:e4b` readiness와 gate boundary를 정상 출력했다.
+
+## 현재 Active Loop (LOOP-128)
+
+목표:
+- `LOOP-127` 완료 이후 자동 진행할 pending 항목이 없으므로 다음 작업 트랙 결정을 대기한다.
+
+범위:
+- 포함: 현재 세션 상태 유지, 다음 우선순위가 정해지면 새 loop로 승격
+- 제외: `LOOP-005` 데스크톱 패키징 blocked 해제, 제품 범위 확장
+
+완료 기준:
+- 사용자가 다음 트랙을 지정하거나, `TODO.md`/`NEXT_SESSION_PLAN.md`가 새 실행 항목을 active/pending으로 승격한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

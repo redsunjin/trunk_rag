@@ -142,6 +142,7 @@
 - `scripts/validate_browser_companion_manifest.py`: browser companion manifest/권한 경계 검증 스크립트
 - `scripts/smoke_browser_companion_extension.py`: Chrome loaded-extension browser companion smoke helper
 - `scripts/check_ops_baseline_gate.py`: core 기본 컬렉션 상태와 `generic-baseline` 회귀 게이트를 한 번에 점검하는 스크립트
+- `scripts/check_user_doc_quality_gate.py`: opt-in `project_docs` user-doc answer eval gate를 점검하는 운영 스크립트
 - `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩 스크립트
 - `scripts/roadmap_harness.py`: `TODO.md`/`NEXT_SESSION_PLAN.md`의 루프 상태와 active 항목을 점검하는 스크립트
 - `scripts/runtime_preflight.py`: P1 벤치 전 런타임 준비 상태 점검
@@ -210,6 +211,7 @@
 - `evals/user_doc_answer_level_eval_fixtures.jsonl`: opt-in user-doc answer-level eval fixture
 - `docs/reports/SUPPORTED_CONTEXT_FALSE_NOT_FOUND_REMEDIATION_2026-04-30.md`: supported context false not-found guard와 `UDQ-BC-01` 전용 gate 승격 기록
 - `docs/reports/USER_DOC_QUERY_ANSWER_EVAL_2026-04-30_LOOP126.md`: `UDQ-BC-01` user-doc answer eval 실행 결과
+- `docs/reports/USER_DOC_QUALITY_GATE_OPERATOR_COMMAND_2026-04-30.md`: opt-in user-doc 품질 게이트 운영 명령과 기본 release gate 경계
 - `docs/VECTORSTORE_POLICY.md`: 벡터스토어 운영/용량 정책
 - `docs/COLLECTION_ROUTING_POLICY.md`: 분야별 컬렉션/라우팅 정책
 - `docs/FUTURE_EXTERNAL_CONSTRAINTS.md`: 외부 제한사항 중 추후 적용 항목
@@ -407,6 +409,23 @@ cd <repo>
 - 프로젝트 기본 경로는 `Ollama` 기준이며, 로컬 환경에 따라 `LM Studio` OpenAI 호환 경로를 별도 실측할 수 있습니다.
 - `2026-03-21` 로컬 PC 실측에서는 `LM Studio` `qwen3.5-4b-mlx-4bit` + `http://127.0.0.1:1337/v1` 연결은 확인됐지만 `ops-baseline`은 `LLM_TIMEOUT`으로 `3/3` 실패했습니다.
 - 종료 코드 `0`은 게이트 통과, `1`은 컬렉션 비어 있음 또는 eval 실패를 뜻합니다.
+
+사용자/운영 문서 기반 품질 확인은 기본 release gate와 분리된 opt-in gate로 실행합니다.
+
+```powershell
+.venv\Scripts\python.exe scripts\check_user_doc_quality_gate.py `
+  --llm-provider ollama `
+  --llm-model gemma4:e4b `
+  --llm-base-url http://localhost:11434 `
+  --query-timeout-seconds 60 `
+  --output-json docs\reports\user_doc_quality_gate_latest.json `
+  --output-report docs\reports\USER_DOC_QUALITY_GATE_LATEST.md
+```
+
+- 이 스크립트는 `evals/user_doc_answer_level_eval_fixtures.jsonl`의 `UDQ-BC-01`과 explicit `project_docs` 컬렉션만 확인합니다.
+- 기본 release gate인 `scripts/check_ops_baseline_gate.py` / `generic-baseline`은 바꾸지 않습니다.
+- `PROJECT_DOCS_REINDEX_REQUIRED`가 나오면 먼저 `project_docs` 컬렉션을 다시 인덱싱한 뒤 재실행합니다.
+- 종료 코드 `0`은 user-doc opt-in gate 통과, `1`은 앱 미기동, `project_docs` 미인덱싱, eval 실패 또는 support/source route 부족을 뜻합니다.
 
 ## Roadmap Harness
 

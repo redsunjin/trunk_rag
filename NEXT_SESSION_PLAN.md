@@ -81,6 +81,7 @@
 - `docs/reports/V1_5_POST_CLOSEOUT_NEXT_TRACK_SELECTION_2026-04-22.md`
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BRANCH_HANDOFF_SNAPSHOT_2026-04-22.md`
 - `docs/reports/V1_5_BRANCH_PUBLICATION_DECISION_2026-04-22.md`
+- `docs/reports/USER_DOC_QUALITY_GATE_OPERATOR_COMMAND_2026-04-30.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -88,8 +89,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-127`
-- current_active_title: `User-doc quality gate operator command`
+- current_active_id: `LOOP-128`
+- current_active_title: `Await next-track after user-doc quality gate`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -126,6 +127,20 @@
 - report: `docs/reports/SUPPORTED_CONTEXT_FALSE_NOT_FOUND_REMEDIATION_2026-04-30.md`
 - 다음 active: `LOOP-127 User-doc quality gate operator command`
 - LOOP-127 목표: opt-in `project_docs`/user-doc eval gate를 운영자가 반복 실행할 수 있는 명령 또는 wrapper로 정리하고, 기본 release gate와의 경계를 문서화한다.
+
+## 2026-04-30 User-Doc Quality Gate Operator Command Snapshot
+
+- 완료 루프: `LOOP-127 User-doc quality gate operator command`
+- 코드 반영: `scripts/check_user_doc_quality_gate.py`를 추가해 `UDQ-BC-01`/`project_docs` 전용 opt-in answer eval gate를 표준 운영 명령으로 고정했다.
+- gate target: eval file `evals/user_doc_answer_level_eval_fixtures.jsonl`, bucket `user-doc-candidate`, case `UDQ-BC-01`, required collection `project_docs`.
+- boundary: 기본 release gate는 `scripts/check_ops_baseline_gate.py`/`generic-baseline`로 유지한다. `project_docs`는 default runtime collection에 추가하지 않고, user-doc fixture도 기본 `evals/answer_level_eval_fixtures.jsonl`에 편입하지 않는다.
+- readiness: runtime ready, `project_docs` vectors 존재, selected eval 전체 pass, `support_pass_rate=1.0`, `source_route_pass_rate=1.0`.
+- blocked diagnostic: `PROJECT_DOCS_REINDEX_REQUIRED`는 `index_service.reindex_single_collection(reset=False, collection_key='project_docs')` 재실행 hint를 제공한다.
+- verification: `tests/test_check_user_doc_quality_gate.py tests/test_user_doc_eval_fixtures.py tests/test_documentation_boundaries.py -> 8 passed`; `py_compile scripts/check_user_doc_quality_gate.py -> pass`; `git diff --check -> pass`; `roadmap_harness.py validate -> ready`.
+- live command smoke: 현재 local app server가 떠 있지 않아 `scripts/check_user_doc_quality_gate.py --json`은 exit `1`과 `APP_HEALTH_UNREACHABLE`을 반환했다. Ollama `gemma4:e4b` readiness와 gate boundary 출력은 확인했다.
+- docs: `README.md`, `SPEC.md`, `docs/reports/USER_DOC_QUALITY_GATE_OPERATOR_COMMAND_2026-04-30.md`.
+- 다음 active: `LOOP-128 Await next-track after user-doc quality gate`
+- LOOP-128 목표: 자동 진행할 pending 항목이 없으므로 다음 트랙 결정을 대기한다. `LOOP-005` 데스크톱 패키징은 embedded Python vs 별도 설치 전략 확정 전까지 계속 `blocked`다.
 
 ## 2026-04-28 UI Copy/Disclosure Snapshot
 
