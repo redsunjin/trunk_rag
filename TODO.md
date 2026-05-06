@@ -93,6 +93,7 @@
 - `docs/reports/SUPPORTED_CONTEXT_FALSE_NOT_FOUND_REMEDIATION_2026-04-30.md`
 - `docs/reports/USER_DOC_QUERY_ANSWER_EVAL_2026-04-30_LOOP126.md`
 - `docs/reports/USER_DOC_QUALITY_GATE_OPERATOR_COMMAND_2026-04-30.md`
+- `docs/reports/WORK_STATUS_AND_VERIFICATION_SPEC_2026-05-06.md`
 
 ## Roadmap Loop Harness
 
@@ -238,7 +239,9 @@
 | LOOP-125 | done | Project-doc query smoke and UDQ candidate promotion gate | `project_docs` reindex/query smoke + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-126 | done | Supported-context false-not-found remediation | `./.venv/bin/python -m pytest -q tests/test_query_service.py tests/api/test_query_api.py tests/test_user_doc_eval_fixtures.py` + user-doc eval `1/1 pass` |
 | LOOP-127 | done | User-doc quality gate operator command | `./.venv/bin/python -m pytest -q tests/test_check_user_doc_quality_gate.py tests/test_user_doc_eval_fixtures.py` + `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/check_user_doc_quality_gate.py` + user-doc gate blocked-smoke + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-128 | active | Await next-track after user-doc quality gate | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-128 | done | Await next-track after user-doc quality gate | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-129 | done | Work status and verification spec | `./.venv/bin/python scripts/roadmap_harness.py validate` + target user-doc gate tests |
+| LOOP-130 | active | Await next-track after work status spec | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -3551,7 +3554,7 @@ closeout 메모 (2026-04-30):
 - 검증 결과: `./.venv/bin/python -m pytest -q tests/test_check_user_doc_quality_gate.py tests/test_user_doc_eval_fixtures.py tests/test_documentation_boundaries.py` -> `8 passed`; `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/check_user_doc_quality_gate.py` -> pass; `git diff --check` -> pass; `./.venv/bin/python scripts/roadmap_harness.py validate` -> ready.
 - 현재 환경 실측: `scripts/check_user_doc_quality_gate.py --json`은 local app server 미기동 상태를 `APP_HEALTH_UNREACHABLE`로 반환하고, Ollama `gemma4:e4b` readiness와 gate boundary를 정상 출력했다.
 
-## 현재 Active Loop (LOOP-128)
+## 완료 Loop (LOOP-128)
 
 목표:
 - `LOOP-127` 완료 이후 자동 진행할 pending 항목이 없으므로 다음 작업 트랙 결정을 대기한다.
@@ -3559,6 +3562,50 @@ closeout 메모 (2026-04-30):
 범위:
 - 포함: 현재 세션 상태 유지, 다음 우선순위가 정해지면 새 loop로 승격
 - 제외: `LOOP-005` 데스크톱 패키징 blocked 해제, 제품 범위 확장
+
+완료 기준:
+- 사용자가 다음 트랙을 지정하거나, `TODO.md`/`NEXT_SESSION_PLAN.md`가 새 실행 항목을 active/pending으로 승격한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-05-06):
+- 사용자가 다음 작업 진행을 지시했고, 다음 트랙을 `LOOP-129 Work status and verification spec`으로 확정했다.
+- `LOOP-127`은 `main`/`origin/main`에 반영됐고, 별도 pending 항목 없이 명세서화 트랙으로 이어간다.
+
+## 완료 Loop (LOOP-129)
+
+목표:
+- `LOOP-123`부터 `LOOP-127`까지 이어진 project-doc/user-doc 품질 게이트 작업을 하나의 추적 가능한 명세서로 고정한다.
+- 무엇이 완료됐고, 어떤 명령으로 제대로 작업되는지 확인할 수 있는지 운영자/다음 세션 기준으로 정리한다.
+
+범위:
+- 포함: 완료 loop 요약, 산출물 경로, 검증 명령, live user-doc gate 실측 결과, 남은 gap/다음 후보 정리
+- 제외: 새 기능 구현, default release gate 변경, desktop packaging blocked 해제, user-doc fixture 추가 확장
+
+완료 기준:
+- `docs/reports/WORK_STATUS_AND_VERIFICATION_SPEC_2026-05-06.md`가 현재 baseline, loop 산출물, 검증 matrix를 포함해야 한다.
+- closeout 전에는 `TODO.md`와 `NEXT_SESSION_PLAN.md`가 `LOOP-129` active를 인식해야 하며, closeout 후에는 다음 대기 loop로 승격되어야 한다.
+- roadmap harness가 ready여야 한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+- `./.venv/bin/python -m pytest -q tests/test_check_user_doc_quality_gate.py tests/test_user_doc_eval_fixtures.py tests/test_documentation_boundaries.py`
+
+closeout 메모 (2026-05-06):
+- `docs/reports/WORK_STATUS_AND_VERIFICATION_SPEC_2026-05-06.md`를 추가해 `LOOP-123~127` 산출물, 검증 matrix, live user-doc gate 실측 결과, 남은 후보 트랙을 한 문서로 고정했다.
+- `2026-05-05 02:14 KST` live smoke에서 앱 서버 기동 후 `scripts/check_user_doc_quality_gate.py --json`이 `ready=true`, `UDQ-BC-01 1/1 passed`, `support_pass_rate=1.0`, `source_route_pass_rate=1.0`, `avg_weighted_score=1.0`으로 통과했음을 명세서에 반영했다.
+- 검증 결과: `./.venv/bin/python scripts/roadmap_harness.py validate` -> ready; `./.venv/bin/python -m pytest -q tests/test_check_user_doc_quality_gate.py tests/test_user_doc_eval_fixtures.py tests/test_documentation_boundaries.py` -> `8 passed`; `git diff --check` -> pass.
+- 다음 active는 `LOOP-130 Await next-track after work status spec`로 둔다.
+
+## 현재 Active Loop (LOOP-130)
+
+목표:
+- `LOOP-129` 명세서화 완료 이후 자동 진행할 pending 항목이 없으므로 다음 작업 트랙 결정을 대기한다.
+
+범위:
+- 포함: 현재 세션 상태 유지, 다음 우선순위가 정해지면 새 loop로 승격
+- 제외: `LOOP-005` 데스크톱 패키징 blocked 해제, 새 user-doc fixture 추가, default release gate 변경
 
 완료 기준:
 - 사용자가 다음 트랙을 지정하거나, `TODO.md`/`NEXT_SESSION_PLAN.md`가 새 실행 항목을 active/pending으로 승격한다.

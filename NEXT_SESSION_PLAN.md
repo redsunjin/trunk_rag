@@ -82,6 +82,7 @@
 - `docs/reports/V1_5_REINDEX_LIVE_ADAPTER_BRANCH_HANDOFF_SNAPSHOT_2026-04-22.md`
 - `docs/reports/V1_5_BRANCH_PUBLICATION_DECISION_2026-04-22.md`
 - `docs/reports/USER_DOC_QUALITY_GATE_OPERATOR_COMMAND_2026-04-30.md`
+- `docs/reports/WORK_STATUS_AND_VERIFICATION_SPEC_2026-05-06.md`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -89,8 +90,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-128`
-- current_active_title: `Await next-track after user-doc quality gate`
+- current_active_id: `LOOP-130`
+- current_active_title: `Await next-track after work status spec`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -141,6 +142,19 @@
 - docs: `README.md`, `SPEC.md`, `docs/reports/USER_DOC_QUALITY_GATE_OPERATOR_COMMAND_2026-04-30.md`.
 - 다음 active: `LOOP-128 Await next-track after user-doc quality gate`
 - LOOP-128 목표: 자동 진행할 pending 항목이 없으므로 다음 트랙 결정을 대기한다. `LOOP-005` 데스크톱 패키징은 embedded Python vs 별도 설치 전략 확정 전까지 계속 `blocked`다.
+
+## 2026-05-06 Work Status and Verification Spec Snapshot
+
+- 완료 루프: `LOOP-128 Await next-track after user-doc quality gate`
+- 완료 루프: `LOOP-129 Work status and verification spec`
+- 현재 active: `LOOP-130 Await next-track after work status spec`
+- 기준선: `main`/`origin/main` = `d7a12bc LOOP-127 add user-doc quality gate command`
+- 목적: `LOOP-123`부터 `LOOP-127`까지 이어진 project-doc/user-doc 품질 게이트 작업을 하나의 추적 가능한 명세서와 검증 matrix로 고정한다.
+- 문서: `docs/reports/WORK_STATUS_AND_VERIFICATION_SPEC_2026-05-06.md`
+- live smoke 보정: 이전 `APP_HEALTH_UNREACHABLE`은 Ollama 문제가 아니라 Trunk RAG 앱 서버 미기동 때문이었다. 앱 서버를 `./.venv/bin/python app_api.py`로 띄운 뒤 `scripts/check_user_doc_quality_gate.py --json`을 실행해 `ready=true`, `UDQ-BC-01 1/1 passed`, `support_pass_rate=1.0`, `source_route_pass_rate=1.0`, `avg_weighted_score=1.0`을 확인했다.
+- 검증: `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`; `./.venv/bin/python -m pytest -q tests/test_check_user_doc_quality_gate.py tests/test_user_doc_eval_fixtures.py tests/test_documentation_boundaries.py -> 8 passed`; `git diff --check -> pass`.
+- 다음 후보: live gate output artifact 고정(`docs/reports/user_doc_quality_gate_latest.*`), user-doc fixture 확장, 또는 `LOOP-005` desktop packaging strategy 결정.
+- LOOP-130 목표: 자동 진행할 pending 항목이 없으므로 다음 트랙 결정을 대기한다.
 
 ## 2026-04-28 UI Copy/Disclosure Snapshot
 
