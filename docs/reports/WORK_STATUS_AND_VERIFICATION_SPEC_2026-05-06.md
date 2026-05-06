@@ -150,6 +150,15 @@ Latest observed live smoke:
 - Result: `ready=true`, `UDQ-BC-01 1/1 passed`, `support_pass_rate=1.0`, `source_route_pass_rate=1.0`, `avg_weighted_score=1.0`
 - Note: the earlier `APP_HEALTH_UNREACHABLE` was caused by the Trunk RAG app server being stopped, not by Ollama. Ollama was reachable at `http://localhost:11434`.
 
+Persisted latest evidence artifact:
+
+- Loop: `LOOP-131 User-doc quality gate live evidence artifact`
+- Time: `2026-05-06T13:57:54+00:00`
+- Files:
+  - `docs/reports/user_doc_quality_gate_latest.json`
+  - `docs/reports/USER_DOC_QUALITY_GATE_LATEST.md`
+- Result: `ready=true`, `project_docs vectors=10`, `UDQ-BC-01 1/1 passed`, `pass_rate=1.0`, `support_pass_rate=1.0`, `source_route_pass_rate=1.0`, `avg_weighted_score=1.0`, `p95_latency_ms=16783.456`
+
 ## Operational Interpretation
 
 - The completed track proves that project/operator documentation can be evaluated through an explicit `project_docs` path without changing the default release gate.
@@ -159,9 +168,7 @@ Latest observed live smoke:
 
 ## Next Track Candidates
 
-1. `User-doc quality gate live evidence artifact`
-   - Persist the live gate output with `--output-json docs/reports/user_doc_quality_gate_latest.json` and `--output-report docs/reports/USER_DOC_QUALITY_GATE_LATEST.md`.
-2. `User-doc fixture expansion`
+1. `User-doc fixture expansion`
    - Add one or two more real project/operator document questions before promoting user-doc quality beyond `UDQ-BC-01`.
-3. `Desktop packaging strategy decision`
+2. `Desktop packaging strategy decision`
    - Unblock `LOOP-005` only after deciding embedded Python vs separate install.

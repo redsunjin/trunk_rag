@@ -83,6 +83,8 @@
 - `docs/reports/V1_5_BRANCH_PUBLICATION_DECISION_2026-04-22.md`
 - `docs/reports/USER_DOC_QUALITY_GATE_OPERATOR_COMMAND_2026-04-30.md`
 - `docs/reports/WORK_STATUS_AND_VERIFICATION_SPEC_2026-05-06.md`
+- `docs/reports/USER_DOC_QUALITY_GATE_LATEST.md`
+- `docs/reports/user_doc_quality_gate_latest.json`
 
 작성 목적:
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
@@ -90,8 +92,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-130`
-- current_active_title: `Await next-track after work status spec`
+- current_active_id: `LOOP-132`
+- current_active_title: `Await next-track after user-doc live evidence`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -155,6 +157,20 @@
 - 검증: `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`; `./.venv/bin/python -m pytest -q tests/test_check_user_doc_quality_gate.py tests/test_user_doc_eval_fixtures.py tests/test_documentation_boundaries.py -> 8 passed`; `git diff --check -> pass`.
 - 다음 후보: live gate output artifact 고정(`docs/reports/user_doc_quality_gate_latest.*`), user-doc fixture 확장, 또는 `LOOP-005` desktop packaging strategy 결정.
 - LOOP-130 목표: 자동 진행할 pending 항목이 없으므로 다음 트랙 결정을 대기한다.
+
+## 2026-05-06 User-Doc Live Evidence Artifact Snapshot
+
+- 완료 루프: `LOOP-130 Await next-track after work status spec`
+- 완료 루프: `LOOP-131 User-doc quality gate live evidence artifact`
+- 현재 active: `LOOP-132 Await next-track after user-doc live evidence`
+- 작업 브랜치: `codex/loop-131-user-doc-gate-evidence`
+- 목표: user-doc quality gate live smoke를 운영 증거 파일로 고정한다.
+- output target: `docs/reports/user_doc_quality_gate_latest.json`, `docs/reports/USER_DOC_QUALITY_GATE_LATEST.md`
+- 실행 명령: `./.venv/bin/python scripts/check_user_doc_quality_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434 --query-timeout-seconds 60 --output-json docs/reports/user_doc_quality_gate_latest.json --output-report docs/reports/USER_DOC_QUALITY_GATE_LATEST.md`
+- 결과: `ready=true`, `project_docs vectors=10`, `UDQ-BC-01 1/1 passed`, `pass_rate=1.0`, `support_pass_rate=1.0`, `source_route_pass_rate=1.0`, `avg_weighted_score=1.0`, `p95_latency_ms=16783.456`.
+- boundary: default release gate는 `generic-baseline`으로 유지하고, user-doc gate는 `user-doc-candidate` opt-in 경로로 분리한다.
+- 검증 계획: `roadmap_harness.py validate`, target pytest, `git diff --check`.
+- LOOP-132 목표: 자동 진행할 pending 항목이 없으므로 다음 트랙 결정을 대기한다.
 
 ## 2026-04-28 UI Copy/Disclosure Snapshot
 
