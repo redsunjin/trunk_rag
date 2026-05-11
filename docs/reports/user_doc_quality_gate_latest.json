@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-06T13:57:54+00:00",
+  "generated_at": "2026-05-11T13:29:49+00:00",
   "ready": true,
   "base_url": "http://127.0.0.1:8000",
   "llm_provider": "ollama",
@@ -179,26 +179,28 @@
       "user-doc-candidate"
     ],
     "selected_case_ids": [
-      "UDQ-BC-01"
+      "UDQ-BC-01",
+      "UDQ-BC-02",
+      "UDQ-BC-03"
     ],
     "summary": {
-      "cases": 1,
-      "passed": 1,
+      "cases": 3,
+      "passed": 3,
       "pass_rate": 1.0,
-      "avg_latency_ms": 16783.456,
-      "p95_latency_ms": 16783.456,
-      "avg_weighted_score": 1.0,
+      "avg_latency_ms": 3479.519,
+      "p95_latency_ms": 4382.149,
+      "avg_weighted_score": 0.925,
       "support_pass_rate": 1.0,
       "source_route_pass_rate": 1.0,
       "avg_source_route_coverage": 1.0,
       "bucket_summaries": {
         "user-doc-candidate": {
-          "cases": 1,
-          "passed": 1,
+          "cases": 3,
+          "passed": 3,
           "pass_rate": 1.0,
-          "avg_latency_ms": 16783.456,
-          "p95_latency_ms": 16783.456,
-          "avg_weighted_score": 1.0,
+          "avg_latency_ms": 3479.519,
+          "p95_latency_ms": 4382.149,
+          "avg_weighted_score": 0.925,
           "support_pass_rate": 1.0,
           "source_route_pass_rate": 1.0,
           "avg_source_route_coverage": 1.0
@@ -322,7 +324,7 @@
         ],
         "route_pass": true,
         "status": 200,
-        "latency_ms": 16783.456,
+        "latency_ms": 4540.689,
         "answer_length": 403,
         "answer_preview": "문서 근거로 확인되는 내용입니다.\n- `graph-lite=not-reported`: Server response did not include graph-lite metadata. 운영자는 다음을 확인합니다: Confirm server was started with current code and debug metadata.\n- graph-lite=hit | relations=<number> | context=added\n- `g",
         "answer": "문서 근거로 확인되는 내용입니다.\n- `graph-lite=not-reported`: Server response did not include graph-lite metadata. 운영자는 다음을 확인합니다: Confirm server was started with current code and debug metadata.\n- graph-lite=hit | relations=<number> | context=added\n- `graph-lite=hit`: Quality mode found relation context and appended it to RAG context. 운영자는 다음을 확인합니다: Treat transport as healthy; evaluate answer quality separately.",
@@ -375,6 +377,148 @@
         "graph_lite_relation_count": 0,
         "graph_lite_context_added": false,
         "weighted_score": 1.0,
+        "pass": true,
+        "error_code": null,
+        "error_message": null
+      },
+      {
+        "id": "UDQ-BC-02",
+        "bucket": "user-doc-candidate",
+        "query": "Browser companion을 로컬에서 정상 사용하려면 side panel에서 어떤 상태를 확인하고, Balanced와 Quality 모드는 각각 언제 써야 하나?",
+        "request_mode": "explicit_single",
+        "collection_keys": [
+          "project_docs"
+        ],
+        "expected_route_keys": [
+          "project_docs"
+        ],
+        "actual_route_keys": [
+          "project_docs"
+        ],
+        "route_pass": true,
+        "status": 200,
+        "latency_ms": 2942.576,
+        "answer_length": 268,
+        "answer_preview": "정상적인 로컬 사용을 위해서는 사이드 패널에서 로컬 서버 URL을 확인하고, 'Quality' 모드에서 관계가 많은 질문을 하는 것이 권장됩니다. 먼저, 로컬에서 Trunk RAG를 정상 서버 경로로 시작한 후, 브라우저 확장 프로그램의 사이드 패널을 열고 새로고침 버튼을 클릭하여 정상적인 상태를 확인해야 합니다. 'Balanced' 모드는 일반적인 로컬 RAG를 요청할 때 사용하며, 반면 'Quality' 모드는 관계(rel",
+        "answer": "정상적인 로컬 사용을 위해서는 사이드 패널에서 로컬 서버 URL을 확인하고, 'Quality' 모드에서 관계가 많은 질문을 하는 것이 권장됩니다. 먼저, 로컬에서 Trunk RAG를 정상 서버 경로로 시작한 후, 브라우저 확장 프로그램의 사이드 패널을 열고 새로고침 버튼을 클릭하여 정상적인 상태를 확인해야 합니다. 'Balanced' 모드는 일반적인 로컬 RAG를 요청할 때 사용하며, 반면 'Quality' 모드는 관계(relation)가 많은 질문을 할 때 사용해야 합니다.",
+        "required_hits": [
+          "Balanced",
+          "Quality",
+          "로컬 서버 URL",
+          "새로고침"
+        ],
+        "required_total": 4,
+        "required_ratio": 1.0,
+        "must_include_any_hits": [
+          "정상",
+          "사이드 패널"
+        ],
+        "must_include_any_total": 5,
+        "must_include_any_ratio": 0.4,
+        "forbidden_hits": [],
+        "min_answer_chars": 150,
+        "min_chars_ratio": 1.0,
+        "precision_score": 1.0,
+        "completeness_score": 0.7,
+        "hallucination_score": 1.0,
+        "support_level": "supported",
+        "support_reason": "multiple_context_segments",
+        "support_pass": true,
+        "citation_count": 3,
+        "citations": [
+          "BROWSER_COMPANION_OPERATOR_GUIDE.md > Graph-Lite Quality Smoke",
+          "BROWSER_COMPANION_OPERATOR_GUIDE.md > Normal Local Use",
+          "BROWSER_COMPANION_OPERATOR_GUIDE.md > Purpose"
+        ],
+        "source_count": 3,
+        "source_collection_keys": [
+          "project_docs",
+          "project_docs",
+          "project_docs"
+        ],
+        "source_covered_keys": [
+          "project_docs"
+        ],
+        "source_route_coverage_ratio": 1.0,
+        "source_route_pass": true,
+        "graph_lite_header": "disabled",
+        "graph_lite_enabled": false,
+        "graph_lite_status": "disabled",
+        "graph_lite_fallback_reason": "-",
+        "graph_lite_relation_count": 0,
+        "graph_lite_context_added": false,
+        "weighted_score": 0.865,
+        "pass": true,
+        "error_code": null,
+        "error_message": null
+      },
+      {
+        "id": "UDQ-BC-03",
+        "bucket": "user-doc-candidate",
+        "query": "Browser companion의 Upload Draft for Review는 문서를 어떻게 처리하며, smoke 실행과 pending 요청 정리에서 운영자가 지켜야 할 제한은 무엇인가?",
+        "request_mode": "explicit_single",
+        "collection_keys": [
+          "project_docs"
+        ],
+        "expected_route_keys": [
+          "project_docs"
+        ],
+        "actual_route_keys": [
+          "project_docs"
+        ],
+        "route_pass": true,
+        "status": 200,
+        "latency_ms": 2955.292,
+        "answer_length": 246,
+        "answer_preview": "Upload Draft for Review 기능은 일반적인 업로드 요청을 로컬 Trunk RAG 스토어에 생성하며, 이 과정에서 콘텐츠를 자체적으로 승인하거나 인덱싱하지는 않습니다. 따라서 운영자는 이 기능 사용 시 `--skip-upload` 옵션을 사용해야 하며, 기존에 대기 중인(pending) 요청은 운영자의 확인 없이는 삭제해서는 안 됩니다. 이처럼 운영자는 업로드 요청의 상태 관리와 데이터 처리 과정에 대한 주의가 ",
+        "answer": "Upload Draft for Review 기능은 일반적인 업로드 요청을 로컬 Trunk RAG 스토어에 생성하며, 이 과정에서 콘텐츠를 자체적으로 승인하거나 인덱싱하지는 않습니다. 따라서 운영자는 이 기능 사용 시 `--skip-upload` 옵션을 사용해야 하며, 기존에 대기 중인(pending) 요청은 운영자의 확인 없이는 삭제해서는 안 됩니다. 이처럼 운영자는 업로드 요청의 상태 관리와 데이터 처리 과정에 대한 주의가 필요합니다.",
+        "required_hits": [
+          "Upload Draft for Review",
+          "승인",
+          "--skip-upload",
+          "pending"
+        ],
+        "required_total": 4,
+        "required_ratio": 1.0,
+        "must_include_any_hits": [
+          "운영자",
+          "확인",
+          "삭제"
+        ],
+        "must_include_any_total": 5,
+        "must_include_any_ratio": 0.6,
+        "forbidden_hits": [],
+        "min_answer_chars": 150,
+        "min_chars_ratio": 1.0,
+        "precision_score": 1.0,
+        "completeness_score": 0.8,
+        "hallucination_score": 1.0,
+        "support_level": "supported",
+        "support_reason": "multiple_context_segments",
+        "support_pass": true,
+        "citation_count": 2,
+        "citations": [
+          "BROWSER_COMPANION_OPERATOR_GUIDE.md > Upload Draft Behavior",
+          "BROWSER_COMPANION_OPERATOR_GUIDE.md > Graph-Lite Quality Smoke"
+        ],
+        "source_count": 3,
+        "source_collection_keys": [
+          "project_docs",
+          "project_docs",
+          "project_docs"
+        ],
+        "source_covered_keys": [
+          "project_docs"
+        ],
+        "source_route_coverage_ratio": 1.0,
+        "source_route_pass": true,
+        "graph_lite_header": "disabled",
+        "graph_lite_enabled": false,
+        "graph_lite_status": "disabled",
+        "graph_lite_fallback_reason": "-",
+        "graph_lite_relation_count": 0,
+        "graph_lite_context_added": false,
+        "weighted_score": 0.91,
         "pass": true,
         "error_code": null,
         "error_message": null

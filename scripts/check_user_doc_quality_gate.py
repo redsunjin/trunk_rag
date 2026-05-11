@@ -19,7 +19,7 @@ DEFAULT_OUTPUT_JSON = Path("docs/reports/user_doc_quality_gate_latest.json")
 DEFAULT_OUTPUT_REPORT = Path("docs/reports/USER_DOC_QUALITY_GATE_LATEST.md")
 DEFAULT_EVAL_FILE = Path("evals/user_doc_answer_level_eval_fixtures.jsonl")
 DEFAULT_GATE_BUCKETS = {"user-doc-candidate"}
-DEFAULT_GATE_CASE_IDS = {"UDQ-BC-01"}
+DEFAULT_GATE_CASE_IDS = {"UDQ-BC-01", "UDQ-BC-02", "UDQ-BC-03"}
 DEFAULT_REQUIRED_COLLECTION_KEYS = ["project_docs"]
 DEFAULT_QUERY_TIMEOUT_SECONDS = 60
 

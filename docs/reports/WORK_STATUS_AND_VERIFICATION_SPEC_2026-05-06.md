@@ -159,6 +159,15 @@ Persisted latest evidence artifact:
   - `docs/reports/USER_DOC_QUALITY_GATE_LATEST.md`
 - Result: `ready=true`, `project_docs vectors=10`, `UDQ-BC-01 1/1 passed`, `pass_rate=1.0`, `support_pass_rate=1.0`, `source_route_pass_rate=1.0`, `avg_weighted_score=1.0`, `p95_latency_ms=16783.456`
 
+Fixture expansion:
+
+- Loop: `LOOP-133 User-doc fixture expansion`
+- Status: completed on `2026-05-11`.
+- Scope: expanded the opt-in user-doc gate from `UDQ-BC-01` to `UDQ-BC-01`~`UDQ-BC-03`.
+- New cases cover browser companion normal local operation/mode selection and upload draft/admin workflow guardrails.
+- Boundary remains unchanged: `project_docs` is explicit-only and the default release gate remains `generic-baseline`.
+- Latest live gate result: `ready=true`, `3/3 passed`, `pass_rate=1.0`, `support_pass_rate=1.0`, `source_route_pass_rate=1.0`, `avg_weighted_score=0.925`, `p95_latency_ms=4382.149`.
+
 ## Operational Interpretation
 
 - The completed track proves that project/operator documentation can be evaluated through an explicit `project_docs` path without changing the default release gate.
@@ -169,6 +178,6 @@ Persisted latest evidence artifact:
 ## Next Track Candidates
 
 1. `User-doc fixture expansion`
-   - Add one or two more real project/operator document questions before promoting user-doc quality beyond `UDQ-BC-01`.
+   - Completed as `LOOP-133`; the opt-in gate now covers `UDQ-BC-01`~`UDQ-BC-03`.
 2. `Desktop packaging strategy decision`
    - Unblock `LOOP-005` only after deciding embedded Python vs separate install.

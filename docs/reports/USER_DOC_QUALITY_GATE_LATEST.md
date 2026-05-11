@@ -1,6 +1,6 @@
 # User-Doc Quality Gate Report
 
-- generated_at: `2026-05-06T13:57:54+00:00`
+- generated_at: `2026-05-11T13:29:49+00:00`
 - ready: `True`
 - base_url: `http://127.0.0.1:8000`
 - llm_provider: `ollama`
@@ -26,13 +26,13 @@
 
 ## Eval Target
 - selected_buckets: `user-doc-candidate`
-- selected_case_ids: `UDQ-BC-01`
+- selected_case_ids: `UDQ-BC-01, UDQ-BC-02, UDQ-BC-03`
 
 ## User-Doc Eval
-- cases: `1`
-- passed: `1`
+- cases: `3`
+- passed: `3`
 - pass_rate: `1.0`
-- avg_weighted_score: `1.0`
+- avg_weighted_score: `0.925`
 - support_pass_rate: `1.0`
 - source_route_pass_rate: `1.0`
-- p95_latency_ms: `16783.456`
+- p95_latency_ms: `4382.149`

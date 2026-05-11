@@ -245,7 +245,9 @@
 | LOOP-129 | done | Work status and verification spec | `./.venv/bin/python scripts/roadmap_harness.py validate` + target user-doc gate tests |
 | LOOP-130 | done | Await next-track after work status spec | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-131 | done | User-doc quality gate live evidence artifact | live user-doc gate output artifact + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-132 | active | Await next-track after user-doc live evidence | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-132 | done | Await next-track after user-doc live evidence | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-133 | done | User-doc fixture expansion | `./.venv/bin/python -m pytest -q tests/test_check_user_doc_quality_gate.py tests/test_user_doc_eval_fixtures.py tests/test_documentation_boundaries.py` + live user-doc gate + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-134 | active | Await next-track after user-doc fixture expansion | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -3647,7 +3649,7 @@ closeout 메모 (2026-05-06):
 - 기본 release gate는 계속 `generic-baseline`이고, user-doc gate는 `user-doc-candidate` opt-in 경로로 분리된다.
 - 다음 active는 `LOOP-132 Await next-track after user-doc live evidence`로 둔다.
 
-## 현재 Active Loop (LOOP-132)
+## 완료 Loop (LOOP-132)
 
 목표:
 - `LOOP-131` live evidence artifact 완료 이후 자동 진행할 pending 항목이 없으므로 다음 작업 트랙 결정을 대기한다.
@@ -3655,6 +3657,55 @@ closeout 메모 (2026-05-06):
 범위:
 - 포함: 현재 세션 상태 유지, 다음 우선순위가 정해지면 새 loop로 승격
 - 제외: `LOOP-005` 데스크톱 패키징 blocked 해제, 새 user-doc fixture 추가, default release gate 변경
+
+완료 기준:
+- 사용자가 다음 트랙을 지정하거나, `TODO.md`/`NEXT_SESSION_PLAN.md`가 새 실행 항목을 active/pending으로 승격한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-05-11):
+- 사용자가 추천 트랙 진행을 지시했고, 다음 작업을 `LOOP-133 User-doc fixture expansion`으로 확정했다.
+- `LOOP-133`은 짧은 V1.5 작업 브랜치 `codex/loop-133-user-doc-fixture-expansion`에서 진행한다.
+
+## 완료 Loop (LOOP-133)
+
+목표:
+- user-doc quality gate를 `UDQ-BC-01` 단일 케이스에서 `UDQ-BC-01`~`UDQ-BC-03` 세 케이스로 확장한다.
+- 추가 케이스는 `docs/BROWSER_COMPANION_OPERATOR_GUIDE.md`의 실제 운영 흐름을 묻고, 계속 explicit `project_docs` opt-in 경로만 사용한다.
+
+범위:
+- 포함: `docs/USER_DOC_QUERY_EVAL_QUESTION_SET.md`, `evals/user_doc_answer_level_eval_fixtures.jsonl`, `scripts/check_user_doc_quality_gate.py`, 관련 fixture/gate 테스트, `README.md`/`SPEC.md`/handoff 문서 갱신
+- 제외: default release gate 변경, default runtime collection 변경, 모델 기본값 변경, `LOOP-005` desktop packaging blocked 해제
+
+완료 기준:
+- `UDQ-BC-02`와 `UDQ-BC-03`이 user-doc opt-in fixture로 추가되어야 한다.
+- `scripts/check_user_doc_quality_gate.py` 기본 case set이 `UDQ-BC-01`~`UDQ-BC-03`을 선택해야 한다.
+- target pytest, roadmap harness, 문법/정적 검증이 통과해야 한다.
+- live gate를 실행할 수 있으면 latest evidence artifact를 갱신하고, 실행할 수 없으면 blocker와 영향 범위를 기록한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_user_doc_eval_fixtures.py tests/test_check_user_doc_quality_gate.py`
+- `./.venv/bin/python -m pytest -q tests/test_check_user_doc_quality_gate.py tests/test_user_doc_eval_fixtures.py tests/test_documentation_boundaries.py`
+- `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/check_user_doc_quality_gate.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-05-11):
+- `docs/USER_DOC_QUERY_EVAL_QUESTION_SET.md`와 `evals/user_doc_answer_level_eval_fixtures.jsonl`에 `UDQ-BC-02`, `UDQ-BC-03`을 추가했다.
+- `scripts/check_user_doc_quality_gate.py` 기본 case set은 `UDQ-BC-01`~`UDQ-BC-03`을 선택한다.
+- 첫 live gate는 source/support route는 정상이었지만 새 fixture가 영어 UI 문자열에 과하게 고정돼 `pass_rate=0.3333`으로 blocked였다. fixture 기대어를 한국어 답변 허용 범위로 조정한 뒤 재실행했다.
+- 최종 live gate 결과는 `ready=true`, `project_docs vectors=10`, `UDQ-BC-01..03 3/3 passed`, `pass_rate=1.0`, `support_pass_rate=1.0`, `source_route_pass_rate=1.0`, `avg_weighted_score=0.925`, `p95_latency_ms=4382.149`였다.
+- latest evidence artifact는 `docs/reports/user_doc_quality_gate_latest.json`와 `docs/reports/USER_DOC_QUALITY_GATE_LATEST.md`에 갱신했다.
+- 다음 active는 `LOOP-134 Await next-track after user-doc fixture expansion`으로 둔다.
+
+## 현재 Active Loop (LOOP-134)
+
+목표:
+- `LOOP-133` user-doc fixture 확장 완료 이후 자동 진행할 pending 항목이 없으므로 다음 작업 트랙 결정을 대기한다.
+
+범위:
+- 포함: 현재 세션 상태 유지, 다음 우선순위가 정해지면 새 loop로 승격
+- 제외: `LOOP-005` 데스크톱 패키징 blocked 해제, default release gate 변경, 모델 기본값 변경
 
 완료 기준:
 - 사용자가 다음 트랙을 지정하거나, `TODO.md`/`NEXT_SESSION_PLAN.md`가 새 실행 항목을 active/pending으로 승격한다.

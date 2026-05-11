@@ -92,8 +92,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-132`
-- current_active_title: `Await next-track after user-doc live evidence`
+- current_active_id: `LOOP-134`
+- current_active_title: `Await next-track after user-doc fixture expansion`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -171,6 +171,24 @@
 - boundary: default release gate는 `generic-baseline`으로 유지하고, user-doc gate는 `user-doc-candidate` opt-in 경로로 분리한다.
 - 검증 계획: `roadmap_harness.py validate`, target pytest, `git diff --check`.
 - LOOP-132 목표: 자동 진행할 pending 항목이 없으므로 다음 트랙 결정을 대기한다.
+
+## 2026-05-11 User-Doc Fixture Expansion Snapshot
+
+- 완료 루프: `LOOP-132 Await next-track after user-doc live evidence`
+- 완료 루프: `LOOP-133 User-doc fixture expansion`
+- 현재 active: `LOOP-134 Await next-track after user-doc fixture expansion`
+- 작업 브랜치: `codex/loop-133-user-doc-fixture-expansion`
+- 목표: user-doc quality gate를 `UDQ-BC-01` 단일 케이스에서 `UDQ-BC-01`~`UDQ-BC-03` 세 케이스로 확장한다.
+- 추가 fixture:
+  - `UDQ-BC-02`: browser companion 정상 로컬 사용, side panel 상태 확인, `Balanced`/`Quality` 모드 선택
+  - `UDQ-BC-03`: `Upload Draft for Review`, admin approval workflow, `--skip-upload`, pending 요청 정리 제한
+- boundary: default release gate는 `generic-baseline`으로 유지하고, user-doc gate는 explicit `project_docs`/`user-doc-candidate` opt-in 경로로 분리한다.
+- 첫 live gate: source/support route는 정상이었지만 새 fixture가 영어 UI 문자열에 과하게 고정돼 `pass_rate=0.3333`으로 blocked였다.
+- fixture 보정: 한국어 답변에서도 의미를 확인할 수 있도록 `UDQ-BC-02`/`UDQ-BC-03`의 required token을 문서 의미 중심으로 조정했다.
+- 최종 live gate: `ready=true`, `project_docs vectors=10`, `UDQ-BC-01..03 3/3 passed`, `pass_rate=1.0`, `support_pass_rate=1.0`, `source_route_pass_rate=1.0`, `avg_weighted_score=0.925`, `p95_latency_ms=4382.149`.
+- latest artifacts: `docs/reports/user_doc_quality_gate_latest.json`, `docs/reports/USER_DOC_QUALITY_GATE_LATEST.md`
+- 검증: target pytest, `py_compile scripts/check_user_doc_quality_gate.py`, `roadmap_harness.py validate`, live user-doc gate artifact 갱신.
+- LOOP-134 목표: 자동 진행할 pending 항목이 없으므로 다음 트랙 결정을 대기한다.
 
 ## 2026-04-28 UI Copy/Disclosure Snapshot
 

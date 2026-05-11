@@ -4,6 +4,8 @@ from pathlib import Path
 
 from scripts import check_user_doc_quality_gate
 
+EXPECTED_USER_DOC_CASE_IDS = {"UDQ-BC-01", "UDQ-BC-02", "UDQ-BC-03"}
+
 
 def _ready_runtime_report() -> dict[str, object]:
     return {
@@ -51,7 +53,7 @@ def test_build_gate_report_blocks_when_project_docs_vectors_are_missing(monkeypa
         timeout_seconds=5,
         eval_file=Path("evals/user_doc_answer_level_eval_fixtures.jsonl"),
         buckets={"user-doc-candidate"},
-        case_ids={"UDQ-BC-01"},
+        case_ids=EXPECTED_USER_DOC_CASE_IDS,
         llm_provider="ollama",
         llm_model="gemma4:e4b",
         llm_base_url="http://localhost:11434",
@@ -65,7 +67,7 @@ def test_build_gate_report_blocks_when_project_docs_vectors_are_missing(monkeypa
     assert "reindex_single_collection" in report["diagnostics"][0]["hint"]
     assert report["collections"]["missing_keys"] == ["project_docs"]
     assert report["eval"]["selected_buckets"] == ["user-doc-candidate"]
-    assert report["eval"]["selected_case_ids"] == ["UDQ-BC-01"]
+    assert report["eval"]["selected_case_ids"] == sorted(EXPECTED_USER_DOC_CASE_IDS)
     assert report["boundary"]["default_release_gate"] == "generic-baseline"
     assert report["boundary"]["default_runtime_collection_changed"] is False
 
@@ -93,10 +95,10 @@ def test_build_gate_report_runs_udq_case_with_user_doc_fixture(monkeypatch):
         calls.append(kwargs)
         return {
             "health": {"status": "ok"},
-            "results": [{"id": "UDQ-BC-01", "pass": True}],
+            "results": [{"id": case_id, "pass": True} for case_id in sorted(EXPECTED_USER_DOC_CASE_IDS)],
             "summary": {
-                "cases": 1,
-                "passed": 1,
+                "cases": 3,
+                "passed": 3,
                 "pass_rate": 1.0,
                 "avg_latency_ms": 1200.0,
                 "p95_latency_ms": 1200.0,
@@ -114,7 +116,7 @@ def test_build_gate_report_runs_udq_case_with_user_doc_fixture(monkeypatch):
         timeout_seconds=90,
         eval_file=Path("evals/user_doc_answer_level_eval_fixtures.jsonl"),
         buckets={"user-doc-candidate"},
-        case_ids={"UDQ-BC-01"},
+        case_ids=EXPECTED_USER_DOC_CASE_IDS,
         llm_provider="ollama",
         llm_model="gemma4:e4b",
         llm_base_url="http://localhost:11434",
@@ -126,7 +128,7 @@ def test_build_gate_report_runs_udq_case_with_user_doc_fixture(monkeypatch):
     assert report["eval"]["summary"]["pass_rate"] == 1.0
     assert calls[0]["eval_file"] == Path("evals/user_doc_answer_level_eval_fixtures.jsonl")
     assert calls[0]["buckets"] == {"user-doc-candidate"}
-    assert calls[0]["case_ids"] == {"UDQ-BC-01"}
+    assert calls[0]["case_ids"] == EXPECTED_USER_DOC_CASE_IDS
     assert calls[0]["query_timeout_seconds"] == 60
     assert calls[0]["debug"] is True
 
@@ -153,3 +155,7 @@ def test_evaluate_gate_ready_requires_support_and_source_route_pass_rates():
         )
         is False
     )
+
+
+def test_default_gate_case_ids_cover_user_doc_fixture_expansion():
+    assert check_user_doc_quality_gate.DEFAULT_GATE_CASE_IDS == EXPECTED_USER_DOC_CASE_IDS
