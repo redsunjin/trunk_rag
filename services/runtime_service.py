@@ -13,7 +13,10 @@ from core.settings import (
     CHUNK_TOKEN_ENCODING_ENV_KEY,
     CHUNKING_MODE_ENV_KEY,
     DEFAULT_QUERY_TIMEOUT_SECONDS,
+    EXTENDED_METADATA_ENABLED_ENV_KEY,
     MAX_CONTEXT_CHARS_ENV_KEY,
+    QUERY_FAILURE_NOTE_ENABLED_ENV_KEY,
+    QUERY_TRACE_ENABLED_ENV_KEY,
     QUERY_TIMEOUT_SECONDS_ENV_KEY,
 )
 
@@ -94,6 +97,18 @@ def get_chunking_config() -> dict[str, str]:
     if not token_encoding:
         token_encoding = DEFAULT_TOKEN_ENCODING
     return {"mode": mode, "token_encoding": token_encoding}
+
+
+def is_query_trace_enabled() -> bool:
+    return parse_bool_env(QUERY_TRACE_ENABLED_ENV_KEY, default=False)
+
+
+def is_query_failure_note_enabled() -> bool:
+    return parse_bool_env(QUERY_FAILURE_NOTE_ENABLED_ENV_KEY, default=False)
+
+
+def is_extended_metadata_enabled() -> bool:
+    return parse_bool_env(EXTENDED_METADATA_ENABLED_ENV_KEY, default=True)
 
 
 def verify_admin_code(code: str) -> None:

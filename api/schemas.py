@@ -13,10 +13,24 @@ class QueryRequest(BaseModel):
     collections: list[str] | None = None
 
 
+class QuerySource(BaseModel):
+    rank: int
+    source: str
+    source_file: str | None = None
+    h2: str | None = None
+    country: str | None = None
+    doc_type: str | None = None
+    topic: str | None = None
+    year_text: str | None = None
+    scientist: str | None = None
+    excerpt: str | None = None
+
+
 class QueryResponse(BaseModel):
     answer: str
     provider: str
     model: str
+    sources: list[QuerySource] = Field(default_factory=list)
 
 
 class ReindexRequest(BaseModel):
@@ -34,6 +48,10 @@ class UploadRequestCreateRequest(BaseModel):
     collection: str | None = None
     country: str | None = None
     doc_type: str | None = None
+    year_text: str | None = None
+    scientist: str | None = None
+    source_file: str | None = None
+    topic: str | None = None
 
 
 class UploadRequestApproveAction(BaseModel):

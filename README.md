@@ -18,7 +18,7 @@
 
 1. 외부 전처리 단계(별도 프로세스, 클라우드 LLM 포함 가능)
 - 원본 소스를 정제해 RAG 정책에 맞는 Markdown으로 변환
-- 메타데이터(`source`, `country`, `doc_type`)를 채운 산출물 생성
+- 메타데이터 필수값(`source`, `country`, `doc_type`)과 optional(`year_text`, `scientist`, `source_file`, `topic`)을 채운 산출물 생성
 
 2. `trunk_rag` 단계(현재 + 다음 단계)
 - 현재: 정제된 md를 인덱싱/검색/질의
@@ -41,6 +41,7 @@
 - `scripts/validate_rag_doc.py`: 등록 전 문서 검증 스크립트
 - `scripts/benchmark_token_chunking.py`: char/token 청킹 비교 벤치 스크립트
 - `scripts/benchmark_query_e2e.py`: `/query` E2E p95 벤치 스크립트
+- `scripts/update_roadmap_dashboard.py`: 로드맵 상단 대시보드 통계 자동 갱신
 - `run_doc_rag.bat`: 터미널 명령 없이 서버+브라우저 실행
 - `stop_doc_rag.bat`: 실행 중인 로컬 서버 종료
 - `.env.example`: 환경변수 템플릿
@@ -106,12 +107,26 @@ curl -X POST http://127.0.0.1:8000/query `
 
 ### `/query` 에러 응답 규격
 
-- 성공 응답은 기존과 동일:
+- 성공 응답:
 ```json
 {
   "answer": "...",
   "provider": "ollama",
-  "model": "qwen3:4b"
+  "model": "qwen3:4b",
+  "sources": [
+    {
+      "rank": 1,
+      "source": "fr.md",
+      "source_file": "fr_legacy.md",
+      "h2": "## 프랑스 과학사",
+      "country": "france",
+      "doc_type": "country",
+      "topic": "science_timeline",
+      "year_text": "18세기",
+      "scientist": "라부아지에",
+      "excerpt": "..."
+    }
+  ]
 }
 ```
 
@@ -133,8 +148,14 @@ curl -X POST http://127.0.0.1:8000/query `
 ```powershell
 curl -X POST http://127.0.0.1:8000/upload-requests `
   -H "Content-Type: application/json" `
-  -d "{\"source_name\":\"new_doc.md\",\"collection\":\"fr\",\"country\":\"france\",\"doc_type\":\"country\",\"content\":\"## 제목\\n본문\"}"
+  -d "{\"source_name\":\"new_doc.md\",\"collection\":\"fr\",\"country\":\"france\",\"doc_type\":\"country\",\"year_text\":\"1727\",\"scientist\":\"아이작 뉴턴\",\"source_file\":\"legacy_source.md\",\"topic\":\"science_timeline\",\"content\":\"## 제목\\n본문\"}"
 ```
+
+- 업로드/인덱싱 메타 처리 규칙:
+  - 필수: `source`, `country`, `doc_type`는 항상 보장
+  - optional: `year_text`, `scientist`, `source_file`, `topic`는 있으면 저장, 없어도 기존 동작 유지
+  - 호환: `source`가 비어 있어도 `source_file`이 있으면 `source`로 보정
+  - 기능 플래그: `DOC_RAG_EXTENDED_METADATA_ENABLED=0`이면 optional 자동 보정(`source_file/topic` 기본 주입) 비활성화
 
 - 실패 코드 매핑:
   - `INVALID_REQUEST` -> `422`
@@ -151,6 +172,10 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 
 - `X-RAG-Collection` 헤더:
   - 실제 질의에 사용된 컬렉션 이름을 반환
+
+- 오답노트(JSONL) 수집:
+  - `DOC_RAG_QUERY_FAILURE_NOTE_ENABLED=1`이면 `/query` 실패 케이스를 `chroma_db/query_failure_notes.jsonl`에 기록
+  - 기록 포맷 핵심 필드: `timestamp`, `request_id`, `type(error|insufficient)`, `code`, `status_code`, `query`, `answer`, `provider`, `model`, `route_reason`, `collection`, `top_sources[]`, `error_message`
 
 ## Preprocessing Contract (정책)
 
@@ -179,6 +204,9 @@ curl -X POST http://127.0.0.1:8000/upload-requests `
 - 개인 운영 자동 승인(선택): `DOC_RAG_AUTO_APPROVE` (`1/true/on`이면 요청 생성 즉시 승인/인덱싱)
 - 질의 타임아웃(선택): `DOC_RAG_QUERY_TIMEOUT_SECONDS` (기본 `15`, 단위 초)
 - 컨텍스트 길이 제한(선택): `DOC_RAG_MAX_CONTEXT_CHARS` (미설정 시 제한 없음)
+- 질의 추적 로그(선택): `DOC_RAG_QUERY_TRACE_ENABLED` (`1/true/on`이면 `chroma_db/query_trace.jsonl`에 기록)
+- 오답노트 수집(선택): `DOC_RAG_QUERY_FAILURE_NOTE_ENABLED` (`1/true/on`이면 `chroma_db/query_failure_notes.jsonl`에 기록)
+- 확장 메타데이터 호환(선택): `DOC_RAG_EXTENDED_METADATA_ENABLED` (기본 `1`, `0`이면 optional 자동 보정 비활성화)
 - 청킹 모드(선택): `DOC_RAG_CHUNKING_MODE` (`char` 기본, `token` 옵션)
 - 토큰 인코딩(선택): `DOC_RAG_CHUNK_TOKEN_ENCODING` (기본 `cl100k_base`)
 
@@ -202,6 +230,12 @@ pytest -q
 ```powershell
 pytest -q tests/api
 pytest -q tests/e2e/test_web_flow_playwright.py -m e2e
+```
+
+로드맵 대시보드 갱신:
+
+```powershell
+.venv\Scripts\python.exe scripts\update_roadmap_dashboard.py
 ```
 
 다중 컬렉션 PoC 벤치(검색 단계):

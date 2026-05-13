@@ -32,6 +32,26 @@
         "country"
       ]
     },
+    "year_text": {
+      "type": "string",
+      "minLength": 1,
+      "description": "연도 또는 시기 텍스트 (예: 1727, 18세기)"
+    },
+    "scientist": {
+      "type": "string",
+      "minLength": 1,
+      "description": "핵심 과학자 이름"
+    },
+    "source_file": {
+      "type": "string",
+      "minLength": 1,
+      "description": "원본 소스 파일명(legacy 호환)"
+    },
+    "topic": {
+      "type": "string",
+      "minLength": 1,
+      "description": "도메인/주제 구분 키"
+    },
     "preprocess_version": {
       "type": "string",
       "minLength": 1
@@ -59,4 +79,3 @@
     }
   }
 }
-

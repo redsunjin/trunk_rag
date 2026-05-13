@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FuturesTimeoutError
+from typing import Callable
 
 from langchain_core.documents import Document
 from langchain_core.output_parsers import StrOutputParser
@@ -27,6 +28,7 @@ PROMPT = ChatPromptTemplate.from_template(
 2) 근거:
 """
 )
+INSUFFICIENT_ANSWER_MARKER = "제공된 문서에서 확인되지 않습니다."
 
 
 def format_docs(docs: list[Document]) -> str:
@@ -38,7 +40,38 @@ def format_docs(docs: list[Document]) -> str:
     return "\n\n".join(lines)
 
 
-def build_collection_context(question: str, collection_keys: list[str]) -> str:
+def build_citation_sources(docs: list[Document], max_items: int = 5) -> list[dict[str, object]]:
+    sources: list[dict[str, object]] = []
+    for idx, doc in enumerate(docs[:max_items], 1):
+        excerpt = doc.page_content.strip().replace("\n", " ")
+        if len(excerpt) > 180:
+            excerpt = excerpt[:180] + "..."
+        sources.append(
+            {
+                "rank": idx,
+                "source": str(doc.metadata.get("source", "unknown")),
+                "source_file": str(doc.metadata.get("source_file", "")) or None,
+                "h2": str(doc.metadata.get("h2", "")) or None,
+                "country": str(doc.metadata.get("country", "")) or None,
+                "doc_type": str(doc.metadata.get("doc_type", "")) or None,
+                "topic": str(doc.metadata.get("topic", "")) or None,
+                "year_text": str(doc.metadata.get("year_text", "")) or None,
+                "scientist": str(doc.metadata.get("scientist", "")) or None,
+                "excerpt": excerpt or None,
+            }
+        )
+    return sources
+
+
+def is_insufficient_answer(answer: str) -> bool:
+    return INSUFFICIENT_ANSWER_MARKER in answer
+
+
+def build_collection_context(
+    question: str,
+    collection_keys: list[str],
+    on_docs: Callable[[list[Document]], None] | None = None,
+) -> str:
     docs: list[Document] = []
     fingerprints: set[str] = set()
 
@@ -62,7 +95,11 @@ def build_collection_context(question: str, collection_keys: list[str]) -> str:
             docs.append(item)
 
     max_docs = max(SEARCH_K * len(collection_keys), SEARCH_K)
-    context = format_docs(docs[:max_docs])
+    selected_docs = docs[:max_docs]
+    if on_docs is not None:
+        on_docs(selected_docs)
+
+    context = format_docs(selected_docs)
     max_context_chars = runtime_service.get_max_context_chars()
     if max_context_chars is not None and len(context) > max_context_chars:
         return context[:max_context_chars]

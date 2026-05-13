@@ -115,6 +115,8 @@ is_auto_approve_enabled = runtime_service.is_auto_approve_enabled
 get_query_timeout_seconds = runtime_service.get_query_timeout_seconds
 get_max_context_chars = runtime_service.get_max_context_chars
 get_chunking_config = runtime_service.get_chunking_config
+is_query_failure_note_enabled = runtime_service.is_query_failure_note_enabled
+is_extended_metadata_enabled = runtime_service.is_extended_metadata_enabled
 verify_admin_code = runtime_service.verify_admin_code
 sanitize_source_name = runtime_service.sanitize_source_name
 

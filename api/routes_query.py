@@ -4,11 +4,19 @@ import logging
 import time
 
 from fastapi import APIRouter, Request, Response
+from langchain_core.documents import Document
 
 from api.schemas import QueryRequest, QueryResponse
 from core.errors import QueryAPIError
 from core.settings import DEFAULT_COLLECTION_KEY, MAX_QUERY_COLLECTIONS
-from services import collection_service, index_service, query_service, runtime_service
+from services import (
+    collection_service,
+    index_service,
+    query_failure_note_service,
+    query_service,
+    query_trace_service,
+    runtime_service,
+)
 from common import create_chat_llm, default_llm_model, resolve_llm_config
 
 router = APIRouter()
@@ -25,6 +33,69 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
     log_provider = req.llm_provider
     log_model = req.llm_model or "-"
     log_collection = collection_service.get_collection_name(DEFAULT_COLLECTION_KEY)
+    route_reason = "-"
+    trace_enabled = runtime_service.is_query_trace_enabled()
+    failure_note_enabled = runtime_service.is_query_failure_note_enabled()
+    trace_sources: list[dict[str, object]] = []
+    citation_docs: list[Document] = []
+
+    def emit_query_trace(*, code: str, status_code: int, elapsed_ms: int, error_message: str | None = None) -> None:
+        if not trace_enabled:
+            return
+
+        query_trace_service.append_query_trace(
+            {
+                "timestamp": runtime_service.utc_now_iso(),
+                "request_id": request_id,
+                "code": code,
+                "status_code": status_code,
+                "elapsed_ms": elapsed_ms,
+                "query": req.query,
+                "provider": log_provider,
+                "model": log_model,
+                "route_reason": route_reason,
+                "collection": log_collection,
+                "requested_collection": req.collection,
+                "requested_collections": req.collections or [],
+                "top_sources": trace_sources,
+                "error_message": error_message,
+            }
+        )
+
+    def emit_query_failure_note(
+        *,
+        note_type: str,
+        code: str,
+        status_code: int,
+        elapsed_ms: int,
+        answer: str | None = None,
+        error_message: str | None = None,
+        sources: list[dict[str, object]] | None = None,
+    ) -> None:
+        if not failure_note_enabled:
+            return
+
+        note_sources = sources or trace_sources
+        query_failure_note_service.append_failure_note(
+            {
+                "timestamp": runtime_service.utc_now_iso(),
+                "request_id": request_id,
+                "type": note_type,
+                "code": code,
+                "status_code": status_code,
+                "elapsed_ms": elapsed_ms,
+                "query": req.query,
+                "answer": answer,
+                "provider": log_provider,
+                "model": log_model,
+                "route_reason": route_reason,
+                "collection": log_collection,
+                "requested_collection": req.collection,
+                "requested_collections": req.collections or [],
+                "top_sources": note_sources,
+                "error_message": error_message,
+            }
+        )
 
     try:
         query_timeout_seconds = runtime_service.get_query_timeout_seconds()
@@ -111,9 +182,16 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
             ) from exc
 
         def _context_builder(question: str) -> str:
+            def _capture_docs(docs):
+                nonlocal trace_sources, citation_docs
+                citation_docs = list(docs)
+                if trace_enabled:
+                    trace_sources = query_trace_service.summarize_docs_for_trace(docs)
+
             return query_service.build_collection_context(
                 question=question,
                 collection_keys=active_collection_keys,
+                on_docs=_capture_docs,
             )
 
         chain = query_service.build_query_chain(_context_builder, llm)
@@ -148,7 +226,18 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
             route_reason,
             elapsed_ms,
         )
-        return QueryResponse(answer=answer, provider=provider, model=model)
+        emit_query_trace(code="OK", status_code=200, elapsed_ms=elapsed_ms)
+        sources = query_service.build_citation_sources(citation_docs)
+        if query_service.is_insufficient_answer(answer):
+            emit_query_failure_note(
+                note_type="insufficient",
+                code="INSUFFICIENT_CONTEXT",
+                status_code=200,
+                elapsed_ms=elapsed_ms,
+                answer=answer,
+                sources=sources,
+            )
+        return QueryResponse(answer=answer, provider=provider, model=model, sources=sources)
     except QueryAPIError as exc:
         elapsed_ms = int((time.perf_counter() - started_at) * 1000)
         logger.warning(
@@ -160,6 +249,19 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
             log_collection,
             elapsed_ms,
         )
+        emit_query_trace(
+            code=exc.code,
+            status_code=exc.status_code,
+            elapsed_ms=elapsed_ms,
+            error_message=exc.message,
+        )
+        emit_query_failure_note(
+            note_type="error",
+            code=exc.code,
+            status_code=exc.status_code,
+            elapsed_ms=elapsed_ms,
+            error_message=exc.message,
+        )
         raise exc
     except Exception as exc:
         elapsed_ms = int((time.perf_counter() - started_at) * 1000)
@@ -170,6 +272,19 @@ def query(req: QueryRequest, request: Request, response: Response) -> QueryRespo
             log_model,
             log_collection,
             elapsed_ms,
+        )
+        emit_query_trace(
+            code="INTERNAL_ERROR",
+            status_code=500,
+            elapsed_ms=elapsed_ms,
+            error_message=str(exc),
+        )
+        emit_query_failure_note(
+            note_type="error",
+            code="INTERNAL_ERROR",
+            status_code=500,
+            elapsed_ms=elapsed_ms,
+            error_message=str(exc),
         )
         raise QueryAPIError(
             code="INTERNAL_ERROR",

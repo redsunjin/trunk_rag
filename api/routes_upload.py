@@ -30,6 +30,7 @@ def upload_request_detail(request_id: str) -> dict[str, object]:
 @router.post("/upload-requests")
 def create_upload_request(req: UploadRequestCreateRequest) -> dict[str, object]:
     collection_key = upload_service.resolve_requested_collection_key(req.collection)
+    extended_metadata_enabled = runtime_service.is_extended_metadata_enabled()
 
     source_seed = req.source_name or f"upload_{int(time.time())}"
     try:
@@ -42,6 +43,11 @@ def create_upload_request(req: UploadRequestCreateRequest) -> dict[str, object]:
         collection_key=collection_key,
         country=req.country,
         doc_type=req.doc_type,
+        year_text=req.year_text,
+        scientist=req.scientist,
+        source_file=req.source_file,
+        topic=req.topic,
+        enable_extended_fields=extended_metadata_enabled,
     )
     validation = validate_markdown_text(
         source=source_name,
@@ -78,6 +84,13 @@ def create_upload_request(req: UploadRequestCreateRequest) -> dict[str, object]:
             metadata_obj = request_item["metadata"]
             if not isinstance(metadata_obj, dict):
                 metadata_obj = {}
+            metadata_obj = upload_service.normalize_metadata_for_collection(
+                metadata_obj,
+                collection_key=collection_key,
+                source_name=source_name,
+                enable_extended_fields=extended_metadata_enabled,
+            )
+            request_item["metadata"] = metadata_obj
 
             ingest_result = index_service.index_documents_for_collection(
                 [
@@ -130,6 +143,13 @@ def approve_upload_request(request_id: str, action: UploadRequestApproveAction) 
         metadata_obj = item.get("metadata", {})
         if not isinstance(metadata_obj, dict):
             metadata_obj = {}
+        metadata_obj = upload_service.normalize_metadata_for_collection(
+            metadata_obj,
+            collection_key=collection_key,
+            source_name=str(item.get("source_name", "")),
+            enable_extended_fields=runtime_service.is_extended_metadata_enabled(),
+        )
+        item["metadata"] = metadata_obj
 
         ingest_result = index_service.index_documents_for_collection(
             [

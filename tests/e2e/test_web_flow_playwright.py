@@ -97,6 +97,20 @@ def test_intro_app_flow(page: Page, live_server_url: str):
                     "answer": "모킹된 질의 응답",
                     "provider": "ollama",
                     "model": "qwen3:4b",
+                    "sources": [
+                        {
+                            "rank": 1,
+                            "source": "fr.md",
+                            "source_file": "fr_legacy.md",
+                            "h2": "## 프랑스 과학사",
+                            "country": "france",
+                            "doc_type": "country",
+                            "topic": "science_timeline",
+                            "year_text": "18세기",
+                            "scientist": "라부아지에",
+                            "excerpt": "모킹 excerpt",
+                        }
+                    ],
                 }
             ),
         )

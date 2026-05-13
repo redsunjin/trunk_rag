@@ -202,6 +202,7 @@ def load_markdown_documents(data_dir: Path, file_names: Iterable[str]) -> list[D
                 page_content=text,
                 metadata={
                     "source": path.name,
+                    "source_file": path.name,
                     "topic": "europe_science_history",
                     "country": COUNTRY_BY_STEM.get(stem, "unknown"),
                     "doc_type": "summary" if stem == "eu_summry" else "country",

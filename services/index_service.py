@@ -23,7 +23,7 @@ from core.settings import (
     PERSIST_DIR,
 )
 from scripts.validate_rag_doc import validate_loaded_documents
-from services import collection_service, runtime_service
+from services import collection_service, metadata_service, runtime_service
 
 
 @lru_cache(maxsize=1)
@@ -98,6 +98,31 @@ def build_validation_summary(
     }
 
 
+def normalize_documents_for_index(
+    docs: list[Document],
+    *,
+    collection_key: str,
+) -> list[Document]:
+    normalized_docs: list[Document] = []
+    enable_extended_metadata = runtime_service.is_extended_metadata_enabled()
+    for doc in docs:
+        metadata = doc.metadata if isinstance(doc.metadata, dict) else {}
+        fallback_source = str(metadata.get("source", "") or metadata.get("source_file", "")).strip() or None
+        normalized_metadata = metadata_service.normalize_document_metadata_for_collection(
+            metadata,
+            collection_key=collection_key,
+            fallback_source=fallback_source,
+            enable_extended_fields=enable_extended_metadata,
+        )
+        normalized_docs.append(
+            Document(
+                page_content=doc.page_content,
+                metadata=normalized_metadata,
+            )
+        )
+    return normalized_docs
+
+
 def index_documents_for_collection(
     docs: list[Document],
     *,
@@ -106,8 +131,9 @@ def index_documents_for_collection(
 ) -> dict[str, object]:
     collection_name = collection_service.get_collection_name(collection_key)
     chunking = runtime_service.get_chunking_config()
+    normalized_docs = normalize_documents_for_index(docs, collection_key=collection_key)
     chunks = split_by_markdown_headers(
-        docs,
+        normalized_docs,
         chunk_size=CHUNK_SIZE,
         chunk_overlap=CHUNK_OVERLAP,
         chunking_mode=chunking["mode"],

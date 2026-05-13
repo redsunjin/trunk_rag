@@ -12,6 +12,7 @@ from common import COUNTRY_BY_STEM
 
 HEADER_RE = re.compile(r"^(#{2,4})\s+(.+?)\s*$")
 REQUIRED_METADATA_FIELDS = ("source", "country", "doc_type")
+OPTIONAL_METADATA_FIELDS = ("year_text", "scientist", "source_file", "topic")
 SECTION_MIN_BODY_LEN = 20
 DOC_MIN_LEN = 200
 
@@ -23,10 +24,24 @@ def _compact_len(text: str) -> int:
 def _validate_metadata(source: str, metadata: dict[str, object]) -> list[str]:
     reasons: list[str] = []
     for key in REQUIRED_METADATA_FIELDS:
-        value = str(metadata.get(key, "")).strip()
+        if key == "source":
+            value = str(metadata.get("source", "") or metadata.get("source_file", "")).strip()
+        else:
+            value = str(metadata.get(key, "")).strip()
         if not value:
             reasons.append(f"{source}: missing metadata `{key}`")
     return reasons
+
+
+def _validate_optional_metadata(source: str, metadata: dict[str, object]) -> list[str]:
+    warnings: list[str] = []
+    for key in OPTIONAL_METADATA_FIELDS:
+        if key not in metadata:
+            continue
+        value = str(metadata.get(key, "")).strip()
+        if not value:
+            warnings.append(f"{source}: optional metadata `{key}` is empty and ignored")
+    return warnings
 
 
 def validate_markdown_text(
@@ -36,7 +51,7 @@ def validate_markdown_text(
 ) -> dict[str, object]:
     metadata = metadata or {}
     reasons = _validate_metadata(source, metadata)
-    warnings: list[str] = []
+    warnings: list[str] = _validate_optional_metadata(source, metadata)
 
     normalized = text.strip()
     if _compact_len(normalized) < DOC_MIN_LEN:

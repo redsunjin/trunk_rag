@@ -51,6 +51,68 @@ def test_upload_request_create_pending_and_list(client, monkeypatch, tmp_path: P
     assert any(item["id"] == request_id for item in listed["requests"])
 
 
+def test_upload_request_create_accepts_extended_metadata(client, monkeypatch, tmp_path: Path):
+    monkeypatch.setattr(
+        routes_upload.upload_service,
+        "upload_request_store_path",
+        lambda: tmp_path / "upload_requests.json",
+    )
+    monkeypatch.setenv("DOC_RAG_AUTO_APPROVE", "0")
+    monkeypatch.setenv("DOC_RAG_EXTENDED_METADATA_ENABLED", "1")
+
+    create = client.post(
+        "/upload-requests",
+        json={
+            "source_name": "timeline_upload.md",
+            "collection": "fr",
+            "country": "france",
+            "doc_type": "country",
+            "year_text": "1727",
+            "scientist": "아이작 뉴턴",
+            "source_file": "legacy_source.txt",
+            "topic": "science_timeline",
+            "content": _sample_markdown(),
+        },
+    )
+    assert create.status_code == 200
+    metadata = create.json()["request"]["metadata"]
+    assert metadata["source"] == "timeline_upload.md"
+    assert metadata["country"] == "france"
+    assert metadata["doc_type"] == "country"
+    assert metadata["year_text"] == "1727"
+    assert metadata["scientist"] == "아이작 뉴턴"
+    assert metadata["source_file"] == "legacy_source.txt"
+    assert metadata["topic"] == "science_timeline"
+
+
+def test_upload_request_create_keeps_legacy_metadata_when_extension_disabled(client, monkeypatch, tmp_path: Path):
+    monkeypatch.setattr(
+        routes_upload.upload_service,
+        "upload_request_store_path",
+        lambda: tmp_path / "upload_requests.json",
+    )
+    monkeypatch.setenv("DOC_RAG_AUTO_APPROVE", "0")
+    monkeypatch.setenv("DOC_RAG_EXTENDED_METADATA_ENABLED", "0")
+
+    create = client.post(
+        "/upload-requests",
+        json={
+            "source_name": "legacy_upload.md",
+            "collection": "all",
+            "content": _sample_markdown(),
+        },
+    )
+    assert create.status_code == 200
+    metadata = create.json()["request"]["metadata"]
+    assert metadata["source"] == "legacy_upload.md"
+    assert metadata["country"] == "all"
+    assert metadata["doc_type"] == "summary"
+    assert "year_text" not in metadata
+    assert "scientist" not in metadata
+    assert "source_file" not in metadata
+    assert "topic" not in metadata
+
+
 def test_upload_request_approve_and_reject(client, monkeypatch, tmp_path: Path):
     monkeypatch.setattr(
         routes_upload.upload_service,

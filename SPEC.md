@@ -45,6 +45,7 @@
 - `/query` 표준 실패 응답(`code`, `message`, `hint`, `request_id`, `detail`) 구현
 - `/query` 타임아웃 정책(15초, 재시도 없음) 적용
 - `/query` 성공/실패 응답에 `X-Request-ID` 헤더 제공
+- `/query` citation(`sources[]`) + 추적 로그 + 오답노트(JSONL) 수집 포맷 구현
 - `/` -> `/intro` 리다이렉트
 - `/intro` 인트로 페이지, `/app` 메인 RAG UI 제공
 - `/admin` 관리자 상태 페이지 제공(MVP)
@@ -152,6 +153,41 @@
   "llm_base_url": "http://localhost:11434"
 }
 ```
+- 성공 응답 예:
+```json
+{
+  "answer": "...",
+  "provider": "ollama",
+  "model": "qwen3:4b",
+  "sources": [
+    {
+      "rank": 1,
+      "source": "fr.md",
+      "source_file": "fr_legacy.md",
+      "h2": "## 프랑스 과학사",
+      "country": "france",
+      "doc_type": "country",
+      "topic": "science_timeline",
+      "year_text": "18세기",
+      "scientist": "라부아지에",
+      "excerpt": "..."
+    }
+  ]
+}
+```
+- 실패 응답 예:
+```json
+{
+  "code": "LLM_TIMEOUT",
+  "message": "LLM 응답 시간이 제한(15초)을 초과했습니다.",
+  "hint": "모델 상태를 확인하거나 더 짧은 질문으로 다시 시도하세요.",
+  "request_id": "req-timeout-1",
+  "detail": "LLM 응답 시간이 제한(15초)을 초과했습니다."
+}
+```
+- 오답노트 수집:
+  - `DOC_RAG_QUERY_FAILURE_NOTE_ENABLED=1`일 때 `chroma_db/query_failure_notes.jsonl`에 기록
+  - 공통 필드: `timestamp`, `request_id`, `type(error|insufficient)`, `code`, `status_code`, `query`, `answer`, `provider`, `model`, `route_reason`, `collection`, `top_sources[]`, `error_message`
 
 ### POST `/admin/auth`
 - 목적: 관리자 인증코드 확인(초기 MVP)
@@ -194,6 +230,10 @@
   "collection": "fr",
   "country": "france",
   "doc_type": "country",
+  "year_text": "1727",
+  "scientist": "아이작 뉴턴",
+  "source_file": "legacy_source.md",
+  "topic": "science_timeline",
   "content": "## 제목\n본문"
 }
 ```
@@ -258,14 +298,6 @@
 {
   "name": "eu_summry.md",
   "content": "## ..."
-}
-```
-- 응답 예:
-```json
-{
-  "answer": "...",
-  "provider": "ollama",
-  "model": "qwen3:4b"
 }
 ```
 

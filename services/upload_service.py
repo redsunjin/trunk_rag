@@ -12,7 +12,7 @@ from core.settings import (
     UPLOAD_REQUEST_LOCK,
     UPLOAD_REQUEST_STORE_FILE,
 )
-from services import collection_service
+from services import collection_service, metadata_service
 
 
 def upload_request_store_path() -> Path:
@@ -101,14 +101,53 @@ def build_upload_request_metadata(
     collection_key: str,
     country: str | None,
     doc_type: str | None,
+    year_text: str | None = None,
+    scientist: str | None = None,
+    source_file: str | None = None,
+    topic: str | None = None,
+    enable_extended_fields: bool = True,
 ) -> dict[str, str]:
-    metadata_country = (country or "").strip() or collection_service.default_country_for_collection(collection_key)
-    metadata_doc_type = (doc_type or "").strip() or collection_service.default_doc_type_for_collection(collection_key)
-    return {
+    metadata_country = (country or "").strip() or collection_service.default_country_for_collection(
+        collection_key
+    )
+    metadata_doc_type = (doc_type or "").strip() or collection_service.default_doc_type_for_collection(
+        collection_key
+    )
+    raw_metadata: dict[str, object] = {
         "source": source_name,
         "country": metadata_country,
         "doc_type": metadata_doc_type,
+        "year_text": year_text,
+        "scientist": scientist,
+        "source_file": source_file,
+        "topic": topic,
     }
+    metadata = metadata_service.normalize_document_metadata_for_collection(
+        raw_metadata,
+        collection_key=collection_key,
+        fallback_source=source_name,
+        enable_extended_fields=enable_extended_fields,
+    )
+    return {
+        key: str(value)
+        for key, value in metadata.items()
+        if isinstance(value, str) and value.strip()
+    }
+
+
+def normalize_metadata_for_collection(
+    metadata: dict[str, object] | None,
+    *,
+    collection_key: str,
+    source_name: str | None = None,
+    enable_extended_fields: bool = True,
+) -> dict[str, object]:
+    return metadata_service.normalize_document_metadata_for_collection(
+        metadata,
+        collection_key=collection_key,
+        fallback_source=source_name,
+        enable_extended_fields=enable_extended_fields,
+    )
 
 
 def resolve_requested_collection_key(collection: str | None) -> str:

@@ -58,6 +58,41 @@
 - [ ] 데스크톱 래핑(Electron/Tauri) PoC
 - [ ] 문서 업로드/갱신 관리자 워크플로우 설계
 
+## P4 (W3_006 적용)
+
+참조:
+- `W3_006_RAG_기술경험_참고문서.md`
+- `NEXT_SESSION_PLAN.md`
+
+### 즉시적용 (본 개발)
+
+- [x] `/query` 검색 추적 로그 저장(질문/라우팅/top-k/request_id)
+- [x] 응답 스키마 citation 필드 추가(`sources[]` 또는 동등 구조)
+- [x] 메타데이터 스키마 확장(`year_text`, `scientist`, `source_file`, `topic`)
+- [x] 오답노트 수집 포맷(JSON) 추가
+- [x] API/프론트 테스트에 citation/로그 계약 검증 추가
+- [x] 문서(`README.md`, `SPEC.md`) 동기화
+
+완료 기준:
+- [ ] 로그/근거 데이터를 기준으로 품질 분석이 가능하다.
+- [ ] API 계약 변경이 테스트로 고정된다.
+- [ ] `pytest -q` 회귀 통과를 유지한다.
+
+### 조건부적용 (PoC 게이트)
+
+- [ ] fact deterministic 경로 PoC
+- [ ] 멀티쿼리 확장(query rewrite) PoC
+- [ ] 키워드 보강 검색 PoC
+- [ ] grounded/sufficient 게이트 + 1회 재시도 PoC
+- [ ] BM25 + Vector 하이브리드 검색 PoC
+- [ ] cross-encoder reranker PoC
+- [ ] PoC 비교 리포트(정확도/p95/운영복잡도) 작성
+
+채택 기준:
+- [ ] baseline 대비 정확도 개선이 확인된다.
+- [ ] p95 지연 악화가 허용치 이내다.
+- [ ] 운영 복잡도 증가 대비 이점이 명확하다.
+
 ## P3-Prep (코드베이스 효율화 게이트)
 
 - [x] 코드베이스 효율화 점검 리포트 작성
@@ -134,6 +169,7 @@
 ## Session Start Checklist
 
 - [ ] `docs/reports/CODEBASE_EFFICIENCY_REVIEW_2026-02-28.md` 확인
+- [ ] `NEXT_SESSION_PLAN.md` 상단 대시보드 갱신 (`scripts/update_roadmap_dashboard.py`)
 - [ ] `run_doc_rag.bat` 실행
 - [ ] `/health` 확인
 - [ ] `/reindex` 1회 실행
