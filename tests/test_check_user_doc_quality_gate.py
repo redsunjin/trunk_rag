@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from pathlib import Path
 
 from scripts import check_user_doc_quality_gate
@@ -159,3 +160,58 @@ def test_evaluate_gate_ready_requires_support_and_source_route_pass_rates():
 
 def test_default_gate_case_ids_cover_user_doc_fixture_expansion():
     assert check_user_doc_quality_gate.DEFAULT_GATE_CASE_IDS == EXPECTED_USER_DOC_CASE_IDS
+
+
+def test_latest_artifact_freshness_blocks_stale_ready_report():
+    freshness = check_user_doc_quality_gate.evaluate_latest_artifact_freshness(
+        {
+            "generated_at": "2026-05-11T00:00:00+00:00",
+            "ready": True,
+        },
+        artifact_path=Path("docs/reports/user_doc_quality_gate_latest.json"),
+        now=datetime(2026, 5, 18, 1, 0, tzinfo=timezone.utc),
+        max_age_hours=168,
+    )
+
+    assert freshness["ready"] is False
+    assert freshness["fresh"] is False
+    assert freshness["source_ready"] is True
+    assert freshness["age_hours"] == 169.0
+    assert freshness["expires_at"] == "2026-05-18T00:00:00+00:00"
+    assert freshness["diagnostics"][0]["code"] == "USER_DOC_GATE_ARTIFACT_STALE"
+
+
+def test_latest_artifact_freshness_keeps_recent_ready_report():
+    freshness = check_user_doc_quality_gate.evaluate_latest_artifact_freshness(
+        {
+            "generated_at": "2026-05-11T00:00:00+00:00",
+            "ready": True,
+        },
+        artifact_path=Path("docs/reports/user_doc_quality_gate_latest.json"),
+        now=datetime(2026, 5, 17, 23, 59, tzinfo=timezone.utc),
+        max_age_hours=168,
+    )
+
+    assert freshness["ready"] is True
+    assert freshness["fresh"] is True
+    assert freshness["source_ready"] is True
+    assert freshness["diagnostics"] == []
+
+
+def test_build_latest_artifact_freshness_report_reads_artifact(tmp_path):
+    artifact_path = tmp_path / "user_doc_quality_gate_latest.json"
+    artifact_path.write_text(
+        '{"generated_at": "2026-05-11T00:00:00+00:00", "ready": true}',
+        encoding="utf-8",
+    )
+
+    report = check_user_doc_quality_gate.build_latest_artifact_freshness_report(
+        artifact_path=artifact_path,
+        now=datetime(2026, 5, 18, 1, 0, tzinfo=timezone.utc),
+        max_age_hours=168,
+    )
+
+    assert report["mode"] == "latest_artifact_freshness"
+    assert report["ready"] is False
+    assert report["latest_artifact"]["path"] == str(artifact_path)
+    assert report["latest_artifact"]["diagnostics"][0]["code"] == "USER_DOC_GATE_ARTIFACT_STALE"

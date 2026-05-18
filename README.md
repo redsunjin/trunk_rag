@@ -425,7 +425,8 @@ cd <repo>
 - 이 스크립트는 `evals/user_doc_answer_level_eval_fixtures.jsonl`의 `UDQ-BC-01`~`UDQ-BC-03`과 explicit `project_docs` 컬렉션만 확인합니다.
 - 기본 release gate인 `scripts/check_ops_baseline_gate.py` / `generic-baseline`은 바꾸지 않습니다.
 - `PROJECT_DOCS_REINDEX_REQUIRED`가 나오면 먼저 `project_docs` 컬렉션을 다시 인덱싱한 뒤 재실행합니다.
-- 종료 코드 `0`은 user-doc opt-in gate 통과, `1`은 앱 미기동, `project_docs` 미인덱싱, eval 실패 또는 support/source route 부족을 뜻합니다.
+- 기존 latest artifact만 빠르게 확인하려면 `scripts\check_user_doc_quality_gate.py --check-latest --json`을 실행합니다. 기본 freshness 한도는 `168`시간이며, 오래된 artifact는 `USER_DOC_GATE_ARTIFACT_STALE`로 막힙니다.
+- 종료 코드 `0`은 user-doc opt-in gate 통과 또는 fresh latest artifact, `1`은 앱 미기동, `project_docs` 미인덱싱, eval 실패, support/source route 부족 또는 stale latest artifact를 뜻합니다.
 
 ## Roadmap Harness
 

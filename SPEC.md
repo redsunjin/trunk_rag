@@ -172,7 +172,7 @@
 - `scripts/validate_browser_companion_manifest.py`: browser companion manifest/권한 경계 검증 스크립트
 - `scripts/smoke_browser_companion_extension.py`: Chrome loaded-extension browser companion smoke helper
 - `scripts/check_ops_baseline_gate.py`: runtime preflight + core 기본 컬렉션 상태 + `generic-baseline` 회귀 게이트/diagnostics 점검
-- `scripts/check_user_doc_quality_gate.py`: default release gate와 분리된 opt-in `project_docs`/`UDQ-BC-01`~`UDQ-BC-03` user-doc 품질 게이트
+- `scripts/check_user_doc_quality_gate.py`: default release gate와 분리된 opt-in `project_docs`/`UDQ-BC-01`~`UDQ-BC-03` user-doc 품질 게이트 및 latest artifact freshness check(`--check-latest`, 기본 168시간)
 - `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩
 - `scripts/roadmap_harness.py`: 실행 큐 상태와 현재 active 항목 점검
 - `scripts/diagnose_ollama_runtime.py`: Ollama 직접 호출 기준 prompt/eval 처리량 진단

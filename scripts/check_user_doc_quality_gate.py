@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -22,6 +22,7 @@ DEFAULT_GATE_BUCKETS = {"user-doc-candidate"}
 DEFAULT_GATE_CASE_IDS = {"UDQ-BC-01", "UDQ-BC-02", "UDQ-BC-03"}
 DEFAULT_REQUIRED_COLLECTION_KEYS = ["project_docs"]
 DEFAULT_QUERY_TIMEOUT_SECONDS = 60
+DEFAULT_LATEST_ARTIFACT_MAX_AGE_HOURS = 168
 
 PROJECT_DOCS_REINDEX_HINT = (
     "Run project_docs reindex before this opt-in gate: "
@@ -84,6 +85,154 @@ def gate_boundary() -> dict[str, object]:
         "user_doc_eval_file": str(DEFAULT_EVAL_FILE),
         "required_collection_keys": list(DEFAULT_REQUIRED_COLLECTION_KEYS),
         "default_runtime_collection_changed": False,
+    }
+
+
+def _parse_generated_at(value: object) -> datetime:
+    text = str(value or "").strip()
+    if not text:
+        raise ValueError("generated_at is missing")
+    parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def evaluate_latest_artifact_freshness(
+    report: dict[str, object],
+    *,
+    artifact_path: Path,
+    now: datetime | None = None,
+    max_age_hours: int = DEFAULT_LATEST_ARTIFACT_MAX_AGE_HOURS,
+) -> dict[str, object]:
+    checked_at = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    diagnostics: list[dict[str, str]] = []
+    source_ready = bool(report.get("ready"))
+
+    try:
+        generated_at = _parse_generated_at(report.get("generated_at"))
+    except Exception as exc:
+        return {
+            "path": str(artifact_path),
+            "ready": False,
+            "fresh": False,
+            "source_ready": source_ready,
+            "generated_at": str(report.get("generated_at", "")),
+            "checked_at": checked_at.replace(microsecond=0).isoformat(),
+            "max_age_hours": max_age_hours,
+            "age_hours": None,
+            "expires_at": None,
+            "diagnostics": [
+                {
+                    "code": "USER_DOC_GATE_ARTIFACT_TIMESTAMP_INVALID",
+                    "message": str(exc),
+                    "hint": "Re-run scripts/check_user_doc_quality_gate.py to refresh the latest artifact.",
+                }
+            ],
+        }
+
+    expires_at = generated_at + timedelta(hours=max_age_hours)
+    age_hours = round((checked_at - generated_at).total_seconds() / 3600, 3)
+    fresh = checked_at <= expires_at
+
+    if not source_ready:
+        diagnostics.append(
+            {
+                "code": "USER_DOC_GATE_ARTIFACT_NOT_READY",
+                "message": "The latest user-doc quality gate artifact is not ready.",
+                "hint": "Inspect artifact diagnostics, then re-run the live user-doc quality gate.",
+            }
+        )
+    if not fresh:
+        diagnostics.append(
+            {
+                "code": "USER_DOC_GATE_ARTIFACT_STALE",
+                "message": (
+                    f"Latest artifact is {age_hours} hours old; "
+                    f"max allowed age is {max_age_hours} hours."
+                ),
+                "hint": "Re-run scripts/check_user_doc_quality_gate.py and refresh latest artifacts.",
+            }
+        )
+
+    return {
+        "path": str(artifact_path),
+        "ready": source_ready and fresh,
+        "fresh": fresh,
+        "source_ready": source_ready,
+        "generated_at": generated_at.replace(microsecond=0).isoformat(),
+        "checked_at": checked_at.replace(microsecond=0).isoformat(),
+        "max_age_hours": max_age_hours,
+        "age_hours": age_hours,
+        "expires_at": expires_at.replace(microsecond=0).isoformat(),
+        "diagnostics": diagnostics,
+    }
+
+
+def build_latest_artifact_freshness_report(
+    *,
+    artifact_path: Path = DEFAULT_OUTPUT_JSON,
+    now: datetime | None = None,
+    max_age_hours: int = DEFAULT_LATEST_ARTIFACT_MAX_AGE_HOURS,
+) -> dict[str, object]:
+    resolved_path = (ROOT_DIR / artifact_path).resolve() if not artifact_path.is_absolute() else artifact_path
+    checked_at = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    if not resolved_path.exists():
+        freshness = {
+            "path": str(resolved_path),
+            "ready": False,
+            "fresh": False,
+            "source_ready": False,
+            "generated_at": None,
+            "checked_at": checked_at.replace(microsecond=0).isoformat(),
+            "max_age_hours": max_age_hours,
+            "age_hours": None,
+            "expires_at": None,
+            "diagnostics": [
+                {
+                    "code": "USER_DOC_GATE_ARTIFACT_MISSING",
+                    "message": f"Latest user-doc quality gate artifact not found: {resolved_path}",
+                    "hint": "Run the live user-doc quality gate with --output-json and --output-report.",
+                }
+            ],
+        }
+    else:
+        try:
+            source_report = json.loads(resolved_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            source_report = {"generated_at": None, "ready": False}
+            freshness = {
+                "path": str(resolved_path),
+                "ready": False,
+                "fresh": False,
+                "source_ready": False,
+                "generated_at": None,
+                "checked_at": checked_at.replace(microsecond=0).isoformat(),
+                "max_age_hours": max_age_hours,
+                "age_hours": None,
+                "expires_at": None,
+                "diagnostics": [
+                    {
+                        "code": "USER_DOC_GATE_ARTIFACT_LOAD_FAILED",
+                        "message": str(exc),
+                        "hint": "Regenerate the latest user-doc quality gate JSON artifact.",
+                    }
+                ],
+            }
+        else:
+            freshness = evaluate_latest_artifact_freshness(
+                source_report,
+                artifact_path=resolved_path,
+                now=checked_at,
+                max_age_hours=max_age_hours,
+            )
+
+    return {
+        "generated_at": checked_at.replace(microsecond=0).isoformat(),
+        "mode": "latest_artifact_freshness",
+        "ready": bool(freshness["ready"]),
+        "latest_artifact": freshness,
+        "boundary": gate_boundary(),
     }
 
 
@@ -440,6 +589,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--query-timeout-seconds", type=int, default=DEFAULT_QUERY_TIMEOUT_SECONDS)
     parser.add_argument("--output-json", type=Path)
     parser.add_argument("--output-report", type=Path)
+    parser.add_argument(
+        "--check-latest",
+        action="store_true",
+        help="Check the freshness of the existing latest user-doc gate JSON artifact without running live eval.",
+    )
+    parser.add_argument("--latest-artifact", type=Path, default=DEFAULT_OUTPUT_JSON)
+    parser.add_argument("--max-artifact-age-hours", type=int, default=DEFAULT_LATEST_ARTIFACT_MAX_AGE_HOURS)
     parser.add_argument("--json", action="store_true")
     return parser.parse_args()
 
@@ -488,8 +644,42 @@ def print_human_readable(report: dict[str, object]) -> None:
     )
 
 
+def print_latest_artifact_freshness(report: dict[str, object]) -> None:
+    latest = dict(report["latest_artifact"])
+    overall = "ready" if report["ready"] else "blocked"
+    print(f"[user-doc-quality-gate-latest] {overall}")
+    print(f"  artifact={latest['path']}")
+    print(f"  source_ready={latest['source_ready']}")
+    print(f"  fresh={latest['fresh']}")
+    print(f"  generated_at={latest['generated_at']}")
+    print(f"  checked_at={latest['checked_at']}")
+    print(f"  max_age_hours={latest['max_age_hours']}")
+    print(f"  age_hours={latest['age_hours']}")
+    print(f"  expires_at={latest['expires_at']}")
+    if latest.get("diagnostics"):
+        print("  diagnostics:")
+        for diagnostic in latest["diagnostics"]:
+            if not isinstance(diagnostic, dict):
+                continue
+            print(
+                f"    - {diagnostic.get('code')}: {diagnostic.get('message')} | "
+                f"hint={diagnostic.get('hint')}"
+            )
+
+
 def main() -> int:
     args = parse_args()
+    if args.check_latest:
+        report = build_latest_artifact_freshness_report(
+            artifact_path=args.latest_artifact,
+            max_age_hours=args.max_artifact_age_hours,
+        )
+        if args.json:
+            print(json.dumps(report, ensure_ascii=False, indent=2))
+        else:
+            print_latest_artifact_freshness(report)
+        return 0 if report["ready"] else 1
+
     env_path = load_project_env()
     if env_path:
         print(f"Loaded env: {env_path}", file=sys.stderr)

@@ -168,6 +168,14 @@ Fixture expansion:
 - Boundary remains unchanged: `project_docs` is explicit-only and the default release gate remains `generic-baseline`.
 - Latest live gate result: `ready=true`, `3/3 passed`, `pass_rate=1.0`, `support_pass_rate=1.0`, `source_route_pass_rate=1.0`, `avg_weighted_score=0.925`, `p95_latency_ms=4382.149`.
 
+Latest artifact freshness guard:
+
+- Loop: `LOOP-135 User-doc quality gate latest artifact freshness guard`
+- Status: completed on `2026-05-18`.
+- Scope: added `scripts/check_user_doc_quality_gate.py --check-latest` so operators can validate persisted latest JSON freshness without running a live eval.
+- Default freshness limit: `168` hours.
+- Stale latest artifacts return `USER_DOC_GATE_ARTIFACT_STALE`; missing or malformed artifacts return blocked diagnostics and should be regenerated with the live gate command.
+
 ## Operational Interpretation
 
 - The completed track proves that project/operator documentation can be evaluated through an explicit `project_docs` path without changing the default release gate.
@@ -179,5 +187,7 @@ Fixture expansion:
 
 1. `User-doc fixture expansion`
    - Completed as `LOOP-133`; the opt-in gate now covers `UDQ-BC-01`~`UDQ-BC-03`.
-2. `Desktop packaging strategy decision`
+2. `Latest artifact freshness guard`
+   - Completed as `LOOP-135`; use `--check-latest` for persisted evidence freshness checks.
+3. `Desktop packaging strategy decision`
    - Unblock `LOOP-005` only after deciding embedded Python vs separate install.

@@ -247,7 +247,9 @@
 | LOOP-131 | done | User-doc quality gate live evidence artifact | live user-doc gate output artifact + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-132 | done | Await next-track after user-doc live evidence | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-133 | done | User-doc fixture expansion | `./.venv/bin/python -m pytest -q tests/test_check_user_doc_quality_gate.py tests/test_user_doc_eval_fixtures.py tests/test_documentation_boundaries.py` + live user-doc gate + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-134 | active | Await next-track after user-doc fixture expansion | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-134 | done | Await next-track after user-doc fixture expansion | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-135 | done | User-doc quality gate latest artifact freshness guard | `./.venv/bin/python -m pytest -q tests/test_check_user_doc_quality_gate.py tests/test_user_doc_eval_fixtures.py tests/test_documentation_boundaries.py` + `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/check_user_doc_quality_gate.py` + latest artifact freshness smoke + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-136 | active | Await next-track after user-doc gate freshness guard | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -3698,10 +3700,58 @@ closeout 메모 (2026-05-11):
 - latest evidence artifact는 `docs/reports/user_doc_quality_gate_latest.json`와 `docs/reports/USER_DOC_QUALITY_GATE_LATEST.md`에 갱신했다.
 - 다음 active는 `LOOP-134 Await next-track after user-doc fixture expansion`으로 둔다.
 
-## 현재 Active Loop (LOOP-134)
+## 완료 Loop (LOOP-134)
 
 목표:
 - `LOOP-133` user-doc fixture 확장 완료 이후 자동 진행할 pending 항목이 없으므로 다음 작업 트랙 결정을 대기한다.
+
+범위:
+- 포함: 현재 세션 상태 유지, 다음 우선순위가 정해지면 새 loop로 승격
+- 제외: `LOOP-005` 데스크톱 패키징 blocked 해제, default release gate 변경, 모델 기본값 변경
+
+완료 기준:
+- 사용자가 다음 트랙을 지정하거나, `TODO.md`/`NEXT_SESSION_PLAN.md`가 새 실행 항목을 active/pending으로 승격한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-05-18):
+- 사용자의 `진행` 지시를 다음 트랙 진행 신호로 보고 `LOOP-134`를 닫았다.
+- 다음 작업은 user-doc quality gate latest artifact가 오래된 증거로 오인되지 않게 하는 `LOOP-135 User-doc quality gate latest artifact freshness guard`로 정했다.
+
+## 완료 Loop (LOOP-135)
+
+목표:
+- live eval을 다시 돌리지 않아도 `docs/reports/user_doc_quality_gate_latest.json`의 freshness와 ready 상태를 빠르게 확인할 수 있게 한다.
+
+범위:
+- 포함: `scripts/check_user_doc_quality_gate.py --check-latest`, freshness 판정 함수, target tests, README/SPEC/operator report/handoff 문서 갱신
+- 제외: live user-doc gate 재실행, latest artifact 재생성, default release gate 변경, 모델 기본값 변경, `LOOP-005` desktop packaging blocked 해제
+
+완료 기준:
+- 기존 latest artifact의 `generated_at`과 `ready` 상태를 기준으로 fresh/stale을 판정해야 한다.
+- 기본 freshness 한도는 `168`시간이어야 한다.
+- stale artifact는 `USER_DOC_GATE_ARTIFACT_STALE` 진단으로 blocked되어야 한다.
+- target pytest, py_compile, roadmap harness가 통과해야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_check_user_doc_quality_gate.py tests/test_user_doc_eval_fixtures.py tests/test_documentation_boundaries.py`
+- `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/check_user_doc_quality_gate.py`
+- `./.venv/bin/python scripts/check_user_doc_quality_gate.py --check-latest --json`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-05-18):
+- `evaluate_latest_artifact_freshness()`와 `build_latest_artifact_freshness_report()`를 추가했다.
+- `scripts/check_user_doc_quality_gate.py --check-latest --json`은 live eval 없이 persisted latest JSON을 검사한다.
+- latest artifact freshness 기본 한도는 `168`시간이고, 오래된 artifact는 `USER_DOC_GATE_ARTIFACT_STALE`로 막는다.
+- 검증 결과: target pytest `13 passed`; `py_compile scripts/check_user_doc_quality_gate.py` pass; `git diff --check` pass; `roadmap_harness.py validate` ready.
+- 현재 latest artifact는 `2026-05-11T13:29:49+00:00` 생성본이며 `--check-latest --json` smoke에서 `age_hours>168`, `USER_DOC_GATE_ARTIFACT_STALE`, exit `1`로 expected blocked를 확인했다.
+- 다음 active는 `LOOP-136 Await next-track after user-doc gate freshness guard`로 둔다.
+
+## 현재 Active Loop (LOOP-136)
+
+목표:
+- `LOOP-135` user-doc gate freshness guard 완료 이후 자동 진행할 pending 항목이 없으므로 다음 작업 트랙 결정을 대기한다.
 
 범위:
 - 포함: 현재 세션 상태 유지, 다음 우선순위가 정해지면 새 loop로 승격
