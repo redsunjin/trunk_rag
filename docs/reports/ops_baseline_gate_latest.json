@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-21T12:22:39+00:00",
+  "generated_at": "2026-05-21T12:25:38+00:00",
   "ready": true,
   "base_url": "http://127.0.0.1:8000",
   "llm_provider": "ollama",
@@ -162,12 +162,12 @@
   "diagnostics": [],
   "collections": {
     "required_keys": [
-      "project_docs"
+      "all"
     ],
     "items": [
       {
-        "key": "project_docs",
-        "vectors": 10,
+        "key": "all",
+        "vectors": 37,
         "ready": true
       }
     ],
@@ -175,33 +175,28 @@
     "ready": true
   },
   "eval": {
-    "eval_file": "evals/user_doc_answer_level_eval_fixtures.jsonl",
+    "eval_file": "evals/answer_level_eval_fixtures.jsonl",
     "selected_buckets": [
-      "user-doc-candidate"
-    ],
-    "selected_case_ids": [
-      "UDQ-BC-01",
-      "UDQ-BC-02",
-      "UDQ-BC-03"
+      "generic-baseline"
     ],
     "summary": {
       "cases": 3,
       "passed": 3,
       "pass_rate": 1.0,
-      "avg_latency_ms": 3543.644,
-      "p95_latency_ms": 4604.336,
-      "avg_weighted_score": 0.925,
+      "avg_latency_ms": 4654.139,
+      "p95_latency_ms": 4843.711,
+      "avg_weighted_score": 0.96,
       "support_pass_rate": 1.0,
       "source_route_pass_rate": 1.0,
       "avg_source_route_coverage": 1.0,
       "bucket_summaries": {
-        "user-doc-candidate": {
+        "generic-baseline": {
           "cases": 3,
           "passed": 3,
           "pass_rate": 1.0,
-          "avg_latency_ms": 3543.644,
-          "p95_latency_ms": 4604.336,
-          "avg_weighted_score": 0.925,
+          "avg_latency_ms": 4654.139,
+          "p95_latency_ms": 4843.711,
+          "avg_weighted_score": 0.96,
           "support_pass_rate": 1.0,
           "source_route_pass_rate": 1.0,
           "avg_source_route_coverage": 1.0
@@ -310,39 +305,180 @@
     },
     "results": [
       {
-        "id": "UDQ-BC-01",
-        "bucket": "user-doc-candidate",
-        "query": "Browser companion에서 graph-lite=hit와 graph-lite=not-reported는 무엇이 다르고, 운영자는 각각 무엇을 확인해야 하나?",
+        "id": "GQ-19",
+        "bucket": "generic-baseline",
+        "query": "문서 기준으로 에콜 폴리테크니크가 어떤 방식으로 과학 인재를 길렀는지 요약해줘.",
         "request_mode": "explicit_single",
         "collection_keys": [
-          "project_docs"
+          "all"
         ],
         "expected_route_keys": [
-          "project_docs"
+          "all"
         ],
         "actual_route_keys": [
-          "project_docs"
+          "all"
         ],
         "route_pass": true,
         "status": 200,
-        "latency_ms": 4785.553,
-        "answer_length": 403,
-        "answer_preview": "문서 근거로 확인되는 내용입니다.\n- `graph-lite=not-reported`: Server response did not include graph-lite metadata. 운영자는 다음을 확인합니다: Confirm server was started with current code and debug metadata.\n- graph-lite=hit | relations=<number> | context=added\n- `g",
-        "answer": "문서 근거로 확인되는 내용입니다.\n- `graph-lite=not-reported`: Server response did not include graph-lite metadata. 운영자는 다음을 확인합니다: Confirm server was started with current code and debug metadata.\n- graph-lite=hit | relations=<number> | context=added\n- `graph-lite=hit`: Quality mode found relation context and appended it to RAG context. 운영자는 다음을 확인합니다: Treat transport as healthy; evaluate answer quality separately.",
+        "latency_ms": 4345.991,
+        "answer_length": 277,
+        "answer_preview": "에콜 폴리테크니크는 국가적 위기 상황에서 과학을 최후의 보루로 삼아 엘리트 과학 인재를 육성하는 독특한 시스템을 갖추었습니다. 이곳은 단순한 학문 교육을 넘어, 수학, 물리 외에도 토목, 교량 건설, 주조 및 단조 등 국가 재건과 전쟁에 필요한 실전 기술을 주입하는 실용적 교육에 중점을 두었습니다. 또한, 미터법 도입과 같은 과학적 표준화 작업을 통해 근대 산업의 강력한 기반을 마련했으며, 몽주, 카르노, 라부아지에와 같은 인",
+        "answer": "에콜 폴리테크니크는 국가적 위기 상황에서 과학을 최후의 보루로 삼아 엘리트 과학 인재를 육성하는 독특한 시스템을 갖추었습니다. 이곳은 단순한 학문 교육을 넘어, 수학, 물리 외에도 토목, 교량 건설, 주조 및 단조 등 국가 재건과 전쟁에 필요한 실전 기술을 주입하는 실용적 교육에 중점을 두었습니다. 또한, 미터법 도입과 같은 과학적 표준화 작업을 통해 근대 산업의 강력한 기반을 마련했으며, 몽주, 카르노, 라부아지에와 같은 인물들이 조국을 수호하는 '과학 군인'으로 양성되는 역할을 했습니다.",
         "required_hits": [
-          "graph-lite=hit",
-          "graph-lite=not-reported",
-          "운영자",
-          "확인"
+          "에콜 폴리테크니크",
+          "과학 인재"
+        ],
+        "required_total": 2,
+        "required_ratio": 1.0,
+        "must_include_any_hits": [
+          "국가",
+          "교육",
+          "양성"
+        ],
+        "must_include_any_total": 5,
+        "must_include_any_ratio": 0.6,
+        "forbidden_hits": [],
+        "min_answer_chars": 110,
+        "min_chars_ratio": 1.0,
+        "precision_score": 1.0,
+        "completeness_score": 0.8,
+        "hallucination_score": 1.0,
+        "support_level": "supported",
+        "support_reason": "multiple_context_segments",
+        "support_pass": true,
+        "citation_count": 2,
+        "citations": [
+          "fr.md",
+          "eu_summry.md"
+        ],
+        "source_count": 3,
+        "source_collection_keys": [
+          "all",
+          "all",
+          "all"
+        ],
+        "source_covered_keys": [
+          "all"
+        ],
+        "source_route_coverage_ratio": 1.0,
+        "source_route_pass": true,
+        "graph_lite_header": "disabled",
+        "graph_lite_enabled": false,
+        "graph_lite_status": "disabled",
+        "graph_lite_fallback_reason": "-",
+        "graph_lite_relation_count": 0,
+        "graph_lite_context_added": false,
+        "weighted_score": 0.92,
+        "pass": true,
+        "error_code": null,
+        "error_message": null
+      },
+      {
+        "id": "GQ-20",
+        "bucket": "generic-baseline",
+        "query": "문서 기준으로 뉴턴의 국장이 당시 영국에서 과학의 위상을 어떻게 보여줬는지 설명해줘.",
+        "request_mode": "explicit_single",
+        "collection_keys": [
+          "all"
+        ],
+        "expected_route_keys": [
+          "all"
+        ],
+        "actual_route_keys": [
+          "all"
+        ],
+        "route_pass": true,
+        "status": 200,
+        "latency_ms": 4763.84,
+        "answer_length": 296,
+        "answer_preview": "아이작 뉴턴의 국장은 과학이 사회적 지위의 정점에 섰음을 보여준 상징적인 사건이었습니다. 1727년, 평민 출신 학자인 뉴턴이 국왕들이 잠든 웨스트민스터 사원에 안치된 것은 과학이 종교나 왕권과 동등한 권위를 획득했음을 선포한 것이었습니다. 당시 영국에 망명 중이던 볼테르는 이 광경을 보고 충격을 받았는데, 신분제에 갇혀 박해받던 고국과 달리 자작과 후작들이 과학자의 운구 행렬을 이끄는 모습에서 영국의 개방성과 힘을 발견했습니",
+        "answer": "아이작 뉴턴의 국장은 과학이 사회적 지위의 정점에 섰음을 보여준 상징적인 사건이었습니다. 1727년, 평민 출신 학자인 뉴턴이 국왕들이 잠든 웨스트민스터 사원에 안치된 것은 과학이 종교나 왕권과 동등한 권위를 획득했음을 선포한 것이었습니다. 당시 영국에 망명 중이던 볼테르는 이 광경을 보고 충격을 받았는데, 신분제에 갇혀 박해받던 고국과 달리 자작과 후작들이 과학자의 운구 행렬을 이끄는 모습에서 영국의 개방성과 힘을 발견했습니다. 이는 영국이 신분을 넘어 지식과 능력을 국격으로 예우하는 문화를 가졌음을 보여준 사건이었습니다.",
+        "required_hits": [
+          "뉴턴",
+          "국장",
+          "영국",
+          "과학"
         ],
         "required_total": 4,
         "required_ratio": 1.0,
         "must_include_any_hits": [
-          "Quality",
-          "debug",
-          "metadata",
-          "context",
-          "RAG"
+          "권위",
+          "사회적 지위",
+          "왕권",
+          "사회"
+        ],
+        "must_include_any_total": 5,
+        "must_include_any_ratio": 0.8,
+        "forbidden_hits": [],
+        "min_answer_chars": 110,
+        "min_chars_ratio": 1.0,
+        "precision_score": 1.0,
+        "completeness_score": 0.9,
+        "hallucination_score": 1.0,
+        "support_level": "supported",
+        "support_reason": "multiple_context_segments",
+        "support_pass": true,
+        "citation_count": 3,
+        "citations": [
+          "uk.md",
+          "eu_summry.md",
+          "ge.md"
+        ],
+        "source_count": 3,
+        "source_collection_keys": [
+          "all",
+          "all",
+          "all"
+        ],
+        "source_covered_keys": [
+          "all"
+        ],
+        "source_route_coverage_ratio": 1.0,
+        "source_route_pass": true,
+        "graph_lite_header": "disabled",
+        "graph_lite_enabled": false,
+        "graph_lite_status": "disabled",
+        "graph_lite_fallback_reason": "-",
+        "graph_lite_relation_count": 0,
+        "graph_lite_context_added": false,
+        "weighted_score": 0.96,
+        "pass": true,
+        "error_code": null,
+        "error_message": null
+      },
+      {
+        "id": "GQ-21",
+        "bucket": "generic-baseline",
+        "query": "문서 기준으로 독일이 교육과 과학을 국가 재건의 동력으로 삼은 방식을 정리해줘.",
+        "request_mode": "explicit_single",
+        "collection_keys": [
+          "all"
+        ],
+        "expected_route_keys": [
+          "all"
+        ],
+        "actual_route_keys": [
+          "all"
+        ],
+        "route_pass": true,
+        "status": 200,
+        "latency_ms": 4852.586,
+        "answer_length": 609,
+        "answer_preview": "문서 근거로 확인되는 내용입니다.\n- 나폴레옹 전쟁의 패배 이후 독일은 국가 재건의 핵심 동력을 교육과 과학에서 찾았습니다. 1810년 설립된 베를린 대학(현 훔볼트 대학)은 연구와 교육의 통합이라는 새로운 대학 모델을 제시하며 아인슈타인과 막스 플랑크를 배출한 세계 과학의 요람으로 거듭났습니다.\n- 1666년 런던 대화재라는 국가적 재난은 과학이 전면에 나서는 계기가 되었습니다. 크리스토퍼 렌과 로버트 후크는 이탈리아의 전통",
+        "answer": "문서 근거로 확인되는 내용입니다.\n- 나폴레옹 전쟁의 패배 이후 독일은 국가 재건의 핵심 동력을 교육과 과학에서 찾았습니다. 1810년 설립된 베를린 대학(현 훔볼트 대학)은 연구와 교육의 통합이라는 새로운 대학 모델을 제시하며 아인슈타인과 막스 플랑크를 배출한 세계 과학의 요람으로 거듭났습니다.\n- 1666년 런던 대화재라는 국가적 재난은 과학이 전면에 나서는 계기가 되었습니다. 크리스토퍼 렌과 로버트 후크는 이탈리아의 전통적인 돔 방식(피렌체 등)을 답습하지 않고, y=x^3와 같은 수학적 곡선과 3중 구조 돔이라는 독자적인 과학적 원리를 이용해 세인트폴 대성당을 재건했습니다. 이는 과학이 국가 재건의 도구가 된 기념비적 사례입니다.\n- 이 시기 독일 지적 민주화의 상징은 '멘사(Mensa)'에서 찾을 수 있습니다. 라틴어로 '둥근 탁자'를 뜻하는 이 단어는 지식인들의 평등한 토론 문화를 상징하며, 오늘날 고지능자 모임뿐 아니라 독일 대학의 학생 식당 체계로 정착되었습니다. 학문적 정점에는 헤르만 폰 헬름홀츠(Helmholtz)가 있었습니다. 가난한 의대생에서 군의관을 거쳐 독일 과학의 대부가 된 그는 에너지 보존 법칙을 확립하며 물리적 세계의 보편 법칙을 선언했습니다.",
+        "required_hits": [
+          "독일",
+          "교육",
+          "과학"
+        ],
+        "required_total": 3,
+        "required_ratio": 1.0,
+        "must_include_any_hits": [
+          "훔볼트 대학",
+          "베를린 대학",
+          "국가 재건",
+          "연구와 교육의 통합",
+          "헬름홀츠"
         ],
         "must_include_any_total": 5,
         "must_include_any_ratio": 1.0,
@@ -355,19 +491,20 @@
         "support_level": "supported",
         "support_reason": "multiple_context_segments",
         "support_pass": true,
-        "citation_count": 2,
+        "citation_count": 3,
         "citations": [
-          "BROWSER_COMPANION_OPERATOR_GUIDE.md > Graph-Lite Quality Smoke",
-          "BROWSER_COMPANION_OPERATOR_GUIDE.md > Graph-Lite Status Meanings"
+          "ge.md",
+          "eu_summry.md",
+          "fr.md"
         ],
         "source_count": 3,
         "source_collection_keys": [
-          "project_docs",
-          "project_docs",
-          "project_docs"
+          "all",
+          "all",
+          "all"
         ],
         "source_covered_keys": [
-          "project_docs"
+          "all"
         ],
         "source_route_coverage_ratio": 1.0,
         "source_route_pass": true,
@@ -381,159 +518,7 @@
         "pass": true,
         "error_code": null,
         "error_message": null
-      },
-      {
-        "id": "UDQ-BC-02",
-        "bucket": "user-doc-candidate",
-        "query": "Browser companion을 로컬에서 정상 사용하려면 side panel에서 어떤 상태를 확인하고, Balanced와 Quality 모드는 각각 언제 써야 하나?",
-        "request_mode": "explicit_single",
-        "collection_keys": [
-          "project_docs"
-        ],
-        "expected_route_keys": [
-          "project_docs"
-        ],
-        "actual_route_keys": [
-          "project_docs"
-        ],
-        "route_pass": true,
-        "status": 200,
-        "latency_ms": 2973.387,
-        "answer_length": 268,
-        "answer_preview": "정상적인 로컬 사용을 위해서는 사이드 패널에서 로컬 서버 URL을 확인하고, 'Quality' 모드에서 관계가 많은 질문을 하는 것이 권장됩니다. 먼저, 로컬에서 Trunk RAG를 정상 서버 경로로 시작한 후, 브라우저 확장 프로그램의 사이드 패널을 열고 새로고침 버튼을 클릭하여 정상적인 상태를 확인해야 합니다. 'Balanced' 모드는 일반적인 로컬 RAG를 요청할 때 사용하며, 반면 'Quality' 모드는 관계(rel",
-        "answer": "정상적인 로컬 사용을 위해서는 사이드 패널에서 로컬 서버 URL을 확인하고, 'Quality' 모드에서 관계가 많은 질문을 하는 것이 권장됩니다. 먼저, 로컬에서 Trunk RAG를 정상 서버 경로로 시작한 후, 브라우저 확장 프로그램의 사이드 패널을 열고 새로고침 버튼을 클릭하여 정상적인 상태를 확인해야 합니다. 'Balanced' 모드는 일반적인 로컬 RAG를 요청할 때 사용하며, 반면 'Quality' 모드는 관계(relation)가 많은 질문을 할 때 사용해야 합니다.",
-        "required_hits": [
-          "Balanced",
-          "Quality",
-          "로컬 서버 URL",
-          "새로고침"
-        ],
-        "required_total": 4,
-        "required_ratio": 1.0,
-        "must_include_any_hits": [
-          "정상",
-          "사이드 패널"
-        ],
-        "must_include_any_total": 5,
-        "must_include_any_ratio": 0.4,
-        "forbidden_hits": [],
-        "min_answer_chars": 150,
-        "min_chars_ratio": 1.0,
-        "precision_score": 1.0,
-        "completeness_score": 0.7,
-        "hallucination_score": 1.0,
-        "support_level": "supported",
-        "support_reason": "multiple_context_segments",
-        "support_pass": true,
-        "citation_count": 3,
-        "citations": [
-          "BROWSER_COMPANION_OPERATOR_GUIDE.md > Graph-Lite Quality Smoke",
-          "BROWSER_COMPANION_OPERATOR_GUIDE.md > Normal Local Use",
-          "BROWSER_COMPANION_OPERATOR_GUIDE.md > Purpose"
-        ],
-        "source_count": 3,
-        "source_collection_keys": [
-          "project_docs",
-          "project_docs",
-          "project_docs"
-        ],
-        "source_covered_keys": [
-          "project_docs"
-        ],
-        "source_route_coverage_ratio": 1.0,
-        "source_route_pass": true,
-        "graph_lite_header": "disabled",
-        "graph_lite_enabled": false,
-        "graph_lite_status": "disabled",
-        "graph_lite_fallback_reason": "-",
-        "graph_lite_relation_count": 0,
-        "graph_lite_context_added": false,
-        "weighted_score": 0.865,
-        "pass": true,
-        "error_code": null,
-        "error_message": null
-      },
-      {
-        "id": "UDQ-BC-03",
-        "bucket": "user-doc-candidate",
-        "query": "Browser companion의 Upload Draft for Review는 문서를 어떻게 처리하며, smoke 실행과 pending 요청 정리에서 운영자가 지켜야 할 제한은 무엇인가?",
-        "request_mode": "explicit_single",
-        "collection_keys": [
-          "project_docs"
-        ],
-        "expected_route_keys": [
-          "project_docs"
-        ],
-        "actual_route_keys": [
-          "project_docs"
-        ],
-        "route_pass": true,
-        "status": 200,
-        "latency_ms": 2871.992,
-        "answer_length": 246,
-        "answer_preview": "Upload Draft for Review 기능은 일반적인 업로드 요청을 로컬 Trunk RAG 스토어에 생성하며, 이 과정에서 콘텐츠를 자체적으로 승인하거나 인덱싱하지는 않습니다. 따라서 운영자는 이 기능 사용 시 `--skip-upload` 옵션을 사용해야 하며, 기존에 대기 중인(pending) 요청은 운영자의 확인 없이는 삭제해서는 안 됩니다. 이처럼 운영자는 업로드 요청의 상태 관리와 데이터 처리 과정에 대한 주의가 ",
-        "answer": "Upload Draft for Review 기능은 일반적인 업로드 요청을 로컬 Trunk RAG 스토어에 생성하며, 이 과정에서 콘텐츠를 자체적으로 승인하거나 인덱싱하지는 않습니다. 따라서 운영자는 이 기능 사용 시 `--skip-upload` 옵션을 사용해야 하며, 기존에 대기 중인(pending) 요청은 운영자의 확인 없이는 삭제해서는 안 됩니다. 이처럼 운영자는 업로드 요청의 상태 관리와 데이터 처리 과정에 대한 주의가 필요합니다.",
-        "required_hits": [
-          "Upload Draft for Review",
-          "승인",
-          "--skip-upload",
-          "pending"
-        ],
-        "required_total": 4,
-        "required_ratio": 1.0,
-        "must_include_any_hits": [
-          "운영자",
-          "확인",
-          "삭제"
-        ],
-        "must_include_any_total": 5,
-        "must_include_any_ratio": 0.6,
-        "forbidden_hits": [],
-        "min_answer_chars": 150,
-        "min_chars_ratio": 1.0,
-        "precision_score": 1.0,
-        "completeness_score": 0.8,
-        "hallucination_score": 1.0,
-        "support_level": "supported",
-        "support_reason": "multiple_context_segments",
-        "support_pass": true,
-        "citation_count": 2,
-        "citations": [
-          "BROWSER_COMPANION_OPERATOR_GUIDE.md > Upload Draft Behavior",
-          "BROWSER_COMPANION_OPERATOR_GUIDE.md > Graph-Lite Quality Smoke"
-        ],
-        "source_count": 3,
-        "source_collection_keys": [
-          "project_docs",
-          "project_docs",
-          "project_docs"
-        ],
-        "source_covered_keys": [
-          "project_docs"
-        ],
-        "source_route_coverage_ratio": 1.0,
-        "source_route_pass": true,
-        "graph_lite_header": "disabled",
-        "graph_lite_enabled": false,
-        "graph_lite_status": "disabled",
-        "graph_lite_fallback_reason": "-",
-        "graph_lite_relation_count": 0,
-        "graph_lite_context_added": false,
-        "weighted_score": 0.91,
-        "pass": true,
-        "error_code": null,
-        "error_message": null
       }
     ]
-  },
-  "boundary": {
-    "default_release_gate": "generic-baseline",
-    "default_release_gate_command": "scripts/check_ops_baseline_gate.py",
-    "user_doc_gate": "user-doc-candidate",
-    "user_doc_eval_file": "evals/user_doc_answer_level_eval_fixtures.jsonl",
-    "required_collection_keys": [
-      "project_docs"
-    ],
-    "default_runtime_collection_changed": false
   }
 }

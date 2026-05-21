@@ -1,6 +1,6 @@
 # User-Doc Quality Gate Report
 
-- generated_at: `2026-05-11T13:29:49+00:00`
+- generated_at: `2026-05-21T12:22:39+00:00`
 - ready: `True`
 - base_url: `http://127.0.0.1:8000`
 - llm_provider: `ollama`
@@ -35,4 +35,4 @@
 - avg_weighted_score: `0.925`
 - support_pass_rate: `1.0`
 - source_route_pass_rate: `1.0`
-- p95_latency_ms: `4382.149`
+- p95_latency_ms: `4604.336`

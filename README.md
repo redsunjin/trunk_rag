@@ -27,6 +27,7 @@
 - 현재 복구 안내: `/intro`와 `/app`는 기본 화면에 간단 상태를 표시하고, release/runtime/ops 세부 진단은 접힘 패널에서 표시
 - 현재 문서 흐름: 기본 번들 문서는 유럽 과학사 sample-pack 데모이며, 사용자 문서는 업로드 요청과 관리자 승인 후 반영
 - 현재 relation PoC: graph-lite JSONL 관계 스냅샷/인메모리 검색 계층을 `Quality` 단계의 opt-in context 보조로 연결했으며, `Balanced` 기본 경로에는 자동 적용하지 않음. `/app` 답변의 근거 요약과 실행 상세에서는 `graph-lite=hit|fallback|disabled` 상태를 확인할 수 있음
+- 최신 로컬 구동 smoke(2026-05-21): `./.venv/bin/python app_api.py` 기준 `/health`, `/intro -> /app`, semantic search, `/query`, `generic-baseline`, user-doc gate가 실제 `ollama/gemma4:e4b` 환경에서 통과했다. `docs/reports/ops_baseline_gate_latest.json`은 `generic-baseline 3/3 pass`, `docs/reports/user_doc_quality_gate_latest.json`은 `UDQ-BC-01..03 3/3 pass` 상태다.
 - 현재 범위 밖: full Neo4j/GraphRAG 운영, 무거운 rerank, 설치형 데스크톱 제품화
 
 현재 문서는 과장된 성능 약속보다 "지금 무엇이 준비돼 있고 어떤 경로가 검증됐는지"를 우선 보여 주는 기준으로 유지합니다.

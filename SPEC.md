@@ -106,6 +106,7 @@
 - 프론트 E2E 테스트: `tests/e2e/test_web_flow_playwright.py`
 - answer-level fixture 검증: `tests/test_answer_level_eval_fixtures.py`
 - answer-level eval 스크립트 테스트: `tests/test_eval_query_quality.py`
+- 2026-05-21 로컬 구동 smoke: `./.venv/bin/python app_api.py` 서버에서 `/health`, `/intro -> /app`, semantic search, `/query`, `generic-baseline`, user-doc gate를 실제 `ollama/gemma4:e4b`로 확인했다. 최신 ops baseline은 `generic-baseline 3/3 pass`, 최신 user-doc gate는 `UDQ-BC-01..03 3/3 pass`다.
 
 ### LLM 연결
 - provider 분기 로직 통합
