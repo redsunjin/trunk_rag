@@ -247,7 +247,11 @@
 | LOOP-131 | done | User-doc quality gate live evidence artifact | live user-doc gate output artifact + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-132 | done | Await next-track after user-doc live evidence | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-133 | done | User-doc fixture expansion | `./.venv/bin/python -m pytest -q tests/test_check_user_doc_quality_gate.py tests/test_user_doc_eval_fixtures.py tests/test_documentation_boundaries.py` + live user-doc gate + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-134 | active | Await next-track after user-doc fixture expansion | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-134 | done | Await next-track after user-doc fixture expansion | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-135 | done | User-doc quality gate latest artifact freshness guard | `./.venv/bin/python -m pytest -q tests/test_check_user_doc_quality_gate.py tests/test_user_doc_eval_fixtures.py tests/test_documentation_boundaries.py` + `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/check_user_doc_quality_gate.py` + latest artifact freshness smoke + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-136 | done | Await next-track after user-doc gate freshness guard | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-137 | done | Local runtime smoke and live gate refresh | app server `/health` + `/intro -> /app` smoke + `generic-baseline` + user-doc gate |
+| LOOP-138 | active | Await next-track after local runtime smoke | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -3698,10 +3702,115 @@ closeout 메모 (2026-05-11):
 - latest evidence artifact는 `docs/reports/user_doc_quality_gate_latest.json`와 `docs/reports/USER_DOC_QUALITY_GATE_LATEST.md`에 갱신했다.
 - 다음 active는 `LOOP-134 Await next-track after user-doc fixture expansion`으로 둔다.
 
-## 현재 Active Loop (LOOP-134)
+## 완료 Loop (LOOP-134)
 
 목표:
 - `LOOP-133` user-doc fixture 확장 완료 이후 자동 진행할 pending 항목이 없으므로 다음 작업 트랙 결정을 대기한다.
+
+범위:
+- 포함: 현재 세션 상태 유지, 다음 우선순위가 정해지면 새 loop로 승격
+- 제외: `LOOP-005` 데스크톱 패키징 blocked 해제, default release gate 변경, 모델 기본값 변경
+
+완료 기준:
+- 사용자가 다음 트랙을 지정하거나, `TODO.md`/`NEXT_SESSION_PLAN.md`가 새 실행 항목을 active/pending으로 승격한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-05-18):
+- 사용자의 `진행` 지시를 다음 트랙 진행 신호로 보고 `LOOP-134`를 닫았다.
+- 다음 작업은 user-doc quality gate latest artifact가 오래된 증거로 오인되지 않게 하는 `LOOP-135 User-doc quality gate latest artifact freshness guard`로 정했다.
+
+## 완료 Loop (LOOP-135)
+
+목표:
+- live eval을 다시 돌리지 않아도 `docs/reports/user_doc_quality_gate_latest.json`의 freshness와 ready 상태를 빠르게 확인할 수 있게 한다.
+
+범위:
+- 포함: `scripts/check_user_doc_quality_gate.py --check-latest`, freshness 판정 함수, target tests, README/SPEC/operator report/handoff 문서 갱신
+- 제외: live user-doc gate 재실행, latest artifact 재생성, default release gate 변경, 모델 기본값 변경, `LOOP-005` desktop packaging blocked 해제
+
+완료 기준:
+- 기존 latest artifact의 `generated_at`과 `ready` 상태를 기준으로 fresh/stale을 판정해야 한다.
+- 기본 freshness 한도는 `168`시간이어야 한다.
+- stale artifact는 `USER_DOC_GATE_ARTIFACT_STALE` 진단으로 blocked되어야 한다.
+- target pytest, py_compile, roadmap harness가 통과해야 한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_check_user_doc_quality_gate.py tests/test_user_doc_eval_fixtures.py tests/test_documentation_boundaries.py`
+- `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/check_user_doc_quality_gate.py`
+- `./.venv/bin/python scripts/check_user_doc_quality_gate.py --check-latest --json`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-05-18):
+- `evaluate_latest_artifact_freshness()`와 `build_latest_artifact_freshness_report()`를 추가했다.
+- `scripts/check_user_doc_quality_gate.py --check-latest --json`은 live eval 없이 persisted latest JSON을 검사한다.
+- latest artifact freshness 기본 한도는 `168`시간이고, 오래된 artifact는 `USER_DOC_GATE_ARTIFACT_STALE`로 막는다.
+- 검증 결과: target pytest `13 passed`; `py_compile scripts/check_user_doc_quality_gate.py` pass; `git diff --check` pass; `roadmap_harness.py validate` ready.
+- 현재 latest artifact는 `2026-05-11T13:29:49+00:00` 생성본이며 `--check-latest --json` smoke에서 `age_hours>168`, `USER_DOC_GATE_ARTIFACT_STALE`, exit `1`로 expected blocked를 확인했다.
+- 다음 active는 `LOOP-136 Await next-track after user-doc gate freshness guard`로 둔다.
+
+## 완료 Loop (LOOP-136)
+
+목표:
+- `LOOP-135` user-doc gate freshness guard 완료 이후 자동 진행할 pending 항목이 없으므로 다음 작업 트랙 결정을 대기한다.
+
+범위:
+- 포함: 현재 세션 상태 유지, 다음 우선순위가 정해지면 새 loop로 승격
+- 제외: `LOOP-005` 데스크톱 패키징 blocked 해제, default release gate 변경, 모델 기본값 변경
+
+완료 기준:
+- 사용자가 다음 트랙을 지정하거나, `TODO.md`/`NEXT_SESSION_PLAN.md`가 새 실행 항목을 active/pending으로 승격한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-05-21):
+- 사용자의 `trunk rag의 이어서 진행, 실제 구동 테스트 하고 싶다` 요청을 다음 트랙 지정으로 보고 대기 상태를 닫았다.
+- 다음 작업은 실제 로컬 앱 서버와 Ollama를 통한 `LOOP-137 Local runtime smoke and live gate refresh`로 정했다.
+
+## 완료 Loop (LOOP-137)
+
+목표:
+- 로컬 FastAPI 서버를 실제로 띄워 `/health`, `/intro -> /app`, semantic search, `/query`, 기본 ops gate, user-doc gate가 현재 환경에서 동작하는지 확인한다.
+- stale 상태였던 user-doc latest artifact를 live eval 결과로 갱신하고, `/ops-baseline/latest`가 읽을 수 있는 최신 generic-baseline 산출물을 생성한다.
+
+범위:
+- 포함: `./.venv/bin/python app_api.py` 로컬 서버 구동, health/collections 확인, browser/UI smoke, 실제 Ollama query smoke, user-doc gate refresh, generic-baseline ops gate refresh
+- 제외: 모델 기본값 변경, default runtime collection 변경, `LOOP-005` 데스크톱 패키징 blocked 해제
+
+완료 기준:
+- `/health`가 `release_web_status=ready`, `vectors=37`, fingerprint `ready`, 기본 LLM `ollama/gemma4:e4b`를 반환한다.
+- `/intro -> /app` 화면 전환과 기본 상태 문구가 실제 브라우저 런타임에서 확인된다.
+- user-doc gate 최신 artifact가 fresh/ready로 갱신된다.
+- `/ops-baseline/latest`가 최신 generic-baseline ready report를 읽는다.
+
+검증:
+- `curl -s http://127.0.0.1:8000/health`
+- `curl -s http://127.0.0.1:8000/collections`
+- `curl -s -X POST http://127.0.0.1:8000/semantic-search ...`
+- `curl -s -X POST http://127.0.0.1:8000/query ...`
+- `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/api/test_query_api.py tests/e2e/test_web_flow_playwright.py`
+- `./.venv/bin/python scripts/check_user_doc_quality_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434 --query-timeout-seconds 60 --output-json docs/reports/user_doc_quality_gate_latest.json --output-report docs/reports/USER_DOC_QUALITY_GATE_LATEST.md`
+- `./.venv/bin/python scripts/check_user_doc_quality_gate.py --check-latest --json`
+- `./.venv/bin/python scripts/check_ops_baseline_gate.py --base-url http://127.0.0.1:8000 --timeout-seconds 60 --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434 --output-json docs/reports/ops_baseline_gate_latest.json --output-report docs/reports/OPS_BASELINE_GATE_LATEST.md`
+
+closeout 메모 (2026-05-21):
+- 앱 서버 health: `release_web_status=ready`, `vectors=37`, `project_docs vectors=10`, embedding fingerprint `ready`, runtime profile `verified`, 기본 모델 `gemma4:e4b`.
+- semantic search smoke: `/semantic-search`가 `all` 컬렉션에서 `fr.md`, `uk.md` snippet을 반환했고 retrieval strategy는 `mmr+light_hybrid`였다.
+- `/query` smoke: 실제 `ollama/gemma4:e4b`, `timeout_seconds=60`, `debug=true`로 성공 응답을 받았다. 질문의 파스퇴르 정보는 현재 샘플 문서에 직접 없어 answer는 not-found였지만, `support_level=supported`, citations `fr.md`, `uk.md`, `eu_summry.md`, invoke `ok`, `invoke_ms=14477.941`로 RAG 경로는 정상 확인됐다.
+- UI smoke: Playwright 런타임으로 `http://127.0.0.1:8000/intro`에서 `/app`으로 이동했고, `로컬 RAG 작업 공간`, `유럽 과학사 샘플 데모`, `default=all, vectors=37, llm=ollama` 상태 문구를 확인했다.
+- user-doc live gate: `ready=true`, `UDQ-BC-01..03 3/3 passed`, `pass_rate=1.0`, `support_pass_rate=1.0`, `source_route_pass_rate=1.0`, `avg_weighted_score=0.925`, `p95_latency_ms=4604.336`.
+- latest artifact freshness: `ready=true`, `fresh=true`, `age_hours=0.005`, `expires_at=2026-05-28T12:22:39+00:00`.
+- ops baseline gate: `ready=true`, `generic-baseline 3/3 passed`, `avg_weighted_score=0.96`, `p95_latency_ms=4843.711`; `/ops-baseline/latest`도 `ready=true`로 읽힘.
+- targeted regression: `tests/api/test_system_api.py tests/api/test_query_api.py tests/e2e/test_web_flow_playwright.py` -> `34 passed`.
+- `playwright-cli` wrapper는 `npx` 단계에서 응답이 없어 중단했고, 설치된 Playwright Python runtime으로 현재 서버 UI smoke를 대체했다.
+- 다음 active는 `LOOP-138 Await next-track after local runtime smoke`로 둔다.
+
+## 현재 Active Loop (LOOP-138)
+
+목표:
+- `LOOP-137` actual local runtime smoke 완료 이후 자동 진행할 pending 항목이 없으므로 다음 작업 트랙 결정을 대기한다.
 
 범위:
 - 포함: 현재 세션 상태 유지, 다음 우선순위가 정해지면 새 loop로 승격

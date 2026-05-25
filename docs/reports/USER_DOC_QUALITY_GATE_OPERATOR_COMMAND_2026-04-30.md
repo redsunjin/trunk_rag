@@ -20,7 +20,7 @@
 
 - Default release gate remains `scripts/check_ops_baseline_gate.py` with `generic-baseline`.
 - User-doc gate uses `evals/user_doc_answer_level_eval_fixtures.jsonl`.
-- Default selected case is `UDQ-BC-01`.
+- Default selected cases are `UDQ-BC-01`~`UDQ-BC-03`.
 - Required collection is explicit-only `project_docs`.
 - The gate does not add `project_docs` to the default runtime collection path.
 - The gate does not promote user-doc fixtures into `evals/answer_level_eval_fixtures.jsonl`.
@@ -47,3 +47,15 @@ If the script returns `PROJECT_DOCS_REINDEX_REQUIRED`, reindex `project_docs` be
 - `source_route_pass_rate=1.0`.
 
 Exit code `0` means ready. Exit code `1` means blocked and the diagnostics section should be used as the operator handoff.
+
+## Latest Artifact Freshness
+
+To check the persisted latest JSON without running a live eval:
+
+```bash
+./.venv/bin/python scripts/check_user_doc_quality_gate.py --check-latest --json
+```
+
+- Default freshness limit: `168` hours.
+- Stale artifacts return `USER_DOC_GATE_ARTIFACT_STALE`.
+- Missing or malformed artifacts return blocked diagnostics and should be regenerated with the live gate command above.

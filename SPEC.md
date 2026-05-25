@@ -106,6 +106,7 @@
 - 프론트 E2E 테스트: `tests/e2e/test_web_flow_playwright.py`
 - answer-level fixture 검증: `tests/test_answer_level_eval_fixtures.py`
 - answer-level eval 스크립트 테스트: `tests/test_eval_query_quality.py`
+- 2026-05-21 로컬 구동 smoke: `./.venv/bin/python app_api.py` 서버에서 `/health`, `/intro -> /app`, semantic search, `/query`, `generic-baseline`, user-doc gate를 실제 `ollama/gemma4:e4b`로 확인했다. 최신 ops baseline은 `generic-baseline 3/3 pass`, 최신 user-doc gate는 `UDQ-BC-01..03 3/3 pass`다.
 
 ### LLM 연결
 - provider 분기 로직 통합
@@ -172,7 +173,7 @@
 - `scripts/validate_browser_companion_manifest.py`: browser companion manifest/권한 경계 검증 스크립트
 - `scripts/smoke_browser_companion_extension.py`: Chrome loaded-extension browser companion smoke helper
 - `scripts/check_ops_baseline_gate.py`: runtime preflight + core 기본 컬렉션 상태 + `generic-baseline` 회귀 게이트/diagnostics 점검
-- `scripts/check_user_doc_quality_gate.py`: default release gate와 분리된 opt-in `project_docs`/`UDQ-BC-01`~`UDQ-BC-03` user-doc 품질 게이트
+- `scripts/check_user_doc_quality_gate.py`: default release gate와 분리된 opt-in `project_docs`/`UDQ-BC-01`~`UDQ-BC-03` user-doc 품질 게이트 및 latest artifact freshness check(`--check-latest`, 기본 168시간)
 - `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩
 - `scripts/roadmap_harness.py`: 실행 큐 상태와 현재 active 항목 점검
 - `scripts/diagnose_ollama_runtime.py`: Ollama 직접 호출 기준 prompt/eval 처리량 진단
