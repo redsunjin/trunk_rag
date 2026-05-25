@@ -97,8 +97,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-140`
-- current_active_title: `Await next-track after handoff freshness audit`
+- current_active_id: `LOOP-142`
+- current_active_title: `Await next-track after session closeout command`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -110,7 +110,20 @@
 - promotion_rule: 현재 `active`가 `done`이 되면 첫 번째 `pending` 항목을 즉시 다음 `active`로 승격한다.
 - progress_sync_rule: 범위 변경, 구현 메모, 검증 결과, blocker, 다음 액션이 생기면 `TODO.md` 현재 `active` 메모와 본 문서의 현재 스냅샷을 같은 작업 단위에서 함께 갱신한다.
 - commit_sync_rule: 커밋 전과 세션 pause 전에는 `TODO.md`/`NEXT_SESSION_PLAN.md`가 모두 최신 진행 상태를 반영한 뒤 `./.venv/bin/python scripts/roadmap_harness.py status`로 handoff 상태를 확인한다.
+- session_closeout_command: `./.venv/bin/python scripts/session_closeout.py`
+- wip_closeout_command: `./.venv/bin/python scripts/session_closeout.py --allow-dirty`
 - legacy_gate_note: 역사 메모의 `ops-baseline` 표기는 `generic-baseline`/`sample-pack-baseline` 분리 이전 명칭이며, 현재 본체 기본 gate는 `generic-baseline`이다.
+
+## 2026-05-26 Session Closeout Command Snapshot
+
+- 완료 루프: `LOOP-140 Await next-track after handoff freshness audit`
+- 완료 루프: `LOOP-141 Session closeout command`
+- 현재 active: `LOOP-142 Await next-track after session closeout command`
+- 코드 반영: `scripts/session_closeout.py`를 추가해 `roadmap_harness` readiness, `git diff --check`, `git status --short --branch`, dirty worktree 여부를 한 번에 확인한다.
+- dirty policy: 기본 closeout은 dirty worktree를 차단한다. 세션 중간 WIP 인계는 `--allow-dirty`를 명시해야 하며, 그래도 `TODO.md`/`NEXT_SESSION_PLAN.md`가 진행 상태를 설명해야 한다.
+- docs: `AGENTS.md`, `WORKFLOW.md`, `README.md`, `SPEC.md`가 세션 종료 명령을 가리킨다.
+- verification: `./.venv/bin/python -m pytest -q tests/test_session_closeout.py tests/test_roadmap_harness.py -> 16 passed`, `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/session_closeout.py scripts/roadmap_harness.py -> pass`, `./.venv/bin/python scripts/session_closeout.py --allow-dirty -> ready`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check -> pass`
+- next: 자동 진행할 pending 항목이 없으므로 다음 작업 트랙 결정을 대기한다. reusable cross-project harness kit 또는 Git hook 적용은 아직 수행하지 않았다.
 
 ## 2026-05-26 Handoff Freshness Audit Snapshot
 

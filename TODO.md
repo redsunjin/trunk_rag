@@ -253,7 +253,9 @@
 | LOOP-137 | done | Local runtime smoke and live gate refresh | app server `/health` + `/intro -> /app` smoke + `generic-baseline` + user-doc gate |
 | LOOP-138 | done | Await next-track after local runtime smoke | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-139 | done | Session handoff freshness audit | `./.venv/bin/python -m pytest -q tests/test_roadmap_harness.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
-| LOOP-140 | active | Await next-track after handoff freshness audit | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-140 | done | Await next-track after handoff freshness audit | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-141 | done | Session closeout command | `./.venv/bin/python -m pytest -q tests/test_session_closeout.py tests/test_roadmap_harness.py` + `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/session_closeout.py scripts/roadmap_harness.py` + `./.venv/bin/python scripts/session_closeout.py --allow-dirty` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-142 | active | Await next-track after session closeout command | `./.venv/bin/python scripts/session_closeout.py` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -3857,7 +3859,7 @@ closeout 메모 (2026-05-26):
 - 검증: `tests/test_roadmap_harness.py -> 11 passed`; `py_compile scripts/roadmap_harness.py -> pass`; `roadmap_harness.py validate -> ready`; `git diff --check -> pass`.
 - 다음 active는 `LOOP-140 Await next-track after handoff freshness audit`로 둔다.
 
-## 현재 Active Loop (LOOP-140)
+## 완료 Loop (LOOP-140)
 
 목표:
 - `LOOP-139` handoff freshness audit 완료 이후 자동 진행할 pending 항목이 없으므로 다음 작업 트랙 결정을 대기한다.
@@ -3871,6 +3873,53 @@ closeout 메모 (2026-05-26):
 
 검증:
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-05-26):
+- 사용자의 "본 프로젝트에서 적용" 지시를 다음 트랙 지정으로 보고 대기 상태를 닫았다.
+- 다음 작업은 `LOOP-141 Session closeout command`로 정했다.
+
+## 완료 Loop (LOOP-141)
+
+목표:
+- 세션 종료 전 `TODO.md`/`NEXT_SESSION_PLAN.md` handoff, whitespace, git 상태를 한 번에 확인하는 표준 명령을 추가한다.
+
+범위:
+- 포함: `scripts/session_closeout.py`, 단위 테스트, README/SPEC/AGENTS/WORKFLOW 사용 규칙, TODO/NEXT 스냅샷 갱신
+- 제외: Git hook 자동 설치, 다른 프로젝트용 skill/package 분리, 제품 런타임 동작 변경
+
+완료 기준:
+- `scripts/session_closeout.py`가 `roadmap_harness` readiness, `git diff --check`, `git status --short --branch`, dirty worktree 상태를 확인한다.
+- dirty worktree는 기본 차단하고, WIP handoff는 `--allow-dirty`로 명시적으로 허용한다.
+- 세션 문서가 다음 세션에서 이 명령을 기준으로 재진입할 수 있게 갱신된다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_session_closeout.py tests/test_roadmap_harness.py`
+- `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/session_closeout.py scripts/roadmap_harness.py`
+- `./.venv/bin/python scripts/session_closeout.py --allow-dirty`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+- `git diff --check`
+
+closeout 메모 (2026-05-26):
+- `scripts/session_closeout.py`를 추가해 표준 세션 종료 점검을 명령 하나로 고정했다.
+- `tests/test_session_closeout.py`는 harness blocked, 기본 dirty 차단, `--allow-dirty`, `git diff --check` 실패, 직접 스크립트 실행 경로를 검증한다.
+- `AGENTS.md`/`WORKFLOW.md`/`README.md`에 세션 종료 전 `session_closeout.py` 실행 규칙을 추가했다.
+- 검증: `tests/test_session_closeout.py tests/test_roadmap_harness.py -> 16 passed`; `py_compile scripts/session_closeout.py scripts/roadmap_harness.py -> pass`; `session_closeout.py --allow-dirty -> ready`; `roadmap_harness.py validate -> ready`; `git diff --check -> pass`.
+- 다음 active는 `LOOP-142 Await next-track after session closeout command`로 둔다.
+
+## 현재 Active Loop (LOOP-142)
+
+목표:
+- `LOOP-141` session closeout command 완료 이후 자동 진행할 pending 항목이 없으므로 다음 작업 트랙 결정을 대기한다.
+
+범위:
+- 포함: 현재 세션 상태 유지, 다음 우선순위가 정해지면 새 loop로 승격
+- 제외: Git hook 자동 설치, reusable skill/package 분리, `LOOP-005` 데스크톱 패키징 blocked 해제
+
+완료 기준:
+- 사용자가 다음 트랙을 지정하거나, `TODO.md`/`NEXT_SESSION_PLAN.md`가 새 실행 항목을 active/pending으로 승격한다.
+
+검증:
+- `./.venv/bin/python scripts/session_closeout.py`
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

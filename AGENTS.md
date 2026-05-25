@@ -47,6 +47,8 @@
 - 의미 있는 구현, 검증, 판단, blocker가 생기면 같은 작업 단위 안에서 두 문서를 함께 갱신한다.
 - dirty worktree 상태로 멈출 때는 최소한 `TODO.md` 또는 `NEXT_SESSION_PLAN.md` 중 하나가 아니라 둘 다 최신 진행 상태를 설명해야 한다.
 - 커밋 메시지나 closeout 메모에는 가능한 한 loop id와 검증 결과를 남겨 다음 세션이 추적 가능해야 한다.
+- 세션 종료 전에는 기본적으로 `./.venv/bin/python scripts/session_closeout.py`를 실행한다.
+- dirty worktree를 남기는 중간 인계는 `./.venv/bin/python scripts/session_closeout.py --allow-dirty`로 명시하되, `TODO.md`와 `NEXT_SESSION_PLAN.md`가 최신 진행 상태를 설명해야 한다.
 
 ## 루프 상태 모델
 

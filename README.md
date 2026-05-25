@@ -436,10 +436,12 @@ cd <repo>
 ```powershell
 .venv\Scripts\python.exe scripts\roadmap_harness.py status
 .venv\Scripts\python.exe scripts\roadmap_harness.py validate
+.venv\Scripts\python.exe scripts\session_closeout.py
 ```
 
 - `status`는 현재 `active` 항목, 기본 게이트 명령, 큐 상태를 출력합니다.
 - `validate`는 `TODO.md`의 `Execution Queue`와 `NEXT_SESSION_PLAN.md`의 `Session Loop Harness`가 일치하는지 검사합니다.
+- `session_closeout.py`는 세션 종료 전 `roadmap_harness`, `git diff --check`, `git status --short --branch`, dirty worktree 상태를 함께 검사합니다. WIP 인계는 `--allow-dirty`를 명시합니다.
 - 현재 규칙은 `active` 항목 1개만 허용하고, `current_active_id`가 실제 active row와 일치해야 합니다. `NEXT_SESSION_PLAN.md` 제목 날짜가 최신 dated snapshot보다 오래되면 warning으로 표시합니다.
 - 다음 작업 트랙은 `TODO.md`/`NEXT_SESSION_PLAN.md`의 active row를 따릅니다. full Neo4j/GraphRAG 재개는 사용자가 명시하지 않는 한 기본 트랙이 아닙니다.
 

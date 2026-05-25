@@ -48,7 +48,8 @@
 - `TODO.md`는 실행 큐, 현재 `active`의 범위, 진행 메모를 담당한다.
 - `NEXT_SESSION_PLAN.md`는 세션 재진입용 최신 스냅샷과 재개 규칙을 담당한다.
 - 구현, 검증, 판단, blocker가 바뀌면 두 문서를 같은 작업 단위 안에서 함께 갱신한다.
-- pause/commit 전에는 `./.venv/bin/python scripts/roadmap_harness.py status`로 handoff 상태를 확인한다.
+- pause/commit 전에는 `./.venv/bin/python scripts/session_closeout.py`로 handoff 상태를 확인한다.
+- dirty worktree를 남기는 WIP 인계는 `./.venv/bin/python scripts/session_closeout.py --allow-dirty`를 사용하고, `TODO.md`와 `NEXT_SESSION_PLAN.md`에 남은 작업과 재개 조건을 기록한다.
 
 ## 현재 우선순위 기준
 
