@@ -1,4 +1,4 @@
-# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-04-28 기준)
+# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-05-26 기준)
 
 기준 문서:
 - `SPEC.md`
@@ -90,10 +90,15 @@
 - 세션 단절 이후에도 동일 기준으로 재진입할 수 있도록 상태를 단일 문서로 고정
 - 완료/미완료 범위를 재정렬하고, 다음 작업 우선순위를 명확화
 
+읽기 규칙:
+- 현행 상태는 `Session Loop Harness`와 그 아래 최신 dated snapshot을 우선한다.
+- 아래 오래된 snapshot의 `현재 active` 표현은 당시 이력이며, 현재 active 판단에는 사용하지 않는다.
+- `TODO.md`의 `Execution Queue`와 본 문서의 `current_active_id`가 충돌하면 `TODO.md`를 우선하고 본 문서를 즉시 정리한다.
+
 ## Session Loop Harness
 
-- current_active_id: `LOOP-138`
-- current_active_title: `Await next-track after local runtime smoke`
+- current_active_id: `LOOP-140`
+- current_active_title: `Await next-track after handoff freshness audit`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -106,6 +111,17 @@
 - progress_sync_rule: 범위 변경, 구현 메모, 검증 결과, blocker, 다음 액션이 생기면 `TODO.md` 현재 `active` 메모와 본 문서의 현재 스냅샷을 같은 작업 단위에서 함께 갱신한다.
 - commit_sync_rule: 커밋 전과 세션 pause 전에는 `TODO.md`/`NEXT_SESSION_PLAN.md`가 모두 최신 진행 상태를 반영한 뒤 `./.venv/bin/python scripts/roadmap_harness.py status`로 handoff 상태를 확인한다.
 - legacy_gate_note: 역사 메모의 `ops-baseline` 표기는 `generic-baseline`/`sample-pack-baseline` 분리 이전 명칭이며, 현재 본체 기본 gate는 `generic-baseline`이다.
+
+## 2026-05-26 Handoff Freshness Audit Snapshot
+
+- 완료 루프: `LOOP-138 Await next-track after local runtime smoke`
+- 완료 루프: `LOOP-139 Session handoff freshness audit`
+- 현재 active: `LOOP-140 Await next-track after handoff freshness audit`
+- 진단 결과: `TODO.md` active row와 `NEXT_SESSION_PLAN.md` `Session Loop Harness` 값은 `LOOP-138`로 일치했지만, 문서 제목이 `2026-04-28 기준`으로 남아 있었고 하단 legacy snapshot에 과거 `현재 active` 문구가 남아 stale handoff처럼 보였다.
+- 코드 반영: `scripts/roadmap_harness.py`가 `NEXT_SESSION_PLAN.md` 제목 날짜와 최신 dated heading을 비교해 제목 날짜가 뒤처지면 warning을 낸다.
+- 문서 반영: 본 문서 제목을 `2026-05-26 기준`으로 갱신하고, 현행 상태는 상단 `Session Loop Harness`와 최신 snapshot을 우선한다는 읽기 규칙을 추가했다.
+- verification: `./.venv/bin/python -m pytest -q tests/test_roadmap_harness.py -> 11 passed`, `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/roadmap_harness.py -> pass`, `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`, `git diff --check -> pass`
+- next: 자동 진행할 pending 항목이 없으므로 다음 작업 트랙 결정을 대기한다. `LOOP-005` 데스크톱 패키징은 embedded Python vs 별도 설치 전략 확정 전까지 계속 `blocked`다.
 
 ## 2026-04-30 Project-Doc Query Smoke Snapshot
 

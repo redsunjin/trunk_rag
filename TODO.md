@@ -251,7 +251,9 @@
 | LOOP-135 | done | User-doc quality gate latest artifact freshness guard | `./.venv/bin/python -m pytest -q tests/test_check_user_doc_quality_gate.py tests/test_user_doc_eval_fixtures.py tests/test_documentation_boundaries.py` + `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/check_user_doc_quality_gate.py` + latest artifact freshness smoke + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-136 | done | Await next-track after user-doc gate freshness guard | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-137 | done | Local runtime smoke and live gate refresh | app server `/health` + `/intro -> /app` smoke + `generic-baseline` + user-doc gate |
-| LOOP-138 | active | Await next-track after local runtime smoke | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-138 | done | Await next-track after local runtime smoke | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-139 | done | Session handoff freshness audit | `./.venv/bin/python -m pytest -q tests/test_roadmap_harness.py` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-140 | active | Await next-track after handoff freshness audit | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -3807,10 +3809,58 @@ closeout 메모 (2026-05-21):
 - `playwright-cli` wrapper는 `npx` 단계에서 응답이 없어 중단했고, 설치된 Playwright Python runtime으로 현재 서버 UI smoke를 대체했다.
 - 다음 active는 `LOOP-138 Await next-track after local runtime smoke`로 둔다.
 
-## 현재 Active Loop (LOOP-138)
+## 완료 Loop (LOOP-138)
 
 목표:
 - `LOOP-137` actual local runtime smoke 완료 이후 자동 진행할 pending 항목이 없으므로 다음 작업 트랙 결정을 대기한다.
+
+범위:
+- 포함: 현재 세션 상태 유지, 다음 우선순위가 정해지면 새 loop로 승격
+- 제외: `LOOP-005` 데스크톱 패키징 blocked 해제, default release gate 변경, 모델 기본값 변경
+
+완료 기준:
+- 사용자가 다음 트랙을 지정하거나, `TODO.md`/`NEXT_SESSION_PLAN.md`가 새 실행 항목을 active/pending으로 승격한다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+
+closeout 메모 (2026-05-26):
+- 사용자의 `NEXT_SESSION_PLAN.md` 현행화 관리 확인 및 기존 세션 이어가기 요청을 다음 트랙 지정으로 보고 대기 상태를 닫았다.
+- 확인 결과 `TODO.md`/`NEXT_SESSION_PLAN.md`의 하네스 active 값은 `LOOP-138`로 일치했지만, `NEXT_SESSION_PLAN.md` 제목 날짜가 `2026-04-28`로 남고 하단 legacy snapshot의 `현재 active` 표현이 혼재해 IDE에서 stale handoff처럼 보이는 원인이 있었다.
+- 다음 작업은 `LOOP-139 Session handoff freshness audit`로 정했다.
+
+## 완료 Loop (LOOP-139)
+
+목표:
+- `NEXT_SESSION_PLAN.md`의 현행 상태를 상단에서 바로 확인할 수 있게 정리한다.
+- 하네스가 `NEXT_SESSION_PLAN.md` 제목 날짜가 최신 dated snapshot보다 오래된 경우 경고하도록 보강한다.
+
+범위:
+- 포함: `NEXT_SESSION_PLAN.md` 제목/현재 스냅샷 정리, `TODO.md` active 상태 갱신, `roadmap_harness.py` stale title-date warning 및 테스트, README/SPEC 설명 보강
+- 제외: 제품 런타임 동작 변경, default release gate 변경, `LOOP-005` 데스크톱 패키징 blocked 해제
+
+완료 기준:
+- `NEXT_SESSION_PLAN.md` 상단 current snapshot과 `TODO.md` active row가 같은 active loop를 가리킨다.
+- 오래된 제목 날짜가 최신 dated heading보다 앞서면 하네스 warning으로 드러난다.
+- 하네스 테스트와 validate가 통과한다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/test_roadmap_harness.py`
+- `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/roadmap_harness.py`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+- `git diff --check`
+
+closeout 메모 (2026-05-26):
+- `roadmap_harness.py`에 `NEXT_SESSION_PLAN` 제목 날짜와 최신 dated heading을 비교하는 warning을 추가했다.
+- `tests/test_roadmap_harness.py`에 stale title-date warning 회귀 테스트를 추가했고 RED/GREEN 순서로 확인했다.
+- `NEXT_SESSION_PLAN.md` 제목을 `2026-05-26 기준`으로 갱신하고 최신 읽기 규칙/스냅샷을 상단에 추가했다.
+- 검증: `tests/test_roadmap_harness.py -> 11 passed`; `py_compile scripts/roadmap_harness.py -> pass`; `roadmap_harness.py validate -> ready`; `git diff --check -> pass`.
+- 다음 active는 `LOOP-140 Await next-track after handoff freshness audit`로 둔다.
+
+## 현재 Active Loop (LOOP-140)
+
+목표:
+- `LOOP-139` handoff freshness audit 완료 이후 자동 진행할 pending 항목이 없으므로 다음 작업 트랙 결정을 대기한다.
 
 범위:
 - 포함: 현재 세션 상태 유지, 다음 우선순위가 정해지면 새 loop로 승격

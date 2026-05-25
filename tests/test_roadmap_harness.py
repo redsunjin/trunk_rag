@@ -159,3 +159,20 @@ def test_build_report_warns_when_no_pending_item_exists():
 
     assert report["ready"] is True
     assert any("No pending item is queued after the active loop" in item for item in report["warnings"])
+
+
+def test_build_report_warns_when_next_session_title_date_is_stale():
+    stale_next_session = NEXT_SESSION_TEXT.replace(
+        "# NEXT",
+        "# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-04-28 기준)",
+        1,
+    ) + "\n\n## 2026-05-21 Local Runtime Smoke Snapshot\n\n- 완료 루프: `LOOP-099`\n"
+
+    report = roadmap_harness.build_report(
+        todo_text=TODO_TEXT,
+        next_session_text=stale_next_session,
+        current_branch="main",
+    )
+
+    assert report["ready"] is True
+    assert any("NEXT_SESSION_PLAN title date is older than latest dated heading" in item for item in report["warnings"])

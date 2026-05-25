@@ -175,7 +175,7 @@
 - `scripts/check_ops_baseline_gate.py`: runtime preflight + core 기본 컬렉션 상태 + `generic-baseline` 회귀 게이트/diagnostics 점검
 - `scripts/check_user_doc_quality_gate.py`: default release gate와 분리된 opt-in `project_docs`/`UDQ-BC-01`~`UDQ-BC-03` user-doc 품질 게이트 및 latest artifact freshness check(`--check-latest`, 기본 168시간)
 - `scripts/bootstrap_web_release.py`: 웹 MVP 기본 경로용 `.env`/`.venv`/requirements 부트스트랩
-- `scripts/roadmap_harness.py`: 실행 큐 상태와 현재 active 항목 점검
+- `scripts/roadmap_harness.py`: 실행 큐 상태, 현재 active 항목, `NEXT_SESSION_PLAN.md` 제목 날짜 freshness 점검
 - `scripts/diagnose_ollama_runtime.py`: Ollama 직접 호출 기준 prompt/eval 처리량 진단
 - `evals/answer_level_eval_fixtures.jsonl`: answer-level 자동 채점 fixture
 - `docs/reports/QUERY_ANSWER_EVAL_REPORT_2026-03-18_VECTOR_BASELINE.md`: Vector RAG 1차 answer-level baseline 실측

@@ -19,6 +19,7 @@ VALID_HARNESS_MODES = {
     "v2_single_agent_loop",
     "v3_agent_system_loop",
 }
+ISO_DATE_PATTERN = re.compile(r"\b(20\d{2}-\d{2}-\d{2})\b")
 
 
 def get_current_branch(root_dir: Path = ROOT_DIR) -> str | None:
@@ -140,6 +141,33 @@ def parse_session_loop_harness(text: str) -> dict[str, str]:
     return parse_key_value_bullets(section)
 
 
+def find_stale_title_date_warning(text: str) -> str | None:
+    title_date = None
+    heading_dates: list[str] = []
+
+    for line in text.splitlines():
+        if not line.startswith("#"):
+            continue
+        match = ISO_DATE_PATTERN.search(line)
+        if not match:
+            continue
+        date_value = match.group(1)
+        heading_dates.append(date_value)
+        if line.startswith("# ") and title_date is None:
+            title_date = date_value
+
+    if not title_date or not heading_dates:
+        return None
+
+    latest_heading_date = max(heading_dates)
+    if title_date >= latest_heading_date:
+        return None
+    return (
+        "NEXT_SESSION_PLAN title date is older than latest dated heading: "
+        f"{title_date} < {latest_heading_date}"
+    )
+
+
 def validate_queue(rows: list[dict[str, str]]) -> dict[str, object]:
     ids = [row["id"] for row in rows]
     duplicate_ids = sorted({item_id for item_id in ids if ids.count(item_id) > 1})
@@ -246,6 +274,9 @@ def build_report(
             "No pending item is queued after the active loop; automatic next-session promotion will stop "
             "when the current active item closes."
         )
+    stale_title_date_warning = find_stale_title_date_warning(next_session_text)
+    if stale_title_date_warning:
+        warnings.append(stale_title_date_warning)
     if tracked_dirty_paths and not dirty_sync_docs:
         warnings.append(
             "Tracked worktree changes exist without TODO.md or NEXT_SESSION_PLAN.md updates; "
