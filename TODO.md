@@ -257,7 +257,9 @@
 | LOOP-141 | done | Session closeout command | `./.venv/bin/python -m pytest -q tests/test_session_closeout.py tests/test_roadmap_harness.py` + `env PYTHONPYCACHEPREFIX=/tmp/trunk-rag-pycache ./.venv/bin/python -m py_compile scripts/session_closeout.py scripts/roadmap_harness.py` + `./.venv/bin/python scripts/session_closeout.py --allow-dirty` + `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-142 | done | Await next-track after session closeout command | `./.venv/bin/python scripts/session_closeout.py` |
 | LOOP-143 | done | Trunk RAG modern UI design spec | `./.venv/bin/python scripts/session_closeout.py --allow-dirty` + `./.venv/bin/python scripts/roadmap_harness.py validate` + `git diff --check` |
-| LOOP-144 | active | Await implementation plan after modern UI design spec | `./.venv/bin/python scripts/session_closeout.py` |
+| LOOP-144 | done | Await implementation plan after modern UI design spec | `./.venv/bin/python scripts/session_closeout.py` |
+| LOOP-145 | done | Modern /app UI implementation plan | `./.venv/bin/python scripts/session_closeout.py --allow-dirty` + `./.venv/bin/python scripts/roadmap_harness.py validate` + `git diff --check` |
+| LOOP-146 | active | Await implementation execution after modern UI plan | `./.venv/bin/python scripts/session_closeout.py` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -3951,7 +3953,7 @@ closeout 메모 (2026-05-28):
 - 스펙 self-review에서 placeholder, 내부 모순, 범위 과확장, 모호성을 점검했다.
 - 다음 active는 `LOOP-144 Await implementation plan after modern UI design spec`로 둔다.
 
-## 현재 Active Loop (LOOP-144)
+## 완료 Loop (LOOP-144)
 
 목표:
 - `LOOP-143` modern UI design spec 완료 이후 구현 계획 수립 승인을 대기한다.
@@ -3962,6 +3964,48 @@ closeout 메모 (2026-05-28):
 
 완료 기준:
 - 사용자가 디자인 스펙을 승인하고 implementation plan 작성을 지시하거나, 수정 요청이 있으면 스펙이 갱신된다.
+
+검증:
+- `./.venv/bin/python scripts/session_closeout.py`
+
+closeout 메모 (2026-05-28):
+- 사용자의 `goal` 명령 기반 진행 요청을 구현 계획 작성 승인으로 보고 대기 상태를 닫았다.
+- 다음 작업은 `LOOP-145 Modern /app UI implementation plan`으로 정했다.
+
+## 완료 Loop (LOOP-145)
+
+목표:
+- 확정된 modern UI design spec을 `/app` 구현자가 바로 실행할 수 있는 단계별 계획으로 고정한다.
+
+범위:
+- 포함: `/app` Research Studio 기본 레이아웃, 오른쪽 Advanced Rail, Quiet Lab 스타일, e2e 검증 계획
+- 제외: 실제 HTML/CSS/JS 구현, `/intro`/`/admin` redesign, backend/API contract 변경, frontend framework 교체
+
+완료 기준:
+- `docs/superpowers/plans/2026-05-28-trunk-rag-modern-ui-implementation.md`가 수정 파일, 단계, 검증 명령, closeout 절차를 포함한다.
+- `TODO.md`와 `NEXT_SESSION_PLAN.md`가 다음 구현 실행 대기 상태를 가리킨다.
+
+검증:
+- `./.venv/bin/python scripts/session_closeout.py --allow-dirty`
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
+- `git diff --check`
+
+closeout 메모 (2026-05-28):
+- implementation plan을 `docs/superpowers/plans/2026-05-28-trunk-rag-modern-ui-implementation.md`에 추가했다.
+- 계획은 TDD 순서로 e2e RED를 먼저 추가하고, `web/index.html`, `web/styles.css`, `web/js/app_page.js`를 단계적으로 개편한 뒤 검증/문서/커밋까지 닫도록 작성했다.
+- 다음 active는 `LOOP-146 Await implementation execution after modern UI plan`로 둔다.
+
+## 현재 Active Loop (LOOP-146)
+
+목표:
+- `LOOP-145` 구현 계획 완료 이후 실행 방식을 확정하고 `/app` modern UI 구현 loop로 진입한다.
+
+범위:
+- 포함: `subagent-driven-development` 또는 `executing-plans` 기반 구현 착수 방식 선택, 구현 loop 승격
+- 제외: 선택 없이 직접 구현 시작, 계획 범위 밖의 `/intro`/`/admin` redesign, backend/API contract 변경
+
+완료 기준:
+- 사용자가 실행 방식을 선택하거나 기본 실행 방식을 승인하면 `Modern /app Research Studio UI implementation` loop가 active로 승격된다.
 
 검증:
 - `./.venv/bin/python scripts/session_closeout.py`

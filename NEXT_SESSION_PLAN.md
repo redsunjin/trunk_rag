@@ -97,8 +97,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-144`
-- current_active_title: `Await implementation plan after modern UI design spec`
+- current_active_id: `LOOP-146`
+- current_active_title: `Await implementation execution after modern UI plan`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -114,7 +114,19 @@
 - wip_closeout_command: `./.venv/bin/python scripts/session_closeout.py --allow-dirty`
 - legacy_gate_note: 역사 메모의 `ops-baseline` 표기는 `generic-baseline`/`sample-pack-baseline` 분리 이전 명칭이며, 현재 본체 기본 gate는 `generic-baseline`이다.
 
-## 2026-05-28 Modern UI Design Spec Snapshot
+## 2026-05-28 Modern UI Implementation Plan Snapshot
+
+- 완료 루프: `LOOP-144 Await implementation plan after modern UI design spec`
+- 완료 루프: `LOOP-145 Modern /app UI implementation plan`
+- 현재 active: `LOOP-146 Await implementation execution after modern UI plan`
+- implementation plan: `docs/superpowers/plans/2026-05-28-trunk-rag-modern-ui-implementation.md`
+- design spec: `docs/superpowers/specs/2026-05-28-trunk-rag-modern-ui-design.md`
+- confirmed UX: 기본 `/app`는 `Research Studio`, 고급 모드는 `AI Workspace` 성격의 오른쪽 `Advanced Rail`, visual tone은 밝고 절제된 `Quiet Lab`.
+- first implementation scope: `/app`만 1차 개선한다. `/intro`와 `/admin`은 같은 시각 언어를 후속 loop에서 적용한다.
+- next: 실행 방식 선택 후 implementation plan에 따라 `Modern /app Research Studio UI implementation` loop로 승격한다. 기본 권장 방식은 `subagent-driven-development`이고, 단일 세션 직접 실행은 `executing-plans`로 진행한다.
+- verification: `./.venv/bin/python scripts/session_closeout.py --allow-dirty`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check`
+
+## 2026-05-28 Modern UI Design Spec Snapshot (Superseded)
 
 - 완료 루프: `LOOP-142 Await next-track after session closeout command`
 - 완료 루프: `LOOP-143 Trunk RAG modern UI design spec`
