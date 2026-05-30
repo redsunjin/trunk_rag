@@ -112,6 +112,16 @@ def test_intro_app_flow(page: Page, live_server_url: str):
 
     page.route("**/ops-baseline/latest", ops_baseline_latest)
     page.goto(f"{live_server_url}/intro", wait_until="domcontentloaded")
+    expect(page.locator(".intro-studio-shell")).to_be_visible()
+    expect(page.locator(".intro-hero")).to_contain_text("현재 상태")
+    expect(page.locator(".intro-hero")).to_contain_text("다음 행동")
+    expect(page.locator(".intro-status-grid")).to_contain_text("/app")
+    expect(page.locator(".intro-status-grid")).to_contain_text("1차 완료")
+    expect(page.locator(".intro-status-grid")).to_contain_text("/intro")
+    expect(page.locator(".intro-status-grid")).to_contain_text("현재 진행")
+    expect(page.locator(".intro-status-grid")).to_contain_text("/admin")
+    expect(page.locator(".intro-status-grid")).to_contain_text("미진행")
+    expect(page.locator(".intro-primary-actions")).to_contain_text("사용자 모드 시작")
     expect(page.locator("#statusIndicator .status-text")).to_have_text(re.compile(r"Online|Ready"), timeout=15000)
     expect(page.locator("#statusMsg")).to_contain_text("문서", timeout=15000)
     expect(page.locator("#runtimeProfileMsg")).to_contain_text("런타임:", timeout=15000)
@@ -462,6 +472,24 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     page.unroute("**/upload-requests", upload_request_rejected)
     page.unroute("**/health", health_success)
     page.unroute("**/ops-baseline/latest", ops_baseline_latest)
+
+
+@pytest.mark.e2e
+def test_intro_quiet_lab_mobile_has_no_horizontal_overflow(page: Page, live_server_url: str):
+    page.set_viewport_size({"width": 390, "height": 844})
+    page.goto(f"{live_server_url}/intro", wait_until="domcontentloaded")
+
+    expect(page.locator(".intro-studio-shell")).to_be_visible()
+    expect(page.locator(".intro-status-grid")).to_contain_text("미진행")
+    expect(page.locator(".intro-primary-actions")).to_contain_text("사용자 모드 시작")
+
+    overflow = page.evaluate(
+        """() => ({
+            scrollWidth: document.documentElement.scrollWidth,
+            clientWidth: document.documentElement.clientWidth,
+        })"""
+    )
+    assert overflow["scrollWidth"] <= overflow["clientWidth"]
 
 
 @pytest.mark.e2e

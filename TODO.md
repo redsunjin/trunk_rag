@@ -262,8 +262,8 @@
 | LOOP-146 | done | Await implementation execution after modern UI plan | `./.venv/bin/python scripts/session_closeout.py` |
 | LOOP-147 | done | Modern /app Research Studio UI implementation | `node --check web/js/app_page.js` + `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/session_closeout.py` |
 | LOOP-148 | done | Modern UX remaining scope proposal | `./.venv/bin/python scripts/session_closeout.py` |
-| LOOP-149 | active | Intro Quiet Lab UX extension | `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/session_closeout.py` |
-| LOOP-150 | pending | Admin Quiet Lab UX extension | `node --check web/js/admin_page.js` + `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` |
+| LOOP-149 | done | Intro Quiet Lab UX extension | `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/session_closeout.py` |
+| LOOP-150 | active | Admin Quiet Lab UX extension | `node --check web/js/admin_page.js` + `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` |
 | LOOP-151 | pending | App UX second-pass polish after Research Studio | `node --check web/js/app_page.js` + `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` |
 | LOOP-152 | pending | Product UX completion status matrix | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
@@ -4071,7 +4071,7 @@ closeout 메모 (2026-05-30):
 - 제품 전체 UX는 `in_progress`, `/app`은 `1차 완료`, `/intro`와 `/admin`은 `미진행`, `/app 2차 polish`는 `미진행 후보`로 정리한다.
 - 다음 active는 기본 추천 순서에 따라 `LOOP-149 Intro Quiet Lab UX extension`로 둔다.
 
-## 현재 Active Loop (LOOP-149)
+## 완료 Loop (LOOP-149)
 
 목표:
 - `/intro`를 `/app`의 Quiet Lab / Research Studio 시각 언어와 맞춰 첫 진입 UX를 현대화한다.
@@ -4087,6 +4087,35 @@ closeout 메모 (2026-05-30):
 - `TODO.md`/`NEXT_SESSION_PLAN.md`가 `/intro` 완료 후 다음 미진행 UX 항목을 명확히 가리킨다.
 
 검증:
+- `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py`
+- `./.venv/bin/python scripts/session_closeout.py`
+
+closeout 메모 (2026-05-30):
+- `/intro`를 `intro-studio-shell` 기반의 Quiet Lab 진입 화면으로 재구성했다.
+- 첫 화면은 현재 상태, 다음 행동, 제품 UX 진행도 matrix를 먼저 보여 주고, 첫 실행/복구 안내와 운영 진단은 접힘 패널에 유지한다.
+- 사용자 모드 시작, 상태 새로고침, 관리자 모드 진입, 관리자 인증 흐름의 기존 DOM id와 동작은 유지했다.
+- TDD RED: 신규 `/intro` 구조 e2e 2건이 `.intro-studio-shell` 부재로 실패함을 확인했다.
+- verification: targeted intro e2e 2 passed; `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py -> 6 passed`; Browser runtime은 `sandbox-exec: execvp() of 'macos' failed`로 사용할 수 없어 Python Playwright visual check로 대체했고, desktop 1394x625/mobile 390x844 모두 overflow 없음, shell/grid 표시, console/page errors 없음; `git diff --check -> pass`; `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`
+- screenshots: `/tmp/trunk-rag-intro-desktop.png`, `/tmp/trunk-rag-intro-mobile.png`
+- 다음 active는 `LOOP-150 Admin Quiet Lab UX extension`로 둔다.
+
+## 현재 Active Loop (LOOP-150)
+
+목표:
+- `/admin`을 `/app`과 `/intro`의 Quiet Lab 시각 언어와 맞춰 관리자 검토/승인 UX를 현대화한다.
+
+범위:
+- 포함: `web/admin.html`, `web/styles.css`, `web/js/admin_page.js`, 관리자 검색/필터/승인 e2e 검증
+- 제외: backend/API contract 변경, `/app` 2차 polish, GraphRAG/desktop packaging 재개
+
+완료 기준:
+- `/admin`이 관리자 검토 우선순위, 검색/필터 상태, 승인/반려 행동을 명확히 보여준다.
+- 기존 upload review, search filters, auth 이동 흐름이 유지된다.
+- 모바일/데스크톱에서 overflow와 텍스트 겹침이 없다.
+- `TODO.md`/`NEXT_SESSION_PLAN.md`가 `/admin` 완료 후 다음 미진행 UX 항목을 명확히 가리킨다.
+
+검증:
+- `node --check web/js/admin_page.js`
 - `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py`
 - `./.venv/bin/python scripts/session_closeout.py`
 

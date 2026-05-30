@@ -10,69 +10,117 @@
 </head>
 <body class="light-theme">
   <div class="app-container">
-    <main class="main-content" style="display:flex;align-items:center;justify-content:center;">
-      <section class="intro-panel">
-        <div class="brand-lockup intro-brand">
-          <img class="brand-mark" src="/assets/trunk-rag-mark.svg" alt="" aria-hidden="true">
-          <div>
-            <p class="brand-kicker">Local-first RAG</p>
-            <h1>Trunk RAG</h1>
-          </div>
-        </div>
-        <p class="intro-copy">
-          문서를 검색하고 질문하는 로컬 RAG 작업 공간입니다. 상태가 준비되면 사용자 모드로 바로 시작할 수 있습니다.
-        </p>
-
-        <div id="statusIndicator" class="status-indicator" style="margin-bottom:10px;">
-          <span class="status-dot"></span>
-          <span class="status-text">Checking...</span>
-        </div>
-        <p id="statusMsg" class="status-msg" style="margin-bottom:18px;">서버 상태 확인 중입니다.</p>
-
-        <details class="disclosure-panel">
-          <summary>첫 실행/복구 안내</summary>
-          <div class="recovery-panel flat" aria-labelledby="introRecoveryTitle">
-            <div class="panel-heading">
-              <h3 id="introRecoveryTitle">필요한 경우만 확인하세요</h3>
-              <span id="releaseStatusBadge" class="status-badge">checking</span>
+    <main class="main-content intro-main">
+      <section class="intro-studio-shell" aria-labelledby="introTitle">
+        <div class="intro-hero">
+          <div class="intro-hero-copy">
+            <div class="brand-lockup intro-brand">
+              <img class="brand-mark" src="/assets/trunk-rag-mark.svg" alt="" aria-hidden="true">
+              <div>
+                <p class="brand-kicker">Local-first RAG</p>
+                <h1>Trunk RAG</h1>
+              </div>
             </div>
-            <ol id="releaseStepsList" class="recovery-steps">
-              <li>run_doc_rag.bat 실행 상태를 확인 중입니다.</li>
-            </ol>
-            <p id="recoveryHintMsg" class="helper-text">상태 확인 후 필요한 다음 행동만 표시합니다.</p>
+            <p class="intro-section-kicker">현재 상태</p>
+            <h2 id="introTitle">로컬 문서 질의를 시작하기 전, 준비 상태를 먼저 확인합니다.</h2>
+            <p class="intro-copy">
+              Trunk RAG는 기본 사용자 흐름을 먼저 열고, 복구와 운영 진단은 필요한 순간에만 펼쳐 확인하는 로컬 RAG 작업 공간입니다.
+            </p>
+            <div class="intro-live-status" aria-live="polite">
+              <div id="statusIndicator" class="status-indicator">
+                <span class="status-dot"></span>
+                <span class="status-text">Checking...</span>
+              </div>
+              <p id="statusMsg" class="status-msg">서버 상태 확인 중입니다.</p>
+            </div>
           </div>
-        </details>
 
-        <div class="info-panel">
-          <h3 style="margin-bottom:10px;">기본 기능</h3>
-          <p class="status-msg" style="margin-bottom:8px;">문서 검색 질의, 문서 추가/갱신 요청, 관리자 승인 흐름을 제공합니다.</p>
-          <p class="status-msg">고급 검색 확장과 데스크톱 패키징은 현재 기본 화면 범위 밖입니다.</p>
+          <aside class="intro-next-panel" aria-label="다음 행동">
+            <p class="intro-section-kicker">다음 행동</p>
+            <h2>준비되면 사용자 모드로 바로 이동합니다.</h2>
+            <p class="status-msg">
+              관리자 승인과 운영 진단은 뒤로 숨기고, 문서 기반 질문을 첫 번째 행동으로 둡니다.
+            </p>
+            <div class="intro-primary-actions">
+              <button id="userStartBtn" class="primary-btn">사용자 모드 시작</button>
+              <button id="refreshBtn" class="secondary-btn">상태 새로고침</button>
+              <button id="adminToggleBtn" class="secondary-btn">관리자 모드 진입</button>
+            </div>
+            <details class="disclosure-panel intro-recovery-disclosure">
+              <summary>첫 실행/복구 안내</summary>
+              <div class="recovery-panel flat" aria-labelledby="introRecoveryTitle">
+                <div class="panel-heading">
+                  <h3 id="introRecoveryTitle">필요한 경우만 확인하세요</h3>
+                  <span id="releaseStatusBadge" class="status-badge">checking</span>
+                </div>
+                <ol id="releaseStepsList" class="recovery-steps">
+                  <li>run_doc_rag.bat 실행 상태를 확인 중입니다.</li>
+                </ol>
+                <p id="recoveryHintMsg" class="helper-text">상태 확인 후 필요한 다음 행동만 표시합니다.</p>
+              </div>
+            </details>
+          </aside>
         </div>
 
-        <details class="disclosure-panel">
-          <summary>운영 진단 상세</summary>
-          <p id="runtimeProfileMsg" class="status-msg">런타임 프로파일을 확인 중입니다.</p>
-          <p id="releaseGuideMsg" class="status-msg">기본 복구 경로를 확인 중입니다.</p>
-          <p id="opsBaselineMsg" class="status-msg">최근 ops-baseline 게이트 상태를 확인 중입니다.</p>
-        </details>
+        <section class="intro-status-section" aria-labelledby="introStatusTitle">
+          <div class="intro-section-heading">
+            <p class="intro-section-kicker">제품 UX 진행도</p>
+            <h2 id="introStatusTitle">현재 상태와 남은 화면</h2>
+            <p class="status-msg">
+              /app 1차 구현은 끝났고, /intro는 현재 진행 중이며, /admin과 2차 polish는 다음 미진행 항목입니다.
+            </p>
+          </div>
+          <div class="intro-status-grid">
+            <article class="intro-status-item complete">
+              <span>/app</span>
+              <strong>1차 완료</strong>
+              <p>Research Studio와 Advanced Rail 기본 흐름을 적용했습니다.</p>
+            </article>
+            <article class="intro-status-item active">
+              <span>/intro</span>
+              <strong>현재 진행</strong>
+              <p>첫 진입 화면에서 상태와 다음 행동을 분명하게 보여줍니다.</p>
+            </article>
+            <article class="intro-status-item pending">
+              <span>/admin</span>
+              <strong>미진행</strong>
+              <p>관리자 승인/검토 화면은 다음 loop에서 같은 언어로 정리합니다.</p>
+            </article>
+            <article class="intro-status-item pending">
+              <span>/app polish</span>
+              <strong>미진행 후보</strong>
+              <p>실제 사용 피드백 이후 밀도와 세부 상호작용을 보정합니다.</p>
+            </article>
+          </div>
+        </section>
 
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
-          <button id="refreshBtn" class="secondary-btn">상태 새로고침</button>
-          <button id="userStartBtn" class="primary-btn">사용자 모드 시작</button>
-          <button id="adminToggleBtn" class="secondary-btn">관리자 모드 진입</button>
-        </div>
+        <section class="intro-detail-grid" aria-label="기본 기능과 운영 진단">
+          <div class="info-panel intro-info-panel">
+            <p class="intro-section-kicker">기본 기능</p>
+            <h3>문서 질의와 승인 흐름을 한 경로로 묶습니다.</h3>
+            <p class="status-msg">문서 검색 질의, 문서 추가/갱신 요청, 관리자 승인 흐름을 제공합니다.</p>
+            <p class="status-msg">고급 검색 확장과 데스크톱 패키징은 현재 기본 화면 범위 밖입니다.</p>
+          </div>
 
-        <div id="adminPanel" class="card hidden" style="padding:16px;background:#f8f9fa;box-shadow:none;border:1px solid #dee2e6;">
-          <h3 style="margin-bottom:10px;">관리자 인증</h3>
-          <div class="input-group" style="margin-bottom:10px;">
+          <details class="disclosure-panel intro-diagnostics">
+            <summary>운영 진단 상세</summary>
+            <p id="runtimeProfileMsg" class="status-msg">런타임 프로파일을 확인 중입니다.</p>
+            <p id="releaseGuideMsg" class="status-msg">기본 복구 경로를 확인 중입니다.</p>
+            <p id="opsBaselineMsg" class="status-msg">최근 ops-baseline 게이트 상태를 확인 중입니다.</p>
+          </details>
+        </section>
+
+        <div id="adminPanel" class="intro-admin-panel hidden">
+          <h3>관리자 인증</h3>
+          <div class="input-group">
             <label for="adminCode">인증 코드</label>
             <input id="adminCode" type="password" placeholder="관리자 인증 코드를 입력하세요">
           </div>
-          <div style="display:flex;gap:10px;">
+          <div class="intro-admin-actions">
             <button id="adminEnterBtn" class="primary-btn">관리자 페이지 이동</button>
             <button id="adminCloseBtn" class="secondary-btn">닫기</button>
           </div>
-          <p id="adminMsg" class="status-msg" style="margin-top:10px;"></p>
+          <p id="adminMsg" class="status-msg"></p>
         </div>
       </section>
     </main>

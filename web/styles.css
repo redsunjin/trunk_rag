@@ -141,6 +141,12 @@ body {
     font-size: 1.15rem;
 }
 
+.intro-main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .intro-panel {
     width: 100%;
     max-width: 720px;
@@ -154,6 +160,187 @@ body {
 .intro-copy {
     margin-bottom: 18px;
     color: var(--text-secondary);
+    max-width: 64ch;
+}
+
+.intro-studio-shell {
+    width: 100%;
+    max-width: 1120px;
+    display: grid;
+    gap: 18px;
+}
+
+.intro-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+    gap: 24px;
+    align-items: stretch;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.intro-hero-copy,
+.intro-next-panel,
+.intro-status-section,
+.intro-admin-panel {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--surface-color);
+    box-shadow: var(--shadow);
+}
+
+.intro-hero-copy {
+    padding: 28px;
+}
+
+.intro-hero-copy h2,
+.intro-next-panel h2,
+.intro-section-heading h2 {
+    font-size: 1.7rem;
+    line-height: 1.18;
+    margin-bottom: 12px;
+}
+
+.intro-next-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 22px;
+    background: linear-gradient(180deg, #ffffff 0%, #f6faf7 100%);
+}
+
+.intro-section-kicker {
+    color: var(--accent-color);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.intro-live-status {
+    margin-top: 18px;
+}
+
+.intro-live-status .status-indicator {
+    margin-bottom: 8px;
+}
+
+.intro-primary-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.intro-primary-actions button {
+    min-height: 40px;
+}
+
+.intro-recovery-disclosure {
+    margin-top: auto;
+    margin-bottom: 0;
+}
+
+.intro-status-section {
+    padding: 22px;
+}
+
+.intro-section-heading {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.intro-status-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.intro-status-item {
+    min-width: 0;
+    min-height: 132px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--surface-soft);
+}
+
+.intro-status-item span {
+    color: var(--text-secondary);
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.intro-status-item strong {
+    color: var(--text-primary);
+    font-size: 1.05rem;
+    line-height: 1.2;
+}
+
+.intro-status-item p {
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+}
+
+.intro-status-item.complete {
+    border-color: #b9d4c9;
+    background: #edf7f2;
+}
+
+.intro-status-item.active {
+    border-color: #d9bd87;
+    background: #fff8e8;
+}
+
+.intro-status-item.pending {
+    background: #f7f9f7;
+}
+
+.intro-detail-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.8fr);
+    gap: 18px;
+    align-items: start;
+}
+
+.intro-info-panel {
+    margin-bottom: 0;
+}
+
+.intro-info-panel h3 {
+    font-size: 1rem;
+    margin: 4px 0 10px;
+}
+
+.intro-info-panel p + p {
+    margin-top: 8px;
+}
+
+.intro-diagnostics {
+    margin-bottom: 0;
+}
+
+.intro-admin-panel {
+    padding: 18px;
+    background: var(--surface-color);
+}
+
+.intro-admin-panel h3 {
+    margin-bottom: 10px;
+}
+
+.intro-admin-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.intro-admin-panel #adminMsg {
+    margin-top: 10px;
 }
 
 .info-panel {
@@ -1201,6 +1388,48 @@ button.secondary-btn {
 
     .main-content {
         padding: 20px;
+    }
+
+    .intro-main {
+        align-items: stretch;
+        justify-content: flex-start;
+    }
+
+    .intro-studio-shell {
+        gap: 14px;
+    }
+
+    .intro-hero,
+    .intro-detail-grid,
+    .intro-status-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .intro-hero {
+        gap: 14px;
+        padding-bottom: 14px;
+    }
+
+    .intro-hero-copy,
+    .intro-next-panel,
+    .intro-status-section,
+    .intro-admin-panel {
+        padding: 18px;
+    }
+
+    .intro-hero-copy h2,
+    .intro-next-panel h2,
+    .intro-section-heading h2 {
+        font-size: 1.35rem;
+    }
+
+    .intro-primary-actions {
+        flex-direction: column;
+    }
+
+    .intro-primary-actions button,
+    .intro-admin-actions button {
+        width: 100%;
     }
 
     .research-studio-shell {

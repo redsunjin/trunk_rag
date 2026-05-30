@@ -97,8 +97,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-149`
-- current_active_title: `Intro Quiet Lab UX extension`
+- current_active_id: `LOOP-150`
+- current_active_title: `Admin Quiet Lab UX extension`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -118,21 +118,35 @@
 
 - 제품 전체 UX 상태: `in_progress`
 - `/app` UX 상태: `1차 완료`; Research Studio + Advanced Rail 구현/검증 완료, 추후 실제 사용 피드백 기반 2차 polish 가능
-- `/intro` UX 상태: `미진행`; 다음 active `LOOP-149 Intro Quiet Lab UX extension`
-- `/admin` UX 상태: `미진행`; 후속 pending `LOOP-150 Admin Quiet Lab UX extension`
+- `/intro` UX 상태: `1차 완료`; Quiet Lab 진입 화면과 UX 진행도 matrix 구현/검증 완료
+- `/admin` UX 상태: `미진행`; 다음 active `LOOP-150 Admin Quiet Lab UX extension`
 - `/app` 2차 polish 상태: `미진행 후보`; 후속 pending `LOOP-151 App UX second-pass polish after Research Studio`
 - 제품 UX 완료 matrix 상태: `미진행 후보`; 후속 pending `LOOP-152 Product UX completion status matrix`
-- 기본 추천 순서: `/intro` 현대화 -> `/admin` 현대화 -> `/app` 실제 사용성 2차 polish -> 전체 UX 완료 상태 matrix 정리
-- 현재 active: `LOOP-149 Intro Quiet Lab UX extension`
-- next-session rule: `진행` 요청 시 단순 대기하지 말고 `LOOP-149`부터 구현 계획/실행으로 들어간다.
-- verification: `./.venv/bin/python scripts/session_closeout.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check`
+- 기본 추천 순서: `/admin` 현대화 -> `/app` 실제 사용성 2차 polish -> 전체 UX 완료 상태 matrix 정리
+- 완료 loop: `LOOP-149 Intro Quiet Lab UX extension`
+- 현재 active: `LOOP-150 Admin Quiet Lab UX extension`
+- next-session rule: `진행` 요청 시 단순 대기하지 말고 `LOOP-150`부터 구현 계획/실행으로 들어간다.
+- verification: targeted intro e2e 2 passed; `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py -> 6 passed`; Python Playwright visual check desktop/mobile no overflow, shell/grid visible, console/page errors 없음; `git diff --check -> pass`; `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`
+
+## 2026-05-30 Intro Quiet Lab UX Snapshot
+
+- 완료 루프: `LOOP-149 Intro Quiet Lab UX extension`
+- implementation: `web/intro.html`, `web/styles.css`, `tests/e2e/test_web_flow_playwright.py`
+- intro layout: `intro-studio-shell` + `intro-hero` + `intro-status-grid`로 현재 상태, 다음 행동, UX 진행도 matrix를 첫 화면에 배치했다.
+- retained behavior: `/health`, `/ops-baseline/latest`, 첫 실행/복구 안내, 운영 진단 상세, 사용자 모드 시작, 관리자 인증 이동 흐름은 기존 DOM id와 JS 동작을 유지한다.
+- hidden detail policy: runtime/release/ops 세부 진단은 기본 화면에서 접힘 패널로 유지한다.
+- Browser plugin note: in-app Browser runtime failed with `sandbox-exec: execvp() of 'macos' failed`; visual verification was completed with Python Playwright against the running local app.
+- verification: TDD RED confirmed on missing `.intro-studio-shell`; targeted intro e2e 2 passed; full web e2e 6 passed; desktop 1394x625/mobile 390x844 screenshots show no horizontal overflow and no browser console/page errors; `git diff --check -> pass`; `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`.
+- screenshots: `/tmp/trunk-rag-intro-desktop.png`, `/tmp/trunk-rag-intro-mobile.png`
+- next: `LOOP-150 Admin Quiet Lab UX extension`
 
 ## 2026-05-30 Modern App UI Implementation Snapshot
 
 - 완료 루프: `LOOP-146 Await implementation execution after modern UI plan`
 - 완료 루프: `LOOP-147 Modern /app Research Studio UI implementation`
 - 완료 루프: `LOOP-148 Modern UX remaining scope proposal`
-- 현재 active: `LOOP-149 Intro Quiet Lab UX extension`
+- 완료 루프: `LOOP-149 Intro Quiet Lab UX extension`
+- 현재 active: `LOOP-150 Admin Quiet Lab UX extension`
 - execution mode: 사용자가 `1`을 선택해 `subagent-driven-development` 방식으로 진행한다.
 - plan: `docs/superpowers/plans/2026-05-28-trunk-rag-modern-ui-implementation.md`
 - design spec: `docs/superpowers/specs/2026-05-28-trunk-rag-modern-ui-design.md`
