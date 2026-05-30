@@ -22,6 +22,14 @@ const collectionHint = document.getElementById("collectionHint");
 const userInput = document.getElementById("userInput");
 const qualityModeInputs = Array.from(document.querySelectorAll("input[name='qualityMode']"));
 const qualityModeHint = document.getElementById("qualityModeHint");
+const advancedModeToggle = document.getElementById("advancedModeToggle");
+const advancedRail = document.getElementById("advancedRail");
+const advancedRailClose = document.getElementById("advancedRailClose");
+const advancedRailMode = document.getElementById("advancedRailMode");
+const advancedRailCollections = document.getElementById("advancedRailCollections");
+const advancedRailRuntime = document.getElementById("advancedRailRuntime");
+const advancedRailEvidence = document.getElementById("advancedRailEvidence");
+const advancedRailGraphLite = document.getElementById("advancedRailGraphLite");
 
 const sendBtn = document.getElementById("sendBtn");
 const healthBtn = document.getElementById("healthBtn");
@@ -51,6 +59,9 @@ let lastHealth = null;
 let advancedSettingsOpen = false;
 let runtimeDefaultsLoaded = false;
 let uploadMetadataOpen = false;
+const ADVANCED_RAIL_STORAGE_KEY = "trunkRagAdvancedRailOpen";
+let advancedRailOpen = localStorage.getItem(ADVANCED_RAIL_STORAGE_KEY) === "1";
+let questionInFlight = false;
 
 const LAYERED_RAG_TIMEOUT_SECONDS = 60;
 const QUALITY_RAG_TIMEOUT_SECONDS = 120;
@@ -135,8 +146,65 @@ function getQualityMode() {
 }
 
 function updateQualityModeHint() {
-  if (!qualityModeHint) return;
-  qualityModeHint.textContent = modeHints[getQualityMode()] || modeHints.balanced;
+  if (qualityModeHint) {
+    qualityModeHint.textContent = modeHints[getQualityMode()] || modeHints.balanced;
+  }
+  renderAdvancedRailMode();
+}
+
+function renderAdvancedRailMode() {
+  if (!advancedRailMode) return;
+  advancedRailMode.textContent = `mode=${getQualityMode()}`;
+}
+
+function renderAdvancedRailCollections() {
+  if (!advancedRailCollections) return;
+  advancedRailCollections.textContent = `collections=${getSelectedCollectionKeys().join(",") || "all"}`;
+}
+
+function renderAdvancedRailRuntime(data = lastHealth) {
+  if (!advancedRailRuntime) return;
+  if (!data || typeof data !== "object") {
+    advancedRailRuntime.textContent = "runtime 확인 전입니다.";
+    return;
+  }
+  const profile = data.runtime_query_budget_profile || data.runtime_profile_status || "-";
+  const modelName = data.default_llm_model || model.value || "-";
+  const vectors = typeof data.vectors === "number" ? data.vectors : "-";
+  advancedRailRuntime.textContent = `profile=${profile} | model=${modelName} | vectors=${vectors}`;
+}
+
+function renderAdvancedRailFromMeta(meta) {
+  if (!meta || typeof meta !== "object") return;
+  if (advancedRailEvidence) {
+    const requestId = meta.request_id || "-";
+    const support = meta.support_level || "-";
+    const citations = Array.isArray(meta.citations) ? meta.citations.length : 0;
+    advancedRailEvidence.textContent = `request_id=${requestId} | support_level=${support} | citations=${citations}`;
+  }
+  if (advancedRailGraphLite) {
+    advancedRailGraphLite.textContent = buildGraphLiteSummary(meta) || "graph-lite=not-reported";
+  }
+}
+
+function setAdvancedRailOpen(open) {
+  advancedRailOpen = Boolean(open);
+  if (advancedRail) {
+    advancedRail.classList.toggle("active", advancedRailOpen);
+    advancedRail.setAttribute("aria-hidden", advancedRailOpen ? "false" : "true");
+    advancedRail.hidden = !advancedRailOpen;
+  }
+  if (advancedModeToggle) {
+    advancedModeToggle.setAttribute("aria-expanded", advancedRailOpen ? "true" : "false");
+    advancedModeToggle.textContent = advancedRailOpen ? "Advanced On" : "Advanced";
+  }
+  localStorage.setItem(ADVANCED_RAIL_STORAGE_KEY, advancedRailOpen ? "1" : "0");
+}
+
+function refreshAdvancedRail() {
+  renderAdvancedRailMode();
+  renderAdvancedRailCollections();
+  renderAdvancedRailRuntime();
 }
 
 function getQualityModelConfig() {
@@ -554,6 +622,20 @@ function collectionDisplayText(item) {
   return `${item.label} (${item.key}) - vectors=${item.vectors}, soft=${softPct}%`;
 }
 
+function createOption(value, label) {
+  const option = document.createElement("option");
+  option.value = value;
+  option.textContent = label;
+  return option;
+}
+
+function setSelectOptions(selectElement, options) {
+  selectElement.replaceChildren();
+  options.forEach((option) => {
+    selectElement.appendChild(createOption(option.value, option.label));
+  });
+}
+
 function getSelectedCollectionKeys() {
   const values = [];
   const first = collection.value;
@@ -565,6 +647,7 @@ function getSelectedCollectionKeys() {
 
 function updateCollectionHint() {
   const selectedKeys = getSelectedCollectionKeys();
+  renderAdvancedRailCollections();
   if (!selectedKeys.length) {
     collectionHint.textContent = "컬렉션을 선택하세요.";
     return;
@@ -600,8 +683,8 @@ async function loadCollections() {
 
     collectionItems = data.collections || [];
     if (!collectionItems.length) {
-      collection.innerHTML = `<option value="all">전체 (기본)</option>`;
-      collection2.innerHTML = `<option value="">사용 안 함</option>`;
+      setSelectOptions(collection, [{value: "all", label: "전체 (기본)"}]);
+      setSelectOptions(collection2, [{value: "", label: "사용 안 함"}]);
       collectionHint.textContent = "컬렉션 정보가 없습니다.";
       return;
     }
@@ -609,12 +692,12 @@ async function loadCollections() {
     const defaultKey = data.default_collection_key || "all";
     const currentPrimary = collection.value;
     const currentSecondary = collection2.value;
-    collection.innerHTML = collectionItems
-      .map((item) => `<option value="${item.key}">${collectionDisplayText(item)}</option>`)
-      .join("");
-    collection2.innerHTML = `<option value="">사용 안 함</option>` + collectionItems
-      .map((item) => `<option value="${item.key}">${collectionDisplayText(item)}</option>`)
-      .join("");
+    const collectionOptions = collectionItems.map((item) => ({
+      value: item.key,
+      label: collectionDisplayText(item),
+    }));
+    setSelectOptions(collection, collectionOptions);
+    setSelectOptions(collection2, [{value: "", label: "사용 안 함"}, ...collectionOptions]);
 
     const primaryExists = collectionItems.some((item) => item.key === currentPrimary);
     const secondaryExists = collectionItems.some((item) => item.key === currentSecondary);
@@ -644,19 +727,32 @@ async function loadDocs() {
       return;
     }
 
-    const items = data.docs.map((doc) => `
-      <button class="doc-item-btn" data-name="${doc.name}">
-        <span class="doc-name">${doc.name}</span>
-        <span class="doc-meta">${doc.origin || "seed"} | ${doc.doc_key || "-"} | ${Math.round(doc.size / 1024)} KB</span>
-      </button>
-    `).join("");
-    docList.innerHTML = items;
+    docList.replaceChildren();
+    data.docs.forEach((doc) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "doc-item-btn";
+      button.dataset.name = doc.name || "";
 
-    docList.querySelectorAll(".doc-item-btn").forEach((button) => {
+      const name = document.createElement("span");
+      name.className = "doc-name";
+      name.textContent = doc.name || "unknown";
+
+      const meta = document.createElement("span");
+      meta.className = "doc-meta";
+      meta.textContent = `${doc.origin || "seed"} | ${doc.doc_key || "-"} | ${Math.round((doc.size || 0) / 1024)} KB`;
+
+      button.appendChild(name);
+      button.appendChild(meta);
       button.addEventListener("click", () => openDoc(button.dataset.name));
+      docList.appendChild(button);
     });
   } catch (error) {
-    docList.innerHTML = `<p class="status-msg">오류: ${error}</p>`;
+    docList.replaceChildren();
+    const message = document.createElement("p");
+    message.className = "status-msg";
+    message.textContent = `오류: ${String(error)}`;
+    docList.appendChild(message);
   }
 }
 
@@ -682,6 +778,7 @@ async function healthCheck() {
     const res = await fetch("/health");
     const data = await res.json();
     lastHealth = data;
+    renderAdvancedRailRuntime(data);
     if (!res.ok) {
       const error = parseApiError(data, "health check 실패");
       setStatus("error", "Error", formatApiError(error));
@@ -711,6 +808,7 @@ async function healthCheck() {
     );
   } catch (err) {
     lastHealth = null;
+    renderAdvancedRailRuntime(null);
     setStatus("error", "Offline", String(err));
     if (runtimeProfileMsg) {
       runtimeProfileMsg.textContent = "런타임 프로파일을 확인할 수 없습니다.";
@@ -872,6 +970,7 @@ async function runQueryAnswer({
       qualityStage,
       data,
     });
+    renderAdvancedRailFromMeta(data.meta || null);
     renderBotResponse(pending, data.answer, data.meta || null, feedbackContext);
     return {ok: true, data, messageNode: pending, feedbackContext};
   } catch (err) {
@@ -895,12 +994,15 @@ async function runQualityEscalation(context, reason) {
 async function sendQuestion() {
   const question = userInput.value.trim();
   if (!question) return;
+  if (questionInFlight) return;
 
   if (lastHealth && (lastHealth.vectors ?? 0) <= 0) {
     appendMessage("bot", "인덱스가 아직 비어 있습니다. 왼쪽 메뉴에서 Reindex를 먼저 실행하세요.");
     return;
   }
 
+  questionInFlight = true;
+  sendBtn.disabled = true;
   appendMessage("user", question);
   const selectedCollections = getSelectedCollectionKeys();
   const qualityMode = getQualityMode();
@@ -949,6 +1051,8 @@ async function sendQuestion() {
     await Promise.allSettled([semanticSearchPromise, ragAnswerPromise]);
   } finally {
     userInput.value = "";
+    questionInFlight = false;
+    sendBtn.disabled = false;
   }
 }
 
@@ -1078,6 +1182,12 @@ uploadDocType.addEventListener("change", updateUploadDefaultsSummary);
 qualityModeInputs.forEach((input) => {
   input.addEventListener("change", updateQualityModeHint);
 });
+advancedModeToggle?.addEventListener("click", () => {
+  setAdvancedRailOpen(!advancedRailOpen);
+});
+advancedRailClose?.addEventListener("click", () => {
+  setAdvancedRailOpen(false);
+});
 
 sendBtn.addEventListener("click", sendQuestion);
 userInput.addEventListener("keydown", (event) => {
@@ -1105,6 +1215,8 @@ sidebarOverlay.addEventListener("click", () => {
 });
 
 setAdvancedSettingsOpen(false);
+setAdvancedRailOpen(advancedRailOpen);
+refreshAdvancedRail();
 updateQualityModeHint();
 healthCheck();
 loadOpsBaselineStatus();

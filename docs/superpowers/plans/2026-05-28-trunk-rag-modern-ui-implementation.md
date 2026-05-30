@@ -33,7 +33,7 @@
 **Files:**
 - Modify: `tests/e2e/test_web_flow_playwright.py`
 
-- [ ] **Step 1: Add default layout and advanced rail assertions**
+- [x] **Step 1: Add default layout and advanced rail assertions**
 
 Insert this block inside `test_intro_app_flow`, immediately after:
 
@@ -52,7 +52,7 @@ Add:
     expect(page.locator(".research-studio-shell")).not_to_contain_text("request_id=")
 ```
 
-- [ ] **Step 2: Add advanced rail toggle assertions**
+- [x] **Step 2: Add advanced rail toggle assertions**
 
 Insert this block after the existing quality mode hint assertion:
 
@@ -72,7 +72,7 @@ Add:
     expect(page.locator("#advancedRail")).to_have_attribute("aria-hidden", "false")
 ```
 
-- [ ] **Step 3: Add query metadata rail assertions**
+- [x] **Step 3: Add query metadata rail assertions**
 
 Insert this block immediately after:
 
@@ -101,7 +101,7 @@ Add:
     expect(page.locator("#advancedRail")).to_contain_text("relations=2")
 ```
 
-- [ ] **Step 4: Add mobile overflow assertion**
+- [x] **Step 4: Add mobile overflow assertion**
 
 Add this new test near the end of the file, before `test_admin_search_filters_flow`:
 
@@ -119,7 +119,7 @@ def test_app_modern_layout_mobile_has_no_horizontal_overflow(page: Page, live_se
     assert overflow is False
 ```
 
-- [ ] **Step 5: Run the new tests and verify RED**
+- [x] **Step 5: Run the new tests and verify RED**
 
 Run:
 
@@ -134,7 +134,7 @@ Expected: FAIL because `.research-studio-shell`, `#advancedModeToggle`, and `#ad
 **Files:**
 - Modify: `web/index.html`
 
-- [ ] **Step 1: Add Advanced toggle in the main header**
+- [x] **Step 1: Add Advanced toggle in the main header**
 
 In `web/index.html`, inside `<header class="main-header">`, after the closing `</div>` for `.header-left`, add:
 
@@ -146,7 +146,7 @@ In `web/index.html`, inside `<header class="main-header">`, after the closing `<
         </div>
 ```
 
-- [ ] **Step 2: Wrap overview, chat, and document viewer in a modern app shell**
+- [x] **Step 2: Wrap overview, chat, and document viewer in a modern app shell**
 
 In `web/index.html`, replace the block starting at:
 
@@ -272,7 +272,7 @@ with:
       </div>
 ```
 
-- [ ] **Step 3: Run the targeted test and verify partial GREEN**
+- [x] **Step 3: Run the targeted test and verify partial GREEN**
 
 Run:
 
@@ -287,7 +287,7 @@ Expected: still FAIL because Advanced Rail JavaScript state is not wired yet, bu
 **Files:**
 - Modify: `web/styles.css`
 
-- [ ] **Step 1: Update root tokens**
+- [x] **Step 1: Update root tokens**
 
 At the top of `web/styles.css`, replace the existing `:root` block with:
 
@@ -313,7 +313,7 @@ At the top of `web/styles.css`, replace the existing `:root` block with:
 }
 ```
 
-- [ ] **Step 2: Add app shell styles**
+- [x] **Step 2: Add app shell styles**
 
 Insert this block before the existing `/* Main Content */` comment:
 
@@ -420,7 +420,7 @@ Insert this block before the existing `/* Main Content */` comment:
 }
 ```
 
-- [ ] **Step 3: Add responsive behavior**
+- [x] **Step 3: Add responsive behavior**
 
 Inside the existing mobile media query in `web/styles.css`, add:
 
@@ -445,7 +445,7 @@ Inside the existing mobile media query in `web/styles.css`, add:
     }
 ```
 
-- [ ] **Step 4: Run CSS-sensitive e2e test**
+- [x] **Step 4: Run CSS-sensitive e2e test**
 
 Run:
 
@@ -460,7 +460,7 @@ Expected: still FAIL until JavaScript toggles `.active`, then pass after Task 4.
 **Files:**
 - Modify: `web/js/app_page.js`
 
-- [ ] **Step 1: Add element references and state**
+- [x] **Step 1: Add element references and state**
 
 Near the other top-level element references, after:
 
@@ -494,7 +494,7 @@ const ADVANCED_RAIL_STORAGE_KEY = "trunkRagAdvancedRailOpen";
 let advancedRailOpen = localStorage.getItem(ADVANCED_RAIL_STORAGE_KEY) === "1";
 ```
 
-- [ ] **Step 2: Add rail render helpers**
+- [x] **Step 2: Add rail render helpers**
 
 After `function updateQualityModeHint() { ... }`, add:
 
@@ -558,7 +558,7 @@ function refreshAdvancedRail() {
 }
 ```
 
-- [ ] **Step 3: Call rail helpers from existing flows**
+- [x] **Step 3: Call rail helpers from existing flows**
 
 In `updateQualityModeHint()`, after setting the hint text, add:
 
@@ -589,7 +589,7 @@ In the query success path after response `meta` is available and before appendin
 
 Use the response object variable already present in the current query handler.
 
-- [ ] **Step 4: Add toggle event listeners**
+- [x] **Step 4: Add toggle event listeners**
 
 Near the bottom of `web/js/app_page.js`, with the other event listeners, add:
 
@@ -606,7 +606,7 @@ setAdvancedRailOpen(advancedRailOpen);
 refreshAdvancedRail();
 ```
 
-- [ ] **Step 5: Run JavaScript syntax check**
+- [x] **Step 5: Run JavaScript syntax check**
 
 Run:
 
@@ -622,7 +622,7 @@ Expected: pass.
 - Modify: `tests/e2e/test_web_flow_playwright.py`
 - No code changes expected outside fixes from prior tasks.
 
-- [ ] **Step 1: Run targeted e2e**
+- [x] **Step 1: Run targeted e2e**
 
 Run:
 
@@ -632,7 +632,7 @@ Run:
 
 Expected: pass.
 
-- [ ] **Step 2: Run broader web/API regression**
+- [x] **Step 2: Run broader web/API regression**
 
 Run:
 
@@ -642,7 +642,7 @@ Run:
 
 Expected: pass.
 
-- [ ] **Step 3: Run static checks**
+- [x] **Step 3: Run static checks**
 
 Run:
 
@@ -663,7 +663,7 @@ Expected: all ready/pass. `session_closeout.py --allow-dirty` may warn about WIP
 - Optional Modify: `README.md`
 - Optional Modify: `SPEC.md`
 
-- [ ] **Step 1: Promote the implementation loop**
+- [x] **Step 1: Promote the implementation loop**
 
 In `TODO.md` `Execution Queue`, set:
 
@@ -672,7 +672,7 @@ In `TODO.md` `Execution Queue`, set:
 | LOOP-147 | active | Modern /app Research Studio UI implementation | `node --check web/js/app_page.js` + `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/session_closeout.py` |
 ```
 
-- [ ] **Step 2: Add implementation notes**
+- [x] **Step 2: Add implementation notes**
 
 Add a new `## 현재 Active Loop (LOOP-147)` section near the current active loop area in `TODO.md` with:
 
@@ -698,7 +698,7 @@ Add a new `## 현재 Active Loop (LOOP-147)` section near the current active loo
 - `./.venv/bin/python scripts/session_closeout.py`
 ```
 
-- [ ] **Step 3: Update `NEXT_SESSION_PLAN.md`**
+- [x] **Step 3: Update `NEXT_SESSION_PLAN.md`**
 
 Update `Session Loop Harness` to:
 
@@ -719,7 +719,7 @@ Add a dated snapshot:
 - verification: `node --check web/js/app_page.js`, web e2e/API regression, `session_closeout.py`
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Run:
 

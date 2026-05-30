@@ -201,71 +201,120 @@
             </div>
           </div>
         </div>
+        <div class="header-actions">
+          <button id="advancedModeToggle" class="secondary-btn advanced-toggle" type="button" aria-controls="advancedRail" aria-expanded="false">
+            Advanced
+          </button>
+        </div>
       </header>
 
-      <section class="card app-overview-card">
-        <h3>로컬 RAG 작업 공간</h3>
-        <p class="status-msg">
-          현재 기본 문서는 첫 실행 확인용 유럽 과학사 샘플 데모입니다. 내 문서는 왼쪽의 문서 추가/갱신 요청을 보내고 관리자 승인 후 반영합니다.
-        </p>
-        <p id="appOverviewRuntime" class="status-msg">
-          기본 런타임과 복구 경로를 확인 중입니다.
-        </p>
-        <details class="disclosure-panel compact">
-          <summary>운영/복구 상세</summary>
-          <div class="recovery-panel compact flat" aria-labelledby="appRecoveryTitle">
-            <div class="panel-heading">
-              <h3 id="appRecoveryTitle">복구 체크</h3>
-              <span class="status-badge">runtime</span>
+      <div class="research-studio-shell">
+        <div class="research-studio-main">
+          <section class="research-hero" aria-labelledby="researchHeroTitle">
+            <div>
+              <p class="brand-kicker">Research Studio</p>
+              <h2 id="researchHeroTitle">문서 기반으로 질문하기</h2>
+              <p class="status-msg">
+                기본 화면은 질문, 답변, 근거 읽기에 집중합니다. 런타임과 route 세부 정보는 Advanced Rail에서 확인합니다.
+              </p>
             </div>
-            <ol id="appRecoverySteps" class="recovery-steps">
-              <li>/health 응답을 확인 중입니다.</li>
-            </ol>
-          </div>
-          <p id="appOpsBaselineMsg" class="status-msg">
-            최근 ops-baseline 게이트 상태를 확인 중입니다.
-          </p>
-        </details>
-      </section>
+            <div class="research-hero-status" id="appOverviewRuntime">
+              기본 런타임과 복구 경로를 확인 중입니다.
+            </div>
+          </section>
 
-      <section class="chat-layout">
-        <div class="main-chat-container" id="chatContainer">
-          <div class="chat-message bot">
-            안녕하세요. 문서 기반 RAG 어시스턴트입니다. 질문을 입력해 주세요.
-          </div>
-        </div>
-        <div class="quality-mode-panel" aria-label="질의 모드 선택">
-          <div class="segmented-control">
-            <label class="segmented-option">
-              <input type="radio" name="qualityMode" value="semantic">
-              <span>Semantic</span>
-            </label>
-            <label class="segmented-option">
-              <input type="radio" name="qualityMode" value="balanced" checked>
-              <span>Balanced</span>
-            </label>
-            <label class="segmented-option">
-              <input type="radio" name="qualityMode" value="quality">
-              <span>Quality</span>
-            </label>
-          </div>
-          <p id="qualityModeHint" class="helper-text">시맨틱 검색 후 e2b 빠른 답변을 만들고, 복합/근거 부족 답변은 quality로 승격합니다.</p>
-        </div>
-        <div class="main-chat-input">
-          <textarea id="userInput" rows="2" placeholder="질문을 입력하세요..."></textarea>
-          <button id="sendBtn" class="primary-btn">Send</button>
-        </div>
-        <p class="helper-text" style="margin-top:8px;">답변 아래의 `실행 상세 보기`에서 mode, route, budget, graph-lite 상태, stage timing, source 요약을 확인할 수 있습니다.</p>
-      </section>
+          <section class="app-overview-card quiet-panel">
+            <h3>로컬 RAG 작업 공간</h3>
+            <p class="status-msg">
+              현재 기본 문서는 첫 실행 확인용 유럽 과학사 샘플 데모입니다. 내 문서는 왼쪽의 문서 추가/갱신 요청을 보내고 관리자 승인 후 반영합니다.
+            </p>
+            <details class="disclosure-panel compact">
+              <summary>운영/복구 상세</summary>
+              <div class="recovery-panel compact flat" aria-labelledby="appRecoveryTitle">
+                <div class="panel-heading">
+                  <h3 id="appRecoveryTitle">복구 체크</h3>
+                  <span class="status-badge">runtime</span>
+                </div>
+                <ol id="appRecoverySteps" class="recovery-steps">
+                  <li>/health 응답을 확인 중입니다.</li>
+                </ol>
+              </div>
+              <p id="appOpsBaselineMsg" class="status-msg">
+                최근 ops-baseline 게이트 상태를 확인 중입니다.
+              </p>
+            </details>
+          </section>
 
-      <section class="doc-viewer-layout">
-        <div class="card">
-          <h3 id="docTitle">Document Viewer</h3>
-          <div class="doc-viewer-body" id="docViewer">
-            <p class="status-msg">왼쪽 문서 목록에서 파일을 선택하면 내용을 볼 수 있습니다.</p>
-          </div>
+          <section class="chat-layout research-chat">
+            <div class="main-chat-container" id="chatContainer">
+              <div class="chat-message bot">
+                안녕하세요. 문서 기반 RAG 어시스턴트입니다. 질문을 입력해 주세요.
+              </div>
+            </div>
+            <div class="quality-mode-panel" aria-label="질의 모드 선택">
+              <div class="segmented-control">
+                <label class="segmented-option">
+                  <input type="radio" name="qualityMode" value="semantic">
+                  <span>Semantic</span>
+                </label>
+                <label class="segmented-option">
+                  <input type="radio" name="qualityMode" value="balanced" checked>
+                  <span>Balanced</span>
+                </label>
+                <label class="segmented-option">
+                  <input type="radio" name="qualityMode" value="quality">
+                  <span>Quality</span>
+                </label>
+              </div>
+              <p id="qualityModeHint" class="helper-text">시맨틱 검색 후 e2b 빠른 답변을 만들고, 복합/근거 부족 답변은 quality로 승격합니다.</p>
+            </div>
+            <div class="main-chat-input">
+              <textarea id="userInput" rows="2" placeholder="질문을 입력하세요..."></textarea>
+              <button id="sendBtn" class="primary-btn">Send</button>
+            </div>
+            <p class="helper-text" style="margin-top:8px;">답변 아래에서 sources와 feedback을 확인하고, Advanced Rail에서 route/request/graph-lite 상세를 볼 수 있습니다.</p>
+          </section>
+
+          <section class="doc-viewer-layout">
+            <div class="quiet-panel">
+              <h3 id="docTitle">Document Viewer</h3>
+              <div class="doc-viewer-body" id="docViewer">
+                <p class="status-msg">왼쪽 문서 목록에서 파일을 선택하면 내용을 볼 수 있습니다.</p>
+              </div>
+            </div>
+          </section>
         </div>
-      </section>
+
+        <aside class="advanced-rail" id="advancedRail" aria-hidden="true" aria-label="Advanced Rail">
+          <div class="advanced-rail-header">
+            <div>
+              <p class="brand-kicker">Power User</p>
+              <h3>Advanced Rail</h3>
+            </div>
+            <button id="advancedRailClose" class="secondary-btn" type="button">Close</button>
+          </div>
+          <div class="advanced-rail-section">
+            <h4>Mode</h4>
+            <p id="advancedRailMode" class="status-msg">mode=balanced</p>
+          </div>
+          <div class="advanced-rail-section">
+            <h4>Collection Route</h4>
+            <p id="advancedRailCollections" class="status-msg">collection=all</p>
+          </div>
+          <div class="advanced-rail-section">
+            <h4>Runtime</h4>
+            <p id="advancedRailRuntime" class="status-msg">runtime 확인 전입니다.</p>
+          </div>
+          <div class="advanced-rail-section">
+            <h4>Evidence</h4>
+            <p id="advancedRailEvidence" class="status-msg">아직 질의 응답이 없습니다.</p>
+          </div>
+          <div class="advanced-rail-section">
+            <h4>Graph-Lite</h4>
+            <p id="advancedRailGraphLite" class="status-msg">graph-lite=not-reported</p>
+          </div>
+        </aside>
+      </div>
     </main>
   </div>
 

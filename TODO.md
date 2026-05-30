@@ -259,7 +259,9 @@
 | LOOP-143 | done | Trunk RAG modern UI design spec | `./.venv/bin/python scripts/session_closeout.py --allow-dirty` + `./.venv/bin/python scripts/roadmap_harness.py validate` + `git diff --check` |
 | LOOP-144 | done | Await implementation plan after modern UI design spec | `./.venv/bin/python scripts/session_closeout.py` |
 | LOOP-145 | done | Modern /app UI implementation plan | `./.venv/bin/python scripts/session_closeout.py --allow-dirty` + `./.venv/bin/python scripts/roadmap_harness.py validate` + `git diff --check` |
-| LOOP-146 | active | Await implementation execution after modern UI plan | `./.venv/bin/python scripts/session_closeout.py` |
+| LOOP-146 | done | Await implementation execution after modern UI plan | `./.venv/bin/python scripts/session_closeout.py` |
+| LOOP-147 | done | Modern /app Research Studio UI implementation | `node --check web/js/app_page.js` + `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/session_closeout.py` |
+| LOOP-148 | active | Await next-track after modern app UI implementation | `./.venv/bin/python scripts/session_closeout.py` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -3995,7 +3997,7 @@ closeout 메모 (2026-05-28):
 - 계획은 TDD 순서로 e2e RED를 먼저 추가하고, `web/index.html`, `web/styles.css`, `web/js/app_page.js`를 단계적으로 개편한 뒤 검증/문서/커밋까지 닫도록 작성했다.
 - 다음 active는 `LOOP-146 Await implementation execution after modern UI plan`로 둔다.
 
-## 현재 Active Loop (LOOP-146)
+## 완료 Loop (LOOP-146)
 
 목표:
 - `LOOP-145` 구현 계획 완료 이후 실행 방식을 확정하고 `/app` modern UI 구현 loop로 진입한다.
@@ -4006,6 +4008,56 @@ closeout 메모 (2026-05-28):
 
 완료 기준:
 - 사용자가 실행 방식을 선택하거나 기본 실행 방식을 승인하면 `Modern /app Research Studio UI implementation` loop가 active로 승격된다.
+
+검증:
+- `./.venv/bin/python scripts/session_closeout.py`
+
+closeout 메모 (2026-05-30):
+- 사용자가 실행 방식 `1`을 선택해 `subagent-driven-development` 기반 구현 진행으로 확정했다.
+- 다음 active는 `LOOP-147 Modern /app Research Studio UI implementation`로 둔다.
+
+## 완료 Loop (LOOP-147)
+
+목표:
+- `/app`를 Quiet Lab 톤의 Research Studio 기본 화면과 오른쪽 Advanced Rail 고급 모드로 개편한다.
+
+범위:
+- 포함: `web/index.html`, `web/styles.css`, `web/js/app_page.js`, `/app` e2e coverage
+- 제외: `/intro`/`/admin` 전체 redesign, dark theme, backend/API contract 변경, frontend framework 교체
+
+완료 기준:
+- 기본 `/app` 화면에서 Research Studio 구조가 보인다.
+- Advanced Rail이 토글되고 localStorage에 유지된다.
+- query response meta가 Advanced Rail에 request/support/graph-lite 요약으로 표시된다.
+- mobile width에서 horizontal overflow가 없다.
+
+검증:
+- `node --check web/js/app_page.js`
+- `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py`
+- `./.venv/bin/python scripts/session_closeout.py`
+
+closeout 메모 (2026-05-30):
+- `/app` 기본 화면을 `Research Studio` 구조로 재구성하고, 고급 정보는 `Advanced Rail` 토글/닫기/로컬 저장 상태로 분리했다.
+- Advanced Rail은 mode, collection route, runtime, evidence, graph-lite 요약을 표시하며 query meta 갱신을 반영한다.
+- 모바일에서는 Advanced Rail을 버튼 아래 fixed overlay로 열고, 320px sidebar와 390px app rail overflow를 회귀 테스트로 고정했다.
+- 동적 collection/doc 이름은 DOM API로 렌더링해 특수문자 때문에 select/doc list markup이 깨지지 않도록 보정했다.
+- 중복 질의 전송은 `questionInFlight`와 `sendBtn.disabled`로 막는다.
+- Browser plugin 검증은 `sandbox-exec: execvp() of 'macos' failed`로 사용할 수 없어, 동일 로컬 서버에 대해 Playwright screenshot/DOM 검증으로 대체했다.
+- verification: `node --check web/js/app_page.js -> pass`; `git diff --check -> pass`; `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`; `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py -> 14 passed`; Playwright visual check desktop/mobile shell+rail visible, no horizontal overflow, console/page errors 없음.
+- screenshots: `/tmp/trunk-rag-modern-ui-desktop.png`, `/tmp/trunk-rag-modern-ui-mobile.png`
+- 다음 active는 `LOOP-148 Await next-track after modern app UI implementation`로 둔다.
+
+## 현재 Active Loop (LOOP-148)
+
+목표:
+- `LOOP-147` modern app UI 구현 완료 이후 다음 작업 트랙 결정을 대기한다.
+
+범위:
+- 포함: 다음 작업 트랙 선택, 필요 시 `/intro`/`/admin` modern UI 후속 loop 승격 또는 현행화 관리 개선 재개
+- 제외: 자동 범위 확장, GraphRAG/desktop packaging 재개, backend/API contract 변경
+
+완료 기준:
+- 사용자가 다음 트랙을 지정하거나, `TODO.md`/`NEXT_SESSION_PLAN.md`가 새 실행 항목을 active/pending으로 승격한다.
 
 검증:
 - `./.venv/bin/python scripts/session_closeout.py`

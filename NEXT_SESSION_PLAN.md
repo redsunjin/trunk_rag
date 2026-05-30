@@ -1,4 +1,4 @@
-# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-05-28 기준)
+# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-05-30 기준)
 
 기준 문서:
 - `SPEC.md`
@@ -97,8 +97,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-146`
-- current_active_title: `Await implementation execution after modern UI plan`
+- current_active_id: `LOOP-148`
+- current_active_title: `Await next-track after modern app UI implementation`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -113,6 +113,23 @@
 - session_closeout_command: `./.venv/bin/python scripts/session_closeout.py`
 - wip_closeout_command: `./.venv/bin/python scripts/session_closeout.py --allow-dirty`
 - legacy_gate_note: 역사 메모의 `ops-baseline` 표기는 `generic-baseline`/`sample-pack-baseline` 분리 이전 명칭이며, 현재 본체 기본 gate는 `generic-baseline`이다.
+
+## 2026-05-30 Modern App UI Implementation Snapshot
+
+- 완료 루프: `LOOP-146 Await implementation execution after modern UI plan`
+- 완료 루프: `LOOP-147 Modern /app Research Studio UI implementation`
+- 현재 active: `LOOP-148 Await next-track after modern app UI implementation`
+- execution mode: 사용자가 `1`을 선택해 `subagent-driven-development` 방식으로 진행한다.
+- plan: `docs/superpowers/plans/2026-05-28-trunk-rag-modern-ui-implementation.md`
+- design spec: `docs/superpowers/specs/2026-05-28-trunk-rag-modern-ui-design.md`
+- implemented scope: `/app` Quiet Lab Research Studio + right Advanced Rail only
+- implementation: `web/index.html`, `web/styles.css`, `web/js/app_page.js`, `tests/e2e/test_web_flow_playwright.py`
+- advanced mode: desktop right rail; mobile fixed overlay below the Advanced button; state persists in `localStorage` key `trunkRagAdvancedRailOpen`.
+- quality fixes: dynamic collection/doc rendering now uses DOM APIs, mobile sidebar is clamped to viewport width, duplicate query submits are blocked while a query is in flight, e2e captures page errors and non-resource console errors.
+- Browser plugin note: in-app Browser runtime failed with `sandbox-exec: execvp() of 'macos' failed`; visual verification was completed with Playwright against the running local app.
+- verification: `node --check web/js/app_page.js -> pass`; `git diff --check -> pass`; `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`; `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py -> 14 passed`; Playwright visual check desktop/mobile shell+rail visible, no horizontal overflow, console/page errors 없음.
+- screenshots: `/tmp/trunk-rag-modern-ui-desktop.png`, `/tmp/trunk-rag-modern-ui-mobile.png`
+- next: 자동 진행할 pending 항목이 없으므로 다음 트랙 결정을 대기한다. 자연스러운 후속 후보는 `/intro`/`/admin`에 같은 Quiet Lab 언어를 확장하거나, session handoff/closeout workflow를 다른 프로젝트에 재사용 가능한 kit로 분리하는 작업이다.
 
 ## 2026-05-28 Modern UI Implementation Plan Snapshot
 

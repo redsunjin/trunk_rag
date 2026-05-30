@@ -66,6 +66,23 @@ def live_server_url():
             process.kill()
 
 
+@pytest.fixture(autouse=True)
+def fail_on_browser_errors(page: Page):
+    errors: list[str] = []
+    page.on("pageerror", lambda exc: errors.append(str(exc)))
+
+    def record_console_error(msg):
+        if msg.type != "error":
+            return
+        if msg.text.startswith("Failed to load resource:"):
+            return
+        errors.append(msg.text)
+
+    page.on("console", record_console_error)
+    yield
+    assert errors == []
+
+
 @pytest.mark.e2e
 def test_intro_app_flow(page: Page, live_server_url: str):
     def ops_baseline_latest(route):
@@ -111,6 +128,12 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     expect(page).to_have_url(re.compile(r".*/app$"), timeout=10000)
     expect(page.locator(".app-overview-card")).to_contain_text("로컬 RAG 작업 공간")
     expect(page.locator(".app-overview-card")).to_contain_text("유럽 과학사 샘플 데모")
+    expect(page.locator(".research-studio-shell")).to_be_visible()
+    expect(page.locator(".research-hero")).to_contain_text("문서 기반으로 질문")
+    expect(page.locator("#advancedModeToggle")).to_be_visible()
+    expect(page.locator("#advancedRail")).to_have_attribute("aria-hidden", "true")
+    expect(page.locator("#advancedRail")).to_be_hidden()
+    expect(page.locator(".research-studio-shell")).not_to_contain_text("request_id=")
     expect(page.locator(".sidebar-section").filter(has_text="RAG Documents")).to_contain_text("샘플 데모")
     expect(page.locator(".sidebar-section").filter(has_text="문서 추가/갱신 요청")).to_contain_text("문서 반영 방식")
     expect(page.locator("#appOpsBaselineMsg")).to_contain_text("최근 ops-baseline")
@@ -124,6 +147,13 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     expect(page.locator("#advancedSettings")).to_be_hidden()
     expect(page.locator("input[name='qualityMode'][value='balanced']")).to_be_checked()
     expect(page.locator("#qualityModeHint")).to_contain_text("e2b")
+    page.click("#advancedModeToggle")
+    expect(page.locator("#advancedRail")).to_have_attribute("aria-hidden", "false")
+    expect(page.locator("#advancedRail")).to_be_visible()
+    expect(page.locator("#advancedRail")).to_contain_text("Advanced Rail")
+    expect(page.locator("#advancedRailMode")).to_contain_text("balanced")
+    page.reload(wait_until="domcontentloaded")
+    expect(page.locator("#advancedRail")).to_have_attribute("aria-hidden", "false")
     expect(page.locator("#uploadMetadataFields")).to_be_hidden()
     expect(page.locator("#uploadDefaultsSummary")).to_contain_text("source=auto")
     page.click("#advancedSettingsToggle")
@@ -286,6 +316,9 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     expect(page.locator(".chat-message.bot").last).to_contain_text("근거 수준=supported")
     expect(page.locator(".chat-message.bot").last).to_contain_text("fr_doc.md > 프랑스")
     expect(page.locator(".chat-message.bot").last).to_contain_text("graph-lite=disabled")
+    expect(page.locator("#advancedRail")).to_contain_text("req-e2e-1")
+    expect(page.locator("#advancedRail")).to_contain_text("supported")
+    expect(page.locator("#advancedRail")).to_contain_text("graph-lite=disabled")
     page.locator(".chat-message.bot").last.locator("summary").click()
     expect(page.locator(".chat-message.bot").last).to_contain_text("request_id=req-e2e-1")
     expect(page.locator(".chat-message.bot").last).to_contain_text("fr_doc.md")
@@ -308,6 +341,8 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     expect(page.locator(".chat-message.bot").last).to_contain_text("모킹된 정밀 질의 응답", timeout=10000)
     expect(page.locator(".chat-message.bot").last).to_contain_text("graph-lite=hit")
     expect(page.locator(".chat-message.bot").last).to_contain_text("relations=2")
+    expect(page.locator("#advancedRail")).to_contain_text("graph-lite=hit")
+    expect(page.locator("#advancedRail")).to_contain_text("relations=2")
     page.locator(".chat-message.bot").last.locator("summary").click()
     expect(page.locator(".chat-message.bot").last).to_contain_text("context=added")
     assert query_payload["body"]["quality_mode"] == "quality"
@@ -427,6 +462,129 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     page.unroute("**/upload-requests", upload_request_rejected)
     page.unroute("**/health", health_success)
     page.unroute("**/ops-baseline/latest", ops_baseline_latest)
+
+
+@pytest.mark.e2e
+def test_app_modern_layout_mobile_has_no_horizontal_overflow(page: Page, live_server_url: str):
+    page.set_viewport_size({"width": 390, "height": 844})
+    page.goto(f"{live_server_url}/app", wait_until="domcontentloaded")
+
+    expect(page.locator(".research-studio-shell")).to_be_visible(timeout=10000)
+    page.click("#advancedModeToggle")
+    expect(page.locator("#advancedRail")).to_be_visible()
+
+    overflow = page.evaluate(
+        """() => ({
+            scrollWidth: document.documentElement.scrollWidth,
+            clientWidth: document.documentElement.clientWidth,
+        })"""
+    )
+    assert overflow["scrollWidth"] <= overflow["clientWidth"]
+
+
+@pytest.mark.e2e
+def test_app_dynamic_collection_and_doc_names_do_not_break_dom(page: Page, live_server_url: str):
+    special_collection = 'custom"key'
+    special_doc_name = 'quote" <doc>.md'
+    opened_docs: list[str] = []
+
+    def collections_handler(route):
+        route.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps(
+                {
+                    "default_collection_key": special_collection,
+                    "auto_approve": False,
+                    "collections": [
+                        {
+                            "key": special_collection,
+                            "label": 'Custom "Docs" & Research',
+                            "name": "custom_collection",
+                            "vectors": 3,
+                            "soft_usage_ratio": 0.0,
+                            "hard_usage_ratio": 0.0,
+                            "soft_exceeded": False,
+                            "hard_exceeded": False,
+                            "default_country": "all",
+                            "default_doc_type": "summary",
+                        }
+                    ],
+                }
+            ),
+        )
+
+    def docs_handler(route):
+        parsed = urllib.parse.urlparse(route.request.url)
+        if parsed.path == "/rag-docs":
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps(
+                    {
+                        "docs": [
+                            {
+                                "name": special_doc_name,
+                                "origin": 'upload"origin',
+                                "doc_key": "key&tag",
+                                "size": 2048,
+                            }
+                        ]
+                    }
+                ),
+            )
+            return
+
+        opened_docs.append(urllib.parse.unquote(parsed.path.removeprefix("/rag-docs/")))
+        route.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps(
+                {
+                    "name": special_doc_name,
+                    "content": "## Special Doc\n본문입니다.",
+                }
+            ),
+        )
+
+    page.route("**/collections", collections_handler)
+    page.route("**/rag-docs**", docs_handler)
+    page.goto(f"{live_server_url}/app", wait_until="domcontentloaded")
+
+    expect(page.locator(".doc-item-btn")).to_have_count(1, timeout=10000)
+    expect(page.locator(".doc-item-btn")).to_contain_text(special_doc_name)
+    page.locator(".doc-item-btn").click()
+    expect(page.locator("#docTitle")).to_contain_text(special_doc_name)
+    expect(page.locator("#docViewer")).to_contain_text("Special Doc")
+    assert opened_docs == [special_doc_name]
+
+    option_data = page.evaluate(
+        """() => Array.from(document.querySelectorAll("#collection option")).map((option) => ({
+            value: option.value,
+            text: option.textContent,
+        }))"""
+    )
+    assert option_data == [
+        {
+            "value": special_collection,
+            "text": 'Custom "Docs" & Research (custom"key) - vectors=3, soft=0%',
+        }
+    ]
+
+    page.unroute("**/rag-docs**", docs_handler)
+    page.unroute("**/collections", collections_handler)
+
+
+@pytest.mark.e2e
+def test_app_mobile_sidebar_fits_narrow_viewport(page: Page, live_server_url: str):
+    page.set_viewport_size({"width": 320, "height": 844})
+    page.goto(f"{live_server_url}/app", wait_until="domcontentloaded")
+    page.click("#menuToggle")
+    expect(page.locator("#sidebar")).to_be_visible()
+
+    sidebar_box = page.locator("#sidebar").bounding_box()
+    assert sidebar_box is not None
+    assert sidebar_box["width"] <= 320
 
 
 @pytest.mark.e2e
