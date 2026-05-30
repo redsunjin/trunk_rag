@@ -97,8 +97,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-148`
-- current_active_title: `Await next-track after modern app UI implementation`
+- current_active_id: `LOOP-149`
+- current_active_title: `Intro Quiet Lab UX extension`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -114,11 +114,25 @@
 - wip_closeout_command: `./.venv/bin/python scripts/session_closeout.py --allow-dirty`
 - legacy_gate_note: 역사 메모의 `ops-baseline` 표기는 `generic-baseline`/`sample-pack-baseline` 분리 이전 명칭이며, 현재 본체 기본 gate는 `generic-baseline`이다.
 
+## 2026-05-30 Modern UX Remaining Scope Snapshot
+
+- 제품 전체 UX 상태: `in_progress`
+- `/app` UX 상태: `1차 완료`; Research Studio + Advanced Rail 구현/검증 완료, 추후 실제 사용 피드백 기반 2차 polish 가능
+- `/intro` UX 상태: `미진행`; 다음 active `LOOP-149 Intro Quiet Lab UX extension`
+- `/admin` UX 상태: `미진행`; 후속 pending `LOOP-150 Admin Quiet Lab UX extension`
+- `/app` 2차 polish 상태: `미진행 후보`; 후속 pending `LOOP-151 App UX second-pass polish after Research Studio`
+- 제품 UX 완료 matrix 상태: `미진행 후보`; 후속 pending `LOOP-152 Product UX completion status matrix`
+- 기본 추천 순서: `/intro` 현대화 -> `/admin` 현대화 -> `/app` 실제 사용성 2차 polish -> 전체 UX 완료 상태 matrix 정리
+- 현재 active: `LOOP-149 Intro Quiet Lab UX extension`
+- next-session rule: `진행` 요청 시 단순 대기하지 말고 `LOOP-149`부터 구현 계획/실행으로 들어간다.
+- verification: `./.venv/bin/python scripts/session_closeout.py`, `./.venv/bin/python scripts/roadmap_harness.py validate`, `git diff --check`
+
 ## 2026-05-30 Modern App UI Implementation Snapshot
 
 - 완료 루프: `LOOP-146 Await implementation execution after modern UI plan`
 - 완료 루프: `LOOP-147 Modern /app Research Studio UI implementation`
-- 현재 active: `LOOP-148 Await next-track after modern app UI implementation`
+- 완료 루프: `LOOP-148 Modern UX remaining scope proposal`
+- 현재 active: `LOOP-149 Intro Quiet Lab UX extension`
 - execution mode: 사용자가 `1`을 선택해 `subagent-driven-development` 방식으로 진행한다.
 - plan: `docs/superpowers/plans/2026-05-28-trunk-rag-modern-ui-implementation.md`
 - design spec: `docs/superpowers/specs/2026-05-28-trunk-rag-modern-ui-design.md`
@@ -129,7 +143,7 @@
 - Browser plugin note: in-app Browser runtime failed with `sandbox-exec: execvp() of 'macos' failed`; visual verification was completed with Playwright against the running local app.
 - verification: `node --check web/js/app_page.js -> pass`; `git diff --check -> pass`; `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`; `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py -> 14 passed`; Playwright visual check desktop/mobile shell+rail visible, no horizontal overflow, console/page errors 없음.
 - screenshots: `/tmp/trunk-rag-modern-ui-desktop.png`, `/tmp/trunk-rag-modern-ui-mobile.png`
-- next: 자동 진행할 pending 항목이 없으므로 다음 트랙 결정을 대기한다. 자연스러운 후속 후보는 `/intro`/`/admin`에 같은 Quiet Lab 언어를 확장하거나, session handoff/closeout workflow를 다른 프로젝트에 재사용 가능한 kit로 분리하는 작업이다.
+- next: `/intro`를 같은 Quiet Lab 언어로 확장한다. `/admin`, `/app 2차 polish`, 제품 UX 완료 상태 matrix는 `pending` 후보로 둔다.
 
 ## 2026-05-28 Modern UI Implementation Plan Snapshot
 

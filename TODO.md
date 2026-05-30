@@ -261,7 +261,11 @@
 | LOOP-145 | done | Modern /app UI implementation plan | `./.venv/bin/python scripts/session_closeout.py --allow-dirty` + `./.venv/bin/python scripts/roadmap_harness.py validate` + `git diff --check` |
 | LOOP-146 | done | Await implementation execution after modern UI plan | `./.venv/bin/python scripts/session_closeout.py` |
 | LOOP-147 | done | Modern /app Research Studio UI implementation | `node --check web/js/app_page.js` + `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/session_closeout.py` |
-| LOOP-148 | active | Await next-track after modern app UI implementation | `./.venv/bin/python scripts/session_closeout.py` |
+| LOOP-148 | done | Modern UX remaining scope proposal | `./.venv/bin/python scripts/session_closeout.py` |
+| LOOP-149 | active | Intro Quiet Lab UX extension | `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/session_closeout.py` |
+| LOOP-150 | pending | Admin Quiet Lab UX extension | `node --check web/js/admin_page.js` + `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` |
+| LOOP-151 | pending | App UX second-pass polish after Research Studio | `node --check web/js/app_page.js` + `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` |
+| LOOP-152 | pending | Product UX completion status matrix | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -4047,19 +4051,43 @@ closeout 메모 (2026-05-30):
 - screenshots: `/tmp/trunk-rag-modern-ui-desktop.png`, `/tmp/trunk-rag-modern-ui-mobile.png`
 - 다음 active는 `LOOP-148 Await next-track after modern app UI implementation`로 둔다.
 
-## 현재 Active Loop (LOOP-148)
+## 완료 Loop (LOOP-148)
 
 목표:
-- `LOOP-147` modern app UI 구현 완료 이후 다음 작업 트랙 결정을 대기한다.
+- `LOOP-147` modern app UI 구현 완료 이후 남은 UX 범위를 미진행 항목으로 명확히 제안한다.
 
 범위:
-- 포함: 다음 작업 트랙 선택, 필요 시 `/intro`/`/admin` modern UI 후속 loop 승격 또는 현행화 관리 개선 재개
-- 제외: 자동 범위 확장, GraphRAG/desktop packaging 재개, backend/API contract 변경
+- 포함: `/intro`, `/admin`, `/app 2차 polish`, 제품 UX 완료 상태 matrix를 후속 loop로 분리
+- 제외: GraphRAG/desktop packaging 재개, backend/API contract 변경, 제품 범위 확장
 
 완료 기준:
-- 사용자가 다음 트랙을 지정하거나, `TODO.md`/`NEXT_SESSION_PLAN.md`가 새 실행 항목을 active/pending으로 승격한다.
+- `TODO.md`/`NEXT_SESSION_PLAN.md`가 더 이상 단순 대기 상태가 아니라, 미진행 UX 후보와 기본 추천 순서를 명시한다.
 
 검증:
+- `./.venv/bin/python scripts/session_closeout.py`
+
+closeout 메모 (2026-05-30):
+- `/app` 1차 구현 완료를 전체 UX 완료로 오해하지 않도록 남은 상태를 명확히 분리했다.
+- 제품 전체 UX는 `in_progress`, `/app`은 `1차 완료`, `/intro`와 `/admin`은 `미진행`, `/app 2차 polish`는 `미진행 후보`로 정리한다.
+- 다음 active는 기본 추천 순서에 따라 `LOOP-149 Intro Quiet Lab UX extension`로 둔다.
+
+## 현재 Active Loop (LOOP-149)
+
+목표:
+- `/intro`를 `/app`의 Quiet Lab / Research Studio 시각 언어와 맞춰 첫 진입 UX를 현대화한다.
+
+범위:
+- 포함: `web/intro.html`, `web/styles.css`, 필요 시 `web/js/intro_page.js`, `/intro -> /app` e2e 검증
+- 제외: `/app` 재설계 재개, `/admin` 전체 redesign, backend/API contract 변경, GraphRAG/desktop packaging 재개
+
+완료 기준:
+- `/intro`가 현재 제품 상태와 다음 행동을 명확히 보여준다.
+- `/intro`에서 `/app`으로 넘어가는 기본 사용자 흐름이 현대화된 UI 언어와 일관된다.
+- 모바일/데스크톱에서 overflow와 텍스트 겹침이 없다.
+- `TODO.md`/`NEXT_SESSION_PLAN.md`가 `/intro` 완료 후 다음 미진행 UX 항목을 명확히 가리킨다.
+
+검증:
+- `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py`
 - `./.venv/bin/python scripts/session_closeout.py`
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
