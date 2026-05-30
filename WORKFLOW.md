@@ -37,16 +37,18 @@
 ## 루프 규칙
 
 1. 세션 시작 시 `scripts/roadmap_harness.py status`로 현재 `active` 항목을 확인한다.
-2. `active` 항목이 끝나기 전에는 같은 우선순위의 다른 최상위 항목으로 이동하지 않는다.
-3. `blocked`로 옮길 때는 blocker와 재개 조건을 `TODO.md`에 함께 남긴다.
-4. `done` 처리 뒤에는 `NEXT_SESSION_PLAN.md`의 `current_active_id`도 즉시 동기화한다.
-5. 기능 브랜치나 버전 준비 브랜치에 있더라도, 별도 지시나 공식 승격이 없으면 `TODO.md`의 `active`가 기본 실행 대상이다.
-6. tracked 변경이 있는데 `TODO.md`와 `NEXT_SESSION_PLAN.md`가 둘 다 그대로면 handoff가 stale 상태로 본다.
+2. 사람이 진행 상태, 남은 일, 다음 작업을 물으면 `scripts/roadmap_harness.py report`로 현재 위치/완료/남은 일/막힌 일/다음 실행을 먼저 확인한다.
+3. `active` 항목이 끝나기 전에는 같은 우선순위의 다른 최상위 항목으로 이동하지 않는다.
+4. `blocked`로 옮길 때는 blocker와 재개 조건을 `TODO.md`에 함께 남긴다.
+5. `done` 처리 뒤에는 `NEXT_SESSION_PLAN.md`의 `current_active_id`도 즉시 동기화한다.
+6. 기능 브랜치나 버전 준비 브랜치에 있더라도, 별도 지시나 공식 승격이 없으면 `TODO.md`의 `active`가 기본 실행 대상이다.
+7. tracked 변경이 있는데 `TODO.md`와 `NEXT_SESSION_PLAN.md`가 둘 다 그대로면 handoff가 stale 상태로 본다.
 
 ## 세션 문서 현행화
 
 - `TODO.md`는 실행 큐, 현재 `active`의 범위, 진행 메모를 담당한다.
 - `NEXT_SESSION_PLAN.md`는 세션 재진입용 최신 스냅샷과 재개 규칙을 담당한다.
+- 상태 보고 기본 명령은 `./.venv/bin/python scripts/roadmap_harness.py report`이다.
 - 구현, 검증, 판단, blocker가 바뀌면 두 문서를 같은 작업 단위 안에서 함께 갱신한다.
 - pause/commit 전에는 `./.venv/bin/python scripts/session_closeout.py`로 handoff 상태를 확인한다.
 - dirty worktree를 남기는 WIP 인계는 `./.venv/bin/python scripts/session_closeout.py --allow-dirty`를 사용하고, `TODO.md`와 `NEXT_SESSION_PLAN.md`에 남은 작업과 재개 조건을 기록한다.

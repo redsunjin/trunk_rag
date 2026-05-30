@@ -1,4 +1,4 @@
-# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-05-30 기준)
+# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-05-31 기준)
 
 기준 문서:
 - `SPEC.md`
@@ -102,6 +102,7 @@
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
+- human_status_report_command: `./.venv/bin/python scripts/roadmap_harness.py report`
 - default_regression_gate: `./.venv/bin/python scripts/check_ops_baseline_gate.py --llm-provider ollama --llm-model gemma4:e4b --llm-base-url http://localhost:11434`
 - branch_execution_policy: `main is the V1 release baseline; create a short V1.5 work branch before implementation`
 - branch_plan_doc: `-`
@@ -113,6 +114,15 @@
 - session_closeout_command: `./.venv/bin/python scripts/session_closeout.py`
 - wip_closeout_command: `./.venv/bin/python scripts/session_closeout.py --allow-dirty`
 - legacy_gate_note: 역사 메모의 `ops-baseline` 표기는 `generic-baseline`/`sample-pack-baseline` 분리 이전 명칭이며, 현재 본체 기본 gate는 `generic-baseline`이다.
+
+## 2026-05-31 Harness Human Status Report Snapshot
+
+- user request: 진행상태를 사람이 기억하지 않아도 되도록 하네스가 현재 위치와 남은 일을 보고해야 한다.
+- implementation: `scripts/roadmap_harness.py report` 명령을 추가해 현재 위치, 최근 완료, 남은 것, 막힌 것, 다음 실행, queue/worktree 상태를 사람용 형식으로 출력한다.
+- machine output: `./.venv/bin/python scripts/roadmap_harness.py report --json`은 기존 harness report에 `progress_summary`를 추가한다.
+- operating rule: 사용자가 진행 상태/남은 일/다음 작업을 물으면 `report` 명령을 먼저 실행하고 그 형식으로 답한다.
+- current active remains: `LOOP-150 Admin Quiet Lab UX extension`
+- verification: TDD RED confirmed on missing `format_progress_report`; `./.venv/bin/python -m pytest -q tests/test_roadmap_harness.py tests/test_session_closeout.py -> 17 passed`; `py_compile scripts/roadmap_harness.py -> pass`; `./.venv/bin/python scripts/roadmap_harness.py report -> ready`; `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`; `git diff --check -> pass`
 
 ## 2026-05-30 Modern UX Remaining Scope Snapshot
 

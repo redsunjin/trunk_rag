@@ -176,3 +176,37 @@ def test_build_report_warns_when_next_session_title_date_is_stale():
 
     assert report["ready"] is True
     assert any("NEXT_SESSION_PLAN title date is older than latest dated heading" in item for item in report["warnings"])
+
+
+def test_format_progress_report_summarizes_current_and_remaining_work():
+    todo_text = TODO_TEXT.replace(
+        "| LOOP-001 | active | Active Task | pytest -q |",
+        "| LOOP-000 | done | Previous Task | pytest old |\n"
+        "| LOOP-001 | active | Active Task | pytest -q |",
+    ).replace(
+        "| LOOP-003 | archived | Old Task | docs only |",
+        "| LOOP-003 | blocked | Blocked Task | choose strategy |",
+    )
+    report = roadmap_harness.build_report(
+        todo_text=todo_text,
+        next_session_text=NEXT_SESSION_TEXT,
+        current_branch="main",
+        head_commit="abc1234",
+        tracked_dirty_paths=[],
+    )
+
+    output = roadmap_harness.format_progress_report(report)
+
+    assert "[roadmap-harness-report] ready" in output
+    assert "현재 위치:" in output
+    assert "- active: LOOP-001 Active Task" in output
+    assert "이번에 완료한 것:" in output
+    assert "- LOOP-000 Previous Task" in output
+    assert "남은 것:" in output
+    assert "- LOOP-001 Active Task (active)" in output
+    assert "- LOOP-002 Pending Task (pending)" in output
+    assert "막힌 것:" in output
+    assert "- LOOP-003 Blocked Task (blocked)" in output
+    assert "다음 실행:" in output
+    assert "- LOOP-001부터 진행" in output
+    assert "- tracked_worktree: clean" in output

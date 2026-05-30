@@ -44,6 +44,7 @@
 
 - `TODO.md`는 실행 큐와 현재 `active` 작업 메모의 기준 문서로 유지한다.
 - `NEXT_SESSION_PLAN.md`는 다음 세션이 바로 이어받을 수 있는 최신 스냅샷으로 유지한다.
+- 사용자가 진행 상태, 남은 일, 다음 작업을 물으면 먼저 `./.venv/bin/python scripts/roadmap_harness.py report`를 실행하고, 그 사람용 요약 형식으로 답한다.
 - 의미 있는 구현, 검증, 판단, blocker가 생기면 같은 작업 단위 안에서 두 문서를 함께 갱신한다.
 - dirty worktree 상태로 멈출 때는 최소한 `TODO.md` 또는 `NEXT_SESSION_PLAN.md` 중 하나가 아니라 둘 다 최신 진행 상태를 설명해야 한다.
 - 커밋 메시지나 closeout 메모에는 가능한 한 loop id와 검증 결과를 남겨 다음 세션이 추적 가능해야 한다.

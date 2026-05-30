@@ -109,6 +109,7 @@
 루프 규칙:
 - 최상위 `active` 항목은 항상 정확히 1개만 둔다.
 - `진행`, `계속`, `이어서` 요청이 오면 `active` 항목부터 수행한다.
+- 사용자가 진행 상태, 남은 일, 다음 작업을 물으면 `./.venv/bin/python scripts/roadmap_harness.py report`를 먼저 실행해 사람용 요약으로 보고한다.
 - `active`가 `done`이 되면 가장 먼저 오는 `pending`을 즉시 다음 `active`로 승격한다.
 - `blocked`로 옮길 때는 blocker와 재개 조건을 함께 기록한다.
 - `archived`는 실행 큐에서 제외하고 이력만 보관한다.
@@ -4118,6 +4119,12 @@ closeout 메모 (2026-05-30):
 - `node --check web/js/admin_page.js`
 - `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py`
 - `./.venv/bin/python scripts/session_closeout.py`
+
+진행 메모 (2026-05-31):
+- 사용자 지시로 active loop 변경 없이 하네스 사람용 상태 보고 명령을 보강한다.
+- `scripts/roadmap_harness.py report`는 현재 위치, 최근 완료, 남은 것, 막힌 것, 다음 실행, queue/worktree 상태를 한 번에 출력한다.
+- 이 보강은 `LOOP-150`의 `/admin` 구현 범위 자체를 변경하지 않는다.
+- verification: TDD RED confirmed on missing `format_progress_report`; `./.venv/bin/python -m pytest -q tests/test_roadmap_harness.py tests/test_session_closeout.py -> 17 passed`; `py_compile scripts/roadmap_harness.py -> pass`; `./.venv/bin/python scripts/roadmap_harness.py report -> ready`; `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`; `git diff --check -> pass`
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

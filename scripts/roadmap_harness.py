@@ -357,9 +357,131 @@ def print_status(report: dict[str, object]) -> None:
             print(f"    - {warning}")
 
 
+def _format_queue_item(item: dict[str, str]) -> str:
+    return f"{item['id']} {item['title']}"
+
+
+def _latest_done_items(queue: list[dict[str, str]], active_item: dict[str, str] | None, limit: int = 3) -> list[dict[str, str]]:
+    if not queue:
+        return []
+    active_index = None
+    if active_item:
+        for index, item in enumerate(queue):
+            if item["id"] == active_item["id"]:
+                active_index = index
+                break
+    candidate_queue = queue[:active_index] if active_index is not None else queue
+    done_items = [item for item in candidate_queue if item["status"] == "done"]
+    if not done_items and active_index is not None:
+        done_items = [item for item in queue if item["status"] == "done"]
+    return list(reversed(done_items[-limit:]))
+
+
+def build_progress_summary(report: dict[str, object]) -> dict[str, object]:
+    queue = list(report.get("queue", []))
+    active_item = report.get("active_item")
+    pending_items = [item for item in queue if item["status"] == "pending"]
+    blocked_items = [item for item in queue if item["status"] == "blocked"]
+    remaining_items: list[dict[str, str]] = []
+    if isinstance(active_item, dict):
+        remaining_items.append(active_item)
+    remaining_items.extend(pending_items)
+    return {
+        "active_item": active_item,
+        "latest_done_items": _latest_done_items(queue, active_item if isinstance(active_item, dict) else None),
+        "remaining_items": remaining_items,
+        "blocked_items": blocked_items,
+        "next_action": active_item,
+    }
+
+
+def format_progress_report(report: dict[str, object]) -> str:
+    state = "ready" if report["ready"] else "blocked"
+    summary = build_progress_summary(report)
+    active_item = summary["active_item"]
+    git_info = report.get("git", {})
+    tracked_dirty_paths = git_info.get("tracked_dirty_paths", [])
+    counts = report["counts"]
+    lines = [f"[roadmap-harness-report] {state}"]
+
+    lines.append("현재 위치:")
+    if isinstance(active_item, dict):
+        lines.append(f"- active: {_format_queue_item(active_item)}")
+        lines.append(f"- 검증: {active_item['verify']}")
+    else:
+        lines.append("- active: 없음")
+
+    lines.append("")
+    lines.append("이번에 완료한 것:")
+    latest_done_items = summary["latest_done_items"]
+    if latest_done_items:
+        for item in latest_done_items:
+            lines.append(f"- {_format_queue_item(item)}")
+    else:
+        lines.append("- 없음")
+
+    lines.append("")
+    lines.append("남은 것:")
+    remaining_items = summary["remaining_items"]
+    if remaining_items:
+        for item in remaining_items:
+            lines.append(f"- {_format_queue_item(item)} ({item['status']})")
+    else:
+        lines.append("- 없음")
+
+    lines.append("")
+    lines.append("막힌 것:")
+    blocked_items = summary["blocked_items"]
+    if blocked_items:
+        for item in blocked_items:
+            lines.append(f"- {_format_queue_item(item)} ({item['status']})")
+    else:
+        lines.append("- 없음")
+
+    lines.append("")
+    lines.append("다음 실행:")
+    next_action = summary["next_action"]
+    if isinstance(next_action, dict):
+        lines.append(f"- {next_action['id']}부터 진행")
+    else:
+        lines.append("- 새 active 항목 지정 필요")
+
+    lines.append("")
+    lines.append("상태:")
+    if report.get("branch"):
+        lines.append(f"- branch: {report['branch']}")
+    if git_info.get("head_commit"):
+        lines.append(f"- head: {git_info['head_commit']}")
+    lines.append(f"- tracked_worktree: {'dirty' if tracked_dirty_paths else 'clean'}")
+    lines.append(
+        "- queue:"
+        f" done={counts['done']}"
+        f" active={counts['active']}"
+        f" pending={counts['pending']}"
+        f" blocked={counts['blocked']}"
+        f" archived={counts['archived']}"
+    )
+
+    if report["errors"]:
+        lines.append("")
+        lines.append("오류:")
+        for error in report["errors"]:
+            lines.append(f"- {error}")
+    if report.get("warnings"):
+        lines.append("")
+        lines.append("주의:")
+        for warning in report["warnings"]:
+            lines.append(f"- {warning}")
+    return "\n".join(lines)
+
+
+def print_progress_report(report: dict[str, object]) -> None:
+    print(format_progress_report(report))
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Validate and display the roadmap loop harness state.")
-    parser.add_argument("command", choices=["status", "validate"])
+    parser.add_argument("command", choices=["status", "validate", "report"])
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--todo", type=Path, default=TODO_PATH)
     parser.add_argument("--next-session", type=Path, default=NEXT_SESSION_PLAN_PATH)
@@ -371,7 +493,12 @@ def main() -> int:
     report = load_report(todo_path=args.todo, next_session_path=args.next_session)
 
     if args.json:
-        print(json.dumps(report, ensure_ascii=False, indent=2))
+        payload = dict(report)
+        if args.command == "report":
+            payload["progress_summary"] = build_progress_summary(report)
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    elif args.command == "report":
+        print_progress_report(report)
     else:
         print_status(report)
 
