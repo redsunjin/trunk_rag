@@ -686,6 +686,14 @@ def test_admin_search_filters_flow(page: Page, live_server_url: str):
     page.route("**/upload-requests**", upload_requests_handler)
 
     page.goto(f"{live_server_url}/admin", wait_until="domcontentloaded")
+    expect(page.locator(".admin-console-shell")).to_be_visible()
+    expect(page.locator(".admin-hero")).to_contain_text("관리자 검토")
+    expect(page.locator(".admin-review-metrics")).to_contain_text("pending")
+    expect(page.locator(".admin-review-metrics")).to_contain_text("1")
+    expect(page.locator(".admin-workspace-grid")).to_be_visible()
+    expect(page.locator(".admin-filter-panel")).to_contain_text("요청 상태 필터")
+    expect(page.locator(".admin-request-table-wrap")).to_contain_text("승인")
+    expect(page.locator(".admin-detail-panel")).to_contain_text("요청 상세")
     expect(page.locator("#statusFilter")).to_have_value("pending", timeout=10000)
     expect(page.locator("#requestMsg")).to_contain_text("pending=1", timeout=10000)
     expect(page.locator("#requestTableWrap")).to_contain_text("update")
@@ -704,3 +712,77 @@ def test_admin_search_filters_flow(page: Page, live_server_url: str):
         for query in request_queries
     )
     assert any(query.get("status") == ["pending"] for query in request_queries)
+
+
+@pytest.mark.e2e
+def test_admin_quiet_lab_mobile_has_no_horizontal_overflow(page: Page, live_server_url: str):
+    def collections_handler(route):
+        route.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps(
+                {
+                    "default_collection_key": "all",
+                    "auto_approve": False,
+                    "collections": [
+                        {
+                            "key": "all",
+                            "label": "전체 (기본)",
+                            "name": "w2_007_header_rag",
+                            "vectors": 10,
+                            "soft_usage_ratio": 0.0,
+                            "hard_usage_ratio": 0.0,
+                            "soft_exceeded": False,
+                            "hard_exceeded": False,
+                        }
+                    ],
+                }
+            ),
+        )
+
+    def upload_requests_handler(route):
+        route.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps(
+                {
+                    "auto_approve": False,
+                    "counts": {"pending": 1, "approved": 2, "rejected": 0},
+                    "requests": [
+                        {
+                            "id": "req-admin-mobile",
+                            "source_name": "mobile_upload.md",
+                            "collection_key": "all",
+                            "doc_key": "mobile",
+                            "request_type": "create",
+                            "change_summary": "모바일 검토 요청",
+                            "status": "pending",
+                            "usable": True,
+                            "created_at": "2026-02-26T00:00:00+00:00",
+                            "updated_at": "2026-02-26T00:01:00+00:00",
+                            "content_preview": "## 모바일 업로드",
+                            "validation": {"reasons": [], "warnings": []},
+                            "active_doc_exists": False,
+                            "active_doc": {"exists": False},
+                        }
+                    ],
+                }
+            ),
+        )
+
+    page.set_viewport_size({"width": 390, "height": 844})
+    page.route("**/collections", collections_handler)
+    page.route("**/upload-requests**", upload_requests_handler)
+    page.goto(f"{live_server_url}/admin", wait_until="domcontentloaded")
+
+    expect(page.locator(".admin-console-shell")).to_be_visible()
+    expect(page.locator(".admin-workspace-grid")).to_be_visible()
+    expect(page.locator(".admin-review-metrics")).to_contain_text("pending")
+
+    overflow = page.evaluate(
+        """() => ({
+            scrollWidth: document.documentElement.scrollWidth,
+            clientWidth: document.documentElement.clientWidth,
+        })"""
+    )
+    assert overflow["scrollWidth"] <= overflow["clientWidth"]

@@ -13,6 +13,10 @@ const collectionTableWrap = document.getElementById("collectionTableWrap");
 const requestTableWrap = document.getElementById("requestTableWrap");
 const requestDetailMsg = document.getElementById("requestDetailMsg");
 const requestDetailWrap = document.getElementById("requestDetailWrap");
+const pendingMetric = document.getElementById("pendingMetric");
+const approvedMetric = document.getElementById("approvedMetric");
+const rejectedMetric = document.getElementById("rejectedMetric");
+const collectionMetric = document.getElementById("collectionMetric");
 
 let selectedRequestId = "";
 
@@ -26,7 +30,7 @@ function renderTextBlock(value) {
   if (!text) {
     return "<p class='status-msg'>-</p>";
   }
-  return `<pre style="white-space:pre-wrap;word-break:break-word;margin:0;">${escapeHtml(text)}</pre>`;
+  return `<pre class="admin-text-block">${escapeHtml(text)}</pre>`;
 }
 
 function renderRequestType(item) {
@@ -63,10 +67,10 @@ function renderRequestDetail(item) {
 
   requestDetailMsg.textContent = `선택된 요청: ${item.id}`;
   requestDetailWrap.innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;">
-      <div>
+    <div class="admin-detail-grid">
+      <div class="admin-detail-block">
         <strong>기본 정보</strong>
-        <div style="margin-top:6px;line-height:1.5;">
+        <div class="admin-detail-list">
           <div>상태: ${escapeHtml(item.status || "-")}</div>
           <div>유형: ${renderRequestType(item)}</div>
           <div>컬렉션: ${escapeHtml(item.collection_key || "-")}</div>
@@ -77,35 +81,35 @@ function renderRequestDetail(item) {
           <div>active_doc_origin: ${escapeHtml(activeOrigin)}</div>
         </div>
       </div>
-      <div>
+      <div class="admin-detail-block">
         <strong>검증</strong>
-        <div style="margin-top:6px;">
+        <div class="admin-detail-list">
           <div>usable: ${item.usable ? "true" : "false"}</div>
-          <div style="margin-top:6px;">reasons:</div>
-          <ul style="margin:6px 0 0 18px;">${reasons}</ul>
-          <div style="margin-top:6px;">warnings:</div>
-          <ul style="margin:6px 0 0 18px;">${warnings}</ul>
+          <div>reasons:</div>
+          <ul>${reasons}</ul>
+          <div>warnings:</div>
+          <ul>${warnings}</ul>
         </div>
       </div>
-      <div>
+      <div class="admin-detail-block">
         <strong>반려 메모</strong>
-        <div style="margin-top:6px;line-height:1.5;">
+        <div class="admin-detail-list">
           <div>reason_code: ${escapeHtml(rejectCode)}</div>
           <div>decision_note: ${escapeHtml(rejectNote)}</div>
         </div>
       </div>
     </div>
-    <div style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;">
-      <div>
+    <div class="admin-preview-grid">
+      <div class="admin-preview-block">
         <strong>요청 미리보기</strong>
-        <div style="margin-top:6px;padding:10px;border:1px solid #dee2e6;border-radius:8px;background:#fff;">
+        <div class="admin-preview-box">
           ${renderTextBlock(item.content_preview || item.content || "-")}
         </div>
       </div>
-      <div>
+      <div class="admin-preview-block">
         <strong>현재 active 문서 미리보기</strong>
-        <div style="margin-top:6px;padding:10px;border:1px solid #dee2e6;border-radius:8px;background:#fff;">
-          <div style="margin-bottom:8px;">active_summary: ${escapeHtml(activeSummary)}</div>
+        <div class="admin-preview-box">
+          <div class="admin-preview-summary">active_summary: ${escapeHtml(activeSummary)}</div>
           ${renderTextBlock(activePreview)}
         </div>
       </div>
@@ -115,10 +119,12 @@ function renderRequestDetail(item) {
 
 function renderCollectionTable(items, defaultKey) {
   if (!Array.isArray(items) || items.length === 0) {
+    collectionMetric.textContent = "0";
     collectionTableWrap.innerHTML = "<p class='status-msg'>컬렉션 정보가 없습니다.</p>";
     return;
   }
 
+  collectionMetric.textContent = String(items.length);
   const rows = items.map((item) => {
     const isDefault = item.key === defaultKey ? " (default)" : "";
     const softPct = Math.round((item.soft_usage_ratio || 0) * 100);
@@ -131,23 +137,23 @@ function renderCollectionTable(items, defaultKey) {
         <td>${escapeHtml(item.key + isDefault)}</td>
         <td>${escapeHtml(item.label)}</td>
         <td>${escapeHtml(item.name)}</td>
-        <td style="text-align:right;">${item.vectors}</td>
-        <td style="text-align:right;">${softPct}% / ${hardPct}%</td>
+        <td class="numeric-cell">${item.vectors}</td>
+        <td class="numeric-cell">${softPct}% / ${hardPct}%</td>
         <td>${escapeHtml(capState)}</td>
       </tr>
     `;
   }).join("");
 
   collectionTableWrap.innerHTML = `
-    <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
+    <table class="admin-data-table admin-collection-table">
       <thead>
         <tr>
-          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">key</th>
-          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">label</th>
-          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">collection</th>
-          <th style="text-align:right;border-bottom:1px solid #dee2e6;padding:8px;">vectors</th>
-          <th style="text-align:right;border-bottom:1px solid #dee2e6;padding:8px;">cap 사용률</th>
-          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">상태</th>
+          <th>key</th>
+          <th>label</th>
+          <th>collection</th>
+          <th class="numeric-cell">vectors</th>
+          <th class="numeric-cell">cap 사용률</th>
+          <th>상태</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -158,12 +164,19 @@ function renderCollectionTable(items, defaultKey) {
 function requestActionButtons(item) {
   if (item.status !== "pending") return "-";
   return `
-    <button class="secondary-btn req-approve-btn" data-id="${item.id}" style="padding:4px 10px;">승인</button>
-    <button class="secondary-btn req-reject-btn" data-id="${item.id}" style="padding:4px 10px;">반려</button>
+    <button class="secondary-btn req-approve-btn admin-action-btn" data-id="${item.id}">승인</button>
+    <button class="secondary-btn req-reject-btn admin-action-btn" data-id="${item.id}">반려</button>
   `;
 }
 
 function renderRequestTable(items, counts) {
+  const pending = counts?.pending ?? 0;
+  const approved = counts?.approved ?? 0;
+  const rejected = counts?.rejected ?? 0;
+  pendingMetric.textContent = String(pending);
+  approvedMetric.textContent = String(approved);
+  rejectedMetric.textContent = String(rejected);
+
   if (!Array.isArray(items) || items.length === 0) {
     requestTableWrap.innerHTML = "<p class='status-msg'>요청 데이터가 없습니다.</p>";
     renderRequestDetail(null);
@@ -178,14 +191,16 @@ function renderRequestTable(items, counts) {
     const rejectedReason = item.rejected_reason || "-";
     const managedDoc = item.managed_doc || {};
     const managedVersion = managedDoc.version_id ? managedDoc.version_id.slice(0, 8) : "-";
-    const rowStyle = item.request_type === "update" ? "background:rgba(255,193,7,0.08);" : "";
-    const selectedStyle = item.id === selectedRequestId ? "box-shadow:inset 0 0 0 2px #2f6fed;" : "";
+    const rowClass = [
+      item.request_type === "update" ? "admin-row-update" : "",
+      item.id === selectedRequestId ? "is-selected" : "",
+    ].filter(Boolean).join(" ");
     const activeDoc = item.active_doc || {};
     const activeDocText = item.active_doc_exists && activeDoc.exists
       ? `${activeDoc.origin || "-"} / ${activeDoc.source_name || "-"}`
       : "없음";
     return `
-      <tr data-request-id="${item.id}" style="cursor:pointer;${rowStyle}${selectedStyle}">
+      <tr data-request-id="${item.id}" class="${rowClass}">
         <td>${escapeHtml(item.id)}</td>
         <td>${escapeHtml(item.source_name || "-")}</td>
         <td>${escapeHtml(item.doc_key || "-")}</td>
@@ -201,36 +216,33 @@ function renderRequestTable(items, counts) {
         <td>${escapeHtml(managedVersion)}</td>
         <td>${escapeHtml(rejectedReason)}</td>
         <td>${escapeHtml(reasons)}</td>
-        <td style="display:flex;gap:6px;">${requestActionButtons(item)}</td>
+        <td><div class="admin-action-row">${requestActionButtons(item)}</div></td>
       </tr>
     `;
   }).join("");
 
-  const pending = counts?.pending ?? 0;
-  const approved = counts?.approved ?? 0;
-  const rejected = counts?.rejected ?? 0;
   requestMsg.textContent = `요청 집계: pending=${pending}, approved=${approved}, rejected=${rejected}`;
 
   requestTableWrap.innerHTML = `
-    <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+    <table class="admin-data-table admin-request-table">
       <thead>
         <tr>
-          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">id</th>
-          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">source</th>
-          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">doc_key</th>
-          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">type</th>
-          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">active_doc</th>
-          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">collection</th>
-          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">status</th>
-          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">usable</th>
-          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">change_summary</th>
-          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">reject_code</th>
-          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">created_at</th>
-          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">updated_at</th>
-          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">managed_version</th>
-          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">rejected_reason</th>
-          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">validation_reasons</th>
-          <th style="text-align:left;border-bottom:1px solid #dee2e6;padding:8px;">actions</th>
+          <th>id</th>
+          <th>source</th>
+          <th>doc_key</th>
+          <th>type</th>
+          <th>active_doc</th>
+          <th>collection</th>
+          <th>status</th>
+          <th>usable</th>
+          <th>change_summary</th>
+          <th>reject_code</th>
+          <th>created_at</th>
+          <th>updated_at</th>
+          <th>managed_version</th>
+          <th>rejected_reason</th>
+          <th>validation_reasons</th>
+          <th>actions</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>

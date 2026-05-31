@@ -97,8 +97,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-150`
-- current_active_title: `Admin Quiet Lab UX extension`
+- current_active_id: `LOOP-151`
+- current_active_title: `App UX second-pass polish after Research Studio`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -121,21 +121,33 @@
 - implementation: `scripts/roadmap_harness.py report` 명령을 추가해 현재 위치, 최근 완료, 남은 것, 막힌 것, 다음 실행, queue/worktree 상태를 사람용 형식으로 출력한다.
 - machine output: `./.venv/bin/python scripts/roadmap_harness.py report --json`은 기존 harness report에 `progress_summary`를 추가한다.
 - operating rule: 사용자가 진행 상태/남은 일/다음 작업을 물으면 `report` 명령을 먼저 실행하고 그 형식으로 답한다.
-- current active remains: `LOOP-150 Admin Quiet Lab UX extension`
+- active at snapshot creation: `LOOP-150 Admin Quiet Lab UX extension`
 - verification: TDD RED confirmed on missing `format_progress_report`; `./.venv/bin/python -m pytest -q tests/test_roadmap_harness.py tests/test_session_closeout.py -> 17 passed`; `py_compile scripts/roadmap_harness.py -> pass`; `./.venv/bin/python scripts/roadmap_harness.py report -> ready`; `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`; `git diff --check -> pass`
+
+## 2026-05-31 Admin Quiet Lab UX Snapshot
+
+- 완료 루프: `LOOP-150 Admin Quiet Lab UX extension`
+- implementation: `web/admin.html`, `web/styles.css`, `web/js/admin_page.js`, `tests/e2e/test_web_flow_playwright.py`
+- admin layout: `admin-console-shell` + `admin-hero` + `admin-review-metrics` + `admin-workspace-grid`로 검토 목적, pending/approved/rejected/collections 지표, 필터, 컬렉션, 요청 목록, 선택 상세를 한 화면에 배치했다.
+- retained behavior: 관리자 코드 입력, 상태/반려 사유/검색 필터, upload request 목록 조회, pending 요청 승인/반려 버튼, 선택 요청 상세 표시 흐름은 유지한다.
+- mobile policy: 테이블은 내부 horizontal scroll 영역에 가두고 페이지 자체는 390px viewport에서 overflow가 없어야 한다.
+- verification: TDD RED confirmed on missing `.admin-console-shell`; `node --check web/js/admin_page.js -> pass`; targeted admin e2e 2 passed; full web e2e 7 passed; desktop 1394x625/mobile 390x844 screenshots show no horizontal overflow and no browser console/page errors; `git diff --check -> pass`; `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`.
+- screenshots: `/tmp/trunk-rag-admin-desktop.png`, `/tmp/trunk-rag-admin-mobile.png`
+- next: `LOOP-151 App UX second-pass polish after Research Studio`
 
 ## 2026-05-30 Modern UX Remaining Scope Snapshot
 
 - 제품 전체 UX 상태: `in_progress`
 - `/app` UX 상태: `1차 완료`; Research Studio + Advanced Rail 구현/검증 완료, 추후 실제 사용 피드백 기반 2차 polish 가능
 - `/intro` UX 상태: `1차 완료`; Quiet Lab 진입 화면과 UX 진행도 matrix 구현/검증 완료
-- `/admin` UX 상태: `미진행`; 다음 active `LOOP-150 Admin Quiet Lab UX extension`
-- `/app` 2차 polish 상태: `미진행 후보`; 후속 pending `LOOP-151 App UX second-pass polish after Research Studio`
+- `/admin` UX 상태: `1차 완료`; Quiet Lab 운영 콘솔 구현/검증 완료
+- `/app` 2차 polish 상태: `미진행`; 다음 active `LOOP-151 App UX second-pass polish after Research Studio`
 - 제품 UX 완료 matrix 상태: `미진행 후보`; 후속 pending `LOOP-152 Product UX completion status matrix`
-- 기본 추천 순서: `/admin` 현대화 -> `/app` 실제 사용성 2차 polish -> 전체 UX 완료 상태 matrix 정리
+- 기본 추천 순서: `/app` 실제 사용성 2차 polish -> 전체 UX 완료 상태 matrix 정리
 - 완료 loop: `LOOP-149 Intro Quiet Lab UX extension`
-- 현재 active: `LOOP-150 Admin Quiet Lab UX extension`
-- next-session rule: `진행` 요청 시 단순 대기하지 말고 `LOOP-150`부터 구현 계획/실행으로 들어간다.
+- 완료 loop: `LOOP-150 Admin Quiet Lab UX extension`
+- 현재 active: `LOOP-151 App UX second-pass polish after Research Studio`
+- next-session rule: `진행` 요청 시 단순 대기하지 말고 `LOOP-151`부터 구현 계획/실행으로 들어간다.
 - verification: targeted intro e2e 2 passed; `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py -> 6 passed`; Python Playwright visual check desktop/mobile no overflow, shell/grid visible, console/page errors 없음; `git diff --check -> pass`; `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`
 
 ## 2026-05-30 Intro Quiet Lab UX Snapshot
@@ -156,7 +168,8 @@
 - 완료 루프: `LOOP-147 Modern /app Research Studio UI implementation`
 - 완료 루프: `LOOP-148 Modern UX remaining scope proposal`
 - 완료 루프: `LOOP-149 Intro Quiet Lab UX extension`
-- 현재 active: `LOOP-150 Admin Quiet Lab UX extension`
+- 완료 루프: `LOOP-150 Admin Quiet Lab UX extension`
+- 현재 active: `LOOP-151 App UX second-pass polish after Research Studio`
 - execution mode: 사용자가 `1`을 선택해 `subagent-driven-development` 방식으로 진행한다.
 - plan: `docs/superpowers/plans/2026-05-28-trunk-rag-modern-ui-implementation.md`
 - design spec: `docs/superpowers/specs/2026-05-28-trunk-rag-modern-ui-design.md`

@@ -264,8 +264,8 @@
 | LOOP-147 | done | Modern /app Research Studio UI implementation | `node --check web/js/app_page.js` + `./.venv/bin/python -m pytest -q tests/api/test_system_api.py tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/session_closeout.py` |
 | LOOP-148 | done | Modern UX remaining scope proposal | `./.venv/bin/python scripts/session_closeout.py` |
 | LOOP-149 | done | Intro Quiet Lab UX extension | `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/session_closeout.py` |
-| LOOP-150 | active | Admin Quiet Lab UX extension | `node --check web/js/admin_page.js` + `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` |
-| LOOP-151 | pending | App UX second-pass polish after Research Studio | `node --check web/js/app_page.js` + `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` |
+| LOOP-150 | done | Admin Quiet Lab UX extension | `node --check web/js/admin_page.js` + `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` |
+| LOOP-151 | active | App UX second-pass polish after Research Studio | `node --check web/js/app_page.js` + `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` |
 | LOOP-152 | pending | Product UX completion status matrix | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
@@ -4100,7 +4100,7 @@ closeout 메모 (2026-05-30):
 - screenshots: `/tmp/trunk-rag-intro-desktop.png`, `/tmp/trunk-rag-intro-mobile.png`
 - 다음 active는 `LOOP-150 Admin Quiet Lab UX extension`로 둔다.
 
-## 현재 Active Loop (LOOP-150)
+## 완료 Loop (LOOP-150)
 
 목표:
 - `/admin`을 `/app`과 `/intro`의 Quiet Lab 시각 언어와 맞춰 관리자 검토/승인 UX를 현대화한다.
@@ -4125,6 +4125,36 @@ closeout 메모 (2026-05-30):
 - `scripts/roadmap_harness.py report`는 현재 위치, 최근 완료, 남은 것, 막힌 것, 다음 실행, queue/worktree 상태를 한 번에 출력한다.
 - 이 보강은 `LOOP-150`의 `/admin` 구현 범위 자체를 변경하지 않는다.
 - verification: TDD RED confirmed on missing `format_progress_report`; `./.venv/bin/python -m pytest -q tests/test_roadmap_harness.py tests/test_session_closeout.py -> 17 passed`; `py_compile scripts/roadmap_harness.py -> pass`; `./.venv/bin/python scripts/roadmap_harness.py report -> ready`; `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`; `git diff --check -> pass`
+
+closeout 메모 (2026-05-31):
+- `/admin`을 `admin-console-shell` 기반의 Quiet Lab 운영 콘솔로 재구성했다.
+- 첫 화면은 관리자 검토 목적, pending/approved/rejected/collections 지표, 인증/필터, 컬렉션 현황, 요청 목록, 선택 요청 상세를 분리해서 보여준다.
+- 기존 관리자 인증 코드, 상태/사유/검색 필터, 요청 목록, 승인/반려 버튼, 상세 표시 동작은 유지했다.
+- 동적 테이블과 상세 렌더링의 inline style을 새 admin 전용 CSS 클래스로 이동하고 모바일 overflow 방어를 추가했다.
+- TDD RED: 신규 `/admin` 구조 e2e 2건이 `.admin-console-shell` 부재로 실패함을 확인했다.
+- verification: `node --check web/js/admin_page.js -> pass`; targeted admin e2e 2 passed; `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py -> 7 passed`; Python Playwright visual check desktop 1394x625/mobile 390x844 모두 overflow 없음, shell/metrics 표시, console/page errors 없음; `git diff --check -> pass`; `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`
+- screenshots: `/tmp/trunk-rag-admin-desktop.png`, `/tmp/trunk-rag-admin-mobile.png`
+- 다음 active는 `LOOP-151 App UX second-pass polish after Research Studio`로 둔다.
+
+## 현재 Active Loop (LOOP-151)
+
+목표:
+- `/app` Research Studio 1차 구현 이후 실제 사용 흐름 기준으로 밀도, 상태 표시, 세부 상호작용을 보정한다.
+
+범위:
+- 포함: `web/index.html`, `web/styles.css`, `web/js/app_page.js`, `/intro -> /app` 및 `/app` e2e 회귀
+- 제외: `/intro`/`/admin` 재설계 재개, backend/API contract 변경, GraphRAG/desktop packaging 재개
+
+완료 기준:
+- 기본 Balanced 사용자 흐름에서 질의, 문서 조회, 업로드 요청, Advanced Rail 접근이 더 명확하다.
+- `/app` 1차 구현의 Research Studio 구조를 유지하면서 실제 사용성 문제를 좁게 보정한다.
+- 모바일/데스크톱에서 overflow와 텍스트 겹침이 없다.
+- `TODO.md`/`NEXT_SESSION_PLAN.md`가 `/app` 2차 polish 이후 전체 UX 완료 matrix 정리 항목을 명확히 가리킨다.
+
+검증:
+- `node --check web/js/app_page.js`
+- `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py`
+- `./.venv/bin/python scripts/session_closeout.py`
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)
 

@@ -10,67 +10,112 @@
 </head>
 <body class="light-theme">
   <div class="app-container">
-    <main class="main-content">
-      <header class="main-header" style="margin-bottom:16px;">
-        <div class="header-left">
-          <div class="brand-lockup page-brand">
-            <img class="brand-mark small" src="/assets/trunk-rag-mark.svg" alt="" aria-hidden="true">
-            <div>
-              <p class="brand-kicker">Operator console</p>
-              <h1>Trunk RAG Admin</h1>
+    <main class="main-content admin-main">
+      <section class="admin-console-shell" aria-labelledby="adminTitle">
+        <header class="admin-hero">
+          <div>
+            <div class="brand-lockup page-brand">
+              <img class="brand-mark small" src="/assets/trunk-rag-mark.svg" alt="" aria-hidden="true">
+              <div>
+                <p class="brand-kicker">Operator console</p>
+                <h1>Trunk RAG Admin</h1>
+              </div>
             </div>
+            <p class="intro-section-kicker">관리자 검토</p>
+            <h2 id="adminTitle">업로드 요청을 확인하고 승인 흐름을 정리합니다.</h2>
+            <p class="status-msg">
+              검토 대기 요청, 컬렉션 상태, 선택 요청 상세를 한 화면에서 확인합니다. 승인/반려 액션은 pending 요청에만 노출합니다.
+            </p>
           </div>
-        </div>
-        <div class="header-actions">
-          <button id="refreshBtn" class="secondary-btn">새로고침</button>
-          <button id="goUserBtn" class="primary-btn">사용자 화면</button>
-        </div>
-      </header>
+          <div class="admin-hero-actions">
+            <button id="refreshBtn" class="secondary-btn">새로고침</button>
+            <button id="goUserBtn" class="primary-btn">사용자 화면</button>
+          </div>
+        </header>
 
-      <section class="card" style="margin-bottom:12px;">
-        <h3>관리자 인증</h3>
-        <div class="input-row" style="margin-top:10px;">
-          <div class="input-group">
-            <label for="adminCode">Admin Code</label>
-            <input id="adminCode" type="password" placeholder="관리자 인증코드">
+        <section class="admin-review-metrics" aria-label="업로드 요청 집계">
+          <div class="admin-metric active">
+            <span>pending</span>
+            <strong id="pendingMetric">-</strong>
+            <p>검토 대기</p>
           </div>
-          <div class="input-group">
-            <label for="statusFilter">요청 상태 필터</label>
-            <select id="statusFilter">
-              <option value="">전체</option>
-              <option value="pending" selected>pending</option>
-              <option value="approved">approved</option>
-              <option value="rejected">rejected</option>
-            </select>
+          <div class="admin-metric">
+            <span>approved</span>
+            <strong id="approvedMetric">-</strong>
+            <p>승인 완료</p>
           </div>
-        </div>
-        <div class="input-row" style="margin-top:8px;">
-          <div class="input-group">
-            <label for="reasonFilter">반려 사유 검색</label>
-            <input id="reasonFilter" type="text" placeholder="예: 형식 미흡">
+          <div class="admin-metric">
+            <span>rejected</span>
+            <strong id="rejectedMetric">-</strong>
+            <p>반려 완료</p>
           </div>
-          <div class="input-group">
-            <label for="searchFilter">요청 이력 검색</label>
-            <input id="searchFilter" type="text" placeholder="id/source/status">
+          <div class="admin-metric">
+            <span>collections</span>
+            <strong id="collectionMetric">-</strong>
+            <p>운영 컬렉션</p>
           </div>
-        </div>
-        <p id="adminMsg" class="status-msg"></p>
-      </section>
+        </section>
 
-      <section class="card" style="margin-bottom:12px;">
-        <h3>컬렉션 현황</h3>
-        <p id="collectionMsg" class="status-msg" style="margin-top:8px;">로딩 중...</p>
-        <div id="collectionTableWrap" style="margin-top:12px;overflow:auto;"></div>
-      </section>
+        <div class="admin-workspace-grid">
+          <section class="admin-panel admin-filter-panel">
+            <div class="admin-panel-heading">
+              <p class="intro-section-kicker">검토 조건</p>
+              <h3>관리자 인증과 요청 필터</h3>
+            </div>
+            <div class="input-row">
+              <div class="input-group">
+                <label for="adminCode">Admin Code</label>
+                <input id="adminCode" type="password" placeholder="관리자 인증코드">
+              </div>
+              <div class="input-group">
+                <label for="statusFilter">요청 상태 필터</label>
+                <select id="statusFilter">
+                  <option value="">전체</option>
+                  <option value="pending" selected>pending</option>
+                  <option value="approved">approved</option>
+                  <option value="rejected">rejected</option>
+                </select>
+              </div>
+            </div>
+            <div class="input-row">
+              <div class="input-group">
+                <label for="reasonFilter">반려 사유 검색</label>
+                <input id="reasonFilter" type="text" placeholder="예: 형식 미흡">
+              </div>
+              <div class="input-group">
+                <label for="searchFilter">요청 이력 검색</label>
+                <input id="searchFilter" type="text" placeholder="id/source/status">
+              </div>
+            </div>
+            <p id="adminMsg" class="status-msg"></p>
+          </section>
 
-      <section class="card">
-        <h3>업로드 요청 승인 워크플로우</h3>
-        <p id="requestMsg" class="status-msg" style="margin-top:8px;">요청 목록 로딩 중...</p>
-        <div id="requestTableWrap" style="margin-top:12px;overflow:auto;"></div>
-        <section class="card" style="margin-top:16px;background:rgba(255,255,255,0.6);">
-          <h4 style="margin-bottom:8px;">요청 상세</h4>
+          <section class="admin-panel admin-collections-panel">
+            <div class="admin-panel-heading">
+              <p class="intro-section-kicker">컬렉션</p>
+              <h3>컬렉션 현황</h3>
+            </div>
+            <p id="collectionMsg" class="status-msg">로딩 중...</p>
+            <div id="collectionTableWrap" class="admin-table-wrap"></div>
+          </section>
+        </div>
+
+        <section class="admin-panel admin-requests-panel">
+          <div class="admin-panel-heading">
+            <p class="intro-section-kicker">승인 워크플로우</p>
+            <h3>업로드 요청 목록</h3>
+          </div>
+          <p id="requestMsg" class="status-msg">요청 목록 로딩 중...</p>
+          <div id="requestTableWrap" class="admin-table-wrap admin-request-table-wrap"></div>
+        </section>
+
+        <section class="admin-panel admin-detail-panel">
+          <div class="admin-panel-heading">
+            <p class="intro-section-kicker">선택 요청</p>
+            <h3>요청 상세</h3>
+          </div>
           <p id="requestDetailMsg" class="status-msg">요청을 선택하면 상세가 표시됩니다.</p>
-          <div id="requestDetailWrap" style="margin-top:10px;"></div>
+          <div id="requestDetailWrap" class="admin-detail-wrap"></div>
         </section>
       </section>
     </main>
