@@ -157,6 +157,11 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     expect(page.locator("#advancedSettings")).to_be_hidden()
     expect(page.locator("input[name='qualityMode'][value='balanced']")).to_be_checked()
     expect(page.locator("#qualityModeHint")).to_contain_text("e2b")
+    expect(page.locator("#queryContextStrip")).to_be_visible()
+    expect(page.locator("#queryContextStrip")).to_contain_text("현재 선택")
+    expect(page.locator("#queryContextStrip")).to_contain_text("Balanced")
+    expect(page.locator("#queryContextStrip")).to_contain_text("all")
+    expect(page.locator("#queryContextStrip")).to_contain_text("질문 입력 후 Send")
     page.click("#advancedModeToggle")
     expect(page.locator("#advancedRail")).to_have_attribute("aria-hidden", "false")
     expect(page.locator("#advancedRail")).to_be_visible()
@@ -185,6 +190,7 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     expect(page.locator("#collection2 option[value='ge']")).to_have_count(1, timeout=10000)
     page.select_option("#collection", "fr")
     page.select_option("#collection2", "ge")
+    expect(page.locator("#queryContextStrip")).to_contain_text("fr + ge")
     expect(page.locator("#uploadDefaultsSummary")).to_contain_text("country=france")
     expect(page.locator("#uploadDefaultsSummary")).to_contain_text("doc_type=country")
 
@@ -344,8 +350,10 @@ def test_intro_app_flow(page: Page, live_server_url: str):
     assert query_payload["body"]["quality_stage"] == "fast"
     assert query_payload["body"]["llm_provider"] == "ollama"
     assert query_payload["body"]["llm_model"] == "gemma4:e2b"
+    expect(page.locator("#queryContextStrip")).to_contain_text("다음 질문 입력 가능")
 
     page.locator(".segmented-option").filter(has_text="Quality").click()
+    expect(page.locator("#queryContextStrip")).to_contain_text("Quality")
     page.fill("#userInput", "정밀 관계 응답 테스트")
     page.click("#sendBtn")
     expect(page.locator(".chat-message.bot").last).to_contain_text("모킹된 정밀 질의 응답", timeout=10000)
@@ -500,6 +508,10 @@ def test_app_modern_layout_mobile_has_no_horizontal_overflow(page: Page, live_se
     expect(page.locator(".research-studio-shell")).to_be_visible(timeout=10000)
     page.click("#advancedModeToggle")
     expect(page.locator("#advancedRail")).to_be_visible()
+
+    query_context_box = page.locator("#queryContextStrip").bounding_box()
+    assert query_context_box is not None
+    assert query_context_box["y"] < 844
 
     overflow = page.evaluate(
         """() => ({

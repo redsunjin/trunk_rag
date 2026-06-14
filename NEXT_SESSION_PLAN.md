@@ -1,4 +1,4 @@
-# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-05-31 기준)
+# doc_rag 다음 세션 계획 / 세션 핸드오버 (2026-06-14 기준)
 
 기준 문서:
 - `SPEC.md`
@@ -97,8 +97,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-151`
-- current_active_title: `App UX second-pass polish after Research Studio`
+- current_active_id: `LOOP-152`
+- current_active_title: `Product UX completion status matrix`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -114,6 +114,20 @@
 - session_closeout_command: `./.venv/bin/python scripts/session_closeout.py`
 - wip_closeout_command: `./.venv/bin/python scripts/session_closeout.py --allow-dirty`
 - legacy_gate_note: 역사 메모의 `ops-baseline` 표기는 `generic-baseline`/`sample-pack-baseline` 분리 이전 명칭이며, 현재 본체 기본 gate는 `generic-baseline`이다.
+
+## 2026-06-14 App UX Second-Pass Polish Snapshot
+
+- 완료 loop: `LOOP-151 App UX second-pass polish after Research Studio`
+- implementation: `web/index.html`, `web/styles.css`, `web/js/app_page.js`, `tests/e2e/test_web_flow_playwright.py`
+- app polish: `/app` Research Studio 기본 질의 영역에 `query-context-strip`을 추가해 현재 mode, route, 다음 행동을 왼쪽 설정이나 Advanced Rail을 열지 않아도 확인할 수 있게 했다.
+- interaction: collection 변경은 `all` 또는 `fr + ge` 같은 route 요약으로 즉시 반영되고, mode 변경은 `Balanced`/`Quality`/`Semantic` 라벨로 반영된다. 질문 전송 중에는 `답변 생성 중`, 완료 후에는 `다음 질문 입력 가능`으로 바뀐다.
+- mobile policy: 390x844에서 chat preview 높이를 낮춰 query context strip이 첫 viewport 안에 들어오게 했고 horizontal overflow는 없어야 한다.
+- TDD evidence: `#queryContextStrip` 부재로 `test_intro_app_flow`가 실패함을 확인했고, 모바일 strip 위치가 `y=896.015625`로 첫 viewport 밖이라 `test_app_modern_layout_mobile_has_no_horizontal_overflow`가 실패함을 확인했다.
+- browser note: Browser plugin 검증은 `Browser is not available: iab`로 사용할 수 없어, Python Playwright render check로 대체했다.
+- verification: `node --check web/js/app_page.js -> pass`; `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py -> 7 passed`; Playwright render check desktop 1394x625/mobile 390x844 모두 overflow 없음, console/page errors 없음.
+- screenshots: `/tmp/trunk-rag-loop151-desktop.png`, `/tmp/trunk-rag-loop151-mobile.png`
+- product UX state: `/app` 2차 polish 완료, `/intro` 1차 완료, `/admin` 1차 완료. 전체 제품 UX 상태 matrix는 다음 active `LOOP-152`에서 정리한다.
+- next: `LOOP-152 Product UX completion status matrix`
 
 ## 2026-05-31 Harness Human Status Report Snapshot
 

@@ -265,8 +265,8 @@
 | LOOP-148 | done | Modern UX remaining scope proposal | `./.venv/bin/python scripts/session_closeout.py` |
 | LOOP-149 | done | Intro Quiet Lab UX extension | `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/session_closeout.py` |
 | LOOP-150 | done | Admin Quiet Lab UX extension | `node --check web/js/admin_page.js` + `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` |
-| LOOP-151 | active | App UX second-pass polish after Research Studio | `node --check web/js/app_page.js` + `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` |
-| LOOP-152 | pending | Product UX completion status matrix | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-151 | done | App UX second-pass polish after Research Studio | `node --check web/js/app_page.js` + `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` |
+| LOOP-152 | active | Product UX completion status matrix | `./.venv/bin/python scripts/roadmap_harness.py validate` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -4136,7 +4136,7 @@ closeout 메모 (2026-05-31):
 - screenshots: `/tmp/trunk-rag-admin-desktop.png`, `/tmp/trunk-rag-admin-mobile.png`
 - 다음 active는 `LOOP-151 App UX second-pass polish after Research Studio`로 둔다.
 
-## 현재 Active Loop (LOOP-151)
+## 완료 Loop (LOOP-151)
 
 목표:
 - `/app` Research Studio 1차 구현 이후 실제 사용 흐름 기준으로 밀도, 상태 표시, 세부 상호작용을 보정한다.
@@ -4154,6 +4154,35 @@ closeout 메모 (2026-05-31):
 검증:
 - `node --check web/js/app_page.js`
 - `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py`
+- `./.venv/bin/python scripts/session_closeout.py`
+
+closeout 메모 (2026-06-14):
+- `/app` Research Studio의 기본 질의 영역에 `query-context-strip`을 추가해 현재 mode, route, 다음 행동을 왼쪽 설정이나 Advanced Rail을 열지 않아도 확인할 수 있게 했다.
+- collection 선택 변경은 `all` 또는 `fr + ge` 같은 route 요약으로 즉시 반영되고, mode 변경은 `Balanced`/`Quality`/`Semantic` 라벨로 반영된다.
+- 질문 전송 중에는 다음 행동이 `답변 생성 중`으로 바뀌고, 완료 후 `다음 질문 입력 가능`으로 돌아온다.
+- 모바일에서는 chat preview 높이를 낮춰 query context strip이 390x844 첫 viewport 안에 들어오게 했다.
+- TDD RED: `#queryContextStrip` 부재로 `test_intro_app_flow`가 실패함을 확인했고, 모바일 strip 위치가 `y=896.015625`로 첫 viewport 밖이라 `test_app_modern_layout_mobile_has_no_horizontal_overflow`가 실패함을 확인했다.
+- Browser plugin 검증은 `Browser is not available: iab`로 사용할 수 없어, Python Playwright render check로 대체했다.
+- verification: `node --check web/js/app_page.js -> pass`; `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py -> 7 passed`; Playwright render check desktop 1394x625/mobile 390x844 모두 overflow 없음, console/page errors 없음.
+- screenshots: `/tmp/trunk-rag-loop151-desktop.png`, `/tmp/trunk-rag-loop151-mobile.png`
+- 다음 active는 `LOOP-152 Product UX completion status matrix`로 둔다.
+
+## 현재 Active Loop (LOOP-152)
+
+목표:
+- `/app`, `/intro`, `/admin`의 현대화 완료 상태와 남은 제품 UX gap을 한눈에 볼 수 있는 matrix로 정리한다.
+
+범위:
+- 포함: `TODO.md`, `NEXT_SESSION_PLAN.md`, 필요 시 `README.md`/`SPEC.md`의 UX 완료 상태 요약
+- 제외: 새 UI 구현, backend/API contract 변경, GraphRAG/desktop packaging 재개
+
+완료 기준:
+- 제품 UX 상태 matrix가 `/app`, `/intro`, `/admin`, 운영/복구, 관리자 승인 흐름의 완료/남은 범위를 명확히 구분한다.
+- 다음 트랙이 구현인지 문서/릴리즈 정리인지 판단할 수 있어야 한다.
+- `TODO.md`/`NEXT_SESSION_PLAN.md`가 matrix 완료 후 다음 실행 상태를 명확히 가리킨다.
+
+검증:
+- `./.venv/bin/python scripts/roadmap_harness.py validate`
 - `./.venv/bin/python scripts/session_closeout.py`
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)

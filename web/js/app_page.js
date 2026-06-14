@@ -22,6 +22,9 @@ const collectionHint = document.getElementById("collectionHint");
 const userInput = document.getElementById("userInput");
 const qualityModeInputs = Array.from(document.querySelectorAll("input[name='qualityMode']"));
 const qualityModeHint = document.getElementById("qualityModeHint");
+const queryContextMode = document.getElementById("queryContextMode");
+const queryContextCollections = document.getElementById("queryContextCollections");
+const queryContextAction = document.getElementById("queryContextAction");
 const advancedModeToggle = document.getElementById("advancedModeToggle");
 const advancedRail = document.getElementById("advancedRail");
 const advancedRailClose = document.getElementById("advancedRailClose");
@@ -62,6 +65,7 @@ let uploadMetadataOpen = false;
 const ADVANCED_RAIL_STORAGE_KEY = "trunkRagAdvancedRailOpen";
 let advancedRailOpen = localStorage.getItem(ADVANCED_RAIL_STORAGE_KEY) === "1";
 let questionInFlight = false;
+let queryContextActionText = "질문 입력 후 Send";
 
 const LAYERED_RAG_TIMEOUT_SECONDS = 60;
 const QUALITY_RAG_TIMEOUT_SECONDS = 120;
@@ -145,10 +149,39 @@ function getQualityMode() {
   return document.querySelector("input[name='qualityMode']:checked")?.value || "balanced";
 }
 
+function formatQualityModeLabel(mode) {
+  if (mode === "semantic") return "Semantic";
+  if (mode === "quality") return "Quality";
+  return "Balanced";
+}
+
+function formatCollectionRouteLabel() {
+  const selectedKeys = getSelectedCollectionKeys();
+  return selectedKeys.length ? selectedKeys.join(" + ") : "all";
+}
+
+function renderQueryContext() {
+  if (queryContextMode) {
+    queryContextMode.textContent = formatQualityModeLabel(getQualityMode());
+  }
+  if (queryContextCollections) {
+    queryContextCollections.textContent = formatCollectionRouteLabel();
+  }
+  if (queryContextAction) {
+    queryContextAction.textContent = queryContextActionText;
+  }
+}
+
+function setQueryContextAction(text) {
+  queryContextActionText = text;
+  renderQueryContext();
+}
+
 function updateQualityModeHint() {
   if (qualityModeHint) {
     qualityModeHint.textContent = modeHints[getQualityMode()] || modeHints.balanced;
   }
+  renderQueryContext();
   renderAdvancedRailMode();
 }
 
@@ -160,6 +193,7 @@ function renderAdvancedRailMode() {
 function renderAdvancedRailCollections() {
   if (!advancedRailCollections) return;
   advancedRailCollections.textContent = `collections=${getSelectedCollectionKeys().join(",") || "all"}`;
+  renderQueryContext();
 }
 
 function renderAdvancedRailRuntime(data = lastHealth) {
@@ -1003,6 +1037,7 @@ async function sendQuestion() {
 
   questionInFlight = true;
   sendBtn.disabled = true;
+  setQueryContextAction("답변 생성 중");
   appendMessage("user", question);
   const selectedCollections = getSelectedCollectionKeys();
   const qualityMode = getQualityMode();
@@ -1053,6 +1088,7 @@ async function sendQuestion() {
     userInput.value = "";
     questionInFlight = false;
     sendBtn.disabled = false;
+    setQueryContextAction("다음 질문 입력 가능");
   }
 }
 
@@ -1218,6 +1254,7 @@ setAdvancedSettingsOpen(false);
 setAdvancedRailOpen(advancedRailOpen);
 refreshAdvancedRail();
 updateQualityModeHint();
+renderQueryContext();
 healthCheck();
 loadOpsBaselineStatus();
 loadCollections();
