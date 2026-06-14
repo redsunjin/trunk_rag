@@ -266,7 +266,8 @@
 | LOOP-149 | done | Intro Quiet Lab UX extension | `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` + `./.venv/bin/python scripts/session_closeout.py` |
 | LOOP-150 | done | Admin Quiet Lab UX extension | `node --check web/js/admin_page.js` + `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` |
 | LOOP-151 | done | App UX second-pass polish after Research Studio | `node --check web/js/app_page.js` + `./.venv/bin/python -m pytest -q tests/e2e/test_web_flow_playwright.py` |
-| LOOP-152 | active | Product UX completion status matrix | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-152 | done | Product UX completion status matrix | `./.venv/bin/python scripts/roadmap_harness.py validate` |
+| LOOP-153 | active | Await next-track after product UX matrix | `./.venv/bin/python scripts/session_closeout.py` |
 | LOOP-002 | done | 단일 부트스트랩/설치 경로 고정 | `./.venv/bin/python -m pytest -q tests/test_runtime_preflight.py tests/api/test_system_api.py` |
 | LOOP-003 | done | 첫 실행 성공 경로와 복구 가이드 강화 | `./.venv/bin/python -m pytest -q tests/api/test_query_api.py tests/test_runtime_service.py` |
 | LOOP-004 | done | 릴리즈 문서/운영 체크리스트 정리 | `./.venv/bin/python scripts/roadmap_harness.py validate` |
@@ -4167,7 +4168,7 @@ closeout 메모 (2026-06-14):
 - screenshots: `/tmp/trunk-rag-loop151-desktop.png`, `/tmp/trunk-rag-loop151-mobile.png`
 - 다음 active는 `LOOP-152 Product UX completion status matrix`로 둔다.
 
-## 현재 Active Loop (LOOP-152)
+## 완료 Loop (LOOP-152)
 
 목표:
 - `/app`, `/intro`, `/admin`의 현대화 완료 상태와 남은 제품 UX gap을 한눈에 볼 수 있는 matrix로 정리한다.
@@ -4183,6 +4184,37 @@ closeout 메모 (2026-06-14):
 
 검증:
 - `./.venv/bin/python scripts/roadmap_harness.py validate`
+- `./.venv/bin/python scripts/session_closeout.py`
+
+closeout 메모 (2026-06-14):
+- 제품 UX 현대화 범위를 `/app`, `/intro`, `/admin`, 운영/복구, 업로드/승인, responsive 기준으로 matrix화했다.
+- 전체 판단은 `MVP web UI UX 1차 완료 + /app 2차 polish 완료`다. 제출/릴리즈 전에는 실제 사용자 문서 기반 smoke와 카피/밀도 최종 리뷰가 남는다.
+
+| Surface | 상태 | 완료 근거 | 남은 gap |
+| --- | --- | --- | --- |
+| `/app` Research Studio | 2차 polish 완료 | Research Studio, Advanced Rail, query context strip, mode/route/action 상태 표시, desktop/mobile overflow 검증 | 실제 사용자 문서와 긴 답변/긴 citation 데이터에서 밀도 재확인 |
+| `/intro` Quiet Lab | 1차 완료 | 현재 상태, 다음 행동, UX 진행도 matrix, 첫 실행/복구 안내 접힘 패널 | 릴리즈 카피 최종 정리 |
+| `/admin` Quiet Lab | 1차 완료 | 관리자 목적, pending/approved/rejected/collections 지표, 필터, 요청 목록, 선택 상세, 승인/반려 동작 유지 | 많은 요청/긴 사유 데이터의 테이블 밀도 재확인 |
+| 운영/복구 안내 | 1차 완료 | `/health`, recovery steps, ops-baseline latest, runtime profile 노출 | live Ollama/user-doc gate를 릴리즈 직전 재측정 |
+| 문서 업로드/승인 흐름 | MVP 완료 | 업로드 요청, pending/approved/rejected 메시지, admin review e2e 유지 | 삭제/비활성화는 MVP 제외 유지 |
+| Responsive/mobile | 1차 완료 | 390x844, 320px sidebar, admin/intro/app overflow 회귀 테스트 | 실제 기기/브라우저 조합 추가 확인 |
+
+- 추천 다음 트랙: release readiness copy sweep, 실제 사용자 문서 기반 end-to-end smoke, 또는 새 제품 기능 트랙 결정.
+- 자동 진행할 pending 항목이 없으므로 다음 active는 `LOOP-153 Await next-track after product UX matrix`로 둔다.
+
+## 현재 Active Loop (LOOP-153)
+
+목표:
+- `LOOP-152` 제품 UX 상태 matrix 완료 이후 자동 진행할 pending 항목이 없으므로 다음 작업 트랙 결정을 대기한다.
+
+범위:
+- 포함: 현재 세션 상태 유지, 다음 우선순위가 정해지면 새 loop로 승격
+- 제외: `LOOP-005` 데스크톱 패키징 blocked 해제, 새 UI 구현, GraphRAG/desktop packaging 재개
+
+완료 기준:
+- 사용자가 다음 트랙을 지정하거나, `TODO.md`/`NEXT_SESSION_PLAN.md`가 새 실행 항목을 active/pending으로 승격한다.
+
+검증:
 - `./.venv/bin/python scripts/session_closeout.py`
 
 ## 현재 우선순위 P0 (쉬운 RAG 운영 게이트, 완료 2026-03-13)

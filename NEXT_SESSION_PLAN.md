@@ -97,8 +97,8 @@
 
 ## Session Loop Harness
 
-- current_active_id: `LOOP-152`
-- current_active_title: `Product UX completion status matrix`
+- current_active_id: `LOOP-153`
+- current_active_title: `Await next-track after product UX matrix`
 - current_version_track: `V1.5`
 - current_harness_mode: `v1_5_agent_ready_loop`
 - session_start_command: `./.venv/bin/python scripts/roadmap_harness.py status`
@@ -114,6 +114,20 @@
 - session_closeout_command: `./.venv/bin/python scripts/session_closeout.py`
 - wip_closeout_command: `./.venv/bin/python scripts/session_closeout.py --allow-dirty`
 - legacy_gate_note: 역사 메모의 `ops-baseline` 표기는 `generic-baseline`/`sample-pack-baseline` 분리 이전 명칭이며, 현재 본체 기본 gate는 `generic-baseline`이다.
+
+## 2026-06-14 Product UX Completion Matrix Snapshot
+
+- 완료 loop: `LOOP-152 Product UX completion status matrix`
+- overall status: `MVP web UI UX 1차 완료 + /app 2차 polish 완료`
+- `/app` Research Studio: `2차 polish 완료`; Research Studio, Advanced Rail, query context strip, mode/route/action 상태 표시, desktop/mobile overflow 검증 완료. 남은 gap은 실제 사용자 문서와 긴 답변/긴 citation 데이터에서 밀도 재확인.
+- `/intro` Quiet Lab: `1차 완료`; 현재 상태, 다음 행동, UX 진행도 matrix, 첫 실행/복구 안내 접힘 패널 구현/검증 완료. 남은 gap은 릴리즈 카피 최종 정리.
+- `/admin` Quiet Lab: `1차 완료`; 관리자 목적, pending/approved/rejected/collections 지표, 필터, 요청 목록, 선택 상세, 승인/반려 동작 유지 검증 완료. 남은 gap은 많은 요청/긴 사유 데이터의 테이블 밀도 재확인.
+- 운영/복구 안내: `1차 완료`; `/health`, recovery steps, ops-baseline latest, runtime profile 노출. 남은 gap은 live Ollama/user-doc gate 릴리즈 직전 재측정.
+- 문서 업로드/승인 흐름: `MVP 완료`; 업로드 요청, pending/approved/rejected 메시지, admin review e2e 유지. 삭제/비활성화는 MVP 제외 유지.
+- Responsive/mobile: `1차 완료`; 390x844, 320px sidebar, admin/intro/app overflow 회귀 테스트 완료. 남은 gap은 실제 기기/브라우저 조합 추가 확인.
+- recommendation: release readiness copy sweep, 실제 사용자 문서 기반 end-to-end smoke, 또는 새 제품 기능 트랙 중 하나를 다음 트랙으로 선택한다.
+- verification: `./.venv/bin/python scripts/roadmap_harness.py validate -> ready`
+- next: 자동 진행할 pending 항목이 없으므로 `LOOP-153 Await next-track after product UX matrix`에서 다음 트랙 결정을 대기한다.
 
 ## 2026-06-14 App UX Second-Pass Polish Snapshot
 
